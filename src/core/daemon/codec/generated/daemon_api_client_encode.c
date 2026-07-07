@@ -197,6 +197,12 @@ static bool encode_auth_bind_request(zcbor_state_t *state, const struct auth_bin
 static bool encode_repeated_auth_begin_request_bind(zcbor_state_t *state, const struct auth_begin_request_bind_r *input);
 static bool encode_auth_begin_request(zcbor_state_t *state, const struct auth_begin_request *input);
 static bool encode_request_auth_begin(zcbor_state_t *state, const struct request_auth_begin *input);
+static bool encode_repeated_Fields_tstrtstr(zcbor_state_t *state, const struct Fields_tstrtstr *input);
+static bool encode_auth_step_input_fields(zcbor_state_t *state, const struct auth_step_input_fields *input);
+static bool encode_auth_step_input_callback(zcbor_state_t *state, const struct auth_step_input_callback *input);
+static bool encode_auth_step_input(zcbor_state_t *state, const struct auth_step_input_r *input);
+static bool encode_auth_step_request(zcbor_state_t *state, const struct auth_step_request *input);
+static bool encode_request_auth_step(zcbor_state_t *state, const struct request_auth_step *input);
 static bool encode_auth_complete_request(zcbor_state_t *state, const struct auth_complete_request *input);
 static bool encode_request_auth_complete(zcbor_state_t *state, const struct request_auth_complete *input);
 static bool encode_request_auth_cancel(zcbor_state_t *state, const struct request_auth_cancel *input);
@@ -640,11 +646,20 @@ static bool encode_curator_entry(zcbor_state_t *state, const struct curator_entr
 static bool encode_response_curator_skills(zcbor_state_t *state, const struct response_curator_skills *input);
 static bool encode_curator_change(zcbor_state_t *state, const struct curator_change *input);
 static bool encode_response_curator_run(zcbor_state_t *state, const struct response_curator_run *input);
-static bool encode_auth_flow_kind(zcbor_state_t *state, const struct auth_flow_kind_r *input);
+static bool encode_auth_challenge_redirect(zcbor_state_t *state, const struct auth_challenge_redirect *input);
+static bool encode_auth_challenge_form(zcbor_state_t *state, const struct auth_challenge_form *input);
+static bool encode_auth_challenge_qr(zcbor_state_t *state, const struct auth_challenge_qr *input);
+static bool encode_auth_challenge_message(zcbor_state_t *state, const struct auth_challenge_message *input);
+static bool encode_auth_challenge(zcbor_state_t *state, const struct auth_challenge_r *input);
 static bool encode_auth_begin_response(zcbor_state_t *state, const struct auth_begin_response *input);
 static bool encode_response_auth_begun(zcbor_state_t *state, const struct response_auth_begun *input);
+static bool encode_auth_step_result_challenge(zcbor_state_t *state, const struct auth_step_result_challenge *input);
 static bool encode_auth_complete_response(zcbor_state_t *state, const struct auth_complete_response *input);
+static bool encode_auth_step_result_completed(zcbor_state_t *state, const struct auth_step_result_completed *input);
+static bool encode_auth_step_result(zcbor_state_t *state, const struct auth_step_result_r *input);
+static bool encode_response_auth_stepped(zcbor_state_t *state, const struct response_auth_stepped *input);
 static bool encode_response_auth_completed(zcbor_state_t *state, const struct response_auth_completed *input);
+static bool encode_auth_flow_kind(zcbor_state_t *state, const struct auth_flow_kind_r *input);
 static bool encode_auth_provider_info(zcbor_state_t *state, const struct auth_provider_info *input);
 static bool encode_response_auth_providers(zcbor_state_t *state, const struct response_auth_providers *input);
 static bool encode_repeated_checkpoint_info_turn_ordinal(zcbor_state_t *state, const struct checkpoint_info_turn_ordinal_r *input);
@@ -3450,6 +3465,87 @@ static bool encode_request_auth_begin(
 
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"AuthBegin", tmp_str.len = sizeof("AuthBegin") - 1, &tmp_str)))))
 	&& (encode_auth_begin_request(state, (&(*input).request_auth_begin_AuthBegin))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_Fields_tstrtstr(
+		zcbor_state_t *state, const struct Fields_tstrtstr *input)
+{
+	zcbor_log("%s\r\n", __func__);
+
+	bool res = ((((zcbor_tstr_encode(state, (&(*input).auth_step_input_fields_Fields_tstrtstr_key))))
+	&& (zcbor_tstr_encode(state, (&(*input).Fields_tstrtstr)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_step_input_fields(
+		zcbor_state_t *state, const struct auth_step_input_fields *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Fields", tmp_str.len = sizeof("Fields") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 64) && ((zcbor_multi_encode_minmax(0, 64, &(*input).Fields_tstrtstr_count, (zcbor_encoder_t *)encode_repeated_Fields_tstrtstr, state, (*&(*input).Fields_tstrtstr), sizeof(struct Fields_tstrtstr))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 64)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_step_input_callback(
+		zcbor_state_t *state, const struct auth_step_input_callback *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Callback", tmp_str.len = sizeof("Callback") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).auth_step_input_callback_Callback))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_step_input(
+		zcbor_state_t *state, const struct auth_step_input_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).auth_step_input_choice == auth_step_input_fields_m_c) ? ((encode_auth_step_input_fields(state, (&(*input).auth_step_input_fields_m))))
+	: (((*input).auth_step_input_choice == auth_step_input_callback_m_c) ? ((encode_auth_step_input_callback(state, (&(*input).auth_step_input_callback_m))))
+	: (((*input).auth_step_input_choice == auth_step_input_Poll_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Poll", tmp_str.len = sizeof("Poll") - 1, &tmp_str)))))
+	: false)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_step_request(
+		zcbor_state_t *state, const struct auth_step_request *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"flow_id", tmp_str.len = sizeof("flow_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).auth_step_request_flow_id))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"input", tmp_str.len = sizeof("input") - 1, &tmp_str)))))
+	&& (encode_auth_step_input(state, (&(*input).auth_step_request_input))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_auth_step(
+		zcbor_state_t *state, const struct request_auth_step *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"AuthStep", tmp_str.len = sizeof("AuthStep") - 1, &tmp_str)))))
+	&& (encode_auth_step_request(state, (&(*input).request_auth_step_AuthStep))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -10392,15 +10488,80 @@ static bool encode_response_curator_run(
 	return res;
 }
 
-static bool encode_auth_flow_kind(
-		zcbor_state_t *state, const struct auth_flow_kind_r *input)
+static bool encode_auth_challenge_redirect(
+		zcbor_state_t *state, const struct auth_challenge_redirect *input)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((((*input).auth_flow_kind_choice == auth_flow_kind_MatrixSso_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"MatrixSso", tmp_str.len = sizeof("MatrixSso") - 1, &tmp_str)))))
-	: (((*input).auth_flow_kind_choice == auth_flow_kind_OAuth2Pkce_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"OAuth2Pkce", tmp_str.len = sizeof("OAuth2Pkce") - 1, &tmp_str)))))
-	: false))));
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Redirect", tmp_str.len = sizeof("Redirect") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"authorization_url", tmp_str.len = sizeof("authorization_url") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).Redirect_authorization_url))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_challenge_form(
+		zcbor_state_t *state, const struct auth_challenge_form *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Form", tmp_str.len = sizeof("Form") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"title", tmp_str.len = sizeof("title") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).Form_title))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"fields", tmp_str.len = sizeof("fields") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 64) && ((zcbor_multi_encode_minmax(0, 64, &(*input).Form_fields_auth_param_field_m_count, (zcbor_encoder_t *)encode_auth_param_field, state, (*&(*input).Form_fields_auth_param_field_m), sizeof(struct auth_param_field))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 64)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_challenge_qr(
+		zcbor_state_t *state, const struct auth_challenge_qr *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Qr", tmp_str.len = sizeof("Qr") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"payload", tmp_str.len = sizeof("payload") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).Qr_payload))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"image", tmp_str.len = sizeof("image") - 1, &tmp_str)))))
+	&& (((*input).Qr_image_choice == Qr_image_byte_array_m_c) ? ((zcbor_bstr_encode(state, (&(*input).Qr_image_byte_array_m))))
+	: (((*input).Qr_image_choice == Qr_image_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"poll_interval_ms", tmp_str.len = sizeof("poll_interval_ms") - 1, &tmp_str)))))
+	&& (zcbor_uint64_encode(state, (&(*input).Qr_poll_interval_ms))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_challenge_message(
+		zcbor_state_t *state, const struct auth_challenge_message *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Message", tmp_str.len = sizeof("Message") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"text", tmp_str.len = sizeof("text") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).Message_text))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_challenge(
+		zcbor_state_t *state, const struct auth_challenge_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+
+	bool res = (((((*input).auth_challenge_choice == auth_challenge_redirect_m_c) ? ((encode_auth_challenge_redirect(state, (&(*input).auth_challenge_redirect_m))))
+	: (((*input).auth_challenge_choice == auth_challenge_form_m_c) ? ((encode_auth_challenge_form(state, (&(*input).auth_challenge_form_m))))
+	: (((*input).auth_challenge_choice == auth_challenge_qr_m_c) ? ((encode_auth_challenge_qr(state, (&(*input).auth_challenge_qr_m))))
+	: (((*input).auth_challenge_choice == auth_challenge_message_m_c) ? ((encode_auth_challenge_message(state, (&(*input).auth_challenge_message_m))))
+	: false))))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -10412,16 +10573,12 @@ static bool encode_auth_begin_response(
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_encode(state, 5) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"flow_id", tmp_str.len = sizeof("flow_id") - 1, &tmp_str)))))
+	bool res = (((zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"flow_id", tmp_str.len = sizeof("flow_id") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).auth_begin_response_flow_id))))
-	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"authorization_url", tmp_str.len = sizeof("authorization_url") - 1, &tmp_str)))))
-	&& (zcbor_tstr_encode(state, (&(*input).auth_begin_response_authorization_url))))
-	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"redirect_uri", tmp_str.len = sizeof("redirect_uri") - 1, &tmp_str)))))
-	&& (zcbor_tstr_encode(state, (&(*input).auth_begin_response_redirect_uri))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"challenge", tmp_str.len = sizeof("challenge") - 1, &tmp_str)))))
+	&& (encode_auth_challenge(state, (&(*input).auth_begin_response_challenge))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"expires_at", tmp_str.len = sizeof("expires_at") - 1, &tmp_str)))))
-	&& (zcbor_uint64_encode(state, (&(*input).auth_begin_response_expires_at))))
-	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"flow_kind", tmp_str.len = sizeof("flow_kind") - 1, &tmp_str)))))
-	&& (encode_auth_flow_kind(state, (&(*input).auth_begin_response_flow_kind))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 5))));
+	&& (zcbor_uint64_encode(state, (&(*input).auth_begin_response_expires_at))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -10435,6 +10592,19 @@ static bool encode_response_auth_begun(
 
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"AuthBegun", tmp_str.len = sizeof("AuthBegun") - 1, &tmp_str)))))
 	&& (encode_auth_begin_response(state, (&(*input).response_auth_begun_AuthBegun))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_step_result_challenge(
+		zcbor_state_t *state, const struct auth_step_result_challenge *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Challenge", tmp_str.len = sizeof("Challenge") - 1, &tmp_str)))))
+	&& (encode_auth_challenge(state, (&(*input).auth_step_result_challenge_Challenge))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -10461,6 +10631,45 @@ static bool encode_auth_complete_response(
 	return res;
 }
 
+static bool encode_auth_step_result_completed(
+		zcbor_state_t *state, const struct auth_step_result_completed *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Completed", tmp_str.len = sizeof("Completed") - 1, &tmp_str)))))
+	&& (encode_auth_complete_response(state, (&(*input).auth_step_result_completed_Completed))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_step_result(
+		zcbor_state_t *state, const struct auth_step_result_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+
+	bool res = (((((*input).auth_step_result_choice == auth_step_result_challenge_m_c) ? ((encode_auth_step_result_challenge(state, (&(*input).auth_step_result_challenge_m))))
+	: (((*input).auth_step_result_choice == auth_step_result_completed_m_c) ? ((encode_auth_step_result_completed(state, (&(*input).auth_step_result_completed_m))))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_auth_stepped(
+		zcbor_state_t *state, const struct response_auth_stepped *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"AuthStepped", tmp_str.len = sizeof("AuthStepped") - 1, &tmp_str)))))
+	&& (encode_auth_step_result(state, (&(*input).response_auth_stepped_AuthStepped))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_response_auth_completed(
 		zcbor_state_t *state, const struct response_auth_completed *input)
 {
@@ -10469,6 +10678,24 @@ static bool encode_response_auth_completed(
 
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"AuthCompleted", tmp_str.len = sizeof("AuthCompleted") - 1, &tmp_str)))))
 	&& (encode_auth_complete_response(state, (&(*input).response_auth_completed_AuthCompleted))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_auth_flow_kind(
+		zcbor_state_t *state, const struct auth_flow_kind_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).auth_flow_kind_choice == auth_flow_kind_MatrixSso_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"MatrixSso", tmp_str.len = sizeof("MatrixSso") - 1, &tmp_str)))))
+	: (((*input).auth_flow_kind_choice == auth_flow_kind_OAuth2Pkce_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"OAuth2Pkce", tmp_str.len = sizeof("OAuth2Pkce") - 1, &tmp_str)))))
+	: (((*input).auth_flow_kind_choice == auth_flow_kind_BotToken_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"BotToken", tmp_str.len = sizeof("BotToken") - 1, &tmp_str)))))
+	: (((*input).auth_flow_kind_choice == auth_flow_kind_UserToken_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"UserToken", tmp_str.len = sizeof("UserToken") - 1, &tmp_str)))))
+	: (((*input).auth_flow_kind_choice == auth_flow_kind_PhoneOtp_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"PhoneOtp", tmp_str.len = sizeof("PhoneOtp") - 1, &tmp_str)))))
+	: (((*input).auth_flow_kind_choice == auth_flow_kind_QrPairing_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"QrPairing", tmp_str.len = sizeof("QrPairing") - 1, &tmp_str)))))
+	: false))))))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -12762,6 +12989,7 @@ static bool encode_api_response(
 	: (((*input).api_response_choice == api_response_response_curator_skills_m_c) ? ((encode_response_curator_skills(state, (&(*input).api_response_response_curator_skills_m))))
 	: (((*input).api_response_choice == api_response_response_curator_run_m_c) ? ((encode_response_curator_run(state, (&(*input).api_response_response_curator_run_m))))
 	: (((*input).api_response_choice == api_response_response_auth_begun_m_c) ? ((encode_response_auth_begun(state, (&(*input).api_response_response_auth_begun_m))))
+	: (((*input).api_response_choice == api_response_response_auth_stepped_m_c) ? ((encode_response_auth_stepped(state, (&(*input).api_response_response_auth_stepped_m))))
 	: (((*input).api_response_choice == api_response_response_auth_completed_m_c) ? ((encode_response_auth_completed(state, (&(*input).api_response_response_auth_completed_m))))
 	: (((*input).api_response_choice == api_response_response_auth_providers_m_c) ? ((encode_response_auth_providers(state, (&(*input).api_response_response_auth_providers_m))))
 	: (((*input).api_response_choice == api_response_response_checkpoints_m_c) ? ((encode_response_checkpoints(state, (&(*input).api_response_response_checkpoints_m))))
@@ -12807,7 +13035,7 @@ static bool encode_api_response(
 	: (((*input).api_response_choice == api_response_response_access_users_m_c) ? ((encode_response_access_users(state, (&(*input).api_response_response_access_users_m))))
 	: (((*input).api_response_choice == api_response_response_access_roles_m_c) ? ((encode_response_access_roles(state, (&(*input).api_response_response_access_roles_m))))
 	: (((*input).api_response_choice == api_response_response_who_am_i_m_c) ? ((encode_response_who_am_i(state, (&(*input).api_response_response_who_am_i_m))))
-	: false))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -12897,6 +13125,7 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_provider_catalog_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ProviderCatalog", tmp_str.len = sizeof("ProviderCatalog") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_provider_models_m_c) ? ((encode_request_provider_models(state, (&(*input).api_request_request_provider_models_m))))
 	: (((*input).api_request_choice == api_request_request_auth_begin_m_c) ? ((encode_request_auth_begin(state, (&(*input).api_request_request_auth_begin_m))))
+	: (((*input).api_request_choice == api_request_request_auth_step_m_c) ? ((encode_request_auth_step(state, (&(*input).api_request_request_auth_step_m))))
 	: (((*input).api_request_choice == api_request_request_auth_complete_m_c) ? ((encode_request_auth_complete(state, (&(*input).api_request_request_auth_complete_m))))
 	: (((*input).api_request_choice == api_request_request_auth_cancel_m_c) ? ((encode_request_auth_cancel(state, (&(*input).api_request_request_auth_cancel_m))))
 	: (((*input).api_request_choice == api_request_request_auth_providers_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"AuthProviders", tmp_str.len = sizeof("AuthProviders") - 1, &tmp_str)))))
@@ -12987,7 +13216,7 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_resource_grant_create_m_c) ? ((encode_request_resource_grant_create(state, (&(*input).api_request_request_resource_grant_create_m))))
 	: (((*input).api_request_choice == api_request_request_resource_grant_list_m_c) ? ((encode_request_resource_grant_list(state, (&(*input).api_request_request_resource_grant_list_m))))
 	: (((*input).api_request_choice == api_request_request_resource_grant_revoke_m_c) ? ((encode_request_resource_grant_revoke(state, (&(*input).api_request_request_resource_grant_revoke_m))))
-	: false))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;

@@ -1364,6 +1364,41 @@ struct request_auth_begin {
 	struct auth_begin_request request_auth_begin_AuthBegin;
 };
 
+struct Fields_tstrtstr {
+	struct zcbor_string auth_step_input_fields_Fields_tstrtstr_key;
+	struct zcbor_string Fields_tstrtstr;
+};
+
+struct auth_step_input_fields {
+	struct Fields_tstrtstr Fields_tstrtstr[64];
+	size_t Fields_tstrtstr_count;
+};
+
+struct auth_step_input_callback {
+	struct zcbor_string auth_step_input_callback_Callback;
+};
+
+struct auth_step_input_r {
+	union {
+		struct auth_step_input_fields auth_step_input_fields_m;
+		struct auth_step_input_callback auth_step_input_callback_m;
+	};
+	enum {
+		auth_step_input_fields_m_c,
+		auth_step_input_callback_m_c,
+		auth_step_input_Poll_tstr_c,
+	} auth_step_input_choice;
+};
+
+struct auth_step_request {
+	struct zcbor_string auth_step_request_flow_id;
+	struct auth_step_input_r auth_step_request_input;
+};
+
+struct request_auth_step {
+	struct auth_step_request request_auth_step_AuthStep;
+};
+
 struct auth_complete_request {
 	struct zcbor_string auth_complete_request_flow_id;
 	struct zcbor_string auth_complete_request_callback;
@@ -2932,6 +2967,7 @@ struct api_request_r {
 		struct request_model_current api_request_request_model_current_m;
 		struct request_provider_models api_request_request_provider_models_m;
 		struct request_auth_begin api_request_request_auth_begin_m;
+		struct request_auth_step api_request_request_auth_step_m;
 		struct request_auth_complete api_request_request_auth_complete_m;
 		struct request_auth_cancel api_request_request_auth_cancel_m;
 		struct request_checkpoint_list api_request_request_checkpoint_list_m;
@@ -3086,6 +3122,7 @@ struct api_request_r {
 		api_request_request_provider_catalog_m_c,
 		api_request_request_provider_models_m_c,
 		api_request_request_auth_begin_m_c,
+		api_request_request_auth_step_m_c,
 		api_request_request_auth_complete_m_c,
 		api_request_request_auth_cancel_m_c,
 		api_request_request_auth_providers_m_c,
@@ -5171,23 +5208,59 @@ struct response_curator_run {
 	size_t response_curator_run_CuratorRun_curator_change_m_count;
 };
 
-struct auth_flow_kind_r {
+struct auth_challenge_redirect {
+	struct zcbor_string Redirect_authorization_url;
+};
+
+struct auth_challenge_form {
+	struct zcbor_string Form_title;
+	struct auth_param_field Form_fields_auth_param_field_m[64];
+	size_t Form_fields_auth_param_field_m_count;
+};
+
+struct auth_challenge_qr {
+	struct zcbor_string Qr_payload;
+	union {
+		struct zcbor_string Qr_image_byte_array_m;
+	};
 	enum {
-		auth_flow_kind_MatrixSso_tstr_c,
-		auth_flow_kind_OAuth2Pkce_tstr_c,
-	} auth_flow_kind_choice;
+		Qr_image_byte_array_m_c,
+		Qr_image_null_m_c,
+	} Qr_image_choice;
+	uint64_t Qr_poll_interval_ms;
+};
+
+struct auth_challenge_message {
+	struct zcbor_string Message_text;
+};
+
+struct auth_challenge_r {
+	union {
+		struct auth_challenge_redirect auth_challenge_redirect_m;
+		struct auth_challenge_form auth_challenge_form_m;
+		struct auth_challenge_qr auth_challenge_qr_m;
+		struct auth_challenge_message auth_challenge_message_m;
+	};
+	enum {
+		auth_challenge_redirect_m_c,
+		auth_challenge_form_m_c,
+		auth_challenge_qr_m_c,
+		auth_challenge_message_m_c,
+	} auth_challenge_choice;
 };
 
 struct auth_begin_response {
 	struct zcbor_string auth_begin_response_flow_id;
-	struct zcbor_string auth_begin_response_authorization_url;
-	struct zcbor_string auth_begin_response_redirect_uri;
+	struct auth_challenge_r auth_begin_response_challenge;
 	uint64_t auth_begin_response_expires_at;
-	struct auth_flow_kind_r auth_begin_response_flow_kind;
 };
 
 struct response_auth_begun {
 	struct auth_begin_response response_auth_begun_AuthBegun;
+};
+
+struct auth_step_result_challenge {
+	struct auth_challenge_r auth_step_result_challenge_Challenge;
 };
 
 struct auth_complete_response {
@@ -5203,8 +5276,38 @@ struct auth_complete_response {
 	} auth_complete_response_bound_profile_choice;
 };
 
+struct auth_step_result_completed {
+	struct auth_complete_response auth_step_result_completed_Completed;
+};
+
+struct auth_step_result_r {
+	union {
+		struct auth_step_result_challenge auth_step_result_challenge_m;
+		struct auth_step_result_completed auth_step_result_completed_m;
+	};
+	enum {
+		auth_step_result_challenge_m_c,
+		auth_step_result_completed_m_c,
+	} auth_step_result_choice;
+};
+
+struct response_auth_stepped {
+	struct auth_step_result_r response_auth_stepped_AuthStepped;
+};
+
 struct response_auth_completed {
 	struct auth_complete_response response_auth_completed_AuthCompleted;
+};
+
+struct auth_flow_kind_r {
+	enum {
+		auth_flow_kind_MatrixSso_tstr_c,
+		auth_flow_kind_OAuth2Pkce_tstr_c,
+		auth_flow_kind_BotToken_tstr_c,
+		auth_flow_kind_UserToken_tstr_c,
+		auth_flow_kind_PhoneOtp_tstr_c,
+		auth_flow_kind_QrPairing_tstr_c,
+	} auth_flow_kind_choice;
 };
 
 struct auth_provider_info {
@@ -6347,6 +6450,7 @@ struct api_response_r {
 		struct response_curator_skills api_response_response_curator_skills_m;
 		struct response_curator_run api_response_response_curator_run_m;
 		struct response_auth_begun api_response_response_auth_begun_m;
+		struct response_auth_stepped api_response_response_auth_stepped_m;
 		struct response_auth_completed api_response_response_auth_completed_m;
 		struct response_auth_providers api_response_response_auth_providers_m;
 		struct response_checkpoints api_response_response_checkpoints_m;
@@ -6437,6 +6541,7 @@ struct api_response_r {
 		api_response_response_curator_skills_m_c,
 		api_response_response_curator_run_m_c,
 		api_response_response_auth_begun_m_c,
+		api_response_response_auth_stepped_m_c,
 		api_response_response_auth_completed_m_c,
 		api_response_response_auth_providers_m_c,
 		api_response_response_checkpoints_m_c,
