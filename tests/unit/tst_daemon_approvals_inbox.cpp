@@ -82,6 +82,43 @@ QByteArray approvalsResponse() {
     return out;
 }
 
+// [waveB:app-v30] D5: one ApprovalInfo carrying an fs.diff ToolDetail (JSON body {path, diff}).
+QByteArray approvalsResponseWithDiff() {
+    static const QByteArray s = QByteArrayLiteral("sess-1");
+    static const QByteArray r = QByteArrayLiteral("d-1");
+    static const QByteArray p = QByteArrayLiteral("edit main.cpp");
+    static const QByteArray kind = QByteArrayLiteral("fs.diff");
+    static const QByteArray body =
+        QByteArrayLiteral("{\"path\":\"main.cpp\",\"diff\":\"--- a/main.cpp\\n+++ b/main.cpp\\n@@ "
+                          "-1 +1 @@\\n-a\\n+b\\n\"}");
+
+    api_response_r resp{};
+    resp.api_response_choice = api_response_r::api_response_response_approvals_m_c;
+    approval_page& page = resp.api_response_response_approvals_m.response_approvals_Approvals;
+    page.approval_page_items_approval_info_m_count = 1;
+    approval_info& a = page.approval_page_items_approval_info_m[0];
+    setStr(a.approval_info_session, s);
+    setStr(a.approval_info_request_id, r);
+    setStr(a.approval_info_prompt, p);
+    a.approval_info_path_present = false;
+    a.approval_info_fingerprint_present = false;
+    a.approval_info_detail_present = true;
+    tool_detail& td = a.approval_info_detail.approval_info_detail_tool_detail_m;
+    setStr(td.tool_detail_kind, kind);
+    setStr(td.tool_detail_body, body);
+    page.approval_page_next_present = false;
+
+    QByteArray out(64 * 1024, Qt::Uninitialized);
+    size_t written = 0;
+    if (cbor_encode_api_response(reinterpret_cast<uint8_t*>(out.data()),
+                                 static_cast<size_t>(out.size()), &resp,
+                                 &written) != ZCBOR_SUCCESS) {
+        return {};
+    }
+    out.resize(static_cast<qsizetype>(written));
+    return out;
+}
+
 // If `cbor` is an ApprovalDecide request, return its request_id + whether allow_permanent is set.
 struct DecidedWire {
     bool isDecide = false;
@@ -144,6 +181,46 @@ private slots:
         QCOMPARE(pending.at(1).requestId, QStringLiteral("a-2"));
         QVERIFY(!pending.at(1).hasFingerprint); // no fingerprint -> not offerable
         QVERIFY(pending.at(1).fingerprint.isEmpty());
+    }
+
+    // [waveB:app-v30] D5: an fs.diff ToolDetail decodes into detailKind + the raw JSON body, and
+    // the inbox projects the parsed {path, diff} onto the row; an unknown/absent detail degrades
+    // (detailKind empty, no diff).
+    void diffDetailDecodesAndProjects() {
+        const QByteArray cbor = approvalsResponseWithDiff();
+        QVERIFY(!cbor.isEmpty());
+        QList<DecodedApprovalInfo> pending;
+        QVERIFY(NodeApiCodec::decodeApprovals(cbor, &pending, nullptr));
+        QCOMPARE(pending.size(), 1);
+        QCOMPARE(pending.at(0).detailKind, QStringLiteral("fs.diff"));
+        QVERIFY(pending.at(0).detailBody.contains("main.cpp"));
+
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("approvals.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplyPayload(cbor);
+        QVERIFY2(fake.start(path), "listen");
+
+        DaemonCacheStore cache(dir.filePath(QStringLiteral("ai-diff.db")));
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        ApprovalRepository repo(&client, &cache);
+        DaemonApprovalsInbox inbox(&repo);
+
+        repo.refreshPending();
+        auto* rows = qobject_cast<uimodels::VariantListModel*>(inbox.pending());
+        QVERIFY(rows != nullptr);
+        QTRY_COMPARE_WITH_TIMEOUT(rows->count(), 1, 3000);
+        const int i = rows->indexOfId(QStringLiteral("d-1"));
+        QVERIFY(i >= 0);
+        QCOMPARE(rows->at(i).value(QStringLiteral("detailKind")).toString(),
+                 QStringLiteral("fs.diff"));
+        QCOMPARE(rows->at(i).value(QStringLiteral("diffPath")).toString(),
+                 QStringLiteral("main.cpp"));
+        QVERIFY(
+            rows->at(i).value(QStringLiteral("diff")).toString().contains(QStringLiteral("+b")));
     }
 
     // [wave2:app-approvals-safety] D3: deny-with-reason threads ApprovalDecide.reason on a deny;

@@ -81,6 +81,17 @@ QByteArray providerCatalogResponse() {
     d1.provider_descriptor_supports_model_discovery = true;
     d1.provider_descriptor_default_base_url_choice =
         provider_descriptor::provider_descriptor_default_base_url_null_m_c;
+    // [waveB:app-v30] CON-15: Anthropic advertises a generic sign-in (family + node label).
+    static const QByteArray signFam = "anthropic_oauth", signLabel = "Sign in with Anthropic";
+    d1.provider_descriptor_sign_in_present = true;
+    d1.provider_descriptor_sign_in.provider_descriptor_sign_in_choice =
+        provider_descriptor_sign_in_r::provider_descriptor_sign_in_provider_sign_in_m_c;
+    setZ(d1.provider_descriptor_sign_in.provider_descriptor_sign_in_provider_sign_in_m
+             .provider_sign_in_family,
+         signFam);
+    setZ(d1.provider_descriptor_sign_in.provider_descriptor_sign_in_provider_sign_in_m
+             .provider_sign_in_label,
+         signLabel);
 
     provider_descriptor& d2 = pc.response_provider_catalog_ProviderCatalog_provider_descriptor_m[2];
     setZ(d2.provider_descriptor_id, idC);
@@ -177,6 +188,39 @@ private slots:
         QCOMPARE(out.at(2).id, QStringLiteral("llama_cpp"));
         QCOMPARE(out.at(2).kind, QStringLiteral("local"));
         QCOMPARE(out.at(2).wireSelector, QStringLiteral("llama_cpp"));
+        // [waveB:app-v30] CON-15: the optional generic sign-in decodes (family + label); providers
+        // without one carry none.
+        QVERIFY(!out.at(0).hasSignIn);
+        QVERIFY(out.at(1).hasSignIn);
+        QCOMPARE(out.at(1).signInFamily, QStringLiteral("anthropic_oauth"));
+        QCOMPARE(out.at(1).signInLabel, QStringLiteral("Sign in with Anthropic"));
+        QVERIFY(!out.at(2).hasSignIn);
+    }
+
+    // [waveB:app-v30] CON-15: DaemonProviderCatalog projects signInFamily/signInLabel onto the row
+    // (empty for providers with no sign-in); the picker keys its button off signInFamily.
+    void catalogRowCarriesSignIn() {
+        const QString sock = m_tmp.filePath(QStringLiteral("signin.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplyPayload(providerCatalogResponse());
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(sock);
+        NodeApiClient client(&transport);
+        ProviderRepository repo(&client, nullptr);
+        DaemonProviderCatalog catalog(&repo, nullptr);
+
+        QSignalSpy providersChanged(&catalog, &models::IProviderCatalog::providersChanged);
+        repo.refreshProviders();
+        QTRY_COMPARE_WITH_TIMEOUT(providersChanged.count() >= 1, true, 3000);
+        const QVariantMap anthropic = catalog.descriptorFor(QStringLiteral("anthropic"));
+        QCOMPARE(anthropic.value(QStringLiteral("signInFamily")).toString(),
+                 QStringLiteral("anthropic_oauth"));
+        QCOMPARE(anthropic.value(QStringLiteral("signInLabel")).toString(),
+                 QStringLiteral("Sign in with Anthropic"));
+        const QVariantMap cloud = catalog.descriptorFor(QStringLiteral("daemon_cloud"));
+        QVERIFY(cloud.value(QStringLiteral("signInFamily")).toString().isEmpty());
     }
 
     // Codec round-trip: ProviderModels decodes with the optional display_name preserved (and the

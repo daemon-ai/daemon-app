@@ -525,6 +525,17 @@ void fillProviderDescriptor(const provider_descriptor& p, DecodedProviderDescrip
         out->hasDefaultBaseUrl = true;
         out->defaultBaseUrl = fromZcbor(p.provider_descriptor_default_base_url_tstr);
     }
+    // [waveB:app-v30] CON-15: optional generic sign-in (family + node label). Everything off the
+    // wire — no vendor strings client-side.
+    if (p.provider_descriptor_sign_in_present &&
+        p.provider_descriptor_sign_in.provider_descriptor_sign_in_choice ==
+            provider_descriptor_sign_in_r::provider_descriptor_sign_in_provider_sign_in_m_c) {
+        const provider_sign_in& si =
+            p.provider_descriptor_sign_in.provider_descriptor_sign_in_provider_sign_in_m;
+        out->hasSignIn = true;
+        out->signInFamily = fromZcbor(si.provider_sign_in_family);
+        out->signInLabel = fromZcbor(si.provider_sign_in_label);
+    }
 }
 
 QString contextEngineName(int choice) {
@@ -723,6 +734,35 @@ DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev) {
         if (summary.turn_summary_final_text_choice ==
             turn_summary::turn_summary_final_text_tstr_c) {
             out.finalText = fromZcbor(summary.turn_summary_final_text_tstr);
+        }
+        // [waveB:app-v30] C6: a foreign-agent failure (optional). Decode the stage + optional agent
+        // so the turn engine can compose stage-specific error copy.
+        if (summary.turn_summary_failure_present &&
+            summary.turn_summary_failure.turn_summary_failure_choice ==
+                turn_summary_failure_r::turn_summary_failure_foreign_failure_m_c) {
+            const foreign_failure& ff =
+                summary.turn_summary_failure.turn_summary_failure_foreign_failure_m;
+            out.hasFailure = true;
+            switch (ff.foreign_failure_stage.foreign_stage_choice) {
+            case foreign_stage_r::foreign_stage_Spawn_tstr_c:
+                out.failureStage = QStringLiteral("Spawn");
+                break;
+            case foreign_stage_r::foreign_stage_Handshake_tstr_c:
+                out.failureStage = QStringLiteral("Handshake");
+                break;
+            case foreign_stage_r::foreign_stage_Turn_tstr_c:
+                out.failureStage = QStringLiteral("Turn");
+                break;
+            case foreign_stage_r::foreign_stage_Unknown_tstr_c:
+            default:
+                out.failureStage = QStringLiteral("Unknown");
+                break;
+            }
+            if (ff.foreign_failure_agent_present &&
+                ff.foreign_failure_agent.foreign_failure_agent_choice ==
+                    foreign_failure_agent_r::foreign_failure_agent_tstr_c) {
+                out.failureAgent = fromZcbor(ff.foreign_failure_agent.foreign_failure_agent_tstr);
+            }
         }
         break;
     }

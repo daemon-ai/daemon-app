@@ -227,6 +227,10 @@ Volverás a la configuración inicial.</translation>
         <translation>Proveedor</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Iniciar sesión</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>URL base</translation>
     </message>
@@ -862,22 +866,6 @@ hasta que se vuelva a registrar.</translation>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>¿Eliminar la credencial almacenada?</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>Eliminar credencial</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>Elimina la credencial almacenada para el perfil “%1” (usada por %2).</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>La sesión de transporte de la cuenta en el nodo no se ve afectada: aún no hay disponible una operación de desconexión/eliminación.</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>Canales</translation>
     </message>
@@ -898,12 +886,60 @@ hasta que se vuelva a registrar.</translation>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>La desconexión aún no está disponible: el nodo no tiene una operación de desconexión de transporte</translation>
+        <source>Disconnected by request</source>
+        <translation>Desconectado a petición</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>Eliminar la credencial almacenada…</translation>
+        <source>Network error</source>
+        <translation>Error de red</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Error de autenticación</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Reemplazado por otro cliente</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Configuración no válida</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Error de certificado</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Desconectado</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>¿Eliminar cuenta?</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Eliminar cuenta</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>Elimina la cuenta “%1” del nodo.</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>El nodo desconecta el transporte, cierra sus conversaciones, desvincula sus rutas y elimina la credencial almacenada. Esto no se puede deshacer.</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>Volver a autenticar esta cuenta</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>Desconectar esta cuenta</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>Eliminar esta cuenta…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1947,6 +1983,22 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>La sesión se reinició; se recuperó del historial.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>El agente%1 no se pudo iniciar.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>El agente%1 falló durante el protocolo de enlace.</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>El agente%1 se bloqueó a mitad del turno.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>El agente%1 falló.</translation>
     </message>
 </context>
 <context>
@@ -3908,6 +3960,10 @@ Inicia una desde la pestaña Descubrir.</translation>
         <translation>Proveedor</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Iniciar sesión</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>URL base</translation>
     </message>
@@ -4819,6 +4875,18 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Rechazar con motivo (el agente lo oirá)</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>¿Eliminar cuenta?</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>¿Eliminar “%1”? El nodo lo desconecta, cierra sus conversaciones, desvincula sus rutas y elimina la credencial almacenada. Esto no se puede deshacer.</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Eliminar cuenta</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -6118,26 +6186,25 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>No se pudo actualizar la herramienta</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>Herramientas</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>Las herramientas las compila y controla el nodo. Este inventario es de solo lectura; una herramienta deshabilitada indica lo que necesita.</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>Las herramientas están controladas por el nodo. Al alternar se pide al nodo que active o desactive una herramienta; una herramienta que indica un requisito permanece desactivada hasta que se cumpla.</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>El nodo no informó herramientas.</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Habilitado</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>Deshabilitado</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6285,6 +6352,17 @@ Gracias — continuando con: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter restaurar  e editar  Esc cancelar</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>No se pudo eliminar la cuenta</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>No se pudo desconectar la cuenta</translation>
     </message>
 </context>
 <context>
@@ -6524,9 +6602,19 @@ Gracias — continuando con: %1
         <translation>Máx. de hijos en segundo plano</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>Herramientas</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- La política de aprobación se establece por sesión (ajustes de sesión del redactor) — _aplicada allí por el nodo_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- Las herramientas están controladas por el nodo; al alternar se le pide que active o desactive una. **Space/Enter** alterna la herramienta seleccionada.
 </translation>
     </message>
     <message>
@@ -7280,40 +7368,16 @@ _Ningún agente seleccionado._
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- Diff: `%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- Huella: `%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## Herramientas
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>Las herramientas las compila y controla el nodo. Este inventario es de solo lectura.
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_El nodo no informó herramientas._
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7452,14 +7516,6 @@ _Ningún agente seleccionado._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>Cuentas de transporte Events-IO y sus salas en vivo, compartidas con la GUI. Pulsa &apos;c&apos; para conectar una cuenta. Desconectar/quitar AÚN no tiene operación de protocolo (B3: seguimiento en el nodo). Una credencial guardada se puede quitar desde la página Cuentas (&apos;x&apos; en el perfil vinculado). Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen aquí automáticamente.
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7478,9 +7534,57 @@ _Ningún agente seleccionado._
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>Desconectado a petición</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>Error de red</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Error de autenticación</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Reemplazado por otro cliente</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Configuración no válida</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Error de certificado</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Desconectado</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Cuentas de transporte Events-IO y sus salas activas, compartidas con la GUI. **j/k** mover · **c** conectar · **d** desconectar · **x** eliminar cuenta. Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen aquí automáticamente.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _Se requiere volver a autenticar — reconéctate con &apos;c&apos;._
 </translation>
     </message>
     <message>
@@ -7523,6 +7627,12 @@ _Ningún agente seleccionado._
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1** (`%2`)
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -7959,6 +8069,24 @@ _Ningún agente seleccionado._
     <message>
         <source>SessionCreate failed</source>
         <translation>Error en SessionCreate</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>No se pudo actualizar la herramienta</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>No se pudo eliminar la cuenta</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>No se pudo desconectar la cuenta</translation>
     </message>
 </context>
 <context>

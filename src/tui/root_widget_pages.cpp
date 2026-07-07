@@ -33,6 +33,7 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "transports/itransport_registry.h" // [waveB:app-v30] D1: Channels remove-confirm
 #include "tui_dialogs.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
@@ -303,8 +304,15 @@ void RootWidget::openRememberedApprovalsOverlay() {
         for (const QVariantMap& r : rows) {
             fps->append(r.value(QStringLiteral("fingerprint")).toString());
             const QString label = r.value(QStringLiteral("label")).toString();
-            display << (label.isEmpty() ? r.value(QStringLiteral("shortFingerprint")).toString()
-                                        : label);
+            QString line =
+                label.isEmpty() ? r.value(QStringLiteral("shortFingerprint")).toString() : label;
+            // [waveB:app-v30] D6: append the node's remembered-at timestamp when present (parity
+            // with the GUI SessionSettingsPopover row).
+            const QString when = r.value(QStringLiteral("rememberedAt")).toString();
+            if (!when.isEmpty()) {
+                line += QStringLiteral("  ·  ") + when;
+            }
+            display << line;
         }
         if (display.isEmpty()) {
             display << tr("(no remembered approvals)");
@@ -515,6 +523,41 @@ void RootWidget::openApprovalDenyReasonPrompt(const QString& id) {
             [this, id](const QString& text) { m_services.approvals->deny(id, text.trimmed()); });
 }
 
+// [waveB:app-v30] D1: destructive confirm before TransportRemove. The node sequences the full
+// teardown (disconnect + conv close + routing unbind + credential drop + config drop); we send one
+// intent and re-read the reported state. Mirrors the GUI ChannelsPage removeAccountDialog.
+void RootWidget::openChannelRemoveConfirm(const QString& transport, const QString& label) {
+    if (m_services.transportRegistry == nullptr || transport.isEmpty()) {
+        return;
+    }
+    auto* confirm = new Tui::ZDialog(this);
+    confirm->setOptions(Tui::ZWindow::DeleteOnClose);
+    confirm->setWindowTitle(tr("Remove account?"));
+    confirm->setContentsMargins({2, 1, 2, 1});
+    auto* layout = new Tui::ZVBoxLayout();
+    confirm->setLayout(layout);
+    layout->addWidget(new Tui::ZLabel(
+        tr("Remove “%1”? The node disconnects it, closes its conversations, unbinds its "
+           "routes, and drops the stored credential. This cannot be undone.")
+            .arg(label.isEmpty() ? transport : label),
+        confirm));
+    layout->addSpacing(1);
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    buttons->addStretch();
+    auto* removeBtn = new Tui::ZButton(tr("Remove account"), confirm);
+    buttons->addWidget(removeBtn);
+    auto* cancelBtn = new Tui::ZButton(tr("Cancel"), confirm);
+    buttons->addWidget(cancelBtn);
+    connect(removeBtn, &Tui::ZButton::clicked, confirm, [this, confirm, transport] {
+        m_services.transportRegistry->remove(transport);
+        confirm->close();
+    });
+    connect(cancelBtn, &Tui::ZButton::clicked, confirm, &Tui::ZDialog::close);
+    confirm->setGeometry(QRect(0, 0, 62, 8));
+    removeBtn->setFocus();
+}
+
 void RootWidget::openFleetSteerPrompt(const QVariantMap& row) {
     if (m_services.roster == nullptr) {
         return;
@@ -594,12 +637,32 @@ void RootWidget::openAuthFlow() {
     m_authFlow->open();
 }
 
+// [waveB:app-v30] CON-15: open the shared auth launcher narrowed to a provider's node-advertised
+// sign_in family (the AgentInferencePicker "Sign in" button's TUI analog).
+void RootWidget::openAuthFlowForFamily(const QString& family) {
+    if (m_services.authFlowController == nullptr || family.isEmpty()) {
+        return;
+    }
+    if (m_authFlow == nullptr) {
+        m_authFlow = new AuthFlowLauncher(m_services.authFlowController, this);
+        connect(m_authFlow, &AuthFlowLauncher::finished, this, [this] {
+            refreshActivePage();
+            if (m_transcript != nullptr && activePageKind() >= 0) {
+                m_transcript->setFocus();
+            }
+        });
+    }
+    m_authFlow->openForFamily(family);
+}
+
 void RootWidget::openProfileEditor(const QString& profileId) {
     if (m_services.profiles == nullptr || profileId.isEmpty()) {
         return;
     }
     auto* dlg =
         new ProfileEditorDialog(m_services.profiles, m_services.providerCatalog, profileId, this);
+    // [waveB:app-v30] CON-15: the editor's provider-row sign-in opens the shared auth launcher.
+    connect(dlg, &ProfileEditorDialog::signInRequested, this, &RootWidget::openAuthFlowForFamily);
     // The editor's local "Discover More Models" row routes to the shared
     // download flow (the GUI editor's Nav.open("models","discover") analog).
     connect(dlg, &ProfileEditorDialog::modelDiscoverRequested, this,

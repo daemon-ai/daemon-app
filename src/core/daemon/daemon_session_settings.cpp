@@ -8,6 +8,9 @@
 #include "daemon/repositories.h"
 #include "uimodels/variant_list_model.h"
 
+#include <QDateTime>
+#include <QLocale>
+
 namespace daemonapp::daemon {
 
 namespace {
@@ -16,6 +19,16 @@ namespace {
 QString shortFingerprint(const QString& fp) {
     constexpr int kHead = 12;
     return fp.size() > kHead ? fp.left(kHead) + QStringLiteral("…") : fp;
+}
+
+// [waveB:app-v30] D6: human-format the node's remembered-at timestamp (locale short date+time).
+// Empty when the node reported none (0), so the row hides the line.
+QString rememberedAtText(quint64 ms) {
+    if (ms == 0) {
+        return {};
+    }
+    return QLocale().toString(QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(ms)),
+                              QLocale::ShortFormat);
 }
 } // namespace
 
@@ -80,9 +93,10 @@ void DaemonSessionSettings::rebuildFingerprints() {
             QVariantMap row;
             row[QStringLiteral("fingerprint")] = fp.fingerprint;
             row[QStringLiteral("shortFingerprint")] = shortFingerprint(fp.fingerprint);
-            // The node stores only the hash today (label always empty); surface it when present so
-            // a future provenance capture needs no client change.
+            // [waveB:app-v30] D6: the node now populates label + remembered_at_ms (wire v30);
+            // surface both (rememberedAt empty when 0 so the row hides the line).
             row[QStringLiteral("label")] = fp.label;
+            row[QStringLiteral("rememberedAt")] = rememberedAtText(fp.rememberedAtMs);
             rows.append(row);
         }
     }

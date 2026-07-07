@@ -494,6 +494,44 @@ inline QByteArray neTransportChanged(const char* transport, const char* connecti
     return b;
 }
 
+// [waveB:app-v30] D2: {"ConversationsChanged":{"transport","conv","change"}} — change is the
+// conv-change enum tstr ("Added"/"Removed").
+inline QByteArray neConversationsChanged(const char* transport, const char* conv,
+                                         const char* change) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "ConversationsChanged");
+    b.append(static_cast<char>(0xA3));
+    cborText(b, "transport");
+    cborText(b, transport);
+    cborText(b, "conv");
+    cborText(b, conv);
+    cborText(b, "change");
+    cborText(b, change);
+    return b;
+}
+
+// [waveB:app-v30] D2: {"MembershipChanged":{"transport","conv","member","change","is_self"}} — the
+// minimal shape (optional actor/reason omitted). `change` is the membership-change enum tstr.
+inline QByteArray neMembershipChanged(const char* transport, const char* conv, const char* member,
+                                      const char* change, bool isSelf) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "MembershipChanged");
+    b.append(static_cast<char>(0xA5)); // map(5): transport, conv, member, change, is_self
+    cborText(b, "transport");
+    cborText(b, transport);
+    cborText(b, "conv");
+    cborText(b, conv);
+    cborText(b, "member");
+    cborText(b, member);
+    cborText(b, "change");
+    cborText(b, change);
+    cborText(b, "is_self");
+    b.append(static_cast<char>(isSelf ? 0xF5 : 0xF4)); // CBOR true / false
+    return b;
+}
+
 // {"EventsPage":{"events":[...],"next_cursor":N,"head_cursor":M}} (events count assumed < 24).
 inline QByteArray buildEventsPage(const QList<QByteArray>& events, quint64 nextCursor,
                                   quint64 headCursor) {

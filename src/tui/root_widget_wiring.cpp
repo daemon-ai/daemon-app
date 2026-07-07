@@ -179,19 +179,10 @@ void RootWidget::wirePageLiveRefresh() {
                 [this] { refreshPageIfActive(TabModel::Channels); });
         connect(reg, &transports::ITransportRegistry::conversationsChanged, this,
                 [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
-        // The GUI fetches an account's live ConvList when its row is expanded;
-        // the TUI page renders every account expanded, so mirror that fetch by
-        // refreshing each account's rooms whenever the Channels tab becomes
-        // current (the conversationsChanged wire above repaints when it lands).
-        connect(m_tabModel, &TabModel::currentTabChanged, this, [this, reg](int tabId) {
-            const int row = m_tabModel->indexOfTabId(tabId);
-            if (row < 0 || m_tabModel->kindAt(row) != TabModel::Channels) {
-                return;
-            }
-            for (const QVariant& v : reg->instances()) {
-                reg->refreshConversations(v.toMap().value(QStringLiteral("transport")).toString());
-            }
-        });
+        // [waveB:app-v30] D2: the per-tab-enter ConvList refetch-all is RETIRED. Conversations are
+        // seeded once per connect (the connect-ready baseline in AppServiceGraph) and kept fresh by
+        // the ConversationsChanged / MembershipChanged feed events + the TransportChanged-connected
+        // seed — no client polling. The conversationsChanged wire above still repaints on arrival.
     }
     if (m_services.presence != nullptr) {
         connect(m_services.presence, &transports::IPresenceService::presenceChanged, this,

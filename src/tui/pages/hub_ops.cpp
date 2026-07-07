@@ -177,6 +177,18 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
         if (!path.isEmpty()) {
             md += tr("- Path: `%1`\n").arg(path);
         }
+        // [waveB:app-v30] D5: render an fs.diff detail as a fenced unified diff (parity with the
+        // GUI DiffBlock; the raw +/- lines carry their own coloring cue). Unknown kinds degrade.
+        if (a.value(QStringLiteral("detailKind")).toString() == QLatin1String("fs.diff")) {
+            const QString diffPath = a.value(QStringLiteral("diffPath")).toString();
+            if (!diffPath.isEmpty()) {
+                md += tr("- Diff: `%1`\n").arg(diffPath);
+            }
+            const QString diff = a.value(QStringLiteral("diff")).toString();
+            if (!diff.isEmpty()) {
+                md += QStringLiteral("\n```diff\n") + diff + QStringLiteral("\n```\n");
+            }
+        }
         // [wave2:app-approvals-safety] D3: fingerprint chip equivalent — the digest the "allow
         // permanently" scope remembers.
         const QString shortFp = a.value(QStringLiteral("shortFingerprint")).toString();
@@ -197,33 +209,6 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
 // section). Rendered as a subsection of the TUI Settings page (the TUI folds GUI settings-sections
 // into its one Settings page). No mutation keys — the node owns tool gating; a disabled tool names
 // its requirement.
-QString TuiPageHub::buildToolsMarkdown() const {
-    QString md;
-    md += tr("## Tools\n\n");
-    md += tr("Tools are compiled and gated by the node. This inventory is read-only.\n\n");
-    auto* model = m_deps.tools == nullptr
-                      ? nullptr
-                      : qobject_cast<uimodels::VariantListModel*>(m_deps.tools->tools());
-    if (model == nullptr || model->count() == 0) {
-        md += tr("_No tools reported by the node._\n");
-        return md;
-    }
-    const auto rows = model->rows();
-    for (const QVariantMap& t : rows) {
-        const bool enabled = t.value(QStringLiteral("enabled")).toBool();
-        md += tr("- %1 **%2** — %3")
-                  .arg(enabled ? QStringLiteral("\u2713") : QStringLiteral("\u2717"),
-                       t.value(QStringLiteral("name")).toString(),
-                       t.value(QStringLiteral("description")).toString());
-        const QString reqLabel = t.value(QStringLiteral("requirementLabel")).toString();
-        if (!enabled && !reqLabel.isEmpty()) {
-            md += tr(" _(%1)_").arg(reqLabel);
-        }
-        md += QStringLiteral("\n");
-    }
-    return md;
-}
-
 // A human label for a pin row's origin scope ("#ops", "@bob", "api:key", "internal").
 static QString routingScopeLabel(const QVariantMap& row) {
     const QString kind = row.value(QStringLiteral("scopeKind")).toString();

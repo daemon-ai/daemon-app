@@ -186,6 +186,13 @@ QQC.Popup {
                               ? model.label : model.shortFingerprint
                         tooltipText: model.fingerprint
                     }
+                    // [waveB:app-v30] D6: when the node remembered it (human-formatted; hidden
+                    // when the node reported no timestamp).
+                    Text {
+                        visible: !!(model.rememberedAt && String(model.rememberedAt).length > 0)
+                        text: model.rememberedAt ? model.rememberedAt : ""
+                        font.family: FontIcons.display; font.pixelSize: 10; color: Theme.textMuted
+                    }
                     Item { Layout.fillWidth: true }
                     Kit.TextButton {
                         text: qsTr("Revoke")

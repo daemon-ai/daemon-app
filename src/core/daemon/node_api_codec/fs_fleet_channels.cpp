@@ -537,11 +537,38 @@ QString connectionStateName(const connection_state_r& c) {
         return QStringLiteral("connecting");
     case connection_state_r::connection_state_Connected_tstr_c:
         return QStringLiteral("connected");
+    // [waveB:app-v30] D1: the node's transient teardown state (wire v30). Rendered verbatim; the
+    // app never predicts it client-side.
+    case connection_state_r::connection_state_Disconnecting_tstr_c:
+        return QStringLiteral("disconnecting");
     case connection_state_r::connection_state_Error_tstr_c:
         return QStringLiteral("error");
     case connection_state_r::connection_state_Offline_tstr_c:
     default:
         return QStringLiteral("offline");
+    }
+}
+
+// [waveB:app-v30] D1: DisconnectReason (wire v30, 7 arms) -> a stable coarse lowercase token. The
+// client maps the token to friendly copy but NEVER keys behavior off it beyond that; the node's
+// `message` is the authoritative human string and `fatal` is the only behavioral gate.
+QString disconnectReasonName(const disconnect_reason_r& r) {
+    switch (r.disconnect_reason_choice) {
+    case disconnect_reason_r::disconnect_reason_UserRequested_tstr_c:
+        return QStringLiteral("user_requested");
+    case disconnect_reason_r::disconnect_reason_NetworkError_tstr_c:
+        return QStringLiteral("network_error");
+    case disconnect_reason_r::disconnect_reason_AuthenticationFailed_tstr_c:
+        return QStringLiteral("authentication_failed");
+    case disconnect_reason_r::disconnect_reason_ReplacedByOtherClient_tstr_c:
+        return QStringLiteral("replaced_by_other_client");
+    case disconnect_reason_r::disconnect_reason_InvalidSettings_tstr_c:
+        return QStringLiteral("invalid_settings");
+    case disconnect_reason_r::disconnect_reason_CertificateError_tstr_c:
+        return QStringLiteral("certificate_error");
+    case disconnect_reason_r::disconnect_reason_Other_tstr_c:
+    default:
+        return QStringLiteral("other");
     }
 }
 
@@ -593,6 +620,26 @@ QByteArray NodeApiCodec::encodeTransportInstancesRequest() {
     return encodeSimple(api_request_r::api_request_request_transport_instances_m_c);
 }
 
+// [waveB:app-v30] D1: single-string transport-teardown intents (wire v30). The node owns the full
+// teardown sequence; the client sends one intent and re-reads the reported state.
+QByteArray NodeApiCodec::encodeTransportDisconnectRequest(const QString& transport) {
+    const QByteArray t = transport.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_transport_disconnect_m_c, [&](api_request_r& request) {
+            setZcbor(
+                request.api_request_request_transport_disconnect_m.TransportDisconnect_transport,
+                t);
+        });
+}
+
+QByteArray NodeApiCodec::encodeTransportRemoveRequest(const QString& transport) {
+    const QByteArray t = transport.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_transport_remove_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_transport_remove_m.TransportRemove_transport, t);
+        });
+}
+
 QByteArray NodeApiCodec::encodeConvListRequest(const QString& transport, const QString& after) {
     const QByteArray t = transport.toUtf8();
     const QByteArray afterUtf8 = after.toUtf8();
@@ -631,6 +678,20 @@ bool NodeApiCodec::decodeAdapters(const QByteArray& responseCbor, QList<DecodedA
         d.capabilities[QStringLiteral("roomEnumeration")] = c.adapter_capabilities_room_enumeration;
         d.capabilities[QStringLiteral("fileTransfer")] = c.adapter_capabilities_file_transfer;
         d.capabilities[QStringLiteral("interactiveAuth")] = c.adapter_capabilities_interactive_auth;
+        // [waveB:app-v30] D3: node-labeled policy rows (optional). Rendered verbatim; behavior is
+        // never keyed off `key`.
+        if (a.adapter_info_policies_present) {
+            for (size_t p = 0;
+                 p < a.adapter_info_policies.adapter_info_policies_policy_entry_m_count; ++p) {
+                const policy_entry& pe =
+                    a.adapter_info_policies.adapter_info_policies_policy_entry_m[p];
+                QVariantMap row;
+                row[QStringLiteral("key")] = fromZcbor(pe.policy_entry_key);
+                row[QStringLiteral("label")] = fromZcbor(pe.policy_entry_label);
+                row[QStringLiteral("value")] = fromZcbor(pe.policy_entry_value);
+                d.policies.append(row);
+            }
+        }
         out->append(d);
     }
     return true;
@@ -671,6 +732,24 @@ bool NodeApiCodec::decodeTransportInstances(const QByteArray& responseCbor,
                     transport_instance_info_bound_profile_profile_ref_m_c) {
             d.boundProfile = fromZcbor(t.transport_instance_info_bound_profile
                                            .transport_instance_info_bound_profile_profile_ref_m);
+        }
+        // [waveB:app-v30] D1: node-reported disconnect provenance (wire v30, all optional).
+        if (t.transport_instance_info_reason_present &&
+            t.transport_instance_info_reason.transport_instance_info_reason_choice ==
+                transport_instance_info_reason_r::
+                    transport_instance_info_reason_disconnect_reason_m_c) {
+            d.reason =
+                disconnectReasonName(t.transport_instance_info_reason
+                                         .transport_instance_info_reason_disconnect_reason_m);
+        }
+        if (t.transport_instance_info_message_present &&
+            t.transport_instance_info_message.transport_instance_info_message_choice ==
+                transport_instance_info_message_r::transport_instance_info_message_tstr_c) {
+            d.message =
+                fromZcbor(t.transport_instance_info_message.transport_instance_info_message_tstr);
+        }
+        if (t.transport_instance_info_fatal_present) {
+            d.fatal = t.transport_instance_info_fatal.transport_instance_info_fatal;
         }
         out->append(d);
     }

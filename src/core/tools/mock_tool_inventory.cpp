@@ -49,4 +49,19 @@ void MockToolInventory::refresh() {
     // Canned data — nothing to re-query.
 }
 
+// [waveB:app-v30] D4: dev stand-in for ToolSetEnabled — flip the matching canned row so the
+// Settings -> Tools toggle exercises without a live node. A credential/feature-gated tool stays
+// disabled (the node is the authority; the mock mirrors that a `requires` tool cannot be enabled).
+void MockToolInventory::setEnabled(const QString& name, bool enabled) {
+    QList<QVariantMap> rows = m_tools->rows();
+    for (QVariantMap& row : rows) {
+        if (row.value(QStringLiteral("name")).toString() == name) {
+            const bool gated = !row.value(QStringLiteral("requires")).toString().isEmpty();
+            row[QStringLiteral("enabled")] = enabled && !gated;
+            break;
+        }
+    }
+    m_tools->setRows(rows);
+}
+
 } // namespace tools

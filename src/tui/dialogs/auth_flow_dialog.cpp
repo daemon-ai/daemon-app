@@ -110,6 +110,24 @@ void AuthFlowDialog::syncToPhase() {
 AuthFlowLauncher::AuthFlowLauncher(auth::AuthFlowController* flow, Tui::ZWidget* host)
     : QObject(host), m_flow(flow), m_host(host) {}
 
+// [waveB:app-v30] CON-15: jump straight to `family`'s param prompts (a provider-row sign-in). If
+// the family is not offered by the node, fall back to the generic family pick.
+void AuthFlowLauncher::openForFamily(const QString& family) {
+    if (m_flow == nullptr || family.isEmpty()) {
+        open();
+        return;
+    }
+    m_flow->refreshProviders();
+    for (const QVariant& v : m_flow->providers()) {
+        const QVariantMap p = v.toMap();
+        if (p.value(QStringLiteral("family")).toString() == family) {
+            promptParams(p);
+            return;
+        }
+    }
+    open();
+}
+
 void AuthFlowLauncher::open() {
     if (m_flow == nullptr) {
         emit finished();

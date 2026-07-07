@@ -223,6 +223,7 @@ ProfileEditorDialog::ProfileEditorDialog(profiles::IProfileStore* profiles,
     m_nameRow = new Tui::ZButton(QString(), this);
     m_engineLabel = new Tui::ZLabel(QString(), this);
     m_providerRow = new Tui::ZButton(QString(), this);
+    m_signInRow = new Tui::ZButton(QString(), this); // [waveB:app-v30] CON-15
     m_baseUrlRow = new Tui::ZButton(QString(), this);
     m_modelRow = new Tui::ZButton(QString(), this);
     m_descriptionRow = new Tui::ZButton(QString(), this);
@@ -232,6 +233,7 @@ ProfileEditorDialog::ProfileEditorDialog(profiles::IProfileStore* profiles,
     layout->addWidget(m_nameRow);
     layout->addWidget(m_engineLabel);
     layout->addWidget(m_providerRow);
+    layout->addWidget(m_signInRow);
     layout->addWidget(m_baseUrlRow);
     layout->addWidget(m_modelRow);
     layout->addWidget(m_descriptionRow);
@@ -250,6 +252,15 @@ ProfileEditorDialog::ProfileEditorDialog(profiles::IProfileStore* profiles,
 
     connect(m_nameRow, &Tui::ZButton::clicked, this, &ProfileEditorDialog::openNamePrompt);
     connect(m_providerRow, &Tui::ZButton::clicked, this, &ProfileEditorDialog::openProviderPalette);
+    // [waveB:app-v30] CON-15: emit the node-advertised sign-in family; RootWidget opens the shared
+    // AuthFlowLauncher narrowed to it (zero vendor knowledge here — everything is off the wire).
+    connect(m_signInRow, &Tui::ZButton::clicked, this, [this] {
+        const QString family =
+            providerDescriptor().value(QStringLiteral("signInFamily")).toString();
+        if (!family.isEmpty()) {
+            emit signInRequested(family);
+        }
+    });
     connect(m_baseUrlRow, &Tui::ZButton::clicked, this, &ProfileEditorDialog::openBaseUrlPrompt);
     connect(m_modelRow, &Tui::ZButton::clicked, this, &ProfileEditorDialog::openModelPalette);
     connect(m_descriptionRow, &Tui::ZButton::clicked, this,
@@ -322,6 +333,14 @@ void ProfileEditorDialog::syncRowLabels() {
     const bool foreign = m_engineKind == QStringLiteral("Foreign");
     m_providerRow->setText(row(tr("Provider"), providerDisplayName()));
     m_providerRow->setVisible(!foreign);
+    // [waveB:app-v30] CON-15: a sign-in row shown IFF the node's catalog row for the selected
+    // provider carries a sign_in. Label = node-supplied; hidden otherwise (and for foreign
+    // engines).
+    const QVariantMap desc = providerDescriptor();
+    const QString signInLabel = desc.value(QStringLiteral("signInLabel")).toString();
+    const bool hasSignIn = !desc.value(QStringLiteral("signInFamily")).toString().isEmpty();
+    m_signInRow->setText(signInLabel.isEmpty() ? tr("Sign in") : signInLabel);
+    m_signInRow->setVisible(!foreign && hasSignIn);
     m_baseUrlRow->setText(row(tr("Base URL"), m_wBaseUrl.isEmpty() ? tr("(provider default)")
                                                                    : elide(m_wBaseUrl, 38)));
     // Base URL only applies to cloud providers (GUI parity), and never to a foreign engine.

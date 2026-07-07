@@ -460,6 +460,75 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
                 decoded.presence =
                     presenceStateName(m.TransportChanged_presence.TransportChanged_presence);
             }
+            // [waveB:app-v30] D1: disconnect provenance (wire v30, all optional).
+            if (m.TransportChanged_reason_present &&
+                m.TransportChanged_reason.TransportChanged_reason_choice ==
+                    TransportChanged_reason_r::TransportChanged_reason_disconnect_reason_m_c) {
+                decoded.hasReason = true;
+                decoded.reason = disconnectReasonName(
+                    m.TransportChanged_reason.TransportChanged_reason_disconnect_reason_m);
+            }
+            if (m.TransportChanged_message_present &&
+                m.TransportChanged_message.TransportChanged_message_choice ==
+                    TransportChanged_message_r::TransportChanged_message_tstr_c) {
+                decoded.hasMessage = true;
+                decoded.message =
+                    fromZcbor(m.TransportChanged_message.TransportChanged_message_tstr);
+            }
+            if (m.TransportChanged_fatal_present) {
+                decoded.fatal = m.TransportChanged_fatal.TransportChanged_fatal;
+            }
+            break;
+        }
+        // [waveB:app-v30] D2: conversation-set + membership deltas. Invalidation pointers — the
+        // SubscriptionManager refetches; no membership fact is derived here.
+        case node_event_r::node_event_conversations_changed_m_c: {
+            const node_event_conversations_changed& m = ev.node_event_conversations_changed_m;
+            decoded.kind = DecodedNodeEvent::Kind::ConversationsChanged;
+            decoded.transport = fromZcbor(m.ConversationsChanged_transport);
+            decoded.conv = fromZcbor(m.ConversationsChanged_conv);
+            decoded.convChange = m.ConversationsChanged_change.conv_change_choice ==
+                                         conv_change_r::conv_change_Added_tstr_c
+                                     ? QStringLiteral("added")
+                                     : QStringLiteral("removed");
+            break;
+        }
+        case node_event_r::node_event_membership_changed_m_c: {
+            const node_event_membership_changed& m = ev.node_event_membership_changed_m;
+            decoded.kind = DecodedNodeEvent::Kind::MembershipChanged;
+            decoded.transport = fromZcbor(m.MembershipChanged_transport);
+            decoded.conv = fromZcbor(m.MembershipChanged_conv);
+            decoded.member = fromZcbor(m.MembershipChanged_member);
+            switch (m.MembershipChanged_change.membership_change_choice) {
+            case membership_change_r::membership_change_Joined_tstr_c:
+                decoded.membershipChange = QStringLiteral("joined");
+                break;
+            case membership_change_r::membership_change_Left_tstr_c:
+                decoded.membershipChange = QStringLiteral("left");
+                break;
+            case membership_change_r::membership_change_Invited_tstr_c:
+                decoded.membershipChange = QStringLiteral("invited");
+                break;
+            case membership_change_r::membership_change_Kicked_tstr_c:
+                decoded.membershipChange = QStringLiteral("kicked");
+                break;
+            case membership_change_r::membership_change_Banned_tstr_c:
+            default:
+                decoded.membershipChange = QStringLiteral("banned");
+                break;
+            }
+            if (m.MembershipChanged_actor_present &&
+                m.MembershipChanged_actor.MembershipChanged_actor_choice ==
+                    MembershipChanged_actor_r::MembershipChanged_actor_tstr_c) {
+                decoded.actor = fromZcbor(m.MembershipChanged_actor.MembershipChanged_actor_tstr);
+            }
+            if (m.MembershipChanged_reason_present &&
+                m.MembershipChanged_reason.MembershipChanged_reason_choice ==
+                    MembershipChanged_reason_r::MembershipChanged_reason_tstr_c) {
+                decoded.memberReason =
+                    fromZcbor(m.MembershipChanged_reason.MembershipChanged_reason_tstr);
+            }
+            decoded.isSelf = m.MembershipChanged_is_self;
             break;
         }
         default:
@@ -1111,6 +1180,12 @@ bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor, QList<Decoded
             entry.fingerprint =
                 fromZcbor(info.approval_info_fingerprint.approval_info_fingerprint_tstr);
         }
+        // [waveB:app-v30] D5: optional structured detail (ToolDetail{kind, body}, wire v30).
+        if (info.approval_info_detail_present) {
+            const tool_detail& td = info.approval_info_detail.approval_info_detail_tool_detail_m;
+            entry.detailKind = fromZcbor(td.tool_detail_kind);
+            entry.detailBody = bytesFromZcbor(td.tool_detail_body);
+        }
         out->append(entry);
     }
     if (next != nullptr) {
@@ -1180,6 +1255,11 @@ bool NodeApiCodec::decodeFingerprints(const QByteArray& responseCbor,
                 remembered_fingerprint_label_r::remembered_fingerprint_label_tstr_c) {
             entry.label =
                 fromZcbor(fp.remembered_fingerprint_label.remembered_fingerprint_label_tstr);
+        }
+        // [waveB:app-v30] D6: when the node remembered it (wire v30, optional).
+        if (fp.remembered_fingerprint_remembered_at_ms_present) {
+            entry.rememberedAtMs =
+                fp.remembered_fingerprint_remembered_at_ms.remembered_fingerprint_remembered_at_ms;
         }
         out->append(entry);
     }

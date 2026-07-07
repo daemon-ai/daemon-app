@@ -61,6 +61,14 @@ void DaemonToolInventory::refresh() {
     }
 }
 
+// [waveB:app-v30] D4: forward the toggle to the repository; the node-authoritative re-fetch
+// (toolsRefreshed -> rebuild) renders the actual overlay result.
+void DaemonToolInventory::setEnabled(const QString& name, bool enabled) {
+    if (m_repository != nullptr) {
+        m_repository->setEnabled(name, enabled);
+    }
+}
+
 void DaemonToolInventory::rebuild() {
     QList<QVariantMap> rows;
     rows.reserve(m_repository->tools().size());

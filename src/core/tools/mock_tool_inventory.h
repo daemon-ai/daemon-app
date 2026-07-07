@@ -19,6 +19,7 @@ public:
     [[nodiscard]] QObject* tools() const override;
     [[nodiscard]] int count() const override;
     void refresh() override;
+    void setEnabled(const QString& name, bool enabled) override; // [waveB:app-v30] D4
 
 private:
     uimodels::VariantListModel* m_tools = nullptr;

@@ -57,6 +57,10 @@ public:
 
     // Start at the family pick (or straight at the single family when only one is offered).
     void open();
+    // [waveB:app-v30] CON-15: open pre-narrowed to one family (a provider row's node-advertised
+    // sign_in.family) — skips the family pick, goes straight to that family's schema params. Falls
+    // back to the family pick when the family is not among the node's offered providers.
+    void openForFamily(const QString& family);
 
 signals:
     // The flow's dialogs went away (completed, failed terminal, or canceled).

@@ -117,6 +117,75 @@ QByteArray toolFinishedLogPage(quint64 seq, const QByteArray& summary, const cha
     return b;
 }
 
+// [waveB:app-v30] C6: a LogPage with a terminal TurnFinished{Failed} carrying a foreign-failure
+// (stage + agent). Mid-turn death arrives exactly like this — the engine must surface it, not hang.
+QByteArray turnFinishedFailureLogPage(quint64 seq, const char* stage, const char* agent) {
+    QByteArray usage; // usage-delta, all-zero (map(7))
+    usage.append(static_cast<char>(0xA7));
+    for (const char* k : {"input_tokens", "output_tokens", "api_calls", "cache_read_tokens",
+                          "cache_write_tokens", "reasoning_tokens", "cost_micros"}) {
+        daemonapp::test::cborText(usage, k);
+        daemonapp::test::cborUint(usage, 0);
+    }
+    QByteArray failure; // {"stage": stage, "agent": agent}
+    failure.append(static_cast<char>(0xA2));
+    daemonapp::test::cborText(failure, "stage");
+    daemonapp::test::cborText(failure, stage);
+    daemonapp::test::cborText(failure, "agent");
+    daemonapp::test::cborText(failure, agent);
+
+    QByteArray summary; // {"end_reason","final_text":null,"usage","failure"}
+    summary.append(static_cast<char>(0xA4));
+    daemonapp::test::cborText(summary, "end_reason");
+    daemonapp::test::cborText(summary, "Failed");
+    daemonapp::test::cborText(summary, "final_text");
+    summary.append(static_cast<char>(0xF6)); // null
+    daemonapp::test::cborText(summary, "usage");
+    summary.append(usage);
+    daemonapp::test::cborText(summary, "failure");
+    summary.append(failure);
+
+    QByteArray ev; // {"TurnFinished": {"seq": seq, "summary": summary}}
+    ev.append(static_cast<char>(0xA1));
+    daemonapp::test::cborText(ev, "TurnFinished");
+    ev.append(static_cast<char>(0xA2));
+    daemonapp::test::cborText(ev, "seq");
+    daemonapp::test::cborUint(ev, seq);
+    daemonapp::test::cborText(ev, "summary");
+    ev.append(summary);
+
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    daemonapp::test::cborText(b, "LogPage");
+    b.append(static_cast<char>(0xA4));
+    daemonapp::test::cborText(b, "entries");
+    b.append(static_cast<char>(0x81)); // array(1)
+    b.append(static_cast<char>(0xA5)); // session-log-entry map(5)
+    daemonapp::test::cborText(b, "seq");
+    daemonapp::test::cborUint(b, seq);
+    daemonapp::test::cborText(b, "direction");
+    daemonapp::test::cborText(b, "Outbound");
+    daemonapp::test::cborText(b, "origin");
+    b.append(static_cast<char>(0xA2));
+    daemonapp::test::cborText(b, "transport");
+    daemonapp::test::cborText(b, "api");
+    daemonapp::test::cborText(b, "scope");
+    daemonapp::test::cborText(b, "Internal");
+    daemonapp::test::cborText(b, "disposition");
+    daemonapp::test::cborText(b, "Context");
+    daemonapp::test::cborText(b, "payload");
+    b.append(static_cast<char>(0xA1));
+    daemonapp::test::cborText(b, "Event");
+    b.append(ev);
+    daemonapp::test::cborText(b, "next_seq");
+    daemonapp::test::cborUint(b, seq + 1);
+    daemonapp::test::cborText(b, "head_seq");
+    daemonapp::test::cborUint(b, seq);
+    daemonapp::test::cborText(b, "epoch");
+    daemonapp::test::cborUint(b, 0);
+    return b;
+}
+
 // One journal-record map(9) wrapping a transcript Block payload (CDDL order).
 void cborJournalBlockRecord(QByteArray& b, quint64 cursor, quint64 seq, const QByteArray& block) {
     b.append(static_cast<char>(0xA9));
@@ -311,6 +380,34 @@ private slots:
                                  5000);
         QCOMPARE(finished.count(), 0);
         engine.cancel();
+    }
+
+    // [waveB:app-v30] C6: a terminal TurnFinished{Failed} carrying a foreign-failure surfaces
+    // stage-specific error copy (with the agent name) and terminates the turn — it does NOT hang.
+    void foreignFailureSurfacesStageCopy() {
+        const QString path = sock(QStringLiteral("ffail.sock"));
+        WireMuxServer fake;
+        fake.setReplyPayload(emptyJournal());
+        QVERIFY2(fake.start(path), "listen");
+
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonTurnEngine engine(&client);
+        engine.setSessionId(QStringLiteral("s1"));
+        QSignalSpy finished(&engine, &ITurnEngine::turnFinished);
+
+        engine.start(QStringLiteral("hi"));
+        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
+        fake.pushItem(turnFinishedFailureLogPage(1, "Spawn", "claude"));
+
+        QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 3000);
+        QVERIFY(!engine.active()); // terminated, not hung
+        QCOMPARE(engine.turnState(), QStringLiteral("error"));
+        QVERIFY2(engine.errorText().contains(QStringLiteral("failed to launch")),
+                 qPrintable(engine.errorText()));
+        QVERIFY2(engine.errorText().contains(QStringLiteral("claude")),
+                 qPrintable(engine.errorText()));
     }
 
     // D1 live path: a streamed ToolFinished carrying the rich result (full content in `summary` +

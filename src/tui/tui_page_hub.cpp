@@ -20,6 +20,7 @@
 #include "pages/hub_detail.h"
 #include "profiles/iprofile_store.h"
 #include "tab_model.h"
+#include "transports/itransport_registry.h" // [waveB:app-v30] D1: Channels disconnect key
 
 #include <Tui/ZEvent.h>
 
@@ -59,7 +60,7 @@ QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) con
     case TabModel::UsersAccess:
         return buildUsersAccessMarkdown();
     case TabModel::Channels:
-        return buildChannelsMarkdown();
+        return buildChannelsMarkdown(sel);
     default:
         return {};
     }
@@ -120,6 +121,8 @@ int TuiPageHub::activePageKind(bool transcriptActive) const {
     case TabModel::Approvals:
     case TabModel::Routing:
     case TabModel::Cron:
+    // [waveB:app-v30] D1: Channels is now selectable (disconnect/remove per account).
+    case TabModel::Channels:
         return m_deps.tabModel->kindAt(idx);
     default:
         return -1;
@@ -146,6 +149,9 @@ QList<QVariantMap> TuiPageHub::pageActionRows(int kind) const {
         return routingPinRows();
     case TabModel::Cron:
         return rowsOfModel(m_deps.cron->jobs());
+    // [waveB:app-v30] D1: the Channels account rows back the disconnect/remove keys.
+    case TabModel::Channels:
+        return channelAccountRows();
     default:
         return {};
     }
@@ -334,6 +340,18 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
         } else if (text == QStringLiteral("x")) {
             m_deps.cron->remove(id);
             acted = true;
+        }
+        break;
+    // [waveB:app-v30] D1: 'd' disconnects the selected account (non-destructive; handled here).
+    // 'x' (remove) is destructive → intercepted at RootWidget level for a confirm prompt, so it is
+    // NOT handled in this hub key path.
+    case TabModel::Channels:
+        if (text == QStringLiteral("d") && m_deps.transportRegistry != nullptr) {
+            const QString conn = row.value(QStringLiteral("connection")).toString();
+            if (conn != QLatin1String("offline") && conn != QLatin1String("disconnecting")) {
+                m_deps.transportRegistry->disconnect(id);
+                acted = true;
+            }
         }
         break;
     default:

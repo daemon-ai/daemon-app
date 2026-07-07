@@ -487,6 +487,22 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // [waveB:app-v30] D1: Channels 'x' removes the selected account (TransportRemove) —
+    // destructive, so it opens a RootWidget-level confirm (TuiPageHub cannot host dialogs). 'd'
+    // (disconnect, non-destructive) stays in the hub key handler.
+    if (kind == TabModel::Channels && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("x")) {
+        const QList<QVariantMap> rows = pageActionRows(kind);
+        if (!rows.isEmpty()) {
+            const int sel =
+                qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
+            const QVariantMap& row = rows.at(sel);
+            openChannelRemoveConfirm(row.value(QStringLiteral("transport")).toString(),
+                                     row.value(QStringLiteral("displayName")).toString());
+        }
+        event->accept();
+        return true;
+    }
     // Fleet: 't' opens the steer prompt for the selected delegated child (F4/DEL-4) — a
     // RootWidget-level overlay because TuiPageHub cannot host dialogs.
     if (kind == TabModel::Fleet && event->modifiers() == Qt::NoModifier &&

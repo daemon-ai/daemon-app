@@ -6,11 +6,12 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
-// [wave2:app-approvals-safety] D2: read-only Tools inventory. Renders the node's advertised tool
-// set (ToolList -> Tools, wire v29): each tool's enabled state and, when disabled, the unmet
-// requirement with honest copy. There is NO enable/disable control — the node owns tool gating
-// (ToolRegister is a register verb, Unsupported at v29). For credential-shaped requirements the
-// "Set up…" affordance deep-links to Connection, where the wave-1 auth stack owns key entry.
+// [waveB:app-v30] D4: read-WRITE Tools inventory. Renders the node's advertised tool set
+// (ToolList -> Tools) with an enable/disable toggle (ToolSetEnabled, wire v30). The node stays
+// authoritative: toggling re-fetches ToolList, so a force-disabled / build-gated tool comes back
+// disabled with its unmet requirement — the client renders whatever the node returns. For
+// credential-shaped requirements the "Set up…" affordance deep-links to Connection, where the
+// wave-1 auth stack owns key entry.
 ColumnLayout {
     id: root
     spacing: 14
@@ -21,7 +22,7 @@ ColumnLayout {
 
     Text {
         Layout.fillWidth: true
-        text: qsTr("Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.")
+        text: qsTr("Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.")
         color: Theme.textMuted
         font.family: FontIcons.display
         font.pixelSize: 12
@@ -49,11 +50,14 @@ ColumnLayout {
             ColumnLayout {
                 spacing: 4
 
-                Kit.Chip {
+                // [waveB:app-v30] D4: enable/disable toggle (ToolSetEnabled). The node is
+                // authoritative — the model re-reads from the re-fetched ToolList, so a
+                // build-gated tool snaps back to disabled with its requirement shown.
+                Kit.Switch {
                     Layout.alignment: Qt.AlignRight
-                    iconGlyph: model.enabled ? FontIcons.fa_circle_check : FontIcons.fa_circle_xmark
-                    tone: model.enabled ? "accent" : "muted"
-                    text: model.enabled ? qsTr("Enabled") : qsTr("Disabled")
+                    checked: model.enabled
+                    onToggled: if (typeof Tools !== "undefined" && Tools)
+                                   Tools.setEnabled(model.name, checked)
                 }
 
                 Text {

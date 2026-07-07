@@ -7,6 +7,12 @@
 
 namespace daemonapp::daemon::cache {
 
+// v8 ([waveB:app-v30]): (1) adds connection_reason + connection_message + fatal to
+// daemon_transport_instances (D1: the node-reported disconnect reason / human message / fatal flag
+// render offline-first, and `fatal` gates the re-auth affordance without a live connection); and
+// (2) adds end_reason to daemon_fleet_units (stretch: UnitNode.end_reason is node-reported wire
+// state, so the subagent strip's error status renders from it — closing the Wave A gap where
+// failedCount was always 0). The cache is non-authoritative, so the bump just drops + rebuilds.
 // v7 ([wave2:app-delegation]): adds lifetime + engine_kind + engine_agent to daemon_fleet_units
 // (F3: authoritative per-child lifetime/engine chips render offline-first). The cache is
 // non-authoritative, so the bump just drops + rebuilds (the daemon re-baselines it). (F1's
@@ -24,7 +30,7 @@ namespace daemonapp::daemon::cache {
 // became live (offline-first read).
 // v2 (L3): added daemon_transcript_blocks (render-from-cache transcript) + per-session resync
 // cursors.
-inline constexpr int kSchemaVersion = 7;
+inline constexpr int kSchemaVersion = 8;
 
 inline constexpr const char* kCreateMetaSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_cache_meta (
@@ -98,6 +104,9 @@ CREATE TABLE IF NOT EXISTS daemon_fleet_units (
   lifetime TEXT,      -- '' | 'Persistent' | 'Ephemeral'
   engine_kind TEXT,   -- '' | 'Core' | 'Foreign'
   engine_agent TEXT,  -- foreign agent name (only when engine_kind == 'Foreign')
+  -- [waveB:app-v30] v8 (stretch): UnitNode.end_reason (node-reported terminal reason for a
+  -- Finished unit) so the subagent strip renders an error status offline-first.
+  end_reason TEXT,
   updated_at_ms INTEGER NOT NULL
 );
 )sql";
@@ -113,6 +122,12 @@ CREATE TABLE IF NOT EXISTS daemon_transport_instances (
   connection TEXT NOT NULL DEFAULT 'offline',
   presence TEXT NOT NULL DEFAULT 'unknown',
   bound_profile TEXT,
+  -- [waveB:app-v30] v8 (D1): node-reported disconnect provenance. connection_reason is a coarse
+  -- token (see disconnectReasonName); connection_message is the node's human string (rendered
+  -- verbatim); fatal gates the re-auth affordance. All empty/0 when the node reported none.
+  connection_reason TEXT,
+  connection_message TEXT,
+  fatal INTEGER NOT NULL DEFAULT 0,
   updated_at_ms INTEGER NOT NULL
 );
 )sql";

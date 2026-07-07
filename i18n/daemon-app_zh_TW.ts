@@ -227,6 +227,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>供應商</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>登入</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>基礎網址</translation>
     </message>
@@ -862,22 +866,6 @@ until it is re-registered.</source>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>要移除已儲存的憑證嗎？</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>移除憑證</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>移除為設定檔「%1」儲存的憑證（由 %2 使用）。</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>節點上該帳號的傳輸工作階段不受影響——中斷連線／移除操作尚未提供。</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>頻道</translation>
     </message>
@@ -898,12 +886,60 @@ until it is re-registered.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>中斷連線尚未提供——節點沒有傳輸中斷操作</translation>
+        <source>Disconnected by request</source>
+        <translation>已依要求中斷連線</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>移除已儲存的憑證…</translation>
+        <source>Network error</source>
+        <translation>網路錯誤</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>驗證失敗</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>已被另一個用戶端取代</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>設定無效</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>憑證錯誤</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>已中斷連線</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>移除帳戶？</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>移除帳戶</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>從節點移除帳戶 “%1”。</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>節點會中斷該傳輸、關閉其會話、解除其路由繫結並刪除已儲存的憑證。此操作無法復原。</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>重新驗證此帳戶</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>中斷此帳戶</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>移除此帳戶…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1947,6 +1983,22 @@ until it is re-registered.</source>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>工作階段已重設；已從歷史記錄復原。</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>代理%1 啟動失敗。</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>代理%1 在交握期間失敗。</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>代理%1 在回合中途當機。</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>代理%1 失敗。</translation>
     </message>
 </context>
 <context>
@@ -3904,6 +3956,10 @@ Start one from the Discover tab.</source>
         <translation>供應商</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>登入</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>基礎網址</translation>
     </message>
@@ -4815,6 +4871,18 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>附理由拒絕（代理會聽到）</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>移除帳戶？</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>移除 “%1”？節點會中斷它、關閉其會話、解除其路由繫結並刪除已儲存的憑證。此操作無法復原。</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>移除帳戶</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -6111,26 +6179,25 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>更新工具失敗</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>工具</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>工具由節點編譯並管控。此清單為唯讀；被停用的工具會說明其所需項目。</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>工具由節點管控。切換會請求節點啟用或停用某個工具；標註了前置要求的工具在滿足之前保持停用。</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>節點未回報任何工具。</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>已啟用</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>已停用</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6278,6 +6345,17 @@ Thanks — proceeding with: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter 還原  e 編輯  Esc 取消</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>移除帳戶失敗</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>中斷帳戶失敗</translation>
     </message>
 </context>
 <context>
@@ -6517,9 +6595,19 @@ Thanks — proceeding with: %1
         <translation>最大背景子項</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>工具</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- 核准原則會依各工作階段設定（撰寫區工作階段設定）— _由節點在該處強制執行_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- 工具由節點管控；切換會請求它啟用或停用某個工具。**Space/Enter** 切換所選工具。
 </translation>
     </message>
     <message>
@@ -7273,40 +7361,16 @@ _未選取代理。_
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- 差異：`%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- 指紋：`%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## 工具
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>工具由節點編譯並管控。此清單為唯讀。
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_節點未回報任何工具。_
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7445,14 +7509,6 @@ _未選取代理。_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>Events-IO 傳輸帳戶及其即時房間，與 GUI 共用。按 &apos;c&apos; 連接帳戶。中斷/移除目前尚無對應的協定操作（B3 — 節點端後續）。已儲存的憑證可在「帳戶」頁面移除（於綁定設定檔按 &apos;x&apos;）。房間邀請由節點處理；新加入的房間會自動顯示於此。
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7471,9 +7527,57 @@ _未選取代理。_
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>已依要求中斷連線</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>網路錯誤</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>驗證失敗</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>已被另一個用戶端取代</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>設定無效</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>憑證錯誤</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>已中斷連線</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Events-IO 傳輸帳戶及其即時房間，與 GUI 共享。**j/k** 移動 · **c** 連線 · **d** 中斷 · **x** 移除帳戶。房間邀請由節點處理；新加入的房間會自動顯示於此。
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _需要重新驗證 — 按 &apos;c&apos; 重新連線。_
 </translation>
     </message>
     <message>
@@ -7516,6 +7620,12 @@ _未選取代理。_
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1**（`%2`）
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -7952,6 +8062,24 @@ _未選取代理。_
     <message>
         <source>SessionCreate failed</source>
         <translation>建立工作階段失敗</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>更新工具失敗</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>移除帳戶失敗</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>中斷帳戶失敗</translation>
     </message>
 </context>
 <context>
