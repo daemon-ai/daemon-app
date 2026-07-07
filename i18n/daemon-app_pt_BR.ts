@@ -5171,6 +5171,14 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
 <context>
     <name>SessionRepository</name>
     <message>
+        <source>The session detail request was rejected</source>
+        <translation>A solicitação de detalhes da sessão foi rejeitada</translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation>Falha ao decodificar a resposta de SessionDetail</translation>
+    </message>
+    <message>
         <source>Not connected to a daemon</source>
         <translation>Não conectado a um daemon</translation>
     </message>
@@ -5837,6 +5845,10 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
     <message>
         <source>idle</source>
         <translation>ocioso</translation>
+    </message>
+    <message>
+        <source>Approvals </source>
+        <translation>Aprovações </translation>
     </message>
     <message>
         <source> tok</source>
@@ -7924,6 +7936,14 @@ _Nenhum agente selecionado._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>The session detail request was rejected</source>
+        <translation>A solicitação de detalhes da sessão foi rejeitada</translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation>Falha ao decodificar a resposta de SessionDetail</translation>
+    </message>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Não conectado a um daemon</translation>

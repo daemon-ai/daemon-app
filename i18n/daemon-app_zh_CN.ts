@@ -5167,6 +5167,14 @@ A generic, non-transcript page hosted by the same tab strip.
 <context>
     <name>SessionRepository</name>
     <message>
+        <source>The session detail request was rejected</source>
+        <translation>会话详情请求被拒绝</translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation>解码 SessionDetail 响应失败</translation>
+    </message>
+    <message>
         <source>Not connected to a daemon</source>
         <translation>未连接到 daemon</translation>
     </message>
@@ -5830,6 +5838,10 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>idle</source>
         <translation>空闲</translation>
+    </message>
+    <message>
+        <source>Approvals </source>
+        <translation>审批 </translation>
     </message>
     <message>
         <source> tok</source>
@@ -7917,6 +7929,14 @@ _未选择智能体。_
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>The session detail request was rejected</source>
+        <translation>会话详情请求被拒绝</translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation>解码 SessionDetail 响应失败</translation>
+    </message>
     <message>
         <source>Not connected to a daemon</source>
         <translation>未连接到 daemon</translation>

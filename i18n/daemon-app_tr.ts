@@ -5167,6 +5167,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
 <context>
     <name>SessionRepository</name>
     <message>
+        <source>The session detail request was rejected</source>
+        <translation>Oturum ayrıntısı isteği reddedildi</translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation>SessionDetail yanıtı çözülemedi</translation>
+    </message>
+    <message>
         <source>Not connected to a daemon</source>
         <translation>Bir daemon&apos;a bağlı değil</translation>
     </message>
@@ -5830,6 +5838,10 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
     <message>
         <source>idle</source>
         <translation>boşta</translation>
+    </message>
+    <message>
+        <source>Approvals </source>
+        <translation>Onaylar </translation>
     </message>
     <message>
         <source> tok</source>
@@ -7917,6 +7929,14 @@ _Hiçbir aracı seçilmedi._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>The session detail request was rejected</source>
+        <translation>Oturum ayrıntısı isteği reddedildi</translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation>SessionDetail yanıtı çözülemedi</translation>
+    </message>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Bir daemon&apos;a bağlı değil</translation>

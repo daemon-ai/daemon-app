@@ -5171,6 +5171,14 @@ A generic, non-transcript page hosted by the same tab strip.
 <context>
     <name>SessionRepository</name>
     <message>
+        <source>The session detail request was rejected</source>
+        <translation>सत्र विवरण अनुरोध अस्वीकार कर दिया गया</translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation>SessionDetail प्रतिक्रिया डिकोड करने में विफल</translation>
+    </message>
+    <message>
         <source>Not connected to a daemon</source>
         <translation>किसी daemon से कनेक्ट नहीं</translation>
     </message>
@@ -5837,6 +5845,10 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>idle</source>
         <translation>निष्क्रिय</translation>
+    </message>
+    <message>
+        <source>Approvals </source>
+        <translation>अनुमोदन </translation>
     </message>
     <message>
         <source> tok</source>
@@ -7924,6 +7936,14 @@ _कोई एजेंट चयनित नहीं।_
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>The session detail request was rejected</source>
+        <translation>सत्र विवरण अनुरोध अस्वीकार कर दिया गया</translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation>SessionDetail प्रतिक्रिया डिकोड करने में विफल</translation>
+    </message>
     <message>
         <source>Not connected to a daemon</source>
         <translation>किसी daemon से कनेक्ट नहीं</translation>
