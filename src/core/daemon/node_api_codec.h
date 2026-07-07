@@ -1223,7 +1223,7 @@ public:
     // contract version moves. The server advertises its own version as the "api/<N>" Hello
     // feature; the connection service compares the two at connect and replaces (app-managed) or
     // refuses (attach) a mismatched daemon instead of silently serving stale wire shapes.
-    static constexpr quint32 kDaemonApiVersion = 29;
+    static constexpr quint32 kDaemonApiVersion = 30;
     // The wire page bound (daemon-api WIRE_PAGE_MAX): a paged response carries at most this many
     // array elements per page — the generated codec decodes into fixed 64-element buffers — so
     // clients loop on the page cursors instead of ever asking for more per response.
