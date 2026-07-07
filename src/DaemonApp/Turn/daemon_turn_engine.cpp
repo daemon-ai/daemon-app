@@ -438,6 +438,21 @@ QString DaemonTurnEngine::subagentTitle(const QString& childId) const {
     return childId;
 }
 
+// [waveB:app-v30] stretch: the node-reported terminal reason for a child session, from the cached
+// fleet tree (UnitNode.end_reason). "" when unknown (not yet in the tree / still running). Never
+// derived — rendered from the node's fact.
+QString DaemonTurnEngine::childEndReason(const QString& childId) const {
+    if (m_cache == nullptr || childId.isEmpty()) {
+        return {};
+    }
+    for (const daemonapp::daemon::CachedFleetUnitRow& row : m_cache->fleetUnits()) {
+        if (row.sessionId == childId) {
+            return row.endReason;
+        }
+    }
+    return {};
+}
+
 void DaemonTurnEngine::applyUnitEvents(const QByteArray& responseCbor) {
     QList<daemonapp::daemon::DecodedManageEvent> events;
     if (!NodeApiCodec::decodeUnitEvents(responseCbor, &events)) {
@@ -452,11 +467,17 @@ void DaemonTurnEngine::applyUnitEvents(const QByteArray& responseCbor) {
             continue; // seq watermark: drop already-emitted / re-read transitions
         }
         m_subagentSeq = ev.seq;
-        // SubagentPhase -> the strip's status. Spawned = a live child (running); Finished = settled
-        // (done). The wire carries no error phase, so a failed child still reads "done" here (the
-        // strip's failedCount is not populated from this structured source).
-        const QString status = ev.phase == QStringLiteral("Finished") ? QStringLiteral("done")
-                                                                      : QStringLiteral("running");
+        // SubagentPhase -> the strip's status. Spawned = a live child (running); Finished =
+        // settled. [waveB:app-v30] stretch: a Finished child's terminal outcome is the
+        // node-reported UnitNode.end_reason (cached in daemon_fleet_units) — "Failed" renders as
+        // "error" (feeds the strip's failedCount), anything else as "done". This is rendering the
+        // node's fact, not re-deriving it; the wire carries no error phase on the ManageEvent
+        // itself.
+        QString status = QStringLiteral("running");
+        if (ev.phase == QStringLiteral("Finished")) {
+            status = childEndReason(ev.child) == QStringLiteral("Failed") ? QStringLiteral("error")
+                                                                          : QStringLiteral("done");
+        }
         emitted.append(QVariantMap{
             {QStringLiteral("type"), QStringLiteral("subagent")},
             {QStringLiteral("id"), ev.child},

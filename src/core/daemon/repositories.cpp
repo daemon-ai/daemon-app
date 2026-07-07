@@ -1794,6 +1794,9 @@ void FleetRepository::syncFleetUnits(const QList<DecodedUnitNode>& flat) {
         row.lifetime = n.lifetime;
         row.engineKind = n.engineKind;
         row.engineAgent = n.engineAgent;
+        // [waveB:app-v30] stretch: the node-reported terminal reason (UnitNode.end_reason) so the
+        // subagent strip can render an error status offline-first (never derived client-side).
+        row.endReason = n.endReason;
         row.updatedAtMs = now;
         cache()->upsertFleetUnit(row);
         keep.insert(n.id);

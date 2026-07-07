@@ -84,6 +84,43 @@ void unitNode(QByteArray& b, const char* id, const char* kind, const QList<const
     }
 }
 
+// [waveB:app-v30] stretch: a Finished unit node carrying a terminal end_reason (state =
+// {"Finished": {"end_reason": <reason>}}). Only the required keys, in CDDL order.
+void finishedUnitNode(QByteArray& b, const char* id, const char* kind, const char* endReason) {
+    mapHdr(b, 6);
+    cborText(b, "id");
+    cborText(b, id);
+    cborText(b, "kind");
+    cborText(b, kind);
+    cborText(b, "state");
+    mapHdr(b, 1);
+    cborText(b, "Finished");
+    mapHdr(b, 1);
+    cborText(b, "end_reason");
+    cborText(b, endReason);
+    cborText(b, "work");
+    b.append(static_cast<char>(0xF6)); // null
+    cborText(b, "usage");
+    zeroUsage(b);
+    cborText(b, "children");
+    arrHdr(b, 0);
+}
+
+// [waveB:app-v30] stretch: a tree whose child unit finished with end_reason "Failed".
+QByteArray treeRespFinishedFailed() {
+    QByteArray b;
+    mapHdr(b, 1);
+    cborText(b, "Tree");
+    mapHdr(b, 2);
+    cborText(b, "root");
+    cborText(b, "u1");
+    cborText(b, "nodes");
+    arrHdr(b, 2);
+    unitNode(b, "u1", "Orchestrator", {"u2"});
+    finishedUnitNode(b, "u2", "Engine", "Failed");
+    return b;
+}
+
 // {"Tree": {"root": "u1", "nodes": [ orchestrator u1 -> child u2, engine u2 ]}}
 QByteArray treeResp() {
     QByteArray b;
@@ -299,6 +336,42 @@ private slots:
         QCOMPARE(cached.at(1).engineKind, QStringLiteral("Foreign"));
         QCOMPARE(cached.at(1).engineAgent, QStringLiteral("gemini-cli"));
         QCOMPARE(cached.at(1).lifetime, QStringLiteral("Ephemeral"));
+    }
+
+    // [waveB:app-v30] stretch: a Finished unit's node-reported end_reason decodes off the wire and
+    // round-trips through the v8 cache column (the subagent strip reads it to render an error).
+    void wireEndReasonDecodesAndCaches() {
+        const QString sock = m_tmp.filePath(QStringLiteral("fleet-end.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplyPayload(treeRespFinishedFailed());
+        DaemonTransport transport;
+        transport.setSocketPath(sock);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("fleet-end.db")));
+        FleetRepository repo(&client, &cache);
+        DaemonFleetTree tree(&repo);
+
+        QSignalSpy refreshed(&repo, &FleetRepository::treeRefreshed);
+        repo.refreshTree();
+        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
+
+        const QList<CachedFleetUnitRow> cached = cache.fleetUnits();
+        QCOMPARE(cached.size(), 2);
+        // The finished child carries the node-reported terminal reason; the running root does not.
+        const CachedFleetUnitRow* child = nullptr;
+        const CachedFleetUnitRow* root = nullptr;
+        for (const CachedFleetUnitRow& r : cached) {
+            if (r.unitId == QStringLiteral("u2")) {
+                child = &r;
+            } else if (r.unitId == QStringLiteral("u1")) {
+                root = &r;
+            }
+        }
+        QVERIFY(child != nullptr && root != nullptr);
+        QCOMPARE(child->state, QStringLiteral("Finished"));
+        QCOMPARE(child->endReason, QStringLiteral("Failed"));
+        QVERIFY(root->endReason.isEmpty());
     }
 
     // PRO-10: pausing an engine leaf is Unsupported -> controlRejected fires + the optimistic

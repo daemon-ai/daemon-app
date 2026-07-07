@@ -95,6 +95,9 @@ private:
     // [waveB:app-v30] C6: stage-specific copy for a foreign-agent failure on a terminal turn
     // (TurnSummary.failure). `agent` (when non-empty) names the failing agent.
     [[nodiscard]] static QString foreignFailureText(const QString& stage, const QString& agent);
+    // [waveB:app-v30] stretch: the node-reported end_reason for a child session (cached fleet
+    // tree); drives the subagent strip's error status. Empty when unknown.
+    [[nodiscard]] QString childEndReason(const QString& childId) const;
     // Park the turn on a decoded HostRequest: surface the gate to the transcript and wait for a
     // respond* (the open stream keeps delivering once the daemon resumes).
     void parkOnRequest(const daemonapp::daemon::DecodedLogEntry& entry);

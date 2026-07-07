@@ -464,15 +464,17 @@ bool DaemonCacheStore::deleteProfile(const QString& profileRef) {
 bool DaemonCacheStore::upsertFleetUnit(const CachedFleetUnitRow& row) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     // [wave2:app-delegation] v7 (F3): +lifetime,engine_kind,engine_agent.
+    // [waveB:app-v30] v8 (stretch): +end_reason.
     q.prepare(QStringLiteral(
         "INSERT INTO daemon_fleet_units(unit_id,parent_id,depth,ordinal,name,kind,state,role,"
-        "profile_ref,session_id,work,lifetime,engine_kind,engine_agent,updated_at_ms) "
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+        "profile_ref,session_id,work,lifetime,engine_kind,engine_agent,end_reason,updated_at_ms) "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
         "ON CONFLICT(unit_id) DO UPDATE SET parent_id=excluded.parent_id,depth=excluded.depth,"
         "ordinal=excluded.ordinal,name=excluded.name,kind=excluded.kind,state=excluded.state,"
         "role=excluded.role,profile_ref=excluded.profile_ref,session_id=excluded.session_id,"
         "work=excluded.work,lifetime=excluded.lifetime,engine_kind=excluded.engine_kind,"
-        "engine_agent=excluded.engine_agent,updated_at_ms=excluded.updated_at_ms"));
+        "engine_agent=excluded.engine_agent,end_reason=excluded.end_reason,"
+        "updated_at_ms=excluded.updated_at_ms"));
     q.addBindValue(row.unitId);
     q.addBindValue(row.parentId);
     q.addBindValue(row.depth);
@@ -487,6 +489,7 @@ bool DaemonCacheStore::upsertFleetUnit(const CachedFleetUnitRow& row) {
     q.addBindValue(row.lifetime);
     q.addBindValue(row.engineKind);
     q.addBindValue(row.engineAgent);
+    q.addBindValue(row.endReason);
     q.addBindValue(row.updatedAtMs);
     return execWrite(q);
 }
@@ -495,9 +498,11 @@ QList<CachedFleetUnitRow> DaemonCacheStore::fleetUnits() const {
     QList<CachedFleetUnitRow> rows;
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     // [wave2:app-delegation] v7 (F3): +lifetime,engine_kind,engine_agent.
+    // [waveB:app-v30] v8 (stretch): +end_reason.
     if (!q.exec(QStringLiteral(
             "SELECT unit_id,parent_id,depth,ordinal,name,kind,state,role,profile_ref,session_id,"
-            "work,lifetime,engine_kind,engine_agent,updated_at_ms FROM daemon_fleet_units "
+            "work,lifetime,engine_kind,engine_agent,end_reason,updated_at_ms FROM "
+            "daemon_fleet_units "
             "ORDER BY ordinal ASC"))) {
         setLastError(q.lastError().text());
         return rows;
@@ -518,7 +523,8 @@ QList<CachedFleetUnitRow> DaemonCacheStore::fleetUnits() const {
         row.lifetime = q.value(11).toString();
         row.engineKind = q.value(12).toString();
         row.engineAgent = q.value(13).toString();
-        row.updatedAtMs = q.value(14).toLongLong();
+        row.endReason = q.value(14).toString();
+        row.updatedAtMs = q.value(15).toLongLong();
         rows.append(row);
     }
     return rows;
