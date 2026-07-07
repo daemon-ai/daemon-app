@@ -13,11 +13,15 @@ import DaemonApp.Controls as Kit
 // (AuthFlowKind::OAuth2Pkce) and Matrix SSO (AuthFlowKind::MatrixSso). Callers pick the family +
 // params and call openFlow(); the sheet renders the controller phases:
 //
-//   beginning        -> "Preparing sign-in…" spinner
-//   awaiting_browser -> the authorization URL (open-in-browser + copyable) + a paste field for
-//                       the no-loopback path ("await", not a poll — there is no AuthPoll op)
-//   completing       -> "Finishing sign-in…" spinner
-//   success          -> the resolved account label; auto-dismisses
+//   beginning  -> "Preparing sign-in…" spinner
+//   challenge  -> the current AuthChallenge, rendered per kind:
+//                   redirect -> the authorization URL (open-in-browser + copyable) + a paste field
+//                               for the no-loopback path
+//                   form     -> the title + a field per formFields, then "Continue" (submitFields)
+//                   qr       -> the QR image/payload; auto-polls until the flow completes
+//                   message  -> the informational text; auto-polls until the flow completes
+//   stepping   -> "Finishing sign-in…" spinner
+//   success    -> the resolved account label; auto-dismisses
 //   failed/cancelled -> the error + Retry
 Kit.Dialog {
     id: root
@@ -44,9 +48,14 @@ Kit.Dialog {
 
     readonly property string phase: (typeof AuthFlow !== "undefined" && AuthFlow)
                                     ? AuthFlow.phase : "idle"
+    // The current challenge kind: "" | "redirect" | "form" | "qr" | "message".
+    readonly property string challengeKind: (typeof AuthFlow !== "undefined" && AuthFlow)
+                                             ? AuthFlow.challengeKind : ""
     readonly property var pickedRow: (providerRows.length > 0
                                       && pickedProvider < providerRows.length)
                                      ? providerRows[pickedProvider] : ({})
+    // Values entered into a Form challenge's fields (key -> text).
+    property var formValues: ({})
 
     // Open with the family picked by the CALLER (e.g. a provider row's "Sign in…" button).
     function openFlow(family, params, bindProfile) {
@@ -132,10 +141,15 @@ Kit.Dialog {
     Connections {
         target: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow : null
         function onPhaseChanged() {
-            if (AuthFlow.phase === "awaiting_browser")
+            if (AuthFlow.phase === "challenge" && AuthFlow.challengeKind === "redirect")
                 AuthFlow.openInBrowser();
             else if (AuthFlow.phase === "success")
                 dismissTimer.start();
+        }
+        function onChallengeChanged() {
+            // A fresh Form challenge starts with empty inputs.
+            if (AuthFlow.challengeKind === "form")
+                root.formValues = {};
         }
     }
     Timer {
@@ -219,9 +233,9 @@ Kit.Dialog {
             }
         }
 
-        // --- beginning / completing: spinner line ---
+        // --- beginning / stepping: spinner line ---
         RowLayout {
-            visible: root.phase === "beginning" || root.phase === "completing"
+            visible: root.phase === "beginning" || root.phase === "stepping"
             Layout.fillWidth: true
             spacing: 10
             QQC.BusyIndicator {
@@ -236,9 +250,9 @@ Kit.Dialog {
             }
         }
 
-        // --- awaiting_browser: URL hand-off + paste fallback ---
+        // --- challenge: redirect — URL hand-off + paste fallback ---
         ColumnLayout {
-            visible: root.phase === "awaiting_browser"
+            visible: root.phase === "challenge" && root.challengeKind === "redirect"
             Layout.fillWidth: true
             spacing: 8
             Text {
@@ -294,6 +308,118 @@ Kit.Dialog {
                     onClicked: if (typeof AuthFlow !== "undefined" && AuthFlow)
                                    AuthFlow.submitCallback(callbackField.text)
                 }
+            }
+        }
+
+        // --- challenge: form — schema-driven inputs, then Continue (submitFields) ---
+        ColumnLayout {
+            visible: root.phase === "challenge" && root.challengeKind === "form"
+            Layout.fillWidth: true
+            spacing: 8
+            Text {
+                Layout.fillWidth: true
+                visible: (typeof AuthFlow !== "undefined" && AuthFlow)
+                         && AuthFlow.formTitle.length > 0
+                text: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow.formTitle : ""
+                wrapMode: Text.WordWrap
+                font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
+            }
+            Repeater {
+                model: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow.formFields : []
+                delegate: ColumnLayout {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    spacing: 4
+                    SectionLabel {
+                        text: modelData.label && modelData.label.length > 0 ? modelData.label
+                                                                            : modelData.key
+                    }
+                    Kit.TextField {
+                        Layout.fillWidth: true
+                        onTextEdited: {
+                            var values = root.formValues;
+                            values[modelData.key] = text;
+                            root.formValues = values;
+                        }
+                    }
+                }
+            }
+            Kit.TextButton {
+                text: qsTr("Continue")
+                accentFilled: true
+                // Required fields must be filled before the step is allowed.
+                enabled: {
+                    var fields = (typeof AuthFlow !== "undefined" && AuthFlow)
+                                 ? AuthFlow.formFields : [];
+                    for (var i = 0; i < fields.length; ++i)
+                        if (fields[i].required === true) {
+                            var v = root.formValues[fields[i].key];
+                            if (!v || String(v).trim().length === 0)
+                                return false;
+                        }
+                    return true;
+                }
+                onClicked: if (typeof AuthFlow !== "undefined" && AuthFlow)
+                               AuthFlow.submitFields(root.formValues)
+            }
+        }
+
+        // --- challenge: qr — image/payload; auto-polls until completion ---
+        ColumnLayout {
+            visible: root.phase === "challenge" && root.challengeKind === "qr"
+            Layout.fillWidth: true
+            spacing: 8
+            Text {
+                Layout.fillWidth: true
+                text: qsTr("Scan this code with your other device to finish signing in.")
+                wrapMode: Text.WordWrap
+                font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
+            }
+            Image {
+                visible: (typeof AuthFlow !== "undefined" && AuthFlow)
+                         && AuthFlow.qrImageSource.length > 0
+                Layout.alignment: Qt.AlignHCenter
+                source: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow.qrImageSource : ""
+                sourceSize.width: 200; sourceSize.height: 200
+                fillMode: Image.PreserveAspectFit
+            }
+            // Fallback when the node sent no pre-rendered image: show the payload to render/scan.
+            Kit.TextField {
+                visible: (typeof AuthFlow !== "undefined" && AuthFlow)
+                         && AuthFlow.qrImageSource.length === 0
+                Layout.fillWidth: true
+                readOnly: true
+                text: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow.qrPayload : ""
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                QQC.BusyIndicator {
+                    running: visible
+                    implicitWidth: 18; implicitHeight: 18
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTr("Waiting for approval…")
+                    font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
+                }
+            }
+        }
+
+        // --- challenge: message — informational text; auto-polls until completion ---
+        RowLayout {
+            visible: root.phase === "challenge" && root.challengeKind === "message"
+            Layout.fillWidth: true
+            spacing: 10
+            QQC.BusyIndicator {
+                running: visible
+                implicitWidth: 22; implicitHeight: 22
+            }
+            Text {
+                Layout.fillWidth: true
+                text: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow.messageText : ""
+                wrapMode: Text.WordWrap
+                font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
             }
         }
 

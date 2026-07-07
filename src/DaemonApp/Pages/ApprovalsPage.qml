@@ -6,6 +6,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.BlockEditor as BE // [waveB:app-v30] D5: DiffBlock + DiffFormat (shared parse)
 
 // Approvals inbox: pending tool-execution requests rendered with the node's honest prompt
 // (resolved command / cwd / digest, faithfully — never re-derived), a fingerprint chip where the
@@ -113,6 +114,30 @@ Item {
                             text: delegate.entry.path
                             font.family: FontIcons.mono; font.pixelSize: 11; color: Theme.text
                             elide: Text.ElideMiddle
+                        }
+                    }
+
+                    // --- Structured diff detail ([waveB:app-v30] D5) -------------------------
+                    // When the node attaches an fs.diff ToolDetail, render the unified diff below
+                    // the prompt using the SAME parser (DiffFormat -> be::parseUnifiedDiff) and the
+                    // SAME DiffBlock the transcript uses. Unknown kinds / no detail degrade away.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: delegate.entry.detailKind === "fs.diff"
+                                 && !!(delegate.entry.diff && String(delegate.entry.diff).length > 0)
+                        spacing: 4
+                        Text {
+                            Layout.fillWidth: true
+                            visible: !!(delegate.entry.diffPath
+                                        && String(delegate.entry.diffPath).length > 0)
+                            text: delegate.entry.diffPath ? delegate.entry.diffPath : ""
+                            font.family: FontIcons.mono; font.pixelSize: 11; color: Theme.textMuted
+                            elide: Text.ElideMiddle
+                        }
+                        BE.DiffBlock {
+                            Layout.fillWidth: true
+                            lines: delegate.entry.diff
+                                   ? BE.DiffFormat.parse(String(delegate.entry.diff)) : []
                         }
                     }
 

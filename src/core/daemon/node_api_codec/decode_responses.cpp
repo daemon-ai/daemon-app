@@ -77,6 +77,7 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         // app-wizard-auth stream additions (appended).
         {api_response_r::api_response_response_auth_providers_m_c, ApiResponseKind::AuthProviders},
         {api_response_r::api_response_response_auth_begun_m_c, ApiResponseKind::AuthBegun},
+        {api_response_r::api_response_response_auth_stepped_m_c, ApiResponseKind::AuthStepped},
         {api_response_r::api_response_response_auth_completed_m_c, ApiResponseKind::AuthCompleted},
         {api_response_r::api_response_response_model_quantize_started_m_c,
          ApiResponseKind::ModelQuantizeStarted},
@@ -460,6 +461,75 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
                 decoded.presence =
                     presenceStateName(m.TransportChanged_presence.TransportChanged_presence);
             }
+            // [waveB:app-v30] D1: disconnect provenance (wire v30, all optional).
+            if (m.TransportChanged_reason_present &&
+                m.TransportChanged_reason.TransportChanged_reason_choice ==
+                    TransportChanged_reason_r::TransportChanged_reason_disconnect_reason_m_c) {
+                decoded.hasReason = true;
+                decoded.reason = disconnectReasonName(
+                    m.TransportChanged_reason.TransportChanged_reason_disconnect_reason_m);
+            }
+            if (m.TransportChanged_message_present &&
+                m.TransportChanged_message.TransportChanged_message_choice ==
+                    TransportChanged_message_r::TransportChanged_message_tstr_c) {
+                decoded.hasMessage = true;
+                decoded.message =
+                    fromZcbor(m.TransportChanged_message.TransportChanged_message_tstr);
+            }
+            if (m.TransportChanged_fatal_present) {
+                decoded.fatal = m.TransportChanged_fatal.TransportChanged_fatal;
+            }
+            break;
+        }
+        // [waveB:app-v30] D2: conversation-set + membership deltas. Invalidation pointers — the
+        // SubscriptionManager refetches; no membership fact is derived here.
+        case node_event_r::node_event_conversations_changed_m_c: {
+            const node_event_conversations_changed& m = ev.node_event_conversations_changed_m;
+            decoded.kind = DecodedNodeEvent::Kind::ConversationsChanged;
+            decoded.transport = fromZcbor(m.ConversationsChanged_transport);
+            decoded.conv = fromZcbor(m.ConversationsChanged_conv);
+            decoded.convChange = m.ConversationsChanged_change.conv_change_choice ==
+                                         conv_change_r::conv_change_Added_tstr_c
+                                     ? QStringLiteral("added")
+                                     : QStringLiteral("removed");
+            break;
+        }
+        case node_event_r::node_event_membership_changed_m_c: {
+            const node_event_membership_changed& m = ev.node_event_membership_changed_m;
+            decoded.kind = DecodedNodeEvent::Kind::MembershipChanged;
+            decoded.transport = fromZcbor(m.MembershipChanged_transport);
+            decoded.conv = fromZcbor(m.MembershipChanged_conv);
+            decoded.member = fromZcbor(m.MembershipChanged_member);
+            switch (m.MembershipChanged_change.membership_change_choice) {
+            case membership_change_r::membership_change_Joined_tstr_c:
+                decoded.membershipChange = QStringLiteral("joined");
+                break;
+            case membership_change_r::membership_change_Left_tstr_c:
+                decoded.membershipChange = QStringLiteral("left");
+                break;
+            case membership_change_r::membership_change_Invited_tstr_c:
+                decoded.membershipChange = QStringLiteral("invited");
+                break;
+            case membership_change_r::membership_change_Kicked_tstr_c:
+                decoded.membershipChange = QStringLiteral("kicked");
+                break;
+            case membership_change_r::membership_change_Banned_tstr_c:
+            default:
+                decoded.membershipChange = QStringLiteral("banned");
+                break;
+            }
+            if (m.MembershipChanged_actor_present &&
+                m.MembershipChanged_actor.MembershipChanged_actor_choice ==
+                    MembershipChanged_actor_r::MembershipChanged_actor_tstr_c) {
+                decoded.actor = fromZcbor(m.MembershipChanged_actor.MembershipChanged_actor_tstr);
+            }
+            if (m.MembershipChanged_reason_present &&
+                m.MembershipChanged_reason.MembershipChanged_reason_choice ==
+                    MembershipChanged_reason_r::MembershipChanged_reason_tstr_c) {
+                decoded.memberReason =
+                    fromZcbor(m.MembershipChanged_reason.MembershipChanged_reason_tstr);
+            }
+            decoded.isSelf = m.MembershipChanged_is_self;
             break;
         }
         default:
@@ -1111,6 +1181,12 @@ bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor, QList<Decoded
             entry.fingerprint =
                 fromZcbor(info.approval_info_fingerprint.approval_info_fingerprint_tstr);
         }
+        // [waveB:app-v30] D5: optional structured detail (ToolDetail{kind, body}, wire v30).
+        if (info.approval_info_detail_present) {
+            const tool_detail& td = info.approval_info_detail.approval_info_detail_tool_detail_m;
+            entry.detailKind = fromZcbor(td.tool_detail_kind);
+            entry.detailBody = bytesFromZcbor(td.tool_detail_body);
+        }
         out->append(entry);
     }
     if (next != nullptr) {
@@ -1180,6 +1256,11 @@ bool NodeApiCodec::decodeFingerprints(const QByteArray& responseCbor,
                 remembered_fingerprint_label_r::remembered_fingerprint_label_tstr_c) {
             entry.label =
                 fromZcbor(fp.remembered_fingerprint_label.remembered_fingerprint_label_tstr);
+        }
+        // [waveB:app-v30] D6: when the node remembered it (wire v30, optional).
+        if (fp.remembered_fingerprint_remembered_at_ms_present) {
+            entry.rememberedAtMs =
+                fp.remembered_fingerprint_remembered_at_ms.remembered_fingerprint_remembered_at_ms;
         }
         out->append(entry);
     }
@@ -1315,6 +1396,59 @@ QString authFlowKindName(const auth_flow_kind_r& kind) {
         return QStringLiteral("MatrixSso");
     }
 }
+
+// [waveB:app-v31] Project the wire `auth_challenge_r` union into the decoded per-kind view.
+DecodedAuthChallenge decodeAuthChallenge(const auth_challenge_r& wire) {
+    DecodedAuthChallenge out;
+    switch (wire.auth_challenge_choice) {
+    case auth_challenge_r::auth_challenge_redirect_m_c:
+        out.kind = AuthChallengeKind::Redirect;
+        out.authorizationUrl = fromZcbor(wire.auth_challenge_redirect_m.Redirect_authorization_url);
+        break;
+    case auth_challenge_r::auth_challenge_form_m_c: {
+        out.kind = AuthChallengeKind::Form;
+        const auth_challenge_form& form = wire.auth_challenge_form_m;
+        out.formTitle = fromZcbor(form.Form_title);
+        for (size_t i = 0; i < form.Form_fields_auth_param_field_m_count; ++i) {
+            const auth_param_field& field = form.Form_fields_auth_param_field_m[i];
+            out.formFields.append(DecodedAuthParamField{fromZcbor(field.auth_param_field_key),
+                                                        fromZcbor(field.auth_param_field_label),
+                                                        field.auth_param_field_required});
+        }
+        break;
+    }
+    case auth_challenge_r::auth_challenge_qr_m_c: {
+        out.kind = AuthChallengeKind::Qr;
+        const auth_challenge_qr& qr = wire.auth_challenge_qr_m;
+        out.qrPayload = fromZcbor(qr.Qr_payload);
+        if (qr.Qr_image_choice == auth_challenge_qr::Qr_image_byte_array_m_c) {
+            out.qrImage = bytesFromZcbor(qr.Qr_image_byte_array_m);
+        }
+        out.qrPollIntervalMs = qr.Qr_poll_interval_ms;
+        break;
+    }
+    case auth_challenge_r::auth_challenge_message_m_c:
+    default:
+        out.kind = AuthChallengeKind::Message;
+        out.messageText = fromZcbor(wire.auth_challenge_message_m.Message_text);
+        break;
+    }
+    return out;
+}
+
+// [waveB:app-v31] Project the wire `auth_complete_response` into the decoded completion view.
+DecodedAuthCompleteResponse decodeAuthComplete(const auth_complete_response& completed) {
+    DecodedAuthCompleteResponse out;
+    out.credentialRef = fromZcbor(completed.auth_complete_response_credential_ref);
+    out.accountLabel = fromZcbor(completed.auth_complete_response_account_label);
+    out.transportInstance = fromZcbor(completed.auth_complete_response_transport_instance);
+    out.hasBoundProfile = completed.auth_complete_response_bound_profile_choice ==
+                          auth_complete_response::auth_complete_response_bound_profile_tstr_c;
+    if (out.hasBoundProfile) {
+        out.boundProfile = fromZcbor(completed.auth_complete_response_bound_profile_tstr);
+    }
+    return out;
+}
 } // namespace
 
 bool NodeApiCodec::decodeAuthProviders(const QByteArray& responseCbor,
@@ -1361,10 +1495,31 @@ bool NodeApiCodec::decodeAuthBegun(const QByteArray& responseCbor, DecodedAuthBe
     const auth_begin_response& begun =
         response->api_response_response_auth_begun_m.response_auth_begun_AuthBegun;
     out->flowId = fromZcbor(begun.auth_begin_response_flow_id);
-    out->authorizationUrl = fromZcbor(begun.auth_begin_response_authorization_url);
-    out->redirectUri = fromZcbor(begun.auth_begin_response_redirect_uri);
+    out->challenge = decodeAuthChallenge(begun.auth_begin_response_challenge);
     out->expiresAt = begun.auth_begin_response_expires_at;
-    out->flowKind = authFlowKindName(begun.auth_begin_response_flow_kind);
+    return true;
+}
+
+bool NodeApiCodec::decodeAuthStepped(const QByteArray& responseCbor, DecodedAuthStepResult* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_auth_stepped_m_c);
+    if (!response) {
+        return false;
+    }
+    const auth_step_result_r& result =
+        response->api_response_response_auth_stepped_m.response_auth_stepped_AuthStepped;
+    if (result.auth_step_result_choice == auth_step_result_r::auth_step_result_completed_m_c) {
+        out->completed = true;
+        out->completion = decodeAuthComplete(
+            result.auth_step_result_completed_m.auth_step_result_completed_Completed);
+    } else {
+        out->completed = false;
+        out->challenge = decodeAuthChallenge(
+            result.auth_step_result_challenge_m.auth_step_result_challenge_Challenge);
+    }
     return true;
 }
 
@@ -1378,18 +1533,8 @@ bool NodeApiCodec::decodeAuthCompleted(const QByteArray& responseCbor,
     if (!response) {
         return false;
     }
-    const auth_complete_response& completed =
-        response->api_response_response_auth_completed_m.response_auth_completed_AuthCompleted;
-    out->credentialRef = fromZcbor(completed.auth_complete_response_credential_ref);
-    out->accountLabel = fromZcbor(completed.auth_complete_response_account_label);
-    out->transportInstance = fromZcbor(completed.auth_complete_response_transport_instance);
-    out->hasBoundProfile = completed.auth_complete_response_bound_profile_choice ==
-                           auth_complete_response::auth_complete_response_bound_profile_tstr_c;
-    if (out->hasBoundProfile) {
-        out->boundProfile = fromZcbor(completed.auth_complete_response_bound_profile_tstr);
-    } else {
-        out->boundProfile.clear();
-    }
+    *out = decodeAuthComplete(
+        response->api_response_response_auth_completed_m.response_auth_completed_AuthCompleted);
     return true;
 }
 

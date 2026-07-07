@@ -59,6 +59,9 @@ QString hostRequestKindName(const host_request_kind_t_r& kind);
 // fs_fleet_channels.cpp.
 QString connectionStateName(const connection_state_r& c);
 QString presenceStateName(const presence_state_r& p);
+// [waveB:app-v30] D1: DisconnectReason -> coarse lowercase token (shared by the TransportInstances
+// decode and the TransportChanged node-event decode). Defined in fs_fleet_channels.cpp.
+QString disconnectReasonName(const disconnect_reason_r& r);
 
 // --- struct projection mappers (Qt-side) ---------------------------------------------------------
 // Scratch buffers a populated wire `origin` borrows (zcbor_string fields point into these); the

@@ -203,11 +203,40 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
     // surface promptly (B2) rather than only on manual expand.
     case DecodedNodeEvent::Kind::TransportChanged:
         if (m_transports != nullptr) {
+            // [waveB:app-v30] D1: forward the disconnect provenance (reason/message/fatal) too.
             m_transports->applyTransportChanged(event.transport, event.connection, event.presence,
-                                                event.hasPresence);
+                                                event.hasPresence, event.reason, event.hasReason,
+                                                event.message, event.hasMessage, event.fatal);
             if (event.connection == QStringLiteral("connected")) {
                 m_transports->refreshConversations(event.transport);
             }
+        }
+        break;
+    // [waveB:app-v30] D2: the conversation set for a transport changed (a room was added/removed).
+    // Refetch that transport's ConvList — invalidation pointer only; the node owns membership.
+    // This is what lets the client stop re-polling ConvList on tab-enter / expand.
+    case DecodedNodeEvent::Kind::ConversationsChanged:
+        if (m_transports != nullptr) {
+            m_transports->refreshConversations(event.transport);
+        }
+        break;
+    // [waveB:app-v30] D2: a room's membership changed. Always refetch that transport's ConvList
+    // (a join/leave can add or drop a visible room). On a removal of THIS node's own identity
+    // (is_self + left/kicked/banned) the node has already reconciled the routing pins, so also
+    // re-list routing + nudge the roster so the routing-facing surfaces re-render — the client
+    // derives nothing itself.
+    case DecodedNodeEvent::Kind::MembershipChanged:
+        if (m_transports != nullptr) {
+            m_transports->refreshConversations(event.transport);
+        }
+        if (event.isSelf && (event.membershipChange == QStringLiteral("left") ||
+                             event.membershipChange == QStringLiteral("kicked") ||
+                             event.membershipChange == QStringLiteral("banned"))) {
+            if (m_routing != nullptr) {
+                m_routing->refreshChats();
+                m_routing->refreshRooms(event.transport);
+            }
+            scheduleRosterRefetch();
         }
         break;
     case DecodedNodeEvent::Kind::Unknown:

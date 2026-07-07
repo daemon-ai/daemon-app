@@ -20,8 +20,10 @@
 #include "models/imodel_catalog.h"
 #include "settings/isettings_store.h"
 #include "theme/theme_palette.h"
+#include "tools/itool_inventory.h" // [waveB:app-v30] D4: tool toggle rows
 #include "tui_page_hub.h"
 #include "tui_palette.h"
+#include "uimodels/variant_list_model.h" // [waveB:app-v30] D4: tool rows model
 #include "update/update_manager.h"
 
 #include <QSettings>
@@ -282,6 +284,28 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
     rows << configToggle(advanced, advancedLabel, "advanced/experimentalTools",
                          tr("Enable experimental tools"), false);
 
+    // [waveB:app-v30] D4: the node-wide tool inventory, folded in as toggle rows (seam "tool" ->
+    // IToolInventory::setEnabled). The node is authoritative: toggling re-fetches ToolList, so a
+    // build-gated / force-disabled tool snaps back to disabled with its requirement in the note.
+    if (m_deps.tools != nullptr) {
+        if (auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.tools->tools())) {
+            const QString tools = QStringLiteral("tools");
+            const QString toolsLabel = tr("Tools");
+            for (const QVariantMap& t : model->rows()) {
+                const bool enabled = t.value(QStringLiteral("enabled")).toBool();
+                QVariantMap row =
+                    makeRow(tools, toolsLabel, t.value(QStringLiteral("name")).toString(),
+                            t.value(QStringLiteral("name")).toString(), QStringLiteral("toggle"),
+                            QStringLiteral("tool"), enabled);
+                const QString reqLabel = t.value(QStringLiteral("requirementLabel")).toString();
+                if (!enabled && !reqLabel.isEmpty()) {
+                    row.insert(QStringLiteral("note"), reqLabel);
+                }
+                rows << row;
+            }
+        }
+    }
+
     return rows;
 }
 
@@ -296,6 +320,11 @@ bool TuiPageHub::applySettingsValue(const QVariantMap& row, const QVariant& valu
     // exactly like the GUI AdvancedSection consent row.
     if (seam == QLatin1String("feedback") && m_deps.feedback != nullptr) {
         m_deps.feedback->setTelemetryEnabled(value.toBool());
+        return true;
+    }
+    // [waveB:app-v30] D4: a tool toggle -> IToolInventory::setEnabled (the node re-fetches).
+    if (seam == QLatin1String("tool") && m_deps.tools != nullptr) {
+        m_deps.tools->setEnabled(key, value.toBool());
         return true;
     }
     // "language" persists like any app pref (the shared ui/language key); the
@@ -348,6 +377,11 @@ QString TuiPageHub::buildSettingsMarkdown(int sel) const {
             } else if (section == QLatin1String("safety")) {
                 md += tr("- Approval policy is set per session (composer session settings) — "
                          "_enforced by the node there_\n");
+            } else if (section == QLatin1String("tools")) {
+                // [waveB:app-v30] D4: the tool toggles below ask the node to enable/disable; the
+                // node stays authoritative (a gated tool snaps back disabled with its requirement).
+                md += tr("- Tools are gated by the node; toggling asks it to enable or disable "
+                         "one. **Space/Enter** toggles the selected tool.\n");
             }
         }
         md += QStringLiteral("- ") + mark(i) + row.value(QStringLiteral("label")).toString() +
@@ -358,8 +392,8 @@ QString TuiPageHub::buildSettingsMarkdown(int sel) const {
         }
         md += QLatin1Char('\n');
     }
-    // [wave2:app-approvals-safety] D2: append the read-only tool inventory as a Settings subsection
-    // (mirrors the GUI's Settings -> Tools section; the TUI has one flat Settings page).
-    md += QStringLiteral("\n") + buildToolsMarkdown();
+    // [waveB:app-v30] D4: the tool inventory now renders as toggle rows in the "tools" section of
+    // the loop above (read-write via IToolInventory::setEnabled), replacing the old read-only
+    // buildToolsMarkdown append.
     return md;
 }

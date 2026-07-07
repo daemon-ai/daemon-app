@@ -265,6 +265,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // DAEMON_APP_MOCK_INTEGRATIONS keeps the demo MockDaemonNet for development (the same
         // escape hatch the Integrations tree seed honors above).
         graph.routingRepository = new RoutingRepository(graph.nodeApi, graph.cache, owner);
+        // [waveB:app-v30] D2: the feed's MembershipChanged (self removal) re-lists the routing pins
+        // (the node reconciled them); wired now that the routing repo exists.
+        if (graph.subscriptions != nullptr) {
+            graph.subscriptions->setRoutingRepository(graph.routingRepository);
+        }
         if (!demoTransports) {
             delete graph.daemonNet;
             graph.daemonNet =
@@ -329,6 +334,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // Channels: the adapter picker + configured accounts/status dots (EIO-1/3/9).
                     transports->refreshAdapters();
                     transports->refreshInstances();
+                    // [waveB:app-v30] D2: seed each account's ConvList once per connect (the
+                    // baseline that replaces the retired per-tab-enter / per-expand polling; the
+                    // feed's ConversationsChanged / MembershipChanged keeps them fresh after).
+                    transports->refreshAllConversations();
                     // Routing: the origin->session pin table (B6/ROU). Per-account rooms follow
                     // the instances refresh (DaemonDaemonNet chains them).
                     routing->refreshChats();

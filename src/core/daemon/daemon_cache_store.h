@@ -72,6 +72,10 @@ struct CachedFleetUnitRow {
     QString lifetime;    // "" | "Persistent" | "Ephemeral"
     QString engineKind;  // "" | "Core" | "Foreign"
     QString engineAgent; // foreign agent name (only when engineKind == "Foreign")
+    // [waveB:app-v30] v8 (stretch): UnitNode.end_reason for a Finished unit ("Completed" |
+    // "Failed" | "Interrupted" | ...); "" for a running unit. The subagent strip reads this to
+    // render an error status (node-reported, not client-derived).
+    QString endReason;
     qint64 updatedAtMs = 0;
 };
 
@@ -83,6 +87,12 @@ struct CachedTransportInstanceRow {
     QString connection = QStringLiteral("offline");
     QString presence = QStringLiteral("unknown");
     QString boundProfile;
+    // [waveB:app-v30] v8 (D1): node-reported disconnect provenance. `connectionReason` is a coarse
+    // token (disconnectReasonName), `connectionMessage` the node's verbatim human string, `fatal`
+    // gates the re-auth affordance. Empty/false when the node reported none.
+    QString connectionReason;
+    QString connectionMessage;
+    bool fatal = false;
     qint64 updatedAtMs = 0;
 };
 

@@ -713,6 +713,18 @@ public:
     void refreshAdapters();
     void refreshInstances();
     void refreshConversations(const QString& transport);
+    // [waveB:app-v30] D2: the connect-ready ConvList baseline — fetch every cached account's
+    // conversations once (replaces the retired per-tab-enter / per-expand polling; the feed's
+    // ConversationsChanged / MembershipChanged then keeps them fresh incrementally).
+    void refreshAllConversations();
+
+    // [waveB:app-v30] D1: transport-instance lifecycle. `disconnect` tears down the live session
+    // (TransportDisconnect); `remove` fully removes the account (TransportRemove — the node
+    // sequences disconnect + conv close + routing unbind + credential drop + config drop). Both
+    // send ONE intent; on Ok the instances re-list so the client renders the node's reported
+    // outcome (never an optimistic local mutation).
+    void disconnect(const QString& transport);
+    void remove(const QString& transport);
 
     // [wave2:app-channels-liveness] B5: apply a live TransportChanged node-event in place. Patches
     // the cached row's connection/presence (preserving family/displayName/boundProfile) and emits
@@ -720,8 +732,11 @@ public:
     // no round-trip. Falls back to refreshInstances() when the transport is not yet cached (a
     // brand-new account before its first TransportInstances). Mirrors
     // ModelRepository::applyDownloadProgress.
+    // [waveB:app-v30] D1: also patches the node-reported disconnect provenance
+    // (reason/message/fatal); hasReason/hasMessage mark which optionals the event carried.
     void applyTransportChanged(const QString& transport, const QString& connection,
-                               const QString& presence, bool hasPresence);
+                               const QString& presence, bool hasPresence, const QString& reason,
+                               bool hasReason, const QString& message, bool hasMessage, bool fatal);
 
     // [wave2:app-channels-liveness] B2: presentation-only "new room" tracking. A conversation id
     // that appears in a ConvList refresh but was NOT in the transport's prior known set is badged
@@ -764,6 +779,9 @@ private:
     static constexpr auto kAdaptersCorrelation = "repo/transport-adapters";
     static constexpr auto kInstancesCorrelation = "repo/transport-instances";
     static constexpr auto kConvPrefix = "repo/conv-list/";
+    // [waveB:app-v30] D1: disconnect/remove intents; on Ok both re-list the instances.
+    static constexpr auto kDisconnectCorrelation = "repo/transport-disconnect";
+    static constexpr auto kRemoveCorrelation = "repo/transport-remove";
 };
 
 // Durable checkpoints (E4/TOOL-9): refresh(session) issues a CheckpointList (page loop) and
@@ -856,12 +874,13 @@ private:
     QString m_lastRemovedName; // echoed on agentRemoved
 };
 
-// --- Interactive auth (begin -> browser -> complete; app-wizard-auth stream) ---------------------
-// The wire seam for the generic interactive-auth contract (daemon-interactive-auth-spec.md):
-// AuthProviders discovers the families, AuthBegin parks a flow + returns the authorization URL,
-// AuthComplete relays the captured redirect, AuthCancel drops a flow early. Stateless beyond the
-// provider list — the flow state machine lives in auth::AuthFlowController; the wire op names live
-// ONLY here + in NodeApiCodec (rename isolation).
+// --- Interactive auth (begin -> challenge/response state machine; app-wizard-auth stream) --------
+// The wire seam for the generic interactive-auth contract (daemon-interactive-auth-spec.md, wire
+// v31): AuthProviders discovers the families, AuthBegin parks a flow + returns its initial
+// AuthChallenge, AuthStep advances the flow one step with the client's AuthStepInput (returning the
+// next challenge or completion), AuthCancel drops a flow early. Stateless beyond the provider list
+// — the flow state machine lives in auth::AuthFlowController; the wire op names live ONLY here + in
+// NodeApiCodec (rename isolation).
 class AuthRepository : public RepositoryBase {
     Q_OBJECT
 
@@ -874,13 +893,15 @@ public:
     void refreshProviders();
     // Begin a flow for `family` with the family-specific `params` map against the CLIENT-owned
     // `redirectUri`. Non-empty `bindProfile` binds the resulting account to that profile
-    // node-side. On success begun() fires with the flow handle; on Error/transport failure
-    // failed("begin", ...) fires.
+    // node-side. On success begun() fires with the flow handle + initial challenge; on
+    // Error/transport failure failed("begin", ...) fires.
     void begin(const QString& family, const QVariantMap& params, const QString& redirectUri,
                const QString& bindProfile = QString());
-    // Finish `flowId` from the captured redirect (`callback`: full URL or query string). On
-    // success completed() fires; the flow is consumed node-side either way.
-    void complete(const QString& flowId, const QString& callback);
+    // Advance `flowId` one step with the collected input (`kind` selects the arm: Fields carries
+    // `fields`, Callback carries `callback`, Poll carries nothing). On success stepped() fires with
+    // the next challenge or the completion; on failure failed("step", ...) fires.
+    void step(const QString& flowId, AuthStepInputKind kind, const QVariantMap& fields = {},
+              const QString& callback = {});
     // Drop a pending flow (user cancelled / TTL abandoned). Fire-and-forget: Ok and errors are
     // both terminal for an already-abandoned flow, so no signal is emitted.
     void cancel(const QString& flowId);
@@ -888,8 +909,8 @@ public:
 signals:
     void providersRefreshed();
     void begun(const daemonapp::daemon::DecodedAuthBeginResponse& response);
-    void completed(const daemonapp::daemon::DecodedAuthCompleteResponse& response);
-    // `phase` is "providers" | "begin" | "complete"; `message` is the node's reason (an ApiError
+    void stepped(const daemonapp::daemon::DecodedAuthStepResult& result);
+    // `phase` is "providers" | "begin" | "step"; `message` is the node's reason (an ApiError
     // message when one decodes, else a transport/decode fallback).
     void failed(const QString& phase, const QString& message);
 
@@ -902,7 +923,7 @@ private:
 
     static constexpr auto kProvidersCorrelation = "repo/auth-providers";
     static constexpr auto kBeginCorrelation = "repo/auth-begin";
-    static constexpr auto kCompleteCorrelation = "repo/auth-complete";
+    static constexpr auto kStepCorrelation = "repo/auth-step";
     static constexpr auto kCancelCorrelation = "repo/auth-cancel";
 
     QList<DecodedAuthProviderInfo> m_providers;
@@ -978,6 +999,10 @@ public:
     [[nodiscard]] const QList<DecodedToolInfo>& tools() const { return m_tools; }
 
     void refreshTools();
+    // [waveB:app-v30] D4: ask the node to enable/disable a tool (ToolSetEnabled). On Ok the tool
+    // list re-fetches so the client renders the node-authoritative overlay result (a force-disabled
+    // / build-gated tool stays disabled with its `requires`).
+    void setEnabled(const QString& tool, bool enabled);
 
 signals:
     void toolsRefreshed();
@@ -988,6 +1013,7 @@ private:
     void handleFailure(const QString& correlationId, const QString& message);
 
     static constexpr auto kToolsCorrelation = "repo/tool-list";
+    static constexpr auto kSetEnabledCorrelation = "repo/tool-set-enabled"; // [waveB:app-v30] D4
 
     QList<DecodedToolInfo> m_tools;
 };

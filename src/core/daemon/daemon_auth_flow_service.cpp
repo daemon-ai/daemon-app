@@ -7,11 +7,55 @@
 
 namespace auth {
 
+using daemonapp::daemon::AuthChallengeKind;
 using daemonapp::daemon::AuthRepository;
+using daemonapp::daemon::AuthStepInputKind;
 using daemonapp::daemon::DecodedAuthBeginResponse;
+using daemonapp::daemon::DecodedAuthChallenge;
 using daemonapp::daemon::DecodedAuthCompleteResponse;
 using daemonapp::daemon::DecodedAuthParamField;
 using daemonapp::daemon::DecodedAuthProviderInfo;
+using daemonapp::daemon::DecodedAuthStepResult;
+
+namespace {
+// Project a decoded (wire-derived) challenge into the plain challenge map the seam carries (keeping
+// the wire types confined to the codec/repository layer). See the shape doc in
+// iauth_flow_service.h.
+QVariantMap challengeToVariant(const DecodedAuthChallenge& c) {
+    QVariantMap map;
+    switch (c.kind) {
+    case AuthChallengeKind::Redirect:
+        map[QStringLiteral("kind")] = QStringLiteral("redirect");
+        map[QStringLiteral("authorizationUrl")] = c.authorizationUrl;
+        break;
+    case AuthChallengeKind::Form: {
+        map[QStringLiteral("kind")] = QStringLiteral("form");
+        map[QStringLiteral("title")] = c.formTitle;
+        QVariantList fields;
+        for (const DecodedAuthParamField& f : c.formFields) {
+            QVariantMap field;
+            field[QStringLiteral("key")] = f.key;
+            field[QStringLiteral("label")] = f.label;
+            field[QStringLiteral("required")] = f.required;
+            fields.append(field);
+        }
+        map[QStringLiteral("fields")] = fields;
+        break;
+    }
+    case AuthChallengeKind::Qr:
+        map[QStringLiteral("kind")] = QStringLiteral("qr");
+        map[QStringLiteral("payload")] = c.qrPayload;
+        map[QStringLiteral("image")] = c.qrImage;
+        map[QStringLiteral("pollIntervalMs")] = static_cast<qulonglong>(c.qrPollIntervalMs);
+        break;
+    case AuthChallengeKind::Message:
+        map[QStringLiteral("kind")] = QStringLiteral("message");
+        map[QStringLiteral("text")] = c.messageText;
+        break;
+    }
+    return map;
+}
+} // namespace
 
 DaemonAuthFlowService::DaemonAuthFlowService(AuthRepository* repository, QObject* parent)
     : IAuthFlowService(parent), m_repository(repository) {
@@ -21,13 +65,17 @@ DaemonAuthFlowService::DaemonAuthFlowService(AuthRepository* repository, QObject
     connect(m_repository, &AuthRepository::providersRefreshed, this,
             &IAuthFlowService::providersChanged);
     connect(m_repository, &AuthRepository::begun, this, [this](const DecodedAuthBeginResponse& r) {
-        emit begun(r.flowId, r.authorizationUrl, r.redirectUri, r.expiresAt, r.flowKind);
+        emit begun(r.flowId, challengeToVariant(r.challenge), r.expiresAt);
     });
-    connect(m_repository, &AuthRepository::completed, this,
-            [this](const DecodedAuthCompleteResponse& r) {
-                emit completed(r.credentialRef, r.accountLabel, r.transportInstance,
-                               r.hasBoundProfile ? r.boundProfile : QString());
-            });
+    connect(m_repository, &AuthRepository::stepped, this, [this](const DecodedAuthStepResult& r) {
+        if (r.completed) {
+            emit completed(r.completion.credentialRef, r.completion.accountLabel,
+                           r.completion.transportInstance,
+                           r.completion.hasBoundProfile ? r.completion.boundProfile : QString());
+        } else {
+            emit challenged(challengeToVariant(r.challenge));
+        }
+    });
     connect(m_repository, &AuthRepository::failed, this, &IAuthFlowService::flowFailed);
 }
 
@@ -70,12 +118,24 @@ void DaemonAuthFlowService::begin(const QString& family, const QVariantMap& para
     m_repository->begin(family, params, redirectUri, bindProfile);
 }
 
-void DaemonAuthFlowService::complete(const QString& flowId, const QString& callback) {
+void DaemonAuthFlowService::step(const QString& flowId, const StepInput& input) {
     if (m_repository == nullptr) {
-        emit flowFailed(QStringLiteral("complete"), QStringLiteral("No daemon connection"));
+        emit flowFailed(QStringLiteral("step"), QStringLiteral("No daemon connection"));
         return;
     }
-    m_repository->complete(flowId, callback);
+    AuthStepInputKind kind = AuthStepInputKind::Poll;
+    switch (input.kind) {
+    case StepInputKind::Fields:
+        kind = AuthStepInputKind::Fields;
+        break;
+    case StepInputKind::Callback:
+        kind = AuthStepInputKind::Callback;
+        break;
+    case StepInputKind::Poll:
+        kind = AuthStepInputKind::Poll;
+        break;
+    }
+    m_repository->step(flowId, kind, input.fields, input.callback);
 }
 
 void DaemonAuthFlowService::cancel(const QString& flowId) {

@@ -844,6 +844,18 @@ QByteArray NodeApiCodec::encodeToolListRequest() {
     return encodeSimple(api_request_r::api_request_request_tool_list_m_c);
 }
 
+// [waveB:app-v30] D4: request the node enable/disable a tool (ToolSetEnabled, wire v30). The node
+// is authoritative — a force-disabled or build-gated tool stays disabled in the ToolList overlay.
+QByteArray NodeApiCodec::encodeToolSetEnabledRequest(const QString& tool, bool enabled) {
+    const QByteArray toolUtf8 = tool.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_tool_set_enabled_m_c, [&](api_request_r& request) {
+            request_tool_set_enabled& s = request.api_request_request_tool_set_enabled_m;
+            setZcbor(s.ToolSetEnabled_tool, toolUtf8);
+            s.ToolSetEnabled_enabled = enabled;
+        });
+}
+
 // [wave2:app-approvals-safety] D4: list a session's remembered exec-approval fingerprints
 // (FingerprintList, wire v29).
 QByteArray NodeApiCodec::encodeFingerprintListRequest(const QString& sessionId) {
@@ -1101,6 +1113,52 @@ QByteArray NodeApiCodec::encodeAuthBeginRequest(const QString& family, const QVa
                         auth_bind_request::auth_bind_request_credential_ref_tstr_c;
                     setZcbor(bind.auth_bind_request_credential_ref_tstr, bindCredRefUtf8);
                 }
+            }
+        });
+}
+
+QByteArray NodeApiCodec::encodeAuthStepRequest(const QString& flowId, AuthStepInputKind kind,
+                                               const QVariantMap& fields, const QString& callback) {
+    const QByteArray flowUtf8 = flowId.toUtf8();
+    const QByteArray callbackUtf8 = callback.toUtf8();
+    // The Fields map borrows into these UTF-8 buffers; both lists must outlive the encode.
+    QList<QByteArray> keyBufs;
+    QList<QByteArray> valueBufs;
+    keyBufs.reserve(fields.size());
+    valueBufs.reserve(fields.size());
+    for (auto it = fields.constBegin(); it != fields.constEnd(); ++it) {
+        keyBufs.append(it.key().toUtf8());
+        valueBufs.append(it.value().toString().toUtf8());
+    }
+    return encodeWithFill(
+        api_request_r::api_request_request_auth_step_m_c, [&](api_request_r& request) {
+            auth_step_request& step =
+                request.api_request_request_auth_step_m.request_auth_step_AuthStep;
+            setZcbor(step.auth_step_request_flow_id, flowUtf8);
+            auth_step_input_r& input = step.auth_step_request_input;
+            switch (kind) {
+            case AuthStepInputKind::Fields: {
+                input.auth_step_input_choice = auth_step_input_r::auth_step_input_fields_m_c;
+                auth_step_input_fields& filled = input.auth_step_input_fields_m;
+                // Capped at the generated buffer bound, same as the begin params fill.
+                const size_t count = qMin<size_t>(static_cast<size_t>(keyBufs.size()), 64);
+                filled.Fields_tstrtstr_count = count;
+                for (size_t i = 0; i < count; ++i) {
+                    setZcbor(filled.Fields_tstrtstr[i].auth_step_input_fields_Fields_tstrtstr_key,
+                             keyBufs[static_cast<int>(i)]);
+                    setZcbor(filled.Fields_tstrtstr[i].Fields_tstrtstr,
+                             valueBufs[static_cast<int>(i)]);
+                }
+                break;
+            }
+            case AuthStepInputKind::Callback:
+                input.auth_step_input_choice = auth_step_input_r::auth_step_input_callback_m_c;
+                setZcbor(input.auth_step_input_callback_m.auth_step_input_callback_Callback,
+                         callbackUtf8);
+                break;
+            case AuthStepInputKind::Poll:
+                input.auth_step_input_choice = auth_step_input_r::auth_step_input_Poll_tstr_c;
+                break;
             }
         });
 }

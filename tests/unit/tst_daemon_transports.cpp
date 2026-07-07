@@ -67,6 +67,16 @@ QByteArray adaptersResponse() {
     a.adapter_info_capabilities.adapter_capabilities_file_transfer = false;
     a.adapter_info_capabilities.adapter_capabilities_interactive_auth = true;
     a.adapter_info_account_schema_present = false;
+    // [waveB:app-v30] D3: one node-labeled policy row {key,label,value}.
+    static const QByteArray pk = QByteArrayLiteral("auto_accept");
+    static const QByteArray pl = QByteArrayLiteral("Auto-accept invites");
+    static const QByteArray pv = QByteArrayLiteral("trusted only");
+    a.adapter_info_policies_present = true;
+    a.adapter_info_policies.adapter_info_policies_policy_entry_m_count = 1;
+    policy_entry& pe = a.adapter_info_policies.adapter_info_policies_policy_entry_m[0];
+    setZ(pe.policy_entry_key, pk);
+    setZ(pe.policy_entry_label, pl);
+    setZ(pe.policy_entry_value, pv);
     return encodeResponse(*resp);
 }
 
@@ -91,6 +101,42 @@ QByteArray instancesResponse() {
     ti.transport_instance_info_presence.transport_instance_info_presence.presence_state_choice =
         presence_state_r::presence_state_Unknown_tstr_c;
     ti.transport_instance_info_bound_profile_present = false;
+    return encodeResponse(*resp);
+}
+
+// [waveB:app-v30] D1: a Disconnecting instance carrying reason (AuthenticationFailed) + a verbatim
+// message + fatal=true — the re-auth-gating shape.
+QByteArray instancesResponseFatal() {
+    const QByteArray t = QByteArrayLiteral("matrix/@bot:hs");
+    const QByteArray fam = QByteArrayLiteral("matrix");
+    const QByteArray disp = QByteArrayLiteral("@bot:hs");
+    const QByteArray msg = QByteArrayLiteral("token expired");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_transport_instances_m_c;
+    response_transport_instances& ri = resp->api_response_response_transport_instances_m;
+    ri.response_transport_instances_TransportInstances_transport_instance_info_m_count = 1;
+    transport_instance_info& ti =
+        ri.response_transport_instances_TransportInstances_transport_instance_info_m[0];
+    setZ(ti.transport_instance_info_transport, t);
+    setZ(ti.transport_instance_info_family, fam);
+    setZ(ti.transport_instance_info_display_name, disp);
+    ti.transport_instance_info_connection_present = true;
+    ti.transport_instance_info_connection.transport_instance_info_connection
+        .connection_state_choice = connection_state_r::connection_state_Disconnecting_tstr_c;
+    ti.transport_instance_info_presence_present = false;
+    ti.transport_instance_info_bound_profile_present = false;
+    ti.transport_instance_info_reason_present = true;
+    ti.transport_instance_info_reason.transport_instance_info_reason_choice =
+        transport_instance_info_reason_r::transport_instance_info_reason_disconnect_reason_m_c;
+    ti.transport_instance_info_reason.transport_instance_info_reason_disconnect_reason_m
+        .disconnect_reason_choice =
+        disconnect_reason_r::disconnect_reason_AuthenticationFailed_tstr_c;
+    ti.transport_instance_info_message_present = true;
+    ti.transport_instance_info_message.transport_instance_info_message_choice =
+        transport_instance_info_message_r::transport_instance_info_message_tstr_c;
+    setZ(ti.transport_instance_info_message.transport_instance_info_message_tstr, msg);
+    ti.transport_instance_info_fatal_present = true;
+    ti.transport_instance_info_fatal.transport_instance_info_fatal = true;
     return encodeResponse(*resp);
 }
 
@@ -174,6 +220,14 @@ private slots:
         QCOMPARE(out.at(0).displayName, QStringLiteral("Matrix"));
         QVERIFY(out.at(0).capabilities.value(QStringLiteral("roomEnumeration")).toBool());
         QVERIFY(!out.at(0).capabilities.value(QStringLiteral("fileTransfer")).toBool());
+        // [waveB:app-v30] D3: the node-labeled policy row decodes verbatim.
+        QCOMPARE(out.at(0).policies.size(), 1);
+        QCOMPARE(out.at(0).policies.at(0).value(QStringLiteral("key")).toString(),
+                 QStringLiteral("auto_accept"));
+        QCOMPARE(out.at(0).policies.at(0).value(QStringLiteral("label")).toString(),
+                 QStringLiteral("Auto-accept invites"));
+        QCOMPARE(out.at(0).policies.at(0).value(QStringLiteral("value")).toString(),
+                 QStringLiteral("trusted only"));
     }
 
     void instancesRoundTrip() {
@@ -183,6 +237,21 @@ private slots:
         QCOMPARE(out.at(0).transport, QStringLiteral("matrix/@bot:hs"));
         QCOMPARE(out.at(0).connection, QStringLiteral("connected"));
         QCOMPARE(out.at(0).presence, QStringLiteral("unknown"));
+        // No provenance on a healthy instance.
+        QVERIFY(out.at(0).reason.isEmpty());
+        QVERIFY(out.at(0).message.isEmpty());
+        QVERIFY(!out.at(0).fatal);
+    }
+
+    // [waveB:app-v30] D1: the disconnecting state + reason/message/fatal decode.
+    void instancesReasonMessageFatalRoundTrip() {
+        QList<DecodedTransportInstance> out;
+        QVERIFY(NodeApiCodec::decodeTransportInstances(instancesResponseFatal(), &out));
+        QCOMPARE(out.size(), 1);
+        QCOMPARE(out.at(0).connection, QStringLiteral("disconnecting"));
+        QCOMPARE(out.at(0).reason, QStringLiteral("authentication_failed"));
+        QCOMPARE(out.at(0).message, QStringLiteral("token expired"));
+        QVERIFY(out.at(0).fatal);
     }
 
     void conversationsRoundTrip() {
@@ -277,7 +346,8 @@ private slots:
         QSignalSpy refreshed(&repo, &TransportRepository::instancesRefreshed);
 
         repo.applyTransportChanged(QStringLiteral("matrix/@bot:hs"), QStringLiteral("connected"),
-                                   QStringLiteral("available"), true);
+                                   QStringLiteral("available"), true, QString(), false, QString(),
+                                   false, false);
         QCOMPARE(refreshed.count(), 1);
         const auto rows = cache.transportInstances();
         QCOMPARE(rows.size(), 1);
@@ -287,15 +357,40 @@ private slots:
         QCOMPARE(rows.at(0).boundProfile, QStringLiteral("p1"));
 
         // Absent presence leaves the previous presence untouched (patches connection only).
+        // [waveB:app-v30] D1: a fatal error carries a reason + verbatim message.
         repo.applyTransportChanged(QStringLiteral("matrix/@bot:hs"), QStringLiteral("error"),
-                                   QString(), false);
+                                   QString(), false, QStringLiteral("authentication_failed"), true,
+                                   QStringLiteral("token expired"), true, true);
         QCOMPARE(cache.transportInstances().at(0).connection, QStringLiteral("error"));
         QCOMPARE(cache.transportInstances().at(0).presence, QStringLiteral("available"));
+        QCOMPARE(cache.transportInstances().at(0).connectionReason,
+                 QStringLiteral("authentication_failed"));
+        QCOMPARE(cache.transportInstances().at(0).connectionMessage,
+                 QStringLiteral("token expired"));
+        QVERIFY(cache.transportInstances().at(0).fatal);
+
+        // A subsequent non-error transition clears reason/message and fatal.
+        repo.applyTransportChanged(QStringLiteral("matrix/@bot:hs"), QStringLiteral("connected"),
+                                   QString(), false, QString(), false, QString(), false, false);
+        QVERIFY(cache.transportInstances().at(0).connectionReason.isEmpty());
+        QVERIFY(cache.transportInstances().at(0).connectionMessage.isEmpty());
+        QVERIFY(!cache.transportInstances().at(0).fatal);
 
         // Unknown transport: no partial row invented (the fallback is a refetch).
         repo.applyTransportChanged(QStringLiteral("nope"), QStringLiteral("connected"), QString(),
-                                   false);
+                                   false, QString(), false, QString(), false, false);
         QCOMPARE(cache.transportInstances().size(), 1);
+    }
+
+    // [waveB:app-v30] D1: the two teardown intents encode to the right request arms.
+    void disconnectRemoveEncodeDistinctIntents() {
+        const QByteArray disc =
+            NodeApiCodec::encodeTransportDisconnectRequest(QStringLiteral("matrix/@bot:hs"));
+        const QByteArray rem =
+            NodeApiCodec::encodeTransportRemoveRequest(QStringLiteral("matrix/@bot:hs"));
+        QVERIFY(!disc.isEmpty());
+        QVERIFY(!rem.isEmpty());
+        QVERIFY(disc != rem);
     }
 
     // [wave2:app-channels-liveness] B2: the first refresh establishes the baseline (no badges); a

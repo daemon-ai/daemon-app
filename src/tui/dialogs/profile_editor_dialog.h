@@ -116,6 +116,9 @@ signals:
     // the host's download flow (the GUI editor's Nav.open("models","discover")
     // analog is RootWidget::openModelDownload).
     void modelDiscoverRequested();
+    // [waveB:app-v30] CON-15: the selected provider's node-advertised sign_in.family was chosen;
+    // the host opens the shared AuthFlowLauncher narrowed to it (auth_begin{family}).
+    void signInRequested(const QString& family);
 
 private:
     void load();
@@ -150,6 +153,7 @@ private:
     Tui::ZLabel* m_engineLabel = nullptr;
     Tui::ZButton* m_nameRow = nullptr;
     Tui::ZButton* m_providerRow = nullptr;
+    Tui::ZButton* m_signInRow = nullptr; // [waveB:app-v30] CON-15
     Tui::ZButton* m_baseUrlRow = nullptr;
     Tui::ZButton* m_modelRow = nullptr;
     Tui::ZButton* m_descriptionRow = nullptr;

@@ -227,6 +227,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>プロバイダー</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>サインイン</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>ベース URL</translation>
     </message>
@@ -692,22 +696,6 @@ until it is re-registered.</source>
         <source>Regenerate</source>
         <translation>再生成</translation>
     </message>
-    <message>
-        <source>Good response</source>
-        <translation>良い回答</translation>
-    </message>
-    <message>
-        <source>Bad response</source>
-        <translation>悪い回答</translation>
-    </message>
-    <message>
-        <source>Tell us more (optional)</source>
-        <translation>詳細を教えてください（任意）</translation>
-    </message>
-    <message>
-        <source>Send feedback</source>
-        <translation>フィードバックを送信</translation>
-    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -878,22 +866,6 @@ until it is re-registered.</source>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>保存された資格情報を削除しますか？</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>資格情報を削除</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>プロファイル「%1」に保存された資格情報（%2 が使用）を削除します。</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>ノード上のアカウントのトランスポートセッションには影響しません — 切断／削除の操作はまだ利用できません。</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>チャンネル</translation>
     </message>
@@ -914,12 +886,60 @@ until it is re-registered.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>切断はまだ利用できません — ノードにトランスポート切断の操作がありません</translation>
+        <source>Disconnected by request</source>
+        <translation>要求により切断されました</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>保存された資格情報を削除…</translation>
+        <source>Network error</source>
+        <translation>ネットワークエラー</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>認証に失敗しました</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>別のクライアントに置き換えられました</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>無効な設定</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>証明書エラー</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>切断されました</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>アカウントを削除しますか？</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>アカウントを削除</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>ノードからアカウント “%1” を削除します。</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>ノードはトランスポートを切断し、その会話を閉じ、そのルートのバインドを解除し、保存された認証情報を破棄します。これは元に戻せません。</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>このアカウントを再認証</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>このアカウントを切断</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>このアカウントを削除…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1285,14 +1305,6 @@ until it is re-registered.</source>
     <message>
         <source>Search this session</source>
         <translation>このセッションを検索</translation>
-    </message>
-    <message>
-        <source>Send feedback</source>
-        <translation>フィードバックを送信</translation>
-    </message>
-    <message>
-        <source>Report a bug or share an idea</source>
-        <translation>バグを報告する、またはアイデアを共有する</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -1971,6 +1983,22 @@ until it is re-registered.</source>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>セッションがリセットされました。履歴から復元しました。</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>エージェント%1 の起動に失敗しました。</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>エージェント%1 はハンドシェイク中に失敗しました。</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>エージェント%1 はターンの途中でクラッシュしました。</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>エージェント%1 が失敗しました。</translation>
     </message>
 </context>
 <context>
@@ -3928,6 +3956,10 @@ Start one from the Discover tab.</source>
         <translation>プロバイダー</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>サインイン</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>ベースURL</translation>
     </message>
@@ -4420,14 +4452,6 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>[数式] </translation>
     </message>
     <message>
-        <source>▲ Good (u)</source>
-        <translation>▲ 良い (u)</translation>
-    </message>
-    <message>
-        <source>▼ Bad (d)</source>
-        <translation>▼ 悪い (d)</translation>
-    </message>
-    <message>
         <source>  [installed]</source>
         <translation>  [インストール済み]</translation>
     </message>
@@ -4705,10 +4729,6 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>セッションを更新できませんでした</translation>
     </message>
     <message>
-        <source>Tell us more (optional)</source>
-        <translation>詳細を教えてください（任意）</translation>
-    </message>
-    <message>
         <source>Clear session</source>
         <translation>セッションをクリア</translation>
     </message>
@@ -4853,32 +4873,16 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>理由を付けて拒否（エージェントに伝わります）</translation>
     </message>
     <message>
-        <source>Send feedback</source>
-        <translation>フィードバックを送信</translation>
+        <source>Remove account?</source>
+        <translation>アカウントを削除しますか？</translation>
     </message>
     <message>
-        <source>What kind of feedback?</source>
-        <translation>どのようなフィードバックですか？</translation>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>“%1” を削除しますか？ノードはこれを切断し、その会話を閉じ、そのルートのバインドを解除し、保存された認証情報を破棄します。これは元に戻せません。</translation>
     </message>
     <message>
-        <source>Bug</source>
-        <translation>バグ</translation>
-    </message>
-    <message>
-        <source>Idea</source>
-        <translation>アイデア</translation>
-    </message>
-    <message>
-        <source>Other</source>
-        <translation>その他</translation>
-    </message>
-    <message>
-        <source>Next…</source>
-        <translation>次へ…</translation>
-    </message>
-    <message>
-        <source>Your feedback (Enter to send)</source>
-        <translation>フィードバック（Enter で送信）</translation>
+        <source>Remove account</source>
+        <translation>アカウントを削除</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5850,10 +5854,6 @@ This only affects the app appearance, not your data.</source>
         <translation>ターミナルを切り替え</translation>
     </message>
     <message>
-        <source>Send feedback</source>
-        <translation>フィードバックを送信</translation>
-    </message>
-    <message>
         <source>Check for updates</source>
         <translation>アップデートを確認</translation>
     </message>
@@ -5868,46 +5868,6 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Terminal</source>
         <translation>ターミナル</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>送信</translation>
-    </message>
-    <message>
-        <source>Thanks — your feedback was sent.</source>
-        <translation>ありがとうございます — フィードバックを送信しました。</translation>
-    </message>
-    <message>
-        <source>Category</source>
-        <translation>カテゴリ</translation>
-    </message>
-    <message>
-        <source>Bug</source>
-        <translation>バグ</translation>
-    </message>
-    <message>
-        <source>Idea</source>
-        <translation>アイデア</translation>
-    </message>
-    <message>
-        <source>Other</source>
-        <translation>その他</translation>
-    </message>
-    <message>
-        <source>What&apos;s working well, or what went wrong?</source>
-        <translation>うまくいっていること、または問題点は何ですか？</translation>
-    </message>
-    <message>
-        <source>Include diagnostics (app version, OS)</source>
-        <translation>診断情報を含める（アプリバージョン、OS）</translation>
-    </message>
-    <message>
-        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
-        <translation>テレメトリはオフです。送信されるのはこのフィードバックと基本的なアプリ情報のみです。</translation>
-    </message>
-    <message>
-        <source>Also enable anonymous telemetry</source>
-        <translation>匿名テレメトリも有効にする</translation>
     </message>
 </context>
 <context>
@@ -6219,26 +6179,25 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>ツールの更新に失敗しました</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>ツール</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>ツールはノードがコンパイルし制御します。この一覧は読み取り専用で、無効なツールは必要なものを示します。</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>ツールはノードによって制御されます。切り替えると、ツールの有効化または無効化がノードに要求されます。要件を示すツールは、それが満たされるまで無効のままです。</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>ノードから報告されたツールはありません。</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>有効</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>無効</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6386,6 +6345,17 @@ Thanks — proceeding with: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter で復元  e で編集  Esc でキャンセル</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>アカウントの削除に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>アカウントの切断に失敗しました</translation>
     </message>
 </context>
 <context>
@@ -6625,9 +6595,19 @@ Thanks — proceeding with: %1
         <translation>最大バックグラウンド子数</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>ツール</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- 承認ポリシーはセッションごとに設定されます（コンポーザーのセッション設定）— _そこでノードによって適用されます_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- ツールはノードによって制御されます。切り替えると、いずれかの有効化または無効化が要求されます。**Space/Enter** で選択中のツールを切り替えます。
 </translation>
     </message>
     <message>
@@ -7381,40 +7361,16 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- 差分: `%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- フィンガープリント: `%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## ツール
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>ツールはノードがコンパイルし制御します。この一覧は読み取り専用です。
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_ノードから報告されたツールはありません。_
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7553,14 +7509,6 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>GUI と共有する Events-IO トランスポートのアカウントとそのライブルーム。&apos;c&apos; を押すとアカウントを接続します。切断/削除に対応するワイヤ操作はまだありません（B3 — ノード側の対応）。保存済みの認証情報は「アカウント」ページで削除できます（バインド済みプロファイルで &apos;x&apos;）。ルームの招待はノードが処理します。新しく参加したルームはここに自動的に表示されます。
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7579,9 +7527,57 @@ _エージェントが選択されていません。_
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>要求により切断されました</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>ネットワークエラー</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>認証に失敗しました</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>別のクライアントに置き換えられました</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>無効な設定</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>証明書エラー</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>切断されました</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Events-IO トランスポートアカウントとそのライブルーム（GUI と共有）。**j/k** 移動 · **c** 接続 · **d** 切断 · **x** アカウント削除。ルームの招待はノードが処理します。新しく参加したルームはここに自動的に表示されます。
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _再認証が必要です — &apos;c&apos; で再接続してください。_
 </translation>
     </message>
     <message>
@@ -7624,6 +7620,12 @@ _エージェントが選択されていません。_
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1** (`%2`)
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -8060,6 +8062,24 @@ _エージェントが選択されていません。_
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate に失敗しました</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>ツールの更新に失敗しました</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>アカウントの削除に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>アカウントの切断に失敗しました</translation>
     </message>
 </context>
 <context>

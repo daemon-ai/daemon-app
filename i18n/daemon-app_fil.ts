@@ -227,6 +227,10 @@ Babalik ka sa first-run setup.</translation>
         <translation>Provider</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Mag-sign in</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Base URL</translation>
     </message>
@@ -692,22 +696,6 @@ hanggang muli itong mairehistro.</translation>
         <source>Regenerate</source>
         <translation>I-regenerate</translation>
     </message>
-    <message>
-        <source>Good response</source>
-        <translation>Magandang sagot</translation>
-    </message>
-    <message>
-        <source>Bad response</source>
-        <translation>Hindi magandang sagot</translation>
-    </message>
-    <message>
-        <source>Tell us more (optional)</source>
-        <translation>Magbahagi pa (opsyonal)</translation>
-    </message>
-    <message>
-        <source>Send feedback</source>
-        <translation>Magpadala ng feedback</translation>
-    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -878,22 +866,6 @@ hanggang muli itong mairehistro.</translation>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>Alisin ang nakaimbak na credential?</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>Alisin ang credential</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>Inaalis ang credential na nakaimbak para sa profile na “%1” (ginagamit ng %2).</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>Hindi apektado ang transport session ng account sa node — hindi pa available ang operasyong disconnect/remove.</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>Mga Channel</translation>
     </message>
@@ -914,12 +886,60 @@ hanggang muli itong mairehistro.</translation>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>Hindi pa available ang disconnect — walang operasyong transport disconnect ang node</translation>
+        <source>Disconnected by request</source>
+        <translation>Nadiskonekta ayon sa kahilingan</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>Alisin ang nakaimbak na credential…</translation>
+        <source>Network error</source>
+        <translation>Error sa network</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Nabigo ang pagpapatotoo</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Pinalitan ng ibang client</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Di-wastong mga setting</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Error sa sertipiko</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Nadiskonekta</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>Alisin ang account?</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Alisin ang account</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>Inaalis ang account na “%1” mula sa node.</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>Idinidiskonekta ng node ang transport, isinasara ang mga pag-uusap nito, ina-unbind ang mga ruta nito, at tinatanggal ang naka-store na credential. Hindi ito maibabalik.</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>I-authenticate muli ang account na ito</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>Idiskonekta ang account na ito</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>Alisin ang account na ito…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1285,14 +1305,6 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Search this session</source>
         <translation>Hanapin ang session na ito</translation>
-    </message>
-    <message>
-        <source>Send feedback</source>
-        <translation>Magpadala ng feedback</translation>
-    </message>
-    <message>
-        <source>Report a bug or share an idea</source>
-        <translation>Mag-ulat ng bug o magbahagi ng ideya</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -1971,6 +1983,22 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>Na-reset ang session; nabawi mula sa history.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>Nabigong maglunsad ang agent%1.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>Nabigo ang agent%1 sa panahon ng handshake.</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>Nag-crash ang agent%1 sa gitna ng turn.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>Nabigo ang agent%1.</translation>
     </message>
 </context>
 <context>
@@ -3932,6 +3960,10 @@ Magsimula ng isa mula sa Discover tab.</translation>
         <translation>Provider</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Mag-sign in</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Base URL</translation>
     </message>
@@ -4424,14 +4456,6 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>[math] </translation>
     </message>
     <message>
-        <source>▲ Good (u)</source>
-        <translation>▲ Maganda (u)</translation>
-    </message>
-    <message>
-        <source>▼ Bad (d)</source>
-        <translation>▼ Pangit (d)</translation>
-    </message>
-    <message>
         <source>  [installed]</source>
         <translation>  [naka-install]</translation>
     </message>
@@ -4709,10 +4733,6 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Hindi na-update ang session</translation>
     </message>
     <message>
-        <source>Tell us more (optional)</source>
-        <translation>Magbahagi pa (opsyonal)</translation>
-    </message>
-    <message>
         <source>Clear session</source>
         <translation>I-clear ang session</translation>
     </message>
@@ -4857,32 +4877,16 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Deny na may dahilan (maririnig ito ng agent)</translation>
     </message>
     <message>
-        <source>Send feedback</source>
-        <translation>Magpadala ng feedback</translation>
+        <source>Remove account?</source>
+        <translation>Alisin ang account?</translation>
     </message>
     <message>
-        <source>What kind of feedback?</source>
-        <translation>Anong uri ng feedback?</translation>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>Alisin ang “%1”? Idinidiskonekta ito ng node, isinasara ang mga pag-uusap nito, ina-unbind ang mga ruta nito, at tinatanggal ang naka-store na credential. Hindi ito maibabalik.</translation>
     </message>
     <message>
-        <source>Bug</source>
-        <translation>Bug</translation>
-    </message>
-    <message>
-        <source>Idea</source>
-        <translation>Ideya</translation>
-    </message>
-    <message>
-        <source>Other</source>
-        <translation>Iba pa</translation>
-    </message>
-    <message>
-        <source>Next…</source>
-        <translation>Susunod…</translation>
-    </message>
-    <message>
-        <source>Your feedback (Enter to send)</source>
-        <translation>Ang iyong feedback (Enter para ipadala)</translation>
+        <source>Remove account</source>
+        <translation>Alisin ang account</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5236,11 +5240,11 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <name>SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation>Tinanggihan ang kahilingan para sa detalye ng session</translation>
+        <translation>Tinanggihan ang kahilingan sa detalye ng session</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation>Nabigong i-decode ang tugon ng SessionDetail</translation>
+        <translation>Nabigo sa pag-decode ng tugon ng SessionDetail</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
@@ -5855,10 +5859,6 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>I-toggle ang terminal</translation>
     </message>
     <message>
-        <source>Send feedback</source>
-        <translation>Magpadala ng feedback</translation>
-    </message>
-    <message>
         <source>Check for updates</source>
         <translation>Tingnan kung may update</translation>
     </message>
@@ -5873,46 +5873,6 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     <message>
         <source>Terminal</source>
         <translation>Terminal</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Ipadala</translation>
-    </message>
-    <message>
-        <source>Thanks — your feedback was sent.</source>
-        <translation>Salamat — naipadala na ang iyong feedback.</translation>
-    </message>
-    <message>
-        <source>Category</source>
-        <translation>Kategorya</translation>
-    </message>
-    <message>
-        <source>Bug</source>
-        <translation>Bug</translation>
-    </message>
-    <message>
-        <source>Idea</source>
-        <translation>Ideya</translation>
-    </message>
-    <message>
-        <source>Other</source>
-        <translation>Iba pa</translation>
-    </message>
-    <message>
-        <source>What&apos;s working well, or what went wrong?</source>
-        <translation>Ano ang gumagana nang maayos, o ano ang nagkamali?</translation>
-    </message>
-    <message>
-        <source>Include diagnostics (app version, OS)</source>
-        <translation>Isama ang diagnostics (bersyon ng app, OS)</translation>
-    </message>
-    <message>
-        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
-        <translation>Naka-off ang telemetry. Ang pagpapadala ay nagpapadala lamang ng feedback na ito at pangunahing impormasyon ng app.</translation>
-    </message>
-    <message>
-        <source>Also enable anonymous telemetry</source>
-        <translation>I-enable din ang anonymous na telemetry</translation>
     </message>
 </context>
 <context>
@@ -5956,7 +5916,7 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     </message>
     <message>
         <source>Approvals </source>
-        <translation>Mga pag-apruba </translation>
+        <translation>Mga Approval </translation>
     </message>
     <message>
         <source> tok</source>
@@ -6226,26 +6186,25 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Nabigong i-update ang tool</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>Mga tool</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>Ang mga tool ay kino-compile at kino-kontrol ng node. Ang inventory na ito ay read-only; pinangangalanan ng disabled na tool kung ano ang kailangan nito.</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>Kontrolado ng node ang mga tool. Ang pag-toggle ay humihiling sa node na i-enable o i-disable ang isang tool; ang tool na may nakalistang kinakailangan ay nananatiling disabled hanggang matugunan ito.</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>Walang tool na iniulat ng node.</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Naka-enable</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>Naka-disable</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6393,6 +6352,17 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter i-restore  e i-edit  Esc kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Nabigong alisin ang account</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Nabigong idiskonekta ang account</translation>
     </message>
 </context>
 <context>
@@ -6632,9 +6602,19 @@ Salamat — magpapatuloy sa: %1
         <translation>Max na background children</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>Mga Tool</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Ang patakaran sa approval ay itinatakda bawat session (mga setting ng session sa composer) — _ipinapatupad doon ng node_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- Kontrolado ng node ang mga tool; ang pag-toggle ay humihiling ditong i-enable o i-disable ang isa. **Space/Enter** ang nagto-toggle sa napiling tool.
 </translation>
     </message>
     <message>
@@ -7388,40 +7368,16 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- Diff: `%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- Fingerprint: `%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## Mga tool
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>Ang mga tool ay kino-compile at kino-kontrol ng node. Ang inventory na ito ay read-only.
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_Walang tool na iniulat ng node._
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7560,14 +7516,6 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>Mga Events-IO transport account at ang kanilang live rooms, ibinabahagi sa GUI. Pindutin ang &apos;c&apos; para ikonekta ang isang account. Ang disconnect/remove ay WALA pang wire op (B3 - node-first follow-up). Ang naka-imbak na credential ay maaaring alisin mula sa Accounts page (&apos;x&apos; sa bound profile). Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong sinalihang room ay lalabas dito nang awtomatiko.
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7586,9 +7534,57 @@ _Walang piniling agent._
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>Nadiskonekta ayon sa kahilingan</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>Error sa network</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Nabigo ang pagpapatotoo</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Pinalitan ng ibang client</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Di-wastong mga setting</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Error sa sertipiko</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Nadiskonekta</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Mga Events-IO transport account at ang kanilang live na mga room, ibinabahagi sa GUI. **j/k** ilipat · **c** kumonekta · **d** idiskonekta · **x** alisin ang account. Ang mga imbitasyon sa room ay pinangangasiwaan ng node; ang mga bagong sinalihang room ay awtomatikong lalabas dito.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _Kailangan ng muling pag-authenticate — kumonekta muli gamit ang &apos;c&apos;._
 </translation>
     </message>
     <message>
@@ -7631,6 +7627,12 @@ _Walang piniling agent._
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1** (`%2`)
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -8046,11 +8048,11 @@ _Walang piniling agent._
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation>Tinanggihan ang kahilingan para sa detalye ng session</translation>
+        <translation>Tinanggihan ang kahilingan sa detalye ng session</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation>Nabigong i-decode ang tugon ng SessionDetail</translation>
+        <translation>Nabigo sa pag-decode ng tugon ng SessionDetail</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
@@ -8067,6 +8069,24 @@ _Walang piniling agent._
     <message>
         <source>SessionCreate failed</source>
         <translation>Nabigo ang SessionCreate</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Nabigong i-update ang tool</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Nabigong alisin ang account</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Nabigong idiskonekta ang account</translation>
     </message>
 </context>
 <context>

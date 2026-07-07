@@ -227,6 +227,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>प्रदाता</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>साइन इन करें</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>बेस URL</translation>
     </message>
@@ -692,22 +696,6 @@ until it is re-registered.</source>
         <source>Regenerate</source>
         <translation>फिर से बनाएँ</translation>
     </message>
-    <message>
-        <source>Good response</source>
-        <translation>अच्छा उत्तर</translation>
-    </message>
-    <message>
-        <source>Bad response</source>
-        <translation>खराब उत्तर</translation>
-    </message>
-    <message>
-        <source>Tell us more (optional)</source>
-        <translation>और बताएं (वैकल्पिक)</translation>
-    </message>
-    <message>
-        <source>Send feedback</source>
-        <translation>प्रतिक्रिया भेजें</translation>
-    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -878,22 +866,6 @@ until it is re-registered.</source>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>संग्रहीत क्रेडेंशियल हटाएँ?</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>क्रेडेंशियल हटाएँ</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>प्रोफ़ाइल “%1” के लिए संग्रहीत क्रेडेंशियल हटाता है (%2 द्वारा उपयोग किया गया)।</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>नोड पर खाते का ट्रांसपोर्ट सत्र प्रभावित नहीं होता — डिस्कनेक्ट/हटाने का ऑपरेशन अभी उपलब्ध नहीं है।</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>चैनल</translation>
     </message>
@@ -914,12 +886,60 @@ until it is re-registered.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>डिस्कनेक्ट अभी उपलब्ध नहीं है — नोड के पास कोई ट्रांसपोर्ट डिस्कनेक्ट ऑपरेशन नहीं है</translation>
+        <source>Disconnected by request</source>
+        <translation>अनुरोध द्वारा डिस्कनेक्ट किया गया</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>संग्रहीत क्रेडेंशियल हटाएँ…</translation>
+        <source>Network error</source>
+        <translation>नेटवर्क त्रुटि</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>प्रमाणीकरण विफल</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>दूसरे क्लाइंट द्वारा प्रतिस्थापित</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>अमान्य सेटिंग्स</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>प्रमाणपत्र त्रुटि</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>डिस्कनेक्ट किया गया</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>खाता हटाएँ?</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>खाता हटाएँ</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>नोड से “%1” खाता हटाता है।</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>नोड ट्रांसपोर्ट को डिस्कनेक्ट करता है, इसकी बातचीत बंद करता है, इसके रूट अनबाइंड करता है, और संग्रहीत क्रेडेंशियल हटा देता है। इसे पूर्ववत नहीं किया जा सकता।</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>इस खाते को पुनः प्रमाणित करें</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>इस खाते को डिस्कनेक्ट करें</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>इस खाते को हटाएँ…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1285,14 +1305,6 @@ until it is re-registered.</source>
     <message>
         <source>Search this session</source>
         <translation>इस सत्र में खोजें</translation>
-    </message>
-    <message>
-        <source>Send feedback</source>
-        <translation>प्रतिक्रिया भेजें</translation>
-    </message>
-    <message>
-        <source>Report a bug or share an idea</source>
-        <translation>बग रिपोर्ट करें या कोई विचार साझा करें</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -1971,6 +1983,22 @@ until it is re-registered.</source>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>सत्र रीसेट किया गया; इतिहास से पुनर्प्राप्त किया गया।</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>एजेंट%1 लॉन्च होने में विफल रहा।</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>एजेंट%1 हैंडशेक के दौरान विफल रहा।</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>एजेंट%1 टर्न के बीच में क्रैश हो गया।</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>एजेंट%1 विफल रहा।</translation>
     </message>
 </context>
 <context>
@@ -3932,6 +3960,10 @@ Start one from the Discover tab.</source>
         <translation>प्रदाता</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>साइन इन करें</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>बेस URL</translation>
     </message>
@@ -4424,14 +4456,6 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>[गणित] </translation>
     </message>
     <message>
-        <source>▲ Good (u)</source>
-        <translation>▲ अच्छा (u)</translation>
-    </message>
-    <message>
-        <source>▼ Bad (d)</source>
-        <translation>▼ खराब (d)</translation>
-    </message>
-    <message>
         <source>  [installed]</source>
         <translation>  [इंस्टॉल किया गया]</translation>
     </message>
@@ -4709,10 +4733,6 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>सत्र अपडेट नहीं किया जा सका</translation>
     </message>
     <message>
-        <source>Tell us more (optional)</source>
-        <translation>और बताएं (वैकल्पिक)</translation>
-    </message>
-    <message>
         <source>Clear session</source>
         <translation>सत्र साफ़ करें</translation>
     </message>
@@ -4857,32 +4877,16 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>कारण के साथ अस्वीकार करें (एजेंट इसे सुनेगा)</translation>
     </message>
     <message>
-        <source>Send feedback</source>
-        <translation>प्रतिक्रिया भेजें</translation>
+        <source>Remove account?</source>
+        <translation>खाता हटाएँ?</translation>
     </message>
     <message>
-        <source>What kind of feedback?</source>
-        <translation>किस तरह की प्रतिक्रिया?</translation>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>“%1” हटाएँ? नोड इसे डिस्कनेक्ट करता है, इसकी बातचीत बंद करता है, इसके रूट अनबाइंड करता है, और संग्रहीत क्रेडेंशियल हटा देता है। इसे पूर्ववत नहीं किया जा सकता।</translation>
     </message>
     <message>
-        <source>Bug</source>
-        <translation>बग</translation>
-    </message>
-    <message>
-        <source>Idea</source>
-        <translation>विचार</translation>
-    </message>
-    <message>
-        <source>Other</source>
-        <translation>अन्य</translation>
-    </message>
-    <message>
-        <source>Next…</source>
-        <translation>अगला…</translation>
-    </message>
-    <message>
-        <source>Your feedback (Enter to send)</source>
-        <translation>आपकी प्रतिक्रिया (भेजने के लिए Enter दबाएं)</translation>
+        <source>Remove account</source>
+        <translation>खाता हटाएँ</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5240,7 +5244,7 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation>SessionDetail प्रतिक्रिया को डिकोड करने में विफल</translation>
+        <translation>SessionDetail प्रतिक्रिया डिकोड करने में विफल</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
@@ -5855,10 +5859,6 @@ This only affects the app appearance, not your data.</source>
         <translation>टर्मिनल टॉगल करें</translation>
     </message>
     <message>
-        <source>Send feedback</source>
-        <translation>प्रतिक्रिया भेजें</translation>
-    </message>
-    <message>
         <source>Check for updates</source>
         <translation>अपडेट जाँचें</translation>
     </message>
@@ -5873,46 +5873,6 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Terminal</source>
         <translation>टर्मिनल</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>भेजें</translation>
-    </message>
-    <message>
-        <source>Thanks — your feedback was sent.</source>
-        <translation>धन्यवाद — आपकी प्रतिक्रिया भेज दी गई।</translation>
-    </message>
-    <message>
-        <source>Category</source>
-        <translation>श्रेणी</translation>
-    </message>
-    <message>
-        <source>Bug</source>
-        <translation>बग</translation>
-    </message>
-    <message>
-        <source>Idea</source>
-        <translation>विचार</translation>
-    </message>
-    <message>
-        <source>Other</source>
-        <translation>अन्य</translation>
-    </message>
-    <message>
-        <source>What&apos;s working well, or what went wrong?</source>
-        <translation>क्या अच्छा चल रहा है, या क्या गलत हुआ?</translation>
-    </message>
-    <message>
-        <source>Include diagnostics (app version, OS)</source>
-        <translation>डायग्नोस्टिक्स शामिल करें (ऐप संस्करण, OS)</translation>
-    </message>
-    <message>
-        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
-        <translation>टेलीमेट्री बंद है. भेजने पर केवल यह प्रतिक्रिया और बुनियादी ऐप जानकारी भेजी जाती है.</translation>
-    </message>
-    <message>
-        <source>Also enable anonymous telemetry</source>
-        <translation>अनाम टेलीमेट्री भी सक्षम करें</translation>
     </message>
 </context>
 <context>
@@ -6226,26 +6186,25 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>टूल अपडेट करने में विफल</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>उपकरण</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>उपकरण नोड द्वारा संकलित और नियंत्रित होते हैं। यह सूची केवल पढ़ने योग्य है; अक्षम उपकरण बताता है कि उसे क्या चाहिए।</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>टूल नोड द्वारा नियंत्रित होते हैं। टॉगल करने पर नोड से किसी टूल को सक्षम या अक्षम करने को कहा जाता है; जो टूल किसी आवश्यकता का नाम देता है वह पूरी होने तक अक्षम रहता है।</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>नोड द्वारा कोई उपकरण रिपोर्ट नहीं किया गया।</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>सक्षम</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>अक्षम</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6393,6 +6352,17 @@ Thanks — proceeding with: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter पुनर्स्थापित  e संपादित  Esc रद्द</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>खाता हटाने में विफल</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>खाता डिस्कनेक्ट करने में विफल</translation>
     </message>
 </context>
 <context>
@@ -6632,9 +6602,19 @@ Thanks — proceeding with: %1
         <translation>अधिकतम बैकग्राउंड चाइल्ड</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>टूल</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- अनुमोदन नीति प्रत्येक सत्र के लिए सेट होती है (कंपोज़र सत्र सेटिंग्स) — _वहाँ नोड द्वारा लागू की जाती है_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- टूल नोड द्वारा नियंत्रित होते हैं; टॉगल करने पर इसे किसी एक को सक्षम या अक्षम करने को कहा जाता है। **Space/Enter** चयनित टूल को टॉगल करता है।
 </translation>
     </message>
     <message>
@@ -7388,40 +7368,16 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- डिफ़: `%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- फ़िंगरप्रिंट: `%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## उपकरण
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>उपकरण नोड द्वारा संकलित और नियंत्रित होते हैं। यह सूची केवल पढ़ने योग्य है।
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_नोड द्वारा कोई उपकरण रिपोर्ट नहीं किया गया।_
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7560,14 +7516,6 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>Events-IO ट्रांसपोर्ट खाते और उनके लाइव रूम, GUI के साथ साझा। खाता कनेक्ट करने के लिए &apos;c&apos; दबाएँ। डिस्कनेक्ट/हटाना अभी वायर ऑप नहीं है (B3 - नोड-फर्स्ट फॉलो-अप)। संग्रहीत क्रेडेंशियल Accounts पेज से हटाया जा सकता है (बाउंड प्रोफ़ाइल पर &apos;x&apos;)। रूम आमंत्रण नोड द्वारा संभाले जाते हैं; नए शामिल हुए रूम यहाँ स्वतः दिखते हैं।
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7586,9 +7534,57 @@ _कोई एजेंट चयनित नहीं।_
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>अनुरोध द्वारा डिस्कनेक्ट किया गया</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>नेटवर्क त्रुटि</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>प्रमाणीकरण विफल</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>दूसरे क्लाइंट द्वारा प्रतिस्थापित</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>अमान्य सेटिंग्स</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>प्रमाणपत्र त्रुटि</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>डिस्कनेक्ट किया गया</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Events-IO ट्रांसपोर्ट खाते और उनके लाइव रूम, GUI के साथ साझा किए गए। **j/k** ले जाएँ · **c** कनेक्ट · **d** डिस्कनेक्ट · **x** खाता हटाएँ। रूम आमंत्रण नोड द्वारा संभाले जाते हैं; नए जुड़े रूम यहाँ स्वचालित रूप से दिखाई देते हैं।
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _पुनः प्रमाणीकरण आवश्यक — &apos;c&apos; से पुनः कनेक्ट करें।_
 </translation>
     </message>
     <message>
@@ -7631,6 +7627,12 @@ _कोई एजेंट चयनित नहीं।_
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1** (`%2`)
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -8050,7 +8052,7 @@ _कोई एजेंट चयनित नहीं।_
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation>SessionDetail प्रतिक्रिया को डिकोड करने में विफल</translation>
+        <translation>SessionDetail प्रतिक्रिया डिकोड करने में विफल</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
@@ -8067,6 +8069,24 @@ _कोई एजेंट चयनित नहीं।_
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate विफल</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>टूल अपडेट करने में विफल</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>खाता हटाने में विफल</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>खाता डिस्कनेक्ट करने में विफल</translation>
     </message>
 </context>
 <context>

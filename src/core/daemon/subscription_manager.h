@@ -19,6 +19,7 @@ class ModelRepository;
 class FleetRepository;
 class ProfileRepository;
 class TransportRepository; // [wave2:app-channels-liveness]
+class RoutingRepository;   // [waveB:app-v30] D2
 class DaemonCacheStore;
 struct DecodedNodeEvent;
 
@@ -69,6 +70,11 @@ public:
     // manager in the service graph. Optional; TransportChanged is ignored when unset.
     void setTransportRepository(TransportRepository* transports) { m_transports = transports; }
 
+    // [waveB:app-v30] D2: the routing repository refetched on a self membership removal (the node
+    // has already reconciled the routing pins; the client re-lists to render the node's state).
+    // Wired via a setter because the repo is constructed after this manager. Optional.
+    void setRoutingRepository(RoutingRepository* routing) { m_routing = routing; }
+
     [[nodiscard]] quint64 feedCursor() const { return m_feedCursor; }
 
 signals:
@@ -89,6 +95,7 @@ private:
     FleetRepository* m_fleet = nullptr;
     ProfileRepository* m_profiles = nullptr;
     TransportRepository* m_transports = nullptr; // [wave2:app-channels-liveness]
+    RoutingRepository* m_routing = nullptr;      // [waveB:app-v30] D2
     DaemonCacheStore* m_cache = nullptr;
 
     quint64 m_feedStreamId = 0; // the open EventsSince stream id (0 = none)

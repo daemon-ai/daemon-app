@@ -67,6 +67,14 @@ struct DecodedProviderDescriptor {
     bool supportsModelDiscovery = false;
     bool hasDefaultBaseUrl = false;
     QString defaultBaseUrl;
+    // [waveB:app-v30] CON-15: an optional interactive sign-in the node offers for this provider
+    // (ProviderDescriptor.sign_in = ProviderSignIn{family, label}). `signInFamily` is the generic
+    // auth family to begin (passed straight to auth_begin{family}); `signInLabel` is the node's
+    // button label. Both empty when the node advertises no sign-in — the client shows nothing and
+    // never fabricates a family or label (zero vendor knowledge).
+    bool hasSignIn = false;
+    QString signInFamily;
+    QString signInLabel;
 };
 
 // A decoded error envelope (ApiResponse::Error): the variant kind + its human-readable message.
@@ -237,6 +245,10 @@ struct DecodedAdapterInfo {
     QString displayName;      // "Matrix" | "Rooms (internal)"
     QVariantMap capabilities; // rooms/directMessages/presence/roomEnumeration/fileTransfer/
                               // interactiveAuth -> bool
+    // [waveB:app-v30] D3: node-labeled adapter policy rows (wire v30, optional). Each entry is a
+    // map {key, label, value}: `label`/`value` are the node's display strings (rendered verbatim),
+    // `key` is a stable identifier the client NEVER keys behavior off (display only).
+    QList<QVariantMap> policies;
 };
 
 // One configured transport instance/account + its live status (TransportInstances ->
@@ -245,9 +257,16 @@ struct DecodedTransportInstance {
     QString transport;                              // instance-qualified id (e.g. matrix/@bot:hs)
     QString family;                                 // adapter family
     QString displayName;                            // human label (e.g. @user:hs)
-    QString connection = QStringLiteral("offline"); // offline|connecting|connected|error
+    QString connection = QStringLiteral("offline"); // offline|connecting|connected|disconnecting|
+                                                    // error
     QString presence = QStringLiteral("unknown");   // unknown|offline|available|idle|away|busy
     QString boundProfile;                           // empty == unbound
+    // [waveB:app-v30] D1: node-reported disconnect provenance (wire v30). `reason` is a coarse
+    // lowercase token (disconnectReasonName; empty when absent); `message` is the node's human
+    // string rendered verbatim; `fatal` gates the re-auth affordance (the ONLY thing it drives).
+    QString reason;
+    QString message;
+    bool fatal = false;
 };
 
 // One live conversation/room within a transport (ConvList -> Conversations; EIO-8).
@@ -295,6 +314,13 @@ struct DecodedAgentEvent {
     QString endReason;          // TurnFinished: Completed | Failed | Interrupted | ...
     QString finalText;          // TurnFinished: the turn's final assistant text (if any)
     bool turnCompleted = false; // TurnFinished with end_reason == Completed
+    // [waveB:app-v30] C6: TurnSummary.failure (wire v30) — a foreign-agent failure on a terminal
+    // TurnFinished. `failureStage` is "Spawn"|"Handshake"|"Turn"|"Unknown"; `failureAgent` is the
+    // agent name when the node reported one. hasFailure marks a present failure (drives the
+    // stage-specific error copy; mid-turn death arrives as a normal terminal Failed carrying this).
+    bool hasFailure = false;
+    QString failureStage;
+    QString failureAgent;
 };
 
 // One decoded session-log entry (Subscribe -> LogPage). The transcript engine consumes the
@@ -356,6 +382,11 @@ struct DecodedApprovalInfo {
     // wire v28) — lowercase-hex sha256 of the resolved (exec-surface, abs-binary, argv, env-delta,
     // cwd) tuple. Display/correlation only (a chip in the structured prompt); empty when absent.
     QString fingerprint;
+    // [waveB:app-v30] D5: optional structured detail (ApprovalInfo.detail = ToolDetail{kind,body}).
+    // `detailKind` is the kind tag (e.g. "fs.diff"); `detailBody` is the raw JSON body (for
+    // "fs.diff" it is {path, diff} — a unified diff). Empty when the node attached no detail.
+    QString detailKind;
+    QByteArray detailBody;
 };
 
 // [wave2:app-approvals-safety] D2: one entry of the node-wide tool inventory (ToolList -> Tools,
@@ -377,6 +408,9 @@ struct DecodedToolInfo {
 struct DecodedRememberedFingerprint {
     QString fingerprint;
     QString label;
+    // [waveB:app-v30] D4-provenance: when the node remembered this fingerprint (Unix ms). 0 when
+    // the node reported none. Rendered as a human-formatted timestamp beside the label.
+    quint64 rememberedAtMs = 0;
 };
 
 // A slash command (CommandList -> Commands). CHA-7.
@@ -634,7 +668,12 @@ struct DecodedNodeEvent {
         ResyncNeeded,
         // [wave2:app-channels-liveness] live fleet + transport presence feed arms (F5/B5).
         FleetChanged,
-        TransportChanged
+        TransportChanged,
+        // [waveB:app-v30] D2: conversation-set + room-membership deltas (wire v30). Invalidation
+        // pointers only — the client refetches the transport's ConvList (+ routing on a self
+        // removal); it derives no membership facts locally.
+        ConversationsChanged,
+        MembershipChanged
     } kind = Kind::Unknown;
     QString session;             // SessionAdvanced / SessionMetaChanged / ApprovalPending
     quint64 epoch = 0;           // SessionAdvanced
@@ -655,6 +694,26 @@ struct DecodedNodeEvent {
     QString connection;       // TransportChanged: connection-state (lowercase)
     QString presence;         // TransportChanged: presence-state (lowercase; when hasPresence)
     bool hasPresence = false; // TransportChanged: the optional presence field was present
+    // [waveB:app-v30] D1: TransportChanged disconnect provenance (wire v30). `reason` is a coarse
+    // lowercase token (disconnectReasonName; empty when absent), `message` the node's verbatim
+    // human string, `fatal` gates the re-auth affordance. hasReason/hasMessage mark presence.
+    QString reason;
+    bool hasReason = false;
+    QString message;
+    bool hasMessage = false;
+    bool fatal = false;
+    // [waveB:app-v30] D2: ConversationsChanged / MembershipChanged (wire v30). `conv` is the
+    // affected conversation id; `convChange` is "added"|"removed"; `member` + `membershipChange`
+    // ("joined"|"left"|"invited"|"kicked"|"banned") + optional `actor`/`memberReason` describe a
+    // membership delta; `isSelf` marks that the changed member is this node's own identity (the
+    // node has already reconciled routing pins on a self removal — the client only refetches).
+    QString conv;
+    QString convChange;
+    QString member;
+    QString membershipChange;
+    QString actor;
+    QString memberReason;
+    bool isSelf = false;
 };
 
 // A decoded page of the node-wide event feed (EventsSince -> EventsPage). `nextCursor` advances the
@@ -744,24 +803,63 @@ struct DecodedAuthProviderInfo {
     QList<DecodedAuthParamField> paramsSchema; // required/optional begin params
 };
 
-// A parked flow handle (AuthBegin -> AuthBegun). The client opens `authorizationUrl` in a browser
-// and later completes with the captured redirect; `expiresAt` (unix seconds) is the flow TTL.
-struct DecodedAuthBeginResponse {
-    QString flowId;
-    QString authorizationUrl;
-    QString redirectUri;
-    quint64 expiresAt = 0;
-    QString flowKind; // "MatrixSso" | "OAuth2Pkce"
+// [waveB:app-v31] The wire v31 generalized interactive-auth challenge (daemon-api AuthChallenge):
+// the flow is a challenge/response state machine, and each step presents ONE challenge telling the
+// client how to collect the next AuthStepInput. The kind picks which per-kind payload below is
+// valid; the client renders exactly that arm (redirect URL / form fields / QR / message).
+enum class AuthChallengeKind {
+    Redirect, // open `authorizationUrl` in a browser + capture the callback (SSO / OAuth2)
+    Form,     // collect `formFields` from the user + reply with a key->value map
+    Qr,       // render `qrPayload` / `qrImage` + poll every `qrPollIntervalMs` (device pairing)
+    Message,  // display `messageText` + poll (informational, e.g. "approve on your other device")
 };
 
-// A finished flow (AuthComplete -> AuthCompleted): where the credential blob landed + the resolved
-// account identity. The client never sees the secret itself.
+struct DecodedAuthChallenge {
+    AuthChallengeKind kind = AuthChallengeKind::Message;
+    QString authorizationUrl;                // Redirect: the URL to open in a browser
+    QString formTitle;                       // Form: a human title for the field set
+    QList<DecodedAuthParamField> formFields; // Form: the fields to collect (key/label/required)
+    QString qrPayload;                       // Qr: the payload the peer device scans
+    QByteArray qrImage;                      // Qr: optional pre-rendered image bytes (empty = none)
+    quint64 qrPollIntervalMs = 0;            // Qr: how often to re-poll (ms)
+    QString messageText;                     // Message: the text to show
+};
+
+// [waveB:app-v31] The client's response to a challenge (daemon-api AuthStepInput). One of the three
+// arms, keyed by `kind`: Fields answers a Form (the filled key->value map), Callback answers a
+// Redirect (the captured URL/query), Poll answers a Qr/Message (a no-payload "landed yet?").
+enum class AuthStepInputKind {
+    Fields,
+    Callback,
+    Poll,
+};
+
+// [waveB:app-v31] A parked flow handle (AuthBegin -> AuthBegun): the flow id, its INITIAL
+// challenge, and the flow TTL (`expiresAt`, unix seconds). The client presents `challenge` and
+// drives the flow forward with AuthStep until it completes.
+struct DecodedAuthBeginResponse {
+    QString flowId;
+    DecodedAuthChallenge challenge;
+    quint64 expiresAt = 0;
+};
+
+// A finished flow (AuthComplete -> AuthCompleted / AuthStepResult::Completed): where the credential
+// blob landed + the resolved account identity. The client never sees the secret itself.
 struct DecodedAuthCompleteResponse {
     QString credentialRef;
     QString accountLabel;
     QString transportInstance;
     bool hasBoundProfile = false;
     QString boundProfile;
+};
+
+// [waveB:app-v31] The result of advancing a flow one step (AuthStep -> AuthStepped): either the
+// next challenge to present (`completed == false`, `challenge` valid) or the completed outcome
+// (`completed == true`, `completion` valid).
+struct DecodedAuthStepResult {
+    bool completed = false;
+    DecodedAuthChallenge challenge;         // valid when !completed
+    DecodedAuthCompleteResponse completion; // valid when completed
 };
 
 // --- Local re-quantization (ModelQuantize/ModelQuantizes; A5) ------------------------------------
@@ -868,6 +966,8 @@ enum class ApiResponseKind {
     AuthProviders,
     AuthBegun,
     AuthCompleted,
+    // [waveB:app-v31] the generalized multi-step result (AuthStep -> AuthStepped).
+    AuthStepped,
     ModelQuantizeStarted,
     ModelQuantizes,
     ModelInspect,
@@ -1109,6 +1209,9 @@ public:
     // ToolList is node-wide (no session arg). FingerprintList/Revoke are per-session (the node's
     // allow-list is per-session); revoke names the exact fingerprint hex to drop.
     [[nodiscard]] static QByteArray encodeToolListRequest();
+    // [waveB:app-v30] D4: enable/disable a tool (ToolSetEnabled). The node owns gating; re-fetch
+    // ToolList after to render the authoritative overlay result.
+    [[nodiscard]] static QByteArray encodeToolSetEnabledRequest(const QString& tool, bool enabled);
     [[nodiscard]] static QByteArray encodeFingerprintListRequest(const QString& sessionId);
     [[nodiscard]] static QByteArray encodeFingerprintRevokeRequest(const QString& sessionId,
                                                                    const QString& fingerprint);
@@ -1197,6 +1300,11 @@ public:
     // --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9) ---------------------------
     [[nodiscard]] static QByteArray encodeTransportAdaptersRequest();
     [[nodiscard]] static QByteArray encodeTransportInstancesRequest();
+    // [waveB:app-v30] D1: tear down a live transport session (TransportDisconnect) or fully remove
+    // the account (TransportRemove — node-side sequences disconnect + conv close + routing unbind +
+    // credential drop + config drop). One intent; the client renders the node's reported outcome.
+    [[nodiscard]] static QByteArray encodeTransportDisconnectRequest(const QString& transport);
+    [[nodiscard]] static QByteArray encodeTransportRemoveRequest(const QString& transport);
     // `after` (wire v25) resumes past the previous page's `next` cursor (empty = first page).
     [[nodiscard]] static QByteArray encodeConvListRequest(const QString& transport,
                                                           const QString& after = QString());
@@ -1371,7 +1479,17 @@ public:
                                                            const QString& redirectUri,
                                                            const QString& bindProfile = QString(),
                                                            const QString& bindCredentialRef = {});
-    // Finish a flow from the captured redirect (full URL or query string). Single-use flow_id.
+    // [waveB:app-v31] Advance a parked flow one step (AuthStep): feed the AuthStepInput collected
+    // for the current challenge. `kind` selects the arm — Fields carries `fields` (the filled
+    // key->value map answering a Form), Callback carries `callback` (the captured redirect
+    // URL/query answering a Redirect), Poll carries nothing (answering a Qr/Message "landed yet?").
+    // The reply is an AuthStepped (decodeAuthStepped): the next challenge, or completion.
+    [[nodiscard]] static QByteArray encodeAuthStepRequest(const QString& flowId,
+                                                          AuthStepInputKind kind,
+                                                          const QVariantMap& fields = {},
+                                                          const QString& callback = {});
+    // Finish a flow from the captured redirect (full URL or query string). Single-use flow_id. The
+    // node keeps AuthComplete as a compat wrapper over AuthStep(Callback); the app drives AuthStep.
     [[nodiscard]] static QByteArray encodeAuthCompleteRequest(const QString& flowId,
                                                               const QString& callback);
     // Drop a pending flow early (user cancelled). Idempotent node-side.
@@ -1379,6 +1497,9 @@ public:
     static bool decodeAuthProviders(const QByteArray& responseCbor,
                                     QList<DecodedAuthProviderInfo>* out);
     static bool decodeAuthBegun(const QByteArray& responseCbor, DecodedAuthBeginResponse* out);
+    // [waveB:app-v31] Decode an AuthStepped (AuthStepResult): sets out->completed and populates
+    // either out->challenge (the next challenge) or out->completion (the finished outcome).
+    static bool decodeAuthStepped(const QByteArray& responseCbor, DecodedAuthStepResult* out);
     static bool decodeAuthCompleted(const QByteArray& responseCbor,
                                     DecodedAuthCompleteResponse* out);
 

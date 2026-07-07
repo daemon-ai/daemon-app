@@ -438,6 +438,21 @@ QString DaemonTurnEngine::subagentTitle(const QString& childId) const {
     return childId;
 }
 
+// [waveB:app-v30] stretch: the node-reported terminal reason for a child session, from the cached
+// fleet tree (UnitNode.end_reason). "" when unknown (not yet in the tree / still running). Never
+// derived — rendered from the node's fact.
+QString DaemonTurnEngine::childEndReason(const QString& childId) const {
+    if (m_cache == nullptr || childId.isEmpty()) {
+        return {};
+    }
+    for (const daemonapp::daemon::CachedFleetUnitRow& row : m_cache->fleetUnits()) {
+        if (row.sessionId == childId) {
+            return row.endReason;
+        }
+    }
+    return {};
+}
+
 void DaemonTurnEngine::applyUnitEvents(const QByteArray& responseCbor) {
     QList<daemonapp::daemon::DecodedManageEvent> events;
     if (!NodeApiCodec::decodeUnitEvents(responseCbor, &events)) {
@@ -452,11 +467,17 @@ void DaemonTurnEngine::applyUnitEvents(const QByteArray& responseCbor) {
             continue; // seq watermark: drop already-emitted / re-read transitions
         }
         m_subagentSeq = ev.seq;
-        // SubagentPhase -> the strip's status. Spawned = a live child (running); Finished = settled
-        // (done). The wire carries no error phase, so a failed child still reads "done" here (the
-        // strip's failedCount is not populated from this structured source).
-        const QString status = ev.phase == QStringLiteral("Finished") ? QStringLiteral("done")
-                                                                      : QStringLiteral("running");
+        // SubagentPhase -> the strip's status. Spawned = a live child (running); Finished =
+        // settled. [waveB:app-v30] stretch: a Finished child's terminal outcome is the
+        // node-reported UnitNode.end_reason (cached in daemon_fleet_units) — "Failed" renders as
+        // "error" (feeds the strip's failedCount), anything else as "done". This is rendering the
+        // node's fact, not re-deriving it; the wire carries no error phase on the ManageEvent
+        // itself.
+        QString status = QStringLiteral("running");
+        if (ev.phase == QStringLiteral("Finished")) {
+            status = childEndReason(ev.child) == QStringLiteral("Failed") ? QStringLiteral("error")
+                                                                          : QStringLiteral("done");
+        }
         emitted.append(QVariantMap{
             {QStringLiteral("type"), QStringLiteral("subagent")},
             {QStringLiteral("id"), ev.child},
@@ -685,11 +706,23 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
             }
         }
         if (entry.event.kind == AgentEventKind::TurnFinished) {
-            finishTurn(entry.event.turnCompleted
-                           ? QString()
-                           : (m_errorText.isEmpty()
-                                  ? tr("The turn ended: %1").arg(entry.event.endReason)
-                                  : m_errorText));
+            // [waveB:app-v30] C6: a foreign-agent failure on a terminal TurnFinished drives
+            // stage-specific copy (Spawn/Handshake/Turn) with the agent name when present —
+            // mid-turn death arrives here as a normal Failed carrying this, so the engine surfaces
+            // it (never hangs). Falls back to any accumulated error text, then the generic
+            // end-reason line.
+            QString errorText;
+            if (!entry.event.turnCompleted) {
+                if (entry.event.hasFailure) {
+                    errorText =
+                        foreignFailureText(entry.event.failureStage, entry.event.failureAgent);
+                } else if (!m_errorText.isEmpty()) {
+                    errorText = m_errorText;
+                } else {
+                    errorText = tr("The turn ended: %1").arg(entry.event.endReason);
+                }
+            }
+            finishTurn(errorText);
             return;
         }
     }
@@ -948,6 +981,21 @@ void DaemonTurnEngine::settleReasoningBlock() {
     checkpointReasoningBlock();
     m_reasoningSeq = 0;
     m_reasoningText.clear();
+}
+
+// [waveB:app-v30] C6: map a foreign-failure stage (+ optional agent) to operator-facing copy.
+QString DaemonTurnEngine::foreignFailureText(const QString& stage, const QString& agent) {
+    const QString named = agent.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(agent);
+    if (stage == QLatin1String("Spawn")) {
+        return tr("The agent%1 failed to launch.").arg(named);
+    }
+    if (stage == QLatin1String("Handshake")) {
+        return tr("The agent%1 failed during handshake.").arg(named);
+    }
+    if (stage == QLatin1String("Turn")) {
+        return tr("The agent%1 crashed mid-turn.").arg(named);
+    }
+    return tr("The agent%1 failed.").arg(named);
 }
 
 void DaemonTurnEngine::finishTurn(const QString& errorText) {
