@@ -692,6 +692,22 @@ until it is re-registered.</source>
         <source>Regenerate</source>
         <translation>再生成</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>良い回答</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>悪い回答</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>詳細を教えてください（任意）</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>フィードバックを送信</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -1269,6 +1285,14 @@ until it is re-registered.</source>
     <message>
         <source>Search this session</source>
         <translation>このセッションを検索</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>フィードバックを送信</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>バグを報告する、またはアイデアを共有する</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4396,6 +4420,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>[数式] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ 良い (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ 悪い (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [インストール済み]</translation>
     </message>
@@ -4673,6 +4705,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>セッションを更新できませんでした</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>詳細を教えてください（任意）</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>セッションをクリア</translation>
     </message>
@@ -4815,6 +4851,34 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>理由を付けて拒否（エージェントに伝わります）</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>フィードバックを送信</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>どのようなフィードバックですか？</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>バグ</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>アイデア</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>その他</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>次へ…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>フィードバック（Enter で送信）</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5168,11 +5232,11 @@ A generic, non-transcript page hosted by the same tab strip.
     <name>SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>セッション詳細のリクエストが拒否されました</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>SessionDetail 応答のデコードに失敗しました</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
@@ -5786,6 +5850,10 @@ This only affects the app appearance, not your data.</source>
         <translation>ターミナルを切り替え</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>フィードバックを送信</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>アップデートを確認</translation>
     </message>
@@ -5800,6 +5868,46 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Terminal</source>
         <translation>ターミナル</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>送信</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>ありがとうございます — フィードバックを送信しました。</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>カテゴリ</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>バグ</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>アイデア</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>その他</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>うまくいっていること、または問題点は何ですか？</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>診断情報を含める（アプリバージョン、OS）</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>テレメトリはオフです。送信されるのはこのフィードバックと基本的なアプリ情報のみです。</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>匿名テレメトリも有効にする</translation>
     </message>
 </context>
 <context>
@@ -5841,7 +5949,7 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Approvals </source>
-        <translation type="unfinished"></translation>
+        <translation>承認 </translation>
     </message>
     <message>
         <source> tok</source>
@@ -7931,11 +8039,11 @@ _エージェントが選択されていません。_
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>セッション詳細のリクエストが拒否されました</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>SessionDetail 応答のデコードに失敗しました</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>

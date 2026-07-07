@@ -692,6 +692,22 @@ sampai didaftarkan ulang.</translation>
         <source>Regenerate</source>
         <translation>Buat ulang</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>Respons bagus</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>Respons buruk</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>Beri tahu kami lebih lanjut (opsional)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Kirim masukan</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -1269,6 +1285,14 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Search this session</source>
         <translation>Cari sesi ini</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Kirim masukan</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>Laporkan bug atau bagikan ide</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4396,6 +4420,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>[matematika] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ Bagus (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ Buruk (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [terpasang]</translation>
     </message>
@@ -4673,6 +4705,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Tidak dapat memperbarui sesi</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>Beri tahu kami lebih lanjut (opsional)</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Kosongkan sesi</translation>
     </message>
@@ -4815,6 +4851,34 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Tolak dengan alasan (agen akan mendengarnya)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Kirim masukan</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>Jenis masukan apa?</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Bug</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Ide</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Lainnya</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>Berikutnya…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>Masukan Anda (Enter untuk mengirim)</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5168,11 +5232,11 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <name>SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>Permintaan detail sesi ditolak</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>Gagal mendekode respons SessionDetail</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
@@ -5786,6 +5850,10 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
         <translation>Alihkan terminal</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>Kirim masukan</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>Periksa pembaruan</translation>
     </message>
@@ -5800,6 +5868,46 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
     <message>
         <source>Terminal</source>
         <translation>Terminal</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Kirim</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>Terima kasih — masukan Anda telah dikirim.</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Kategori</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Bug</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Ide</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Lainnya</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>Apa yang berjalan baik, atau apa yang salah?</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>Sertakan diagnostik (versi aplikasi, OS)</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>Telemetri nonaktif. Pengiriman hanya mengirimkan masukan ini dan info dasar aplikasi.</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>Aktifkan juga telemetri anonim</translation>
     </message>
 </context>
 <context>
@@ -5841,7 +5949,7 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
     </message>
     <message>
         <source>Approvals </source>
-        <translation type="unfinished"></translation>
+        <translation>Persetujuan </translation>
     </message>
     <message>
         <source> tok</source>
@@ -7931,11 +8039,11 @@ _Tidak ada agen yang dipilih._
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>Permintaan detail sesi ditolak</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>Gagal mendekode respons SessionDetail</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>

@@ -692,6 +692,22 @@ until it is re-registered.</source>
         <source>Regenerate</source>
         <translation>重新產生</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>回答不錯</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>回答不佳</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>告訴我們更多（選填）</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>傳送意見回饋</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -1269,6 +1285,14 @@ until it is re-registered.</source>
     <message>
         <source>Search this session</source>
         <translation>搜尋此工作階段</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>傳送意見回饋</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>回報錯誤或分享想法</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4396,6 +4420,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>[數學] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ 好評 (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ 差評 (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [已安裝]</translation>
     </message>
@@ -4673,6 +4705,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>無法更新工作階段</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>告訴我們更多（選填）</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>清除工作階段</translation>
     </message>
@@ -4815,6 +4851,34 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>附理由拒絕（代理會聽到）</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>傳送意見回饋</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>哪一種意見回饋？</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>錯誤</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>想法</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>其他</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>下一步…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>你的意見回饋（按 Enter 傳送）</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5168,11 +5232,11 @@ A generic, non-transcript page hosted by the same tab strip.
     <name>SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>工作階段詳細資料請求遭拒</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>無法解碼 SessionDetail 回應</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
@@ -5786,6 +5850,10 @@ This only affects the app appearance, not your data.</source>
         <translation>切換終端機</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>傳送意見回饋</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>檢查更新</translation>
     </message>
@@ -5800,6 +5868,46 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Terminal</source>
         <translation>終端機</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>傳送</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>謝謝 — 你的意見回饋已傳送。</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>類別</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>錯誤</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>想法</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>其他</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>哪些運作良好，或哪裡出了問題？</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>包含診斷資訊（應用程式版本、作業系統）</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>遙測已關閉。傳送時僅傳輸此意見回饋和基本應用程式資訊。</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>同時啟用匿名遙測</translation>
     </message>
 </context>
 <context>
@@ -5841,7 +5949,7 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Approvals </source>
-        <translation type="unfinished"></translation>
+        <translation>核准 </translation>
     </message>
     <message>
         <source> tok</source>
@@ -7931,11 +8039,11 @@ _未選取代理。_
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>工作階段詳細資料請求遭拒</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>無法解碼 SessionDetail 回應</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>

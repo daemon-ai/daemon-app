@@ -692,6 +692,22 @@ até que seja registrado novamente.</translation>
         <source>Regenerate</source>
         <translation>Regenerar</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>Boa resposta</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>Resposta ruim</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>Conte-nos mais (opcional)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Enviar feedback</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -1269,6 +1285,14 @@ até que seja registrado novamente.</translation>
     <message>
         <source>Search this session</source>
         <translation>Pesquisar nesta sessão</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Enviar feedback</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>Relate um bug ou compartilhe uma ideia</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4400,6 +4424,14 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
         <translation>[matemática] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ Bom (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ Ruim (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [instalado]</translation>
     </message>
@@ -4677,6 +4709,10 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
         <translation>Não foi possível atualizar a sessão</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>Conte-nos mais (opcional)</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Limpar sessão</translation>
     </message>
@@ -4819,6 +4855,34 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Recusar com motivo (o agente ouvirá)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Enviar feedback</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>Que tipo de feedback?</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Bug</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Ideia</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Outro</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>Avançar…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>Seu feedback (Enter para enviar)</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5172,11 +5236,11 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
     <name>SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>A solicitação de detalhes da sessão foi rejeitada</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>Falha ao decodificar a resposta de SessionDetail</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
@@ -5791,6 +5855,10 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
         <translation>Alternar terminal</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>Enviar feedback</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>Verificar atualizações</translation>
     </message>
@@ -5805,6 +5873,46 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
     <message>
         <source>Terminal</source>
         <translation>Terminal</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>Obrigado — seu feedback foi enviado.</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Categoria</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Bug</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Ideia</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Outro</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>O que está funcionando bem ou o que deu errado?</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>Incluir diagnósticos (versão do app, SO)</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>A telemetria está desativada. O envio transmite apenas este feedback e informações básicas do app.</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>Também ativar telemetria anônima</translation>
     </message>
 </context>
 <context>
@@ -5848,7 +5956,7 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
     </message>
     <message>
         <source>Approvals </source>
-        <translation type="unfinished"></translation>
+        <translation>Aprovações </translation>
     </message>
     <message>
         <source> tok</source>
@@ -7938,11 +8046,11 @@ _Nenhum agente selecionado._
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>A solicitação de detalhes da sessão foi rejeitada</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>Falha ao decodificar a resposta de SessionDetail</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>

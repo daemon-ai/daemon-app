@@ -692,6 +692,22 @@ hanggang muli itong mairehistro.</translation>
         <source>Regenerate</source>
         <translation>I-regenerate</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>Magandang sagot</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>Hindi magandang sagot</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>Magbahagi pa (opsyonal)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Magpadala ng feedback</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -1269,6 +1285,14 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Search this session</source>
         <translation>Hanapin ang session na ito</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Magpadala ng feedback</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>Mag-ulat ng bug o magbahagi ng ideya</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4400,6 +4424,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>[math] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ Maganda (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ Pangit (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [naka-install]</translation>
     </message>
@@ -4677,6 +4709,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Hindi na-update ang session</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>Magbahagi pa (opsyonal)</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>I-clear ang session</translation>
     </message>
@@ -4819,6 +4855,34 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Deny na may dahilan (maririnig ito ng agent)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Magpadala ng feedback</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>Anong uri ng feedback?</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Bug</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Ideya</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Iba pa</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>Susunod…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>Ang iyong feedback (Enter para ipadala)</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5172,11 +5236,11 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <name>SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>Tinanggihan ang kahilingan para sa detalye ng session</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>Nabigong i-decode ang tugon ng SessionDetail</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
@@ -5791,6 +5855,10 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>I-toggle ang terminal</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>Magpadala ng feedback</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>Tingnan kung may update</translation>
     </message>
@@ -5805,6 +5873,46 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     <message>
         <source>Terminal</source>
         <translation>Terminal</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ipadala</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>Salamat — naipadala na ang iyong feedback.</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Kategorya</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Bug</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Ideya</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Iba pa</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>Ano ang gumagana nang maayos, o ano ang nagkamali?</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>Isama ang diagnostics (bersyon ng app, OS)</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>Naka-off ang telemetry. Ang pagpapadala ay nagpapadala lamang ng feedback na ito at pangunahing impormasyon ng app.</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>I-enable din ang anonymous na telemetry</translation>
     </message>
 </context>
 <context>
@@ -5848,7 +5956,7 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     </message>
     <message>
         <source>Approvals </source>
-        <translation type="unfinished"></translation>
+        <translation>Mga pag-apruba </translation>
     </message>
     <message>
         <source> tok</source>
@@ -7938,11 +8046,11 @@ _Walang piniling agent._
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>The session detail request was rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>Tinanggihan ang kahilingan para sa detalye ng session</translation>
     </message>
     <message>
         <source>Failed to decode SessionDetail response</source>
-        <translation type="unfinished"></translation>
+        <translation>Nabigong i-decode ang tugon ng SessionDetail</translation>
     </message>
     <message>
         <source>Not connected to a daemon</source>
