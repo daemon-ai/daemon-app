@@ -1719,6 +1719,11 @@ struct request_tool_register {
 	struct tool_info ToolRegister_tool;
 };
 
+struct request_tool_set_enabled {
+	struct zcbor_string ToolSetEnabled_tool;
+	bool ToolSetEnabled_enabled;
+};
+
 struct command_invocation {
 	struct zcbor_string command_invocation_name;
 	struct zcbor_string command_invocation_args;
@@ -2075,6 +2080,14 @@ struct request_transport_rooms {
 	struct zcbor_string TransportRooms_transport;
 	struct TransportRooms_after_r TransportRooms_after;
 	bool TransportRooms_after_present;
+};
+
+struct request_transport_disconnect {
+	struct zcbor_string TransportDisconnect_transport;
+};
+
+struct request_transport_remove {
+	struct zcbor_string TransportRemove_transport;
 };
 
 struct ConvList_after_r {
@@ -2935,6 +2948,7 @@ struct api_request_r {
 		struct request_skill_put api_request_request_skill_put_m;
 		struct request_provider_register api_request_request_provider_register_m;
 		struct request_tool_register api_request_request_tool_register_m;
+		struct request_tool_set_enabled api_request_request_tool_set_enabled_m;
 		struct request_command_invoke api_request_request_command_invoke_m;
 		struct request_config_set api_request_request_config_set_m;
 		struct request_cron_create api_request_request_cron_create_m;
@@ -2951,6 +2965,8 @@ struct api_request_r {
 		struct request_routing_bind_chat api_request_request_routing_bind_chat_m;
 		struct request_routing_unbind_chat api_request_request_routing_unbind_chat_m;
 		struct request_transport_rooms api_request_request_transport_rooms_m;
+		struct request_transport_disconnect api_request_request_transport_disconnect_m;
+		struct request_transport_remove api_request_request_transport_remove_m;
 		struct request_conv_list api_request_request_conv_list_m;
 		struct request_conv_get api_request_request_conv_get_m;
 		struct request_conv_create_details api_request_request_conv_create_details_m;
@@ -3091,6 +3107,7 @@ struct api_request_r {
 		api_request_request_provider_register_m_c,
 		api_request_request_tool_list_m_c,
 		api_request_request_tool_register_m_c,
+		api_request_request_tool_set_enabled_m_c,
 		api_request_request_command_list_m_c,
 		api_request_request_command_invoke_m_c,
 		api_request_request_caps_m_c,
@@ -3114,6 +3131,8 @@ struct api_request_r {
 		api_request_request_transport_rooms_m_c,
 		api_request_request_transport_adapters_m_c,
 		api_request_request_transport_instances_m_c,
+		api_request_request_transport_disconnect_m_c,
+		api_request_request_transport_remove_m_c,
 		api_request_request_conv_list_m_c,
 		api_request_request_conv_get_m_c,
 		api_request_request_conv_create_details_m_c,
@@ -3360,6 +3379,41 @@ struct end_reason_r {
 	} end_reason_choice;
 };
 
+struct foreign_stage_r {
+	enum {
+		foreign_stage_Spawn_tstr_c,
+		foreign_stage_Handshake_tstr_c,
+		foreign_stage_Turn_tstr_c,
+		foreign_stage_Unknown_tstr_c,
+	} foreign_stage_choice;
+};
+
+struct foreign_failure_agent_r {
+	union {
+		struct zcbor_string foreign_failure_agent_tstr;
+	};
+	enum {
+		foreign_failure_agent_tstr_c,
+		foreign_failure_agent_null_m_c,
+	} foreign_failure_agent_choice;
+};
+
+struct foreign_failure {
+	struct foreign_stage_r foreign_failure_stage;
+	struct foreign_failure_agent_r foreign_failure_agent;
+	bool foreign_failure_agent_present;
+};
+
+struct turn_summary_failure_r {
+	union {
+		struct foreign_failure turn_summary_failure_foreign_failure_m;
+	};
+	enum {
+		turn_summary_failure_foreign_failure_m_c,
+		turn_summary_failure_null_m_c,
+	} turn_summary_failure_choice;
+};
+
 struct turn_summary {
 	struct end_reason_r turn_summary_end_reason;
 	union {
@@ -3370,6 +3424,8 @@ struct turn_summary {
 		turn_summary_final_text_null_m_c,
 	} turn_summary_final_text_choice;
 	struct usage_delta turn_summary_usage;
+	struct turn_summary_failure_r turn_summary_failure;
+	bool turn_summary_failure_present;
 };
 
 struct agent_event_turn_finished {
@@ -3719,6 +3775,16 @@ struct approval_info_fingerprint_r {
 	} approval_info_fingerprint_choice;
 };
 
+struct approval_info_detail_r {
+	union {
+		struct tool_detail approval_info_detail_tool_detail_m;
+	};
+	enum {
+		approval_info_detail_tool_detail_m_c,
+		approval_info_detail_null_m_c,
+	} approval_info_detail_choice;
+};
+
 struct approval_info {
 	struct zcbor_string approval_info_session;
 	struct zcbor_string approval_info_request_id;
@@ -3727,6 +3793,8 @@ struct approval_info {
 	bool approval_info_path_present;
 	struct approval_info_fingerprint_r approval_info_fingerprint;
 	bool approval_info_fingerprint_present;
+	struct approval_info_detail_r approval_info_detail;
+	bool approval_info_detail_present;
 };
 
 struct approval_page_next_r {
@@ -3760,10 +3828,16 @@ struct remembered_fingerprint_label_r {
 	} remembered_fingerprint_label_choice;
 };
 
+struct remembered_fingerprint_remembered_at_ms {
+	uint64_t remembered_fingerprint_remembered_at_ms;
+};
+
 struct remembered_fingerprint {
 	struct zcbor_string remembered_fingerprint_fingerprint;
 	struct remembered_fingerprint_label_r remembered_fingerprint_label;
 	bool remembered_fingerprint_label_present;
+	struct remembered_fingerprint_remembered_at_ms remembered_fingerprint_remembered_at_ms;
+	bool remembered_fingerprint_remembered_at_ms_present;
 };
 
 struct response_fingerprints {
@@ -4247,6 +4321,7 @@ struct connection_state_r {
 		connection_state_Offline_tstr_c,
 		connection_state_Connecting_tstr_c,
 		connection_state_Connected_tstr_c,
+		connection_state_Disconnecting_tstr_c,
 		connection_state_Error_tstr_c,
 	} connection_state_choice;
 };
@@ -4266,11 +4341,108 @@ struct TransportChanged_presence {
 	struct presence_state_r TransportChanged_presence;
 };
 
+struct disconnect_reason_r {
+	enum {
+		disconnect_reason_UserRequested_tstr_c,
+		disconnect_reason_NetworkError_tstr_c,
+		disconnect_reason_AuthenticationFailed_tstr_c,
+		disconnect_reason_ReplacedByOtherClient_tstr_c,
+		disconnect_reason_InvalidSettings_tstr_c,
+		disconnect_reason_CertificateError_tstr_c,
+		disconnect_reason_Other_tstr_c,
+	} disconnect_reason_choice;
+};
+
+struct TransportChanged_reason_r {
+	union {
+		struct disconnect_reason_r TransportChanged_reason_disconnect_reason_m;
+	};
+	enum {
+		TransportChanged_reason_disconnect_reason_m_c,
+		TransportChanged_reason_null_m_c,
+	} TransportChanged_reason_choice;
+};
+
+struct TransportChanged_message_r {
+	union {
+		struct zcbor_string TransportChanged_message_tstr;
+	};
+	enum {
+		TransportChanged_message_tstr_c,
+		TransportChanged_message_null_m_c,
+	} TransportChanged_message_choice;
+};
+
+struct TransportChanged_fatal {
+	bool TransportChanged_fatal;
+};
+
 struct node_event_transport_changed {
 	struct zcbor_string TransportChanged_transport;
 	struct connection_state_r TransportChanged_connection;
 	struct TransportChanged_presence TransportChanged_presence;
 	bool TransportChanged_presence_present;
+	struct TransportChanged_reason_r TransportChanged_reason;
+	bool TransportChanged_reason_present;
+	struct TransportChanged_message_r TransportChanged_message;
+	bool TransportChanged_message_present;
+	struct TransportChanged_fatal TransportChanged_fatal;
+	bool TransportChanged_fatal_present;
+};
+
+struct conv_change_r {
+	enum {
+		conv_change_Added_tstr_c,
+		conv_change_Removed_tstr_c,
+	} conv_change_choice;
+};
+
+struct node_event_conversations_changed {
+	struct zcbor_string ConversationsChanged_transport;
+	struct zcbor_string ConversationsChanged_conv;
+	struct conv_change_r ConversationsChanged_change;
+};
+
+struct membership_change_r {
+	enum {
+		membership_change_Joined_tstr_c,
+		membership_change_Left_tstr_c,
+		membership_change_Invited_tstr_c,
+		membership_change_Kicked_tstr_c,
+		membership_change_Banned_tstr_c,
+	} membership_change_choice;
+};
+
+struct MembershipChanged_actor_r {
+	union {
+		struct zcbor_string MembershipChanged_actor_tstr;
+	};
+	enum {
+		MembershipChanged_actor_tstr_c,
+		MembershipChanged_actor_null_m_c,
+	} MembershipChanged_actor_choice;
+};
+
+struct MembershipChanged_reason_r {
+	union {
+		struct zcbor_string MembershipChanged_reason_tstr;
+	};
+	enum {
+		MembershipChanged_reason_tstr_c,
+		MembershipChanged_reason_null_m_c,
+	} MembershipChanged_reason_choice;
+};
+
+struct node_event_membership_changed {
+	struct zcbor_string MembershipChanged_transport;
+	struct zcbor_string MembershipChanged_conv;
+	struct zcbor_string MembershipChanged_member;
+	struct membership_change_r MembershipChanged_change;
+	struct MembershipChanged_actor_r MembershipChanged_actor;
+	bool MembershipChanged_actor_present;
+	struct MembershipChanged_reason_r MembershipChanged_reason;
+	bool MembershipChanged_reason_present;
+	bool MembershipChanged_is_self;
 };
 
 struct node_event_resync_needed {
@@ -4286,6 +4458,8 @@ struct node_event_r {
 		struct node_event_approval_pending node_event_approval_pending_m;
 		struct node_event_download_progress node_event_download_progress_m;
 		struct node_event_transport_changed node_event_transport_changed_m;
+		struct node_event_conversations_changed node_event_conversations_changed_m;
+		struct node_event_membership_changed node_event_membership_changed_m;
 		struct node_event_resync_needed node_event_resync_needed_m;
 	};
 	enum {
@@ -4297,6 +4471,8 @@ struct node_event_r {
 		node_event_download_progress_m_c,
 		node_event_catalog_changed_m_c,
 		node_event_transport_changed_m_c,
+		node_event_conversations_changed_m_c,
+		node_event_membership_changed_m_c,
 		node_event_resync_needed_m_c,
 	} node_event_choice;
 };
@@ -4815,6 +4991,21 @@ struct provider_kind_wire_r {
 	} provider_kind_wire_choice;
 };
 
+struct provider_sign_in {
+	struct zcbor_string provider_sign_in_family;
+	struct zcbor_string provider_sign_in_label;
+};
+
+struct provider_descriptor_sign_in_r {
+	union {
+		struct provider_sign_in provider_descriptor_sign_in_provider_sign_in_m;
+	};
+	enum {
+		provider_descriptor_sign_in_provider_sign_in_m_c,
+		provider_descriptor_sign_in_null_m_c,
+	} provider_descriptor_sign_in_choice;
+};
+
 struct provider_descriptor {
 	struct zcbor_string provider_descriptor_id;
 	struct zcbor_string provider_descriptor_display_name;
@@ -4829,6 +5020,8 @@ struct provider_descriptor {
 		provider_descriptor_default_base_url_tstr_c,
 		provider_descriptor_default_base_url_null_m_c,
 	} provider_descriptor_default_base_url_choice;
+	struct provider_descriptor_sign_in_r provider_descriptor_sign_in;
+	bool provider_descriptor_sign_in_present;
 };
 
 struct response_provider_catalog {
@@ -5570,12 +5763,25 @@ struct adapter_info_account_schema {
 	struct account_settings_schema adapter_info_account_schema;
 };
 
+struct policy_entry {
+	struct zcbor_string policy_entry_key;
+	struct zcbor_string policy_entry_label;
+	struct zcbor_string policy_entry_value;
+};
+
+struct adapter_info_policies_r {
+	struct policy_entry adapter_info_policies_policy_entry_m[64];
+	size_t adapter_info_policies_policy_entry_m_count;
+};
+
 struct adapter_info {
 	struct zcbor_string adapter_info_family;
 	struct zcbor_string adapter_info_display_name;
 	struct adapter_capabilities adapter_info_capabilities;
 	struct adapter_info_account_schema adapter_info_account_schema;
 	bool adapter_info_account_schema_present;
+	struct adapter_info_policies_r adapter_info_policies;
+	bool adapter_info_policies_present;
 };
 
 struct response_adapters {
@@ -5601,6 +5807,30 @@ struct transport_instance_info_bound_profile_r {
 	} transport_instance_info_bound_profile_choice;
 };
 
+struct transport_instance_info_reason_r {
+	union {
+		struct disconnect_reason_r transport_instance_info_reason_disconnect_reason_m;
+	};
+	enum {
+		transport_instance_info_reason_disconnect_reason_m_c,
+		transport_instance_info_reason_null_m_c,
+	} transport_instance_info_reason_choice;
+};
+
+struct transport_instance_info_message_r {
+	union {
+		struct zcbor_string transport_instance_info_message_tstr;
+	};
+	enum {
+		transport_instance_info_message_tstr_c,
+		transport_instance_info_message_null_m_c,
+	} transport_instance_info_message_choice;
+};
+
+struct transport_instance_info_fatal {
+	bool transport_instance_info_fatal;
+};
+
 struct transport_instance_info {
 	struct zcbor_string transport_instance_info_transport;
 	struct zcbor_string transport_instance_info_family;
@@ -5611,6 +5841,12 @@ struct transport_instance_info {
 	bool transport_instance_info_presence_present;
 	struct transport_instance_info_bound_profile_r transport_instance_info_bound_profile;
 	bool transport_instance_info_bound_profile_present;
+	struct transport_instance_info_reason_r transport_instance_info_reason;
+	bool transport_instance_info_reason_present;
+	struct transport_instance_info_message_r transport_instance_info_message;
+	bool transport_instance_info_message_present;
+	struct transport_instance_info_fatal transport_instance_info_fatal;
+	bool transport_instance_info_fatal_present;
 };
 
 struct response_transport_instances {
