@@ -1256,6 +1256,11 @@ bool NodeApiCodec::decodeFingerprints(const QByteArray& responseCbor,
             entry.label =
                 fromZcbor(fp.remembered_fingerprint_label.remembered_fingerprint_label_tstr);
         }
+        // [waveB:app-v30] D6: when the node remembered it (wire v30, optional).
+        if (fp.remembered_fingerprint_remembered_at_ms_present) {
+            entry.rememberedAtMs =
+                fp.remembered_fingerprint_remembered_at_ms.remembered_fingerprint_remembered_at_ms;
+        }
         out->append(entry);
     }
     return true;

@@ -304,8 +304,15 @@ void RootWidget::openRememberedApprovalsOverlay() {
         for (const QVariantMap& r : rows) {
             fps->append(r.value(QStringLiteral("fingerprint")).toString());
             const QString label = r.value(QStringLiteral("label")).toString();
-            display << (label.isEmpty() ? r.value(QStringLiteral("shortFingerprint")).toString()
-                                        : label);
+            QString line =
+                label.isEmpty() ? r.value(QStringLiteral("shortFingerprint")).toString() : label;
+            // [waveB:app-v30] D6: append the node's remembered-at timestamp when present (parity
+            // with the GUI SessionSettingsPopover row).
+            const QString when = r.value(QStringLiteral("rememberedAt")).toString();
+            if (!when.isEmpty()) {
+                line += QStringLiteral("  ·  ") + when;
+            }
+            display << line;
         }
         if (display.isEmpty()) {
             display << tr("(no remembered approvals)");

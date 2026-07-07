@@ -393,6 +393,9 @@ struct DecodedToolInfo {
 struct DecodedRememberedFingerprint {
     QString fingerprint;
     QString label;
+    // [waveB:app-v30] D4-provenance: when the node remembered this fingerprint (Unix ms). 0 when
+    // the node reported none. Rendered as a human-formatted timestamp beside the label.
+    quint64 rememberedAtMs = 0;
 };
 
 // A slash command (CommandList -> Commands). CHA-7.
