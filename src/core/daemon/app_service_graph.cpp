@@ -36,6 +36,7 @@
 #include "daemon/repositories.h"
 #include "daemon/subscription_manager.h"
 #include "daemonnet/mock_daemonnet.h"
+#include "feedback/mock_feedback.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/mock_approvals_inbox.h"
 #include "fleet/mock_dashboard.h"
@@ -90,6 +91,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                            : static_cast<connection::IConnectionService*>(
                                  new connection::MockConnectionService(owner));
     graph.daemonConfig = new config::MockDaemonConfig(owner);
+    // User-feedback + telemetry-consent seam. Mock-first: recorded in memory and
+    // consent persisted locally; the daemon adapter (FeedbackSubmit /
+    // TelemetryConsentGet/Set, wire v31) replaces it in a later integration phase.
+    graph.feedback = new feedback::MockFeedback(owner);
     graph.fs = new fs::LocalDiskFsService(
         graph.daemonConfig->value(QStringLiteral("workspace/root")).toString(), QString(), owner);
     graph.memory = new memory::MockMemoryService(owner);

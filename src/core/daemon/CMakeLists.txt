@@ -132,6 +132,7 @@ target_link_libraries(da_daemon_client
         daemon-app::persistence
         daemon-app::settings_store
         daemon-app::config
+        daemon-app::feedback
         daemon-app::fs
         daemon-app::memory
         daemon-app::models

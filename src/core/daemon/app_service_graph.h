@@ -21,6 +21,9 @@ class IDaemonConfig;
 namespace connection {
 class IConnectionService;
 }
+namespace feedback {
+class IFeedback;
+}
 namespace daemonnet {
 class IDaemonNet;
 }
@@ -111,6 +114,11 @@ struct AppServiceGraph {
     settings::ISettingsStore* settings = nullptr;
     connection::IConnectionService* connection = nullptr;
     config::IDaemonConfig* daemonConfig = nullptr;
+    // User-feedback seam (thumbs up/down + app feedback) and the node-owned
+    // telemetry-consent source of truth. Mock-backed today (MockFeedback); a
+    // daemon adapter (FeedbackSubmit / TelemetryConsentGet/Set, wire v31) lands
+    // in a later integration phase.
+    feedback::IFeedback* feedback = nullptr;
     fs::IFsService* fs = nullptr;
     memory::IMemoryService* memory = nullptr;
     nav::NavController* nav = nullptr;

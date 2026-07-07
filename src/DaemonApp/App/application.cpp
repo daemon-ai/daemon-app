@@ -20,6 +20,7 @@
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
 #include "daemonnet/idaemonnet.h"
+#include "feedback/ifeedback.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/iapprovals_inbox.h"
 #include "fleet/idashboard.h"
@@ -261,6 +262,11 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // Daemon-authoritative config facade (mock) backing the settings sections.
     engine.rootContext()->setContextProperty(QStringLiteral("DaemonConfig"),
                                              m_services.daemonConfig);
+
+    // User-feedback + telemetry-consent seam (mock). Backs the transcript thumbs,
+    // the status-bar app-feedback dialog, and the Advanced settings consent row
+    // (the node-owned source of truth the FeedbackController routes through).
+    engine.rootContext()->setContextProperty(QStringLiteral("Feedback"), m_services.feedback);
 
     // Filesystem seam (dev local-disk impl) backing the file tree, finder, and editor.
     engine.rootContext()->setContextProperty(QStringLiteral("Fs"), m_services.fs);
