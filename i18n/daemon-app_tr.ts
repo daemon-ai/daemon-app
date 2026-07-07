@@ -227,6 +227,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Sağlayıcı</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Oturum aç</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Temel URL</translation>
     </message>
@@ -862,22 +866,6 @@ kadar başlatılamaz.</translation>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>Saklanan kimlik bilgisi kaldırılsın mı?</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>Kimlik bilgisini kaldır</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>“%1” profili için saklanan kimlik bilgisini kaldırır (%2 tarafından kullanılıyor).</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>Hesabın düğümdeki taşıma oturumu etkilenmez — bir bağlantı kesme/kaldırma işlemi henüz kullanılamıyor.</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>Kanallar</translation>
     </message>
@@ -898,12 +886,60 @@ kadar başlatılamaz.</translation>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>Bağlantı kesme henüz kullanılamıyor — düğümde taşıma bağlantısı kesme işlemi yok</translation>
+        <source>Disconnected by request</source>
+        <translation>İstek üzerine bağlantı kesildi</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>Saklanan kimlik bilgisini kaldır…</translation>
+        <source>Network error</source>
+        <translation>Ağ hatası</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Kimlik doğrulama başarısız</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Başka bir istemciyle değiştirildi</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Geçersiz ayarlar</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Sertifika hatası</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Bağlantı kesildi</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>Hesap kaldırılsın mı?</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Hesabı kaldır</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>“%1” hesabını düğümden kaldırır.</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>Düğüm aktarımı keser, konuşmalarını kapatır, rotalarının bağlamasını kaldırır ve saklanan kimlik bilgisini siler. Bu geri alınamaz.</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>Bu hesabın kimliğini yeniden doğrula</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>Bu hesabın bağlantısını kes</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>Bu hesabı kaldır…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1947,6 +1983,22 @@ kadar başlatılamaz.</translation>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>Oturum sıfırlandı; geçmişten kurtarıldı.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>Aracı%1 başlatılamadı.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>Aracı%1 el sıkışma sırasında başarısız oldu.</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>Aracı%1 tur ortasında çöktü.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>Aracı%1 başarısız oldu.</translation>
     </message>
 </context>
 <context>
@@ -3904,6 +3956,10 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>Sağlayıcı</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Oturum aç</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Temel URL</translation>
     </message>
@@ -4815,6 +4871,18 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Gerekçeyle reddet (aracı bunu duyacak)</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>Hesap kaldırılsın mı?</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>“%1” kaldırılsın mı? Düğüm onun bağlantısını keser, konuşmalarını kapatır, rotalarının bağlamasını kaldırır ve saklanan kimlik bilgisini siler. Bu geri alınamaz.</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Hesabı kaldır</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -6111,26 +6179,25 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Araç güncellenemedi</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>Araçlar</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>Araçlar düğüm tarafından derlenir ve denetlenir. Bu envanter salt okunurdur; devre dışı bir araç neye ihtiyaç duyduğunu belirtir.</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>Araçlar düğüm tarafından denetlenir. Değiştirmek, düğümden bir aracı etkinleştirmesini veya devre dışı bırakmasını ister; bir gereksinim belirten araç, o karşılanana kadar devre dışı kalır.</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>Düğüm tarafından bildirilen araç yok.</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Etkin</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>Devre dışı</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6278,6 +6345,17 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter geri yükle  e düzenle  Esc iptal</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Hesap kaldırılamadı</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Hesabın bağlantısı kesilemedi</translation>
     </message>
 </context>
 <context>
@@ -6517,9 +6595,19 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Maks. arka plan alt görevi</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>Araçlar</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Onay politikası her oturum için ayarlanır (oluşturucu oturum ayarları) — _orada düğüm tarafından uygulanır_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- Araçlar düğüm tarafından denetlenir; değiştirmek ondan birini etkinleştirmesini veya devre dışı bırakmasını ister. **Space/Enter** seçili aracı değiştirir.
 </translation>
     </message>
     <message>
@@ -7273,40 +7361,16 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- Fark: `%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- Parmak izi: `%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## Araçlar
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>Araçlar düğüm tarafından derlenir ve denetlenir. Bu envanter salt okunurdur.
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_Düğüm tarafından bildirilen araç yok._
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7445,14 +7509,6 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>GUI ile paylaşılan Events-IO taşıma hesapları ve canlı odaları. Bir hesabı bağlamak için &apos;c&apos; tuşuna basın. Bağlantı kesme/kaldırma için HENÜZ bir wire işlemi yok (B3 - düğüm önce takip). Kayıtlı bir kimlik bilgisi Hesaplar sayfasından kaldırılabilir (bağlı profilde &apos;x&apos;). Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada otomatik olarak görünür.
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7471,9 +7527,57 @@ _Hiçbir aracı seçilmedi._
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>İstek üzerine bağlantı kesildi</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>Ağ hatası</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Kimlik doğrulama başarısız</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Başka bir istemciyle değiştirildi</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Geçersiz ayarlar</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Sertifika hatası</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Bağlantı kesildi</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Events-IO aktarım hesapları ve canlı odaları, GUI ile paylaşılır. **j/k** taşı · **c** bağlan · **d** bağlantıyı kes · **x** hesabı kaldır. Oda davetleri düğüm tarafından yönetilir; yeni katılan odalar burada otomatik olarak görünür.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _Yeniden kimlik doğrulama gerekli — &apos;c&apos; ile yeniden bağlanın._
 </translation>
     </message>
     <message>
@@ -7516,6 +7620,12 @@ _Hiçbir aracı seçilmedi._
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1** (`%2`)
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -7952,6 +8062,24 @@ _Hiçbir aracı seçilmedi._
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate başarısız oldu</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Araç güncellenemedi</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Hesap kaldırılamadı</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Hesabın bağlantısı kesilemedi</translation>
     </message>
 </context>
 <context>

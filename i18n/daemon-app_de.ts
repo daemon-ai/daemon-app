@@ -227,6 +227,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>Anbieter</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Anmelden</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Basis-URL</translation>
     </message>
@@ -862,22 +866,6 @@ bis er erneut registriert wird.</translation>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>Gespeicherte Anmeldedaten entfernen?</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>Anmeldedaten entfernen</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>Entfernt die für das Profil „%1“ gespeicherten Anmeldedaten (verwendet von %2).</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>Die Transportsitzung des Kontos auf dem Knoten ist nicht betroffen – ein Trennen/Entfernen ist noch nicht verfügbar.</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>Kanäle</translation>
     </message>
@@ -898,12 +886,60 @@ bis er erneut registriert wird.</translation>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>Trennen ist noch nicht verfügbar – der Knoten hat keinen Transport-Trennvorgang</translation>
+        <source>Disconnected by request</source>
+        <translation>Auf Anfrage getrennt</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>Gespeicherte Anmeldedaten entfernen…</translation>
+        <source>Network error</source>
+        <translation>Netzwerkfehler</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Authentifizierung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Durch anderen Client ersetzt</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Ungültige Einstellungen</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Zertifikatsfehler</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Getrennt</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>Konto entfernen?</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Konto entfernen</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>Entfernt das Konto “%1” vom Knoten.</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>Der Knoten trennt den Transport, schließt seine Unterhaltungen, löst seine Routen und verwirft die gespeicherten Anmeldedaten. Dies kann nicht rückgängig gemacht werden.</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>Dieses Konto erneut authentifizieren</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>Dieses Konto trennen</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>Dieses Konto entfernen…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1947,6 +1983,22 @@ bis er erneut registriert wird.</translation>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>Die Sitzung wurde zurückgesetzt; aus dem Verlauf wiederhergestellt.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>Der Agent%1 konnte nicht gestartet werden.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>Der Agent%1 ist beim Handshake fehlgeschlagen.</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>Der Agent%1 ist mitten im Zug abgestürzt.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>Der Agent%1 ist fehlgeschlagen.</translation>
     </message>
 </context>
 <context>
@@ -3908,6 +3960,10 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
         <translation>Anbieter</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Anmelden</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Basis-URL</translation>
     </message>
@@ -4819,6 +4875,18 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Mit Grund ablehnen (der Agent hört ihn)</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>Konto entfernen?</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>“%1” entfernen? Der Knoten trennt es, schließt seine Unterhaltungen, löst seine Routen und verwirft die gespeicherten Anmeldedaten. Dies kann nicht rückgängig gemacht werden.</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Konto entfernen</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -6118,26 +6186,25 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Werkzeug konnte nicht aktualisiert werden</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>Werkzeuge</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>Werkzeuge werden vom Node kompiliert und gesteuert. Dieses Inventar ist schreibgeschützt; ein deaktiviertes Werkzeug nennt, was es benötigt.</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>Werkzeuge werden vom Knoten gesteuert. Das Umschalten fordert den Knoten auf, ein Werkzeug zu aktivieren oder zu deaktivieren; ein Werkzeug, das eine Anforderung nennt, bleibt deaktiviert, bis sie erfüllt ist.</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>Vom Node wurden keine Werkzeuge gemeldet.</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Aktiviert</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>Deaktiviert</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6285,6 +6352,17 @@ Danke — es geht weiter mit: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter wiederherstellen  e bearbeiten  Esc abbrechen</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Konto konnte nicht entfernt werden</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Konto konnte nicht getrennt werden</translation>
     </message>
 </context>
 <context>
@@ -6524,9 +6602,19 @@ Danke — es geht weiter mit: %1
         <translation>Max. Hintergrund-Kinder</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>Werkzeuge</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Die Freigaberichtlinie wird pro Sitzung festgelegt (Sitzungseinstellungen des Composers) — _dort vom Node durchgesetzt_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- Werkzeuge werden vom Knoten gesteuert; das Umschalten fordert ihn auf, eines zu aktivieren oder zu deaktivieren. **Space/Enter** schaltet das ausgewählte Werkzeug um.
 </translation>
     </message>
     <message>
@@ -7280,40 +7368,16 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- Diff: `%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- Fingerabdruck: `%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## Werkzeuge
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>Werkzeuge werden vom Node kompiliert und gesteuert. Dieses Inventar ist schreibgeschützt.
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_Vom Node wurden keine Werkzeuge gemeldet._
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7452,14 +7516,6 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>Events-IO-Transportkonten und ihre Live-Räume, mit der GUI geteilt. Drücke &apos;c&apos;, um ein Konto zu verbinden. Trennen/Entfernen hat NOCH keine Wire-Operation (B3 - Node-first-Follow-up). Eine gespeicherte Anmeldeinfo kann auf der Konten-Seite entfernt werden (&apos;x&apos; beim gebundenen Profil). Raum-Einladungen werden vom Node verarbeitet; neu beigetretene Räume erscheinen hier automatisch.
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7478,9 +7534,57 @@ _Kein Agent ausgewählt._
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>Auf Anfrage getrennt</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>Netzwerkfehler</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Authentifizierung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Durch anderen Client ersetzt</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Ungültige Einstellungen</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Zertifikatsfehler</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Getrennt</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Events-IO-Transport-Konten und ihre aktiven Räume, gemeinsam mit der GUI. **j/k** Bewegen · **c** Verbinden · **d** Trennen · **x** Konto entfernen. Raum-Einladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen hier automatisch.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _Erneute Authentifizierung erforderlich — mit &apos;c&apos; neu verbinden._
 </translation>
     </message>
     <message>
@@ -7523,6 +7627,12 @@ _Kein Agent ausgewählt._
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1** (`%2`)
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -7959,6 +8069,24 @@ _Kein Agent ausgewählt._
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Werkzeug konnte nicht aktualisiert werden</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Konto konnte nicht entfernt werden</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Konto konnte nicht getrennt werden</translation>
     </message>
 </context>
 <context>

@@ -227,6 +227,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Провайдер</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Войти</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Базовый URL</translation>
     </message>
@@ -862,22 +866,6 @@ until it is re-registered.</source>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>Удалить сохранённые учётные данные?</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>Удалить учётные данные</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>Удаляет учётные данные, сохранённые для профиля «%1» (используется %2).</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>Транспортная сессия аккаунта на узле не затрагивается — операция отключения/удаления пока недоступна.</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>Каналы</translation>
     </message>
@@ -898,12 +886,60 @@ until it is re-registered.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>Отключение пока недоступно — на узле нет операции отключения транспорта</translation>
+        <source>Disconnected by request</source>
+        <translation>Отключено по запросу</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>Удалить сохранённые учётные данные…</translation>
+        <source>Network error</source>
+        <translation>Ошибка сети</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Ошибка аутентификации</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Заменено другим клиентом</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Недопустимые настройки</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Ошибка сертификата</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Отключено</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>Удалить учётную запись?</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Удалить учётную запись</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>Удаляет учётную запись “%1” с узла.</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>Узел отключает транспорт, закрывает его беседы, отвязывает его маршруты и удаляет сохранённые учётные данные. Это нельзя отменить.</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>Повторно аутентифицировать эту учётную запись</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>Отключить эту учётную запись</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>Удалить эту учётную запись…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1947,6 +1983,22 @@ until it is re-registered.</source>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>Сессия была сброшена; восстановлено из истории.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>Агенту%1 не удалось запуститься.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>Агент%1 завершился с ошибкой во время рукопожатия.</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>Агент%1 аварийно завершился в середине хода.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>Агент%1 завершился с ошибкой.</translation>
     </message>
 </context>
 <context>
@@ -3912,6 +3964,10 @@ Start one from the Discover tab.</source>
         <translation>Провайдер</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Войти</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Базовый URL</translation>
     </message>
@@ -4823,6 +4879,18 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Отклонить с причиной (агент её услышит)</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>Удалить учётную запись?</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>Удалить “%1”? Узел отключает её, закрывает её беседы, отвязывает её маршруты и удаляет сохранённые учётные данные. Это нельзя отменить.</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Удалить учётную запись</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -6125,26 +6193,25 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Не удалось обновить инструмент</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>Инструменты</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>Инструменты компилируются и контролируются узлом. Этот перечень только для чтения; отключённый инструмент указывает, что ему нужно.</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>Инструменты управляются узлом. Переключение просит узел включить или отключить инструмент; инструмент, указывающий требование, остаётся отключённым, пока оно не выполнено.</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>Узел не сообщил ни об одном инструменте.</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Включено</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>Отключено</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6292,6 +6359,17 @@ Thanks — proceeding with: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter — восстановить  e — изменить  Esc — отмена</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Не удалось удалить учётную запись</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Не удалось отключить учётную запись</translation>
     </message>
 </context>
 <context>
@@ -6531,9 +6609,19 @@ Thanks — proceeding with: %1
         <translation>Макс. фоновых потомков</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>Инструменты</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Политика подтверждений задаётся для каждой сессии (настройки сессии в композере) — _применяется там узлом_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- Инструменты управляются узлом; переключение просит его включить или отключить один. **Space/Enter** переключает выбранный инструмент.
 </translation>
     </message>
     <message>
@@ -7287,40 +7375,16 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- Различия: `%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- Отпечаток: `%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## Инструменты
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>Инструменты компилируются и контролируются узлом. Этот перечень только для чтения.
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_Узел не сообщил ни об одном инструменте._
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7459,14 +7523,6 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>Учётные записи транспорта Events-IO и их активные комнаты, общие с GUI. Нажмите &apos;c&apos;, чтобы подключить учётную запись. Для отключения/удаления пока НЕТ операции протокола (B3 — доработка на стороне узла). Сохранённые учётные данные можно удалить на странице «Аккаунты» (&apos;x&apos; на привязанном профиле). Приглашения в комнаты обрабатывает узел; недавно присоединённые комнаты появляются здесь автоматически.
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7485,9 +7541,57 @@ _Агент не выбран._
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>Отключено по запросу</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>Ошибка сети</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Ошибка аутентификации</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Заменено другим клиентом</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Недопустимые настройки</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Ошибка сертификата</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Отключено</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Транспортные учётные записи Events-IO и их активные комнаты, общие с графическим интерфейсом. **j/k** перемещение · **c** подключить · **d** отключить · **x** удалить учётную запись. Приглашения в комнаты обрабатываются узлом; недавно присоединённые комнаты появляются здесь автоматически.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _Требуется повторная аутентификация — переподключитесь клавишей &apos;c&apos;._
 </translation>
     </message>
     <message>
@@ -7530,6 +7634,12 @@ _Агент не выбран._
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1** (`%2`)
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -7966,6 +8076,24 @@ _Агент не выбран._
     <message>
         <source>SessionCreate failed</source>
         <translation>Не удалось создать сессию</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Не удалось обновить инструмент</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Не удалось удалить учётную запись</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Не удалось отключить учётную запись</translation>
     </message>
 </context>
 <context>

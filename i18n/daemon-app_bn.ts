@@ -227,6 +227,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>প্রদানকারী</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>সাইন ইন করুন</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>বেস URL</translation>
     </message>
@@ -862,22 +866,6 @@ until it is re-registered.</source>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>সংরক্ষিত ক্রেডেনশিয়াল সরাবেন?</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>ক্রেডেনশিয়াল সরান</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>প্রোফাইল “%1”-এর জন্য সংরক্ষিত ক্রেডেনশিয়াল সরায় (%2 দ্বারা ব্যবহৃত)।</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>নোডে অ্যাকাউন্টের ট্রান্সপোর্ট সেশন প্রভাবিত হয় না — সংযোগ বিচ্ছিন্ন/সরানোর অপারেশন এখনও উপলব্ধ নয়।</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>চ্যানেল</translation>
     </message>
@@ -898,12 +886,60 @@ until it is re-registered.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>সংযোগ বিচ্ছিন্ন করা এখনও উপলব্ধ নয় — নোডে কোনো ট্রান্সপোর্ট ডিসকানেক্ট অপারেশন নেই</translation>
+        <source>Disconnected by request</source>
+        <translation>অনুরোধ অনুযায়ী সংযোগ বিচ্ছিন্ন</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>সংরক্ষিত ক্রেডেনশিয়াল সরান…</translation>
+        <source>Network error</source>
+        <translation>নেটওয়ার্ক ত্রুটি</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>প্রমাণীকরণ ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>অন্য ক্লায়েন্ট দ্বারা প্রতিস্থাপিত</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>অবৈধ সেটিংস</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>সার্টিফিকেট ত্রুটি</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>সংযোগ বিচ্ছিন্ন</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>অ্যাকাউন্ট সরাবেন?</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>অ্যাকাউন্ট সরান</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>নোড থেকে “%1” অ্যাকাউন্ট সরিয়ে দেয়।</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>নোডটি ট্রান্সপোর্ট সংযোগ বিচ্ছিন্ন করে, এর কথোপকথন বন্ধ করে, এর রুটগুলি আনবাইন্ড করে এবং সংরক্ষিত ক্রেডেনশিয়াল মুছে ফেলে। এটি পূর্বাবস্থায় ফেরানো যাবে না।</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>এই অ্যাকাউন্ট পুনরায় প্রমাণীকরণ করুন</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>এই অ্যাকাউন্ট সংযোগ বিচ্ছিন্ন করুন</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>এই অ্যাকাউন্ট সরান…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1947,6 +1983,22 @@ until it is re-registered.</source>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>সেশন রিসেট করা হয়েছে; ইতিহাস থেকে পুনরুদ্ধার করা হয়েছে।</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>এজেন্ট%1 চালু হতে ব্যর্থ হয়েছে।</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>এজেন্ট%1 হ্যান্ডশেকের সময় ব্যর্থ হয়েছে।</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>এজেন্ট%1 টার্নের মাঝপথে ক্র্যাশ করেছে।</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>এজেন্ট%1 ব্যর্থ হয়েছে।</translation>
     </message>
 </context>
 <context>
@@ -3908,6 +3960,10 @@ Start one from the Discover tab.</source>
         <translation>প্রদানকারী</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>সাইন ইন করুন</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>বেস URL</translation>
     </message>
@@ -4819,6 +4875,18 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>কারণসহ প্রত্যাখ্যান (এজেন্ট শুনবে)</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>অ্যাকাউন্ট সরাবেন?</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>“%1” সরাবেন? নোডটি এটি সংযোগ বিচ্ছিন্ন করে, এর কথোপকথন বন্ধ করে, এর রুটগুলি আনবাইন্ড করে এবং সংরক্ষিত ক্রেডেনশিয়াল মুছে ফেলে। এটি পূর্বাবস্থায় ফেরানো যাবে না।</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>অ্যাকাউন্ট সরান</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -6118,26 +6186,25 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>টুল আপডেট করতে ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>টুল</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>টুলগুলো নোড কম্পাইল ও নিয়ন্ত্রণ করে। এই তালিকা কেবল-পঠনযোগ্য; নিষ্ক্রিয় টুল কী প্রয়োজন তা জানায়।</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>টুলগুলি নোড দ্বারা নিয়ন্ত্রিত। টগল করা নোডকে একটি টুল সক্ষম বা অক্ষম করতে বলে; যে টুল কোনো প্রয়োজনীয়তার নাম দেয় তা পূরণ না হওয়া পর্যন্ত অক্ষম থাকে।</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>নোড কোনো টুল রিপোর্ট করেনি।</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>সক্রিয়</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>নিষ্ক্রিয়</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6285,6 +6352,17 @@ Thanks — proceeding with: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter পুনরুদ্ধার  e সম্পাদনা  Esc বাতিল</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>অ্যাকাউন্ট সরাতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>অ্যাকাউন্ট সংযোগ বিচ্ছিন্ন করতে ব্যর্থ হয়েছে</translation>
     </message>
 </context>
 <context>
@@ -6524,9 +6602,19 @@ Thanks — proceeding with: %1
         <translation>সর্বোচ্চ ব্যাকগ্রাউন্ড চাইল্ড</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>টুল</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- অনুমোদন নীতি প্রতি সেশনে সেট করা হয় (কম্পোজারের সেশন সেটিংস) — _সেখানে নোড দ্বারা প্রয়োগ করা হয়_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- টুলগুলি নোড দ্বারা নিয়ন্ত্রিত; টগল করা এটিকে একটি সক্ষম বা অক্ষম করতে বলে। **Space/Enter** নির্বাচিত টুল টগল করে।
 </translation>
     </message>
     <message>
@@ -7280,40 +7368,16 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- ডিফ: `%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- ফিঙ্গারপ্রিন্ট: `%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## টুল
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>টুলগুলো নোড কম্পাইল ও নিয়ন্ত্রণ করে। এই তালিকা কেবল-পঠনযোগ্য।
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_নোড কোনো টুল রিপোর্ট করেনি।_
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7452,14 +7516,6 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>Events-IO ট্রান্সপোর্ট অ্যাকাউন্ট ও তাদের লাইভ রুম, GUI-এর সাথে শেয়ার করা। একটি অ্যাকাউন্ট সংযুক্ত করতে &apos;c&apos; চাপুন। সংযোগ বিচ্ছিন্ন/সরানোর জন্য এখনও কোনো ওয়্যার অপ নেই (B3 - নোড-ফার্স্ট ফলো-আপ)। সংরক্ষিত ক্রেডেনশিয়াল Accounts পেজ থেকে সরানো যায় (বাউন্ড প্রোফাইলে &apos;x&apos;)। রুম আমন্ত্রণ নোড পরিচালনা করে; নতুন যোগ দেওয়া রুম এখানে স্বয়ংক্রিয়ভাবে দেখা যায়।
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7478,9 +7534,57 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>অনুরোধ অনুযায়ী সংযোগ বিচ্ছিন্ন</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>নেটওয়ার্ক ত্রুটি</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>প্রমাণীকরণ ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>অন্য ক্লায়েন্ট দ্বারা প্রতিস্থাপিত</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>অবৈধ সেটিংস</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>সার্টিফিকেট ত্রুটি</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>সংযোগ বিচ্ছিন্ন</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Events-IO ট্রান্সপোর্ট অ্যাকাউন্ট এবং তাদের লাইভ রুম, GUI-এর সাথে শেয়ার করা। **j/k** সরান · **c** সংযোগ · **d** বিচ্ছিন্ন · **x** অ্যাকাউন্ট সরান। রুম আমন্ত্রণগুলি নোড দ্বারা পরিচালিত হয়; নতুন যোগ দেওয়া রুম এখানে স্বয়ংক্রিয়ভাবে প্রদর্শিত হয়।
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _পুনরায় প্রমাণীকরণ প্রয়োজন — &apos;c&apos; দিয়ে পুনরায় সংযোগ করুন।_
 </translation>
     </message>
     <message>
@@ -7523,6 +7627,12 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1** (`%2`)
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -7959,6 +8069,24 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>টুল আপডেট করতে ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>অ্যাকাউন্ট সরাতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>অ্যাকাউন্ট সংযোগ বিচ্ছিন্ন করতে ব্যর্থ হয়েছে</translation>
     </message>
 </context>
 <context>

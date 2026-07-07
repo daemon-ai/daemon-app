@@ -227,6 +227,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Penyedia</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Masuk</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Base URL</translation>
     </message>
@@ -862,22 +866,6 @@ sampai didaftarkan ulang.</translation>
 <context>
     <name>ChannelsPage</name>
     <message>
-        <source>Remove stored credential?</source>
-        <translation>Hapus kredensial tersimpan?</translation>
-    </message>
-    <message>
-        <source>Remove credential</source>
-        <translation>Hapus kredensial</translation>
-    </message>
-    <message>
-        <source>Removes the credential stored for profile “%1” (used by %2).</source>
-        <translation>Menghapus kredensial yang tersimpan untuk profil “%1” (digunakan oleh %2).</translation>
-    </message>
-    <message>
-        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
-        <translation>Sesi transport akun di node tidak terpengaruh — operasi putus/hapus belum tersedia.</translation>
-    </message>
-    <message>
         <source>Channels</source>
         <translation>Saluran</translation>
     </message>
@@ -898,12 +886,60 @@ sampai didaftarkan ulang.</translation>
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
-        <translation>Putus koneksi belum tersedia — node tidak memiliki operasi putus transport</translation>
+        <source>Disconnected by request</source>
+        <translation>Diputus atas permintaan</translation>
     </message>
     <message>
-        <source>Remove the stored credential…</source>
-        <translation>Hapus kredensial tersimpan…</translation>
+        <source>Network error</source>
+        <translation>Kesalahan jaringan</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Autentikasi gagal</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Digantikan oleh klien lain</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Pengaturan tidak valid</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Kesalahan sertifikat</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Terputus</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>Hapus akun?</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Hapus akun</translation>
+    </message>
+    <message>
+        <source>Removes the account “%1” from the node.</source>
+        <translation>Menghapus akun “%1” dari node.</translation>
+    </message>
+    <message>
+        <source>The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>Node memutuskan transport, menutup percakapannya, melepas rute-rutenya, dan menghapus kredensial tersimpan. Ini tidak dapat dibatalkan.</translation>
+    </message>
+    <message>
+        <source>Re-authenticate this account</source>
+        <translation>Autentikasi ulang akun ini</translation>
+    </message>
+    <message>
+        <source>Disconnect this account</source>
+        <translation>Putuskan akun ini</translation>
+    </message>
+    <message>
+        <source>Remove this account…</source>
+        <translation>Hapus akun ini…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1947,6 +1983,22 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>The session was reset; recovered from history.</source>
         <translation>Sesi disetel ulang; dipulihkan dari riwayat.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed to launch.</source>
+        <translation>Agen%1 gagal diluncurkan.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed during handshake.</source>
+        <translation>Agen%1 gagal saat handshake.</translation>
+    </message>
+    <message>
+        <source>The agent%1 crashed mid-turn.</source>
+        <translation>Agen%1 macet di tengah giliran.</translation>
+    </message>
+    <message>
+        <source>The agent%1 failed.</source>
+        <translation>Agen%1 gagal.</translation>
     </message>
 </context>
 <context>
@@ -3904,6 +3956,10 @@ Mulai dari tab Temukan.</translation>
         <translation>Penyedia</translation>
     </message>
     <message>
+        <source>Sign in</source>
+        <translation>Masuk</translation>
+    </message>
+    <message>
         <source>Base URL</source>
         <translation>Base URL</translation>
     </message>
@@ -4815,6 +4871,18 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Tolak dengan alasan (agen akan mendengarnya)</translation>
+    </message>
+    <message>
+        <source>Remove account?</source>
+        <translation>Hapus akun?</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? The node disconnects it, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.</source>
+        <translation>Hapus “%1”? Node memutuskannya, menutup percakapannya, melepas rute-rutenya, dan menghapus kredensial tersimpan. Ini tidak dapat dibatalkan.</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Hapus akun</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -6111,26 +6179,25 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
     </message>
 </context>
 <context>
+    <name>ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Gagal memperbarui alat</translation>
+    </message>
+</context>
+<context>
     <name>ToolsSettingsSection</name>
     <message>
         <source>Tools</source>
         <translation>Alat</translation>
     </message>
     <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
-        <translation>Alat dikompilasi dan dibatasi oleh node. Inventaris ini hanya-baca; alat yang dinonaktifkan menyebutkan apa yang dibutuhkannya.</translation>
+        <source>Tools are gated by the node. Toggling asks the node to enable or disable a tool; a tool that names a requirement stays disabled until it is met.</source>
+        <translation>Alat dikontrol oleh node. Mengalihkan meminta node untuk mengaktifkan atau menonaktifkan alat; alat yang menyebutkan suatu persyaratan tetap dinonaktifkan hingga terpenuhi.</translation>
     </message>
     <message>
         <source>No tools reported by the node.</source>
         <translation>Tidak ada alat yang dilaporkan oleh node.</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Aktif</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>Nonaktif</translation>
     </message>
     <message>
         <source>Set up…</source>
@@ -6278,6 +6345,17 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Enter restore  e edit  Esc cancel</source>
         <translation>Enter pulihkan  e sunting  Esc batal</translation>
+    </message>
+</context>
+<context>
+    <name>TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Gagal menghapus akun</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Gagal memutuskan akun</translation>
     </message>
 </context>
 <context>
@@ -6517,9 +6595,19 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Anak latar belakang maks</translation>
     </message>
     <message>
+        <source>Tools</source>
+        <translation>Alat</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Kebijakan persetujuan diatur per sesi (pengaturan sesi komposer) — _diterapkan di sana oleh node_
+</translation>
+    </message>
+    <message>
+        <source>- Tools are gated by the node; toggling asks it to enable or disable one. **Space/Enter** toggles the selected tool.
+</source>
+        <translation>- Alat dikontrol oleh node; mengalihkan memintanya untuk mengaktifkan atau menonaktifkan satu. **Space/Enter** mengalihkan alat yang dipilih.
 </translation>
     </message>
     <message>
@@ -7273,40 +7361,16 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
+        <source>- Diff: `%1`
+</source>
+        <translation>- Diff: `%1`
+</translation>
+    </message>
+    <message>
         <source>- Fingerprint: `%1`
 </source>
         <translation>- Sidik jari: `%1`
 </translation>
-    </message>
-    <message>
-        <source>## Tools
-
-</source>
-        <translation>## Alat
-
-</translation>
-    </message>
-    <message>
-        <source>Tools are compiled and gated by the node. This inventory is read-only.
-
-</source>
-        <translation>Alat dikompilasi dan dibatasi oleh node. Inventaris ini hanya-baca.
-
-</translation>
-    </message>
-    <message>
-        <source>_No tools reported by the node._
-</source>
-        <translation>_Tidak ada alat yang dilaporkan oleh node._
-</translation>
-    </message>
-    <message>
-        <source>- %1 **%2** — %3</source>
-        <translation>- %1 **%2** — %3</translation>
-    </message>
-    <message>
-        <source> _(%1)_</source>
-        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -7445,14 +7509,6 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
-
-</source>
-        <translation>Akun transport Events-IO dan ruang langsungnya, dibagikan dengan GUI. Tekan &apos;c&apos; untuk menghubungkan akun. Putuskan/hapus BELUM ada operasi wire (B3 - tindak lanjut di node). Kredensial tersimpan dapat dihapus dari halaman Akun (&apos;x&apos; pada profil terikat). Undangan ruang ditangani oleh node; ruang yang baru diikuti muncul di sini secara otomatis.
-
-</translation>
-    </message>
-    <message>
         <source>## Accounts
 
 </source>
@@ -7471,9 +7527,57 @@ _Tidak ada agen yang dipilih._
         <translation>%1 · %2</translation>
     </message>
     <message>
-        <source>- %1 **%2** — %3 · %4
+        <source>Disconnected by request</source>
+        <translation>Diputus atas permintaan</translation>
+    </message>
+    <message>
+        <source>Network error</source>
+        <translation>Kesalahan jaringan</translation>
+    </message>
+    <message>
+        <source>Authentication failed</source>
+        <translation>Autentikasi gagal</translation>
+    </message>
+    <message>
+        <source>Replaced by another client</source>
+        <translation>Digantikan oleh klien lain</translation>
+    </message>
+    <message>
+        <source>Invalid settings</source>
+        <translation>Pengaturan tidak valid</translation>
+    </message>
+    <message>
+        <source>Certificate error</source>
+        <translation>Kesalahan sertifikat</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Terputus</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
+
 </source>
-        <translation>- %1 **%2** — %3 · %4
+        <translation>Akun transport Events-IO dan ruang langsungnya, dibagikan dengan GUI. **j/k** pindah · **c** hubungkan · **d** putuskan · **x** hapus akun. Undangan ruang ditangani oleh node; ruang yang baru bergabung muncul di sini secara otomatis.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 **%3** — %4 · %5
+</source>
+        <translation>- %1%2 **%3** — %4 · %5
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - _Re-authentication required — reconnect with &apos;c&apos;._
+</source>
+        <translation>  - _Perlu autentikasi ulang — hubungkan kembali dengan &apos;c&apos;._
 </translation>
     </message>
     <message>
@@ -7516,6 +7620,12 @@ _Tidak ada agen yang dipilih._
         <source>- **%1** (`%2`)
 </source>
         <translation>- **%1** (`%2`)
+</translation>
+    </message>
+    <message>
+        <source>  - %1: %2
+</source>
+        <translation>  - %1: %2
 </translation>
     </message>
 </context>
@@ -7952,6 +8062,24 @@ _Tidak ada agen yang dipilih._
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate gagal</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ToolRepository</name>
+    <message>
+        <source>Failed to update the tool</source>
+        <translation>Gagal memperbarui alat</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::TransportRepository</name>
+    <message>
+        <source>Failed to remove the account</source>
+        <translation>Gagal menghapus akun</translation>
+    </message>
+    <message>
+        <source>Failed to disconnect the account</source>
+        <translation>Gagal memutuskan akun</translation>
     </message>
 </context>
 <context>
