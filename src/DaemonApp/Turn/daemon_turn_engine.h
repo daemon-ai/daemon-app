@@ -92,6 +92,9 @@ private:
     // conversation, re-surface any unanswered parked Request, then finish (the interrupted turn).
     void rebaselineFromJournal();
     void finishTurn(const QString& errorText = QString());
+    // [waveB:app-v30] C6: stage-specific copy for a foreign-agent failure on a terminal turn
+    // (TurnSummary.failure). `agent` (when non-empty) names the failing agent.
+    [[nodiscard]] static QString foreignFailureText(const QString& stage, const QString& agent);
     // Park the turn on a decoded HostRequest: surface the gate to the transcript and wait for a
     // respond* (the open stream keeps delivering once the daemon resumes).
     void parkOnRequest(const daemonapp::daemon::DecodedLogEntry& entry);

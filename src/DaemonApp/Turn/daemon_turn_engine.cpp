@@ -685,11 +685,23 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
             }
         }
         if (entry.event.kind == AgentEventKind::TurnFinished) {
-            finishTurn(entry.event.turnCompleted
-                           ? QString()
-                           : (m_errorText.isEmpty()
-                                  ? tr("The turn ended: %1").arg(entry.event.endReason)
-                                  : m_errorText));
+            // [waveB:app-v30] C6: a foreign-agent failure on a terminal TurnFinished drives
+            // stage-specific copy (Spawn/Handshake/Turn) with the agent name when present —
+            // mid-turn death arrives here as a normal Failed carrying this, so the engine surfaces
+            // it (never hangs). Falls back to any accumulated error text, then the generic
+            // end-reason line.
+            QString errorText;
+            if (!entry.event.turnCompleted) {
+                if (entry.event.hasFailure) {
+                    errorText =
+                        foreignFailureText(entry.event.failureStage, entry.event.failureAgent);
+                } else if (!m_errorText.isEmpty()) {
+                    errorText = m_errorText;
+                } else {
+                    errorText = tr("The turn ended: %1").arg(entry.event.endReason);
+                }
+            }
+            finishTurn(errorText);
             return;
         }
     }
@@ -948,6 +960,21 @@ void DaemonTurnEngine::settleReasoningBlock() {
     checkpointReasoningBlock();
     m_reasoningSeq = 0;
     m_reasoningText.clear();
+}
+
+// [waveB:app-v30] C6: map a foreign-failure stage (+ optional agent) to operator-facing copy.
+QString DaemonTurnEngine::foreignFailureText(const QString& stage, const QString& agent) {
+    const QString named = agent.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(agent);
+    if (stage == QLatin1String("Spawn")) {
+        return tr("The agent%1 failed to launch.").arg(named);
+    }
+    if (stage == QLatin1String("Handshake")) {
+        return tr("The agent%1 failed during handshake.").arg(named);
+    }
+    if (stage == QLatin1String("Turn")) {
+        return tr("The agent%1 crashed mid-turn.").arg(named);
+    }
+    return tr("The agent%1 failed.").arg(named);
 }
 
 void DaemonTurnEngine::finishTurn(const QString& errorText) {

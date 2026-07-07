@@ -306,6 +306,13 @@ struct DecodedAgentEvent {
     QString endReason;          // TurnFinished: Completed | Failed | Interrupted | ...
     QString finalText;          // TurnFinished: the turn's final assistant text (if any)
     bool turnCompleted = false; // TurnFinished with end_reason == Completed
+    // [waveB:app-v30] C6: TurnSummary.failure (wire v30) — a foreign-agent failure on a terminal
+    // TurnFinished. `failureStage` is "Spawn"|"Handshake"|"Turn"|"Unknown"; `failureAgent` is the
+    // agent name when the node reported one. hasFailure marks a present failure (drives the
+    // stage-specific error copy; mid-turn death arrives as a normal terminal Failed carrying this).
+    bool hasFailure = false;
+    QString failureStage;
+    QString failureAgent;
 };
 
 // One decoded session-log entry (Subscribe -> LogPage). The transcript engine consumes the
