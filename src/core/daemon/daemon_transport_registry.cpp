@@ -32,6 +32,12 @@ QVariantList DaemonTransportRegistry::availableAdapters() const {
         row[QStringLiteral("family")] = a.family;
         row[QStringLiteral("displayName")] = a.displayName;
         row[QStringLiteral("capabilities")] = a.capabilities;
+        // [waveB:app-v30] D3: node-labeled policy rows ({key,label,value}); rendered read-only.
+        QVariantList policies;
+        for (const QVariantMap& p : a.policies) {
+            policies.append(p);
+        }
+        row[QStringLiteral("policies")] = policies;
         out.append(row);
     }
     return out;

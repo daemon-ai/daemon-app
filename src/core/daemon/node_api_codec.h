@@ -237,6 +237,10 @@ struct DecodedAdapterInfo {
     QString displayName;      // "Matrix" | "Rooms (internal)"
     QVariantMap capabilities; // rooms/directMessages/presence/roomEnumeration/fileTransfer/
                               // interactiveAuth -> bool
+    // [waveB:app-v30] D3: node-labeled adapter policy rows (wire v30, optional). Each entry is a
+    // map {key, label, value}: `label`/`value` are the node's display strings (rendered verbatim),
+    // `key` is a stable identifier the client NEVER keys behavior off (display only).
+    QList<QVariantMap> policies;
 };
 
 // One configured transport instance/account + its live status (TransportInstances ->

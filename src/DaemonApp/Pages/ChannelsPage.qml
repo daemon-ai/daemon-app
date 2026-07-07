@@ -456,6 +456,29 @@ Item {
                                 text: modelData.family
                                 font.family: FontIcons.mono; font.pixelSize: 10; color: Theme.textMuted
                             }
+                            // [waveB:app-v30] D3: read-only node-labeled adapter policies. The node
+                            // owns label + value; the client renders them verbatim and never keys
+                            // behavior off the policy `key`.
+                            Repeater {
+                                model: modelData.policies !== undefined ? modelData.policies : []
+                                delegate: RowLayout {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    spacing: 6
+                                    Text {
+                                        text: modelData.label
+                                        font.family: FontIcons.display; font.pixelSize: 10
+                                        color: Theme.textMuted
+                                    }
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: modelData.value
+                                        font.family: FontIcons.mono; font.pixelSize: 10
+                                        color: Theme.text; elide: Text.ElideRight
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                }
+                            }
                         }
                         // [wave2:app-channels-liveness] B1: connect an account via the shared
                         // interactive-auth sheet (MatrixSso family). Enabled only for adapters the

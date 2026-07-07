@@ -67,6 +67,16 @@ QByteArray adaptersResponse() {
     a.adapter_info_capabilities.adapter_capabilities_file_transfer = false;
     a.adapter_info_capabilities.adapter_capabilities_interactive_auth = true;
     a.adapter_info_account_schema_present = false;
+    // [waveB:app-v30] D3: one node-labeled policy row {key,label,value}.
+    static const QByteArray pk = QByteArrayLiteral("auto_accept");
+    static const QByteArray pl = QByteArrayLiteral("Auto-accept invites");
+    static const QByteArray pv = QByteArrayLiteral("trusted only");
+    a.adapter_info_policies_present = true;
+    a.adapter_info_policies.adapter_info_policies_policy_entry_m_count = 1;
+    policy_entry& pe = a.adapter_info_policies.adapter_info_policies_policy_entry_m[0];
+    setZ(pe.policy_entry_key, pk);
+    setZ(pe.policy_entry_label, pl);
+    setZ(pe.policy_entry_value, pv);
     return encodeResponse(*resp);
 }
 
@@ -210,6 +220,14 @@ private slots:
         QCOMPARE(out.at(0).displayName, QStringLiteral("Matrix"));
         QVERIFY(out.at(0).capabilities.value(QStringLiteral("roomEnumeration")).toBool());
         QVERIFY(!out.at(0).capabilities.value(QStringLiteral("fileTransfer")).toBool());
+        // [waveB:app-v30] D3: the node-labeled policy row decodes verbatim.
+        QCOMPARE(out.at(0).policies.size(), 1);
+        QCOMPARE(out.at(0).policies.at(0).value(QStringLiteral("key")).toString(),
+                 QStringLiteral("auto_accept"));
+        QCOMPARE(out.at(0).policies.at(0).value(QStringLiteral("label")).toString(),
+                 QStringLiteral("Auto-accept invites"));
+        QCOMPARE(out.at(0).policies.at(0).value(QStringLiteral("value")).toString(),
+                 QStringLiteral("trusted only"));
     }
 
     void instancesRoundTrip() {

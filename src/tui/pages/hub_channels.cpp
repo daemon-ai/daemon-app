@@ -175,6 +175,13 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
         md += tr("- **%1** (`%2`)\n")
                   .arg(p.value(QStringLiteral("displayName")).toString(),
                        p.value(QStringLiteral("family")).toString());
+        // [waveB:app-v30] D3: read-only node-labeled policy rows (verbatim; never keyed on `key`).
+        for (const QVariant& pv : p.value(QStringLiteral("policies")).toList()) {
+            const QVariantMap policy = pv.toMap();
+            md += tr("  - %1: %2\n")
+                      .arg(policy.value(QStringLiteral("label")).toString(),
+                           policy.value(QStringLiteral("value")).toString());
+        }
     }
 
     return md;

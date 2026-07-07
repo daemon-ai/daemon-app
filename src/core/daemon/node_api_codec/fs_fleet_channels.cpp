@@ -678,6 +678,20 @@ bool NodeApiCodec::decodeAdapters(const QByteArray& responseCbor, QList<DecodedA
         d.capabilities[QStringLiteral("roomEnumeration")] = c.adapter_capabilities_room_enumeration;
         d.capabilities[QStringLiteral("fileTransfer")] = c.adapter_capabilities_file_transfer;
         d.capabilities[QStringLiteral("interactiveAuth")] = c.adapter_capabilities_interactive_auth;
+        // [waveB:app-v30] D3: node-labeled policy rows (optional). Rendered verbatim; behavior is
+        // never keyed off `key`.
+        if (a.adapter_info_policies_present) {
+            for (size_t p = 0;
+                 p < a.adapter_info_policies.adapter_info_policies_policy_entry_m_count; ++p) {
+                const policy_entry& pe =
+                    a.adapter_info_policies.adapter_info_policies_policy_entry_m[p];
+                QVariantMap row;
+                row[QStringLiteral("key")] = fromZcbor(pe.policy_entry_key);
+                row[QStringLiteral("label")] = fromZcbor(pe.policy_entry_label);
+                row[QStringLiteral("value")] = fromZcbor(pe.policy_entry_value);
+                d.policies.append(row);
+            }
+        }
         out->append(d);
     }
     return true;
