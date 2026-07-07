@@ -844,6 +844,18 @@ QByteArray NodeApiCodec::encodeToolListRequest() {
     return encodeSimple(api_request_r::api_request_request_tool_list_m_c);
 }
 
+// [waveB:app-v30] D4: request the node enable/disable a tool (ToolSetEnabled, wire v30). The node
+// is authoritative — a force-disabled or build-gated tool stays disabled in the ToolList overlay.
+QByteArray NodeApiCodec::encodeToolSetEnabledRequest(const QString& tool, bool enabled) {
+    const QByteArray toolUtf8 = tool.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_tool_set_enabled_m_c, [&](api_request_r& request) {
+            request_tool_set_enabled& s = request.api_request_request_tool_set_enabled_m;
+            setZcbor(s.ToolSetEnabled_tool, toolUtf8);
+            s.ToolSetEnabled_enabled = enabled;
+        });
+}
+
 // [wave2:app-approvals-safety] D4: list a session's remembered exec-approval fingerprints
 // (FingerprintList, wire v29).
 QByteArray NodeApiCodec::encodeFingerprintListRequest(const QString& sessionId) {

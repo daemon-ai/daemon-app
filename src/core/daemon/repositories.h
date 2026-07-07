@@ -996,6 +996,10 @@ public:
     [[nodiscard]] const QList<DecodedToolInfo>& tools() const { return m_tools; }
 
     void refreshTools();
+    // [waveB:app-v30] D4: ask the node to enable/disable a tool (ToolSetEnabled). On Ok the tool
+    // list re-fetches so the client renders the node-authoritative overlay result (a force-disabled
+    // / build-gated tool stays disabled with its `requires`).
+    void setEnabled(const QString& tool, bool enabled);
 
 signals:
     void toolsRefreshed();
@@ -1006,6 +1010,7 @@ private:
     void handleFailure(const QString& correlationId, const QString& message);
 
     static constexpr auto kToolsCorrelation = "repo/tool-list";
+    static constexpr auto kSetEnabledCorrelation = "repo/tool-set-enabled"; // [waveB:app-v30] D4
 
     QList<DecodedToolInfo> m_tools;
 };

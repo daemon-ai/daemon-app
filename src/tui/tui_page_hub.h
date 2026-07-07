@@ -145,8 +145,6 @@ private:
     [[nodiscard]] QString buildFleetMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildSessionsMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildApprovalsMarkdown(int sel = -1) const;
-    // [wave2:app-approvals-safety] D2: read-only tool inventory markdown (Tools tab).
-    [[nodiscard]] QString buildToolsMarkdown() const;
     [[nodiscard]] QString buildRoutingMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildCronMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildMemoryMarkdown() const;

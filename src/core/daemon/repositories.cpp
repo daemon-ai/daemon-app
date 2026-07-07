@@ -2645,21 +2645,47 @@ void ToolRepository::refreshTools() {
     client()->sendRequest(NodeApiCodec::encodeToolListRequest(), QLatin1String(kToolsCorrelation));
 }
 
+// [waveB:app-v30] D4: request the toggle; on Ok re-fetch so the client renders the node's
+// authoritative overlay (never an optimistic local flip).
+void ToolRepository::setEnabled(const QString& tool, bool enabled) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeToolSetEnabledRequest(tool, enabled),
+                          QLatin1String(kSetEnabledCorrelation));
+}
+
 void ToolRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
-    if (correlationId != QLatin1String(kToolsCorrelation)) {
+    if (correlationId == QLatin1String(kToolsCorrelation)) {
+        QList<DecodedToolInfo> tools;
+        if (!NodeApiCodec::decodeTools(responseCbor, &tools)) {
+            emit operationFailed(QStringLiteral("Failed to decode Tools response"));
+            return;
+        }
+        m_tools = tools;
+        emit toolsRefreshed();
         return;
     }
-    QList<DecodedToolInfo> tools;
-    if (!NodeApiCodec::decodeTools(responseCbor, &tools)) {
-        emit operationFailed(QStringLiteral("Failed to decode Tools response"));
-        return;
+    // [waveB:app-v30] D4: the toggle's Ok/Error; on Ok re-list the authoritative inventory.
+    if (correlationId == QLatin1String(kSetEnabledCorrelation)) {
+        const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+        if (kind == ApiResponseKind::Ok) {
+            refreshTools();
+            return;
+        }
+        DecodedApiError err;
+        if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(tr("Failed to update the tool"));
+        }
     }
-    m_tools = tools;
-    emit toolsRefreshed();
 }
 
 void ToolRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kToolsCorrelation)) {
+    if (correlationId == QLatin1String(kToolsCorrelation) ||
+        correlationId == QLatin1String(kSetEnabledCorrelation)) {
         emit operationFailed(message);
     }
 }

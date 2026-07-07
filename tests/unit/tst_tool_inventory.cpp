@@ -133,6 +133,46 @@ private slots:
         QVERIFY(sawEnabled);
         QVERIFY(sawCredentialRequirement);
     }
+
+    // [waveB:app-v30] D4: the enable/disable intent encodes (and enable vs disable differ on the
+    // wire — the bool rides the request).
+    void toolSetEnabledEncodes() {
+        const QByteArray on = NodeApiCodec::encodeToolSetEnabledRequest(QStringLiteral("fs"), true);
+        const QByteArray off =
+            NodeApiCodec::encodeToolSetEnabledRequest(QStringLiteral("fs"), false);
+        QVERIFY(!on.isEmpty());
+        QVERIFY(!off.isEmpty());
+        QVERIFY(on != off);
+    }
+
+    // [waveB:app-v30] D4: the mock facade's setEnabled flips an ungated tool; a build/credential-
+    // gated tool stays disabled (the node is authoritative — a gated tool cannot be force-enabled).
+    void mockSetEnabledRespectsGating() {
+        tools::MockToolInventory inv;
+        auto* model = qobject_cast<uimodels::VariantListModel*>(inv.tools());
+        QVERIFY(model != nullptr);
+
+        const auto enabledOf = [&](const QString& name) -> bool {
+            for (const QVariantMap& r : model->rows()) {
+                if (r.value(QStringLiteral("name")).toString() == name) {
+                    return r.value(QStringLiteral("enabled")).toBool();
+                }
+            }
+            return false;
+        };
+
+        // An ungated tool ("fs") toggles freely.
+        QVERIFY(enabledOf(QStringLiteral("fs")));
+        inv.setEnabled(QStringLiteral("fs"), false);
+        QVERIFY(!enabledOf(QStringLiteral("fs")));
+        inv.setEnabled(QStringLiteral("fs"), true);
+        QVERIFY(enabledOf(QStringLiteral("fs")));
+
+        // A gated tool ("web_search", requires tavily) cannot be force-enabled.
+        QVERIFY(!enabledOf(QStringLiteral("web_search")));
+        inv.setEnabled(QStringLiteral("web_search"), true);
+        QVERIFY(!enabledOf(QStringLiteral("web_search")));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestToolInventory)

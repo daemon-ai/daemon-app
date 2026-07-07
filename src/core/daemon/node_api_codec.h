@@ -1145,6 +1145,9 @@ public:
     // ToolList is node-wide (no session arg). FingerprintList/Revoke are per-session (the node's
     // allow-list is per-session); revoke names the exact fingerprint hex to drop.
     [[nodiscard]] static QByteArray encodeToolListRequest();
+    // [waveB:app-v30] D4: enable/disable a tool (ToolSetEnabled). The node owns gating; re-fetch
+    // ToolList after to render the authoritative overlay result.
+    [[nodiscard]] static QByteArray encodeToolSetEnabledRequest(const QString& tool, bool enabled);
     [[nodiscard]] static QByteArray encodeFingerprintListRequest(const QString& sessionId);
     [[nodiscard]] static QByteArray encodeFingerprintRevokeRequest(const QString& sessionId,
                                                                    const QString& fingerprint);

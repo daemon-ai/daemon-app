@@ -197,33 +197,6 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
 // section). Rendered as a subsection of the TUI Settings page (the TUI folds GUI settings-sections
 // into its one Settings page). No mutation keys — the node owns tool gating; a disabled tool names
 // its requirement.
-QString TuiPageHub::buildToolsMarkdown() const {
-    QString md;
-    md += tr("## Tools\n\n");
-    md += tr("Tools are compiled and gated by the node. This inventory is read-only.\n\n");
-    auto* model = m_deps.tools == nullptr
-                      ? nullptr
-                      : qobject_cast<uimodels::VariantListModel*>(m_deps.tools->tools());
-    if (model == nullptr || model->count() == 0) {
-        md += tr("_No tools reported by the node._\n");
-        return md;
-    }
-    const auto rows = model->rows();
-    for (const QVariantMap& t : rows) {
-        const bool enabled = t.value(QStringLiteral("enabled")).toBool();
-        md += tr("- %1 **%2** — %3")
-                  .arg(enabled ? QStringLiteral("\u2713") : QStringLiteral("\u2717"),
-                       t.value(QStringLiteral("name")).toString(),
-                       t.value(QStringLiteral("description")).toString());
-        const QString reqLabel = t.value(QStringLiteral("requirementLabel")).toString();
-        if (!enabled && !reqLabel.isEmpty()) {
-            md += tr(" _(%1)_").arg(reqLabel);
-        }
-        md += QStringLiteral("\n");
-    }
-    return md;
-}
-
 // A human label for a pin row's origin scope ("#ops", "@bob", "api:key", "internal").
 static QString routingScopeLabel(const QVariantMap& row) {
     const QString kind = row.value(QStringLiteral("scopeKind")).toString();
