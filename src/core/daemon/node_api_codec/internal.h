@@ -73,6 +73,9 @@ DecodedOrigin decodeOriginStruct(const origin& o);
 // Project a generated `chat_route` into DecodedChatRoute.
 DecodedChatRoute decodeChatRouteStruct(const chat_route& r);
 DecodedUnitNode decodeUnitNodeStruct(const unit_node& n);
+// Project a generated `session_info` into a CachedSessionRow (shared by decodeSessionPage and
+// decodeSessionDetail). Leaves `updatedAtMs` at 0 (the caller stamps it).
+CachedSessionRow sessionRowFromInfo(const session_info& info);
 void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out);
 void fillProviderDescriptor(const provider_descriptor& p, DecodedProviderDescriptor* out);
 DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps);

@@ -262,8 +262,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.routingRepository = new RoutingRepository(graph.nodeApi, graph.cache, owner);
         if (!demoTransports) {
             delete graph.daemonNet;
-            graph.daemonNet = new DaemonDaemonNet(graph.routingRepository,
-                                                  graph.transportRepository, graph.store, owner);
+            graph.daemonNet =
+                new DaemonDaemonNet(graph.routingRepository, graph.transportRepository, graph.store,
+                                    graph.sessions, owner);
         }
         // The repository rides along for the operator steer/startTurn/interrupt ops (F4) and the
         // archived-scope refetch (F6).

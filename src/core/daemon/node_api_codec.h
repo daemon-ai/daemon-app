@@ -767,10 +767,38 @@ struct DecodedGgufInfo {
     quint64 sizeBytes = 0;
 };
 
+// One outbound delivery target of a session (SessionDetail.delivery_targets -> [DeliveryTarget]).
+// `kind` is the wire SinkKind: "Primary" (the authoritative reply sink; exactly one) or
+// "Spectator" (a read-only observer). CHA-9 detail hydration.
+struct DecodedDeliveryTarget {
+    QString transport;
+    QString route;
+    QString kind = QStringLiteral("Primary"); // "Primary" | "Spectator"
+};
+
+// The on-demand full detail for one session (SessionGet -> SessionDetail(opt)). CHA-9 follow-on:
+// the roster (SessionPage) carries only the SessionInfo row; this hydrates the extra per-session
+// facets the node owns - the live overlay's resolved model + approval mode, the outbound delivery
+// targets, the child session ids, and the durable checkpoint count. Every facet past `info` is
+// optional on the wire (a `has*` flag guards it). The null SessionDetail arm (unknown session)
+// surfaces as decodeSessionDetail(..., found=false).
+struct DecodedSessionDetail {
+    CachedSessionRow info; // the same SessionInfo row shape the roster page carries
+    bool hasModel = false;
+    QString model; // overlay's resolved model id, when the session pins one
+    bool hasApprovalMode = false;
+    QString approvalMode; // overlay approval mode: "ask"|"accept_edits"|"auto_allow"|"deny"
+    QList<DecodedDeliveryTarget> deliveryTargets;
+    QStringList children; // child session ids (delegated children / subagents)
+    bool hasCheckpointCount = false;
+    quint32 checkpointCount = 0;
+};
+
 enum class ApiResponseKind {
     Unknown,
     Health,
     SessionPage,
+    SessionDetail,
     LogPage,
     EventsPage,
     Journal,
@@ -886,6 +914,11 @@ public:
                                                                const QString& profile = QString());
     // Decode a SessionCreated response into the node-minted/accepted session id.
     static bool decodeSessionCreated(const QByteArray& responseCbor, QString* outId);
+
+    // Fetch one session's full detail (SessionGet{session} -> SessionDetail(opt)). CHA-9 follow-on:
+    // the on-demand hydration of the per-session facets the roster page omits (delivery targets,
+    // child ids, checkpoint count, resolved model/approval mode).
+    [[nodiscard]] static QByteArray encodeSessionGetRequest(const QString& sessionId);
 
     // Patch a session's node-owned metadata (SessionUpdateMeta{session, patch} -> Ok). Each
     // optional is Some(value) = set that field, std::nullopt = leave it untouched (the key is
@@ -1196,6 +1229,10 @@ public:
     static bool decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
                                   QString* nextCursor = nullptr, quint64* rev = nullptr,
                                   QStringList* removed = nullptr);
+    // Decode a SessionDetail response (SessionGet). Sets *found=false on the null arm (unknown
+    // session). CHA-9 follow-on: hydrates the per-session facets the roster page omits.
+    static bool decodeSessionDetail(const QByteArray& responseCbor, DecodedSessionDetail* out,
+                                    bool* found);
     // Decode a LogPage into cache rows tagged with sessionId (seq/direction/disposition + the
     // next/head cursors). The full payload/origin now generate from the unified contract; use
     // decodeLogPageEntries() when the typed payload (AgentEvent) is needed (transcript rendering).
