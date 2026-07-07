@@ -72,6 +72,11 @@ QtObject {
     readonly property string fa_file: "\uf15b"
     readonly property string fa_tag: "\uf02b"
     readonly property string fa_comments: "\uf086"
+    // Feedback thumbs (solid only; the regular/outline face is deliberately not
+    // loaded, so a "selected" thumb is conveyed by accent color, not a filled
+    // variant — see the fa-regular note above).
+    readonly property string fa_thumbs_up: "\uf164"
+    readonly property string fa_thumbs_down: "\uf165"
     readonly property string fa_box_archive: "\uf187"
     readonly property string fa_paper_plane: "\uf1d8"
     readonly property string fa_user: "\uf007"

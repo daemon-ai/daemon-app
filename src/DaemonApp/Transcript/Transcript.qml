@@ -266,6 +266,15 @@ Rectangle {
             root.rerunRequested("")
         }
 
+        // Footer thumbs feedback: the controller recorded the rating + resolved
+        // the message's wire anchor; forward it to the node-owned Feedback seam
+        // (sessions are keyed the same way as the other host signals). Explicit
+        // feedback is sent even when telemetry is off (per-event consent).
+        function onMessageFeedbackSubmitted(messageId, anchor, rating, comment) {
+            if (typeof Feedback !== "undefined" && Feedback)
+                Feedback.submitMessageFeedback(root.sessionId, anchor, rating, comment)
+        }
+
         // Inline edit / restore: the controller truncated the doc to the user
         // message and re-added its text; stream the assistant reply for it.
         function onUserMessageEdited(messageId, text) {
