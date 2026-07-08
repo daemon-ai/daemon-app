@@ -3,7 +3,7 @@
 #
 # Static-Qt macOS desktop build: a self-contained daemon-app .app bundle
 # with Qt compiled in (no /nix/store Qt references, no macdeployqt needed),
-# packaged as a .dmg via cpack DragNDrop.
+# packaged as a drag-and-drop .dmg via hdiutil.
 #
 # Mirrors portable.nix (the Linux static stack) using the same shared
 # qt-from-source.nix builder, flavor "macos-static". macOS SDK comes from
@@ -403,71 +403,74 @@ let
     '';
   };
 
-  # --- .dmg packaging via cpack DragNDrop ---
-  # The static binary needs no macdeployqt (Qt is compiled in). cpack
-  # creates the .app bundle structure and wraps it in a DMG.
+  # --- .dmg packaging via hdiutil (drag-and-drop layout) ---
+  # The static build's shippable product is the .app bundle that cmake's
+  # install lays out (BUNDLE DESTINATION . in src/DaemonApp/App/CMakeLists.txt):
+  #   ${appStatic}/daemon-app.app/Contents/MacOS/daemon-app     (static GUI, ~74 MB)
+  #   ${appStatic}/daemon-app.app/Contents/MacOS/daemon-updater (self-update helper)
+  #   ${appStatic}/daemon-app.app/Contents/Resources/...        (microtex-res, icon, license)
+  # (daemon-tui installs to ${appStatic}/bin, deliberately NOT inside the .app,
+  # so it is not part of the drag-to-Applications payload.)
+  #
+  # No macdeployqt is needed (Qt is compiled in). We stage a writable copy of
+  # that bundle, scrub the baked /nix/store references, re-seal it, and wrap it
+  # in a compressed, mountable DMG with an /Applications alias.
   dmg = pkgs.runCommand "daemon-macos-dmg-${baseVersion}" {
     nativeBuildInputs = with pkgs; [
       removeReferencesTo
     ];
   } ''
-    mkdir -p "$out"
-    bin="${appStatic}/bin/daemon-app"
-
-    # Scrub nix store references from the binary (Qt bakes QLibraryInfo paths).
-    cp "$bin" ./daemon-app
-    chmod u+w ./daemon-app
-    for ref in ${qtbaseStatic} ${qtshadertoolsStatic} ${qtdeclarativeStatic} \
-               ${qtsvgStatic} ${qtwebsocketsStatic} ${tinyxml2Static} \
-               ${qt5compatStatic} ${qtkeychainStatic}; do
-      remove-references-to -t "$ref" ./daemon-app
-    done
-
-    # Create a minimal .app bundle.
-    app="$out/Daemon.app/Contents"
-    mkdir -p "$app/MacOS" "$app/Resources"
-    cp ./daemon-app "$app/MacOS/daemon-app"
-
-    cat > "$app/Info.plist" <<PLIST
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>CFBundleExecutable</key>
-      <string>daemon-app</string>
-      <key>CFBundleIdentifier</key>
-      <string>ai.daemon.app</string>
-      <key>CFBundleName</key>
-      <string>Daemon</string>
-      <key>CFBundleVersion</key>
-      <string>${baseVersion}</string>
-      <key>CFBundleShortVersionString</key>
-      <string>${baseVersion}</string>
-      <key>CFBundlePackageType</key>
-      <string>APPL</string>
-      <key>LSMinimumSystemVersion</key>
-      <string>12.0</string>
-      <key>NSHighResolutionCapable</key>
-      <true/>
-      <key>NSSupportsAutomaticGraphicsSwitching</key>
-      <true/>
-    </dict>
-    </plist>
-    PLIST
-
-    # Copy MicroTeX runtime resources.
-    mkdir -p "$app/Resources/microtex-res"
-    cp -r ${depSources.microtex}/res/. "$app/Resources/microtex-res/"
-
-    # Ad-hoc codesign (required on arm64 macOS for any executable).
     export PATH="$PATH:/usr/bin:/usr/sbin"
-    codesign --force --sign - "$app/MacOS/daemon-app" 2>/dev/null || true
+    mkdir -p "$out"
+
+    # Stage a writable copy of the real .app bundle (the store copy is
+    # read-only, and scrubbing/signing rewrites bytes in place).
+    stage="$TMPDIR/stage"
+    mkdir -p "$stage"
+    cp -a "${appStatic}/daemon-app.app" "$stage/daemon-app.app"
+    chmod -R u+w "$stage/daemon-app.app"
+
+    # Scrub baked /nix/store references from every executable in the bundle.
+    # The static binary carries QLibraryInfo prefix strings (Qt) and the
+    # linker's install-name/rpath strings for the statically-linked deps; once
+    # the .app is dragged off the store those absolute paths dangle, so
+    # neutralize them. Covers appStatic's full static-link closure.
+    for macho in "$stage/daemon-app.app/Contents/MacOS"/*; do
+      [ -f "$macho" ] || continue
+      for ref in ${qtbaseStatic} ${qtshadertoolsStatic} ${qtdeclarativeStatic} \
+                 ${qtsvgStatic} ${qtwebsocketsStatic} ${qt5compatStatic} \
+                 ${tinyxml2Static} ${qtkeychainStatic} ${tuiWidgetsStatic} \
+                 ${termpaintStatic} ${posixSignalManagerStatic} \
+                 ${qmltermwidgetStatic} ${sdk} ${pkgs.zlib}; do
+        remove-references-to -t "$ref" "$macho"
+      done
+      # remove-references-to rewrites bytes, voiding the ad-hoc signature.
+      codesign --force --sign - "$macho"
+    done
+    # Re-seal the bundle now that its executables changed.
+    codesign --force --sign - "$stage/daemon-app.app"
+
+    # Drag-and-drop layout: the .app next to an /Applications alias.
+    ln -s /Applications "$stage/Applications"
+
+    # Build the compressed, mountable disk image. hdiutil lives in /usr/bin;
+    # this mac's daemon build user runs with the sandbox disabled.
+    hdiutil create \
+      -volname "Daemon" \
+      -srcfolder "$stage" \
+      -format UDZO \
+      -ov \
+      "$out/daemon-app-${baseVersion}.dmg"
+
+    # Checksum sidecar alongside the image.
+    ( cd "$out" && shasum -a 256 "daemon-app-${baseVersion}.dmg" \
+        > "daemon-app-${baseVersion}.dmg.sha256" )
   '';
 
   # Boot smoke (offscreen, mock service mode — same contract as Linux).
   bootSmoke = pkgs.runCommand "macos-boot-smoke" { } ''
     mkdir -p "$out"
-    bin="${appStatic}/bin/daemon-app"
+    bin="${appStatic}/daemon-app.app/Contents/MacOS/daemon-app"
     report="$out/report.txt"
 
     echo "== macos-boot-smoke: $bin" | tee "$report"
