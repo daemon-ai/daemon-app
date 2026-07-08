@@ -31,6 +31,12 @@ public:
     // Available adapter families for the "Add channel" picker. Each entry is a map:
     //   family (QString), displayName (QString), capabilities (QVariantMap of bool flags),
     //   schema (QVariantList of field maps: key, label, required).
+    // [acct-mgmt] Per-verb ops (wire v33): rows MAY also carry conversationOps (create/joinChannel/
+    // leave/delete/send/setTopic/setTitle/setDescription -> bool), membershipOps (invite/remove/
+    // ban/setRole), contactsOps (getProfile/actionMenu/setAlias), rosterOps (add/update/remove)
+    // and directory (bool). Each key is present ONLY when the node reported a concrete ops map —
+    // a missing key (v32 node, or the adapter reported null) means "no per-verb info" and the UI
+    // falls back to the coarse capability heuristic; a present map is authoritative.
     [[nodiscard]] Q_INVOKABLE virtual QVariantList availableAdapters() const = 0;
 
     // Configured transport instances (accounts). Each entry is a map:

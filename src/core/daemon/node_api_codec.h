@@ -305,6 +305,22 @@ struct DecodedAdapterInfo {
     // map {key, label, value}: `label`/`value` are the node's display strings (rendered verbatim),
     // `key` is a stable identifier the client NEVER keys behavior off (display only).
     QList<QVariantMap> policies;
+    // [acct-mgmt] Per-verb adapter ops (wire v33, optional-nullable on the wire). Each has*Ops is
+    // true ONLY when the node reported a concrete ops map — absent (a v32 node / non-messaging
+    // adapter) and null (an adapter without that feature) both decode false, meaning "no per-verb
+    // info" (the UI then falls back to the legacy coarse capability heuristic). When true, the
+    // map is AUTHORITATIVE: verb -> bool with the capabilities map's camelCase key convention.
+    bool hasConversationOps = false;
+    QVariantMap conversationOps; // create/joinChannel/leave/delete/send/setTopic/setTitle/
+                                 // setDescription -> bool
+    bool hasMembershipOps = false;
+    QVariantMap membershipOps; // invite/remove/ban/setRole -> bool
+    bool hasContactsOps = false;
+    QVariantMap contactsOps; // getProfile/actionMenu/setAlias -> bool
+    bool hasRosterOps = false;
+    QVariantMap rosterOps; // add/update/remove -> bool
+    bool hasDirectory = false;
+    bool directory = false; // the adapter offers a people directory (DirectorySearch)
 };
 
 // One configured transport instance/account + its live status (TransportInstances ->

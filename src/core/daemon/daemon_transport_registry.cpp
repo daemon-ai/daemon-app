@@ -48,6 +48,25 @@ QVariantList DaemonTransportRegistry::availableAdapters() const {
             policies.append(p);
         }
         row[QStringLiteral("policies")] = policies;
+        // [acct-mgmt] Per-verb ops (wire v33): the key is present ONLY when the node reported a
+        // concrete ops map, so consumers distinguish "authoritative per-verb info" (key present)
+        // from "absent/null — fall back to the coarse capability" (key missing / undefined in
+        // QML) without a parallel flag.
+        if (a.hasConversationOps) {
+            row[QStringLiteral("conversationOps")] = a.conversationOps;
+        }
+        if (a.hasMembershipOps) {
+            row[QStringLiteral("membershipOps")] = a.membershipOps;
+        }
+        if (a.hasContactsOps) {
+            row[QStringLiteral("contactsOps")] = a.contactsOps;
+        }
+        if (a.hasRosterOps) {
+            row[QStringLiteral("rosterOps")] = a.rosterOps;
+        }
+        if (a.hasDirectory) {
+            row[QStringLiteral("directory")] = a.directory;
+        }
         out.append(row);
     }
     return out;

@@ -910,6 +910,62 @@ bool NodeApiCodec::decodeAdapters(const QByteArray& responseCbor, QList<DecodedA
                 d.policies.append(row);
             }
         }
+        // [acct-mgmt] Per-verb adapter ops (wire v33, optional-nullable). Absent (a v32 node /
+        // non-messaging adapter) and the null arm (an adapter without that feature) both leave
+        // has*Ops false — "no per-verb info", the UI falls back to the coarse capability. A
+        // concrete ops map sets has*Ops and is authoritative. Keys follow the capabilities map's
+        // camelCase convention.
+        if (a.adapter_info_conversation_ops_present &&
+            a.adapter_info_conversation_ops.adapter_info_conversation_ops_choice ==
+                adapter_info_conversation_ops_r::
+                    adapter_info_conversation_ops_conversation_ops_m_c) {
+            const conversation_ops& ops =
+                a.adapter_info_conversation_ops.adapter_info_conversation_ops_conversation_ops_m;
+            d.hasConversationOps = true;
+            d.conversationOps[QStringLiteral("create")] = ops.conversation_ops_create;
+            d.conversationOps[QStringLiteral("joinChannel")] = ops.conversation_ops_join_channel;
+            d.conversationOps[QStringLiteral("leave")] = ops.conversation_ops_leave;
+            d.conversationOps[QStringLiteral("delete")] = ops.conversation_ops_delete;
+            d.conversationOps[QStringLiteral("send")] = ops.conversation_ops_send;
+            d.conversationOps[QStringLiteral("setTopic")] = ops.conversation_ops_set_topic;
+            d.conversationOps[QStringLiteral("setTitle")] = ops.conversation_ops_set_title;
+            d.conversationOps[QStringLiteral("setDescription")] =
+                ops.conversation_ops_set_description;
+        }
+        if (a.adapter_info_membership_ops_present &&
+            a.adapter_info_membership_ops.adapter_info_membership_ops_choice ==
+                adapter_info_membership_ops_r::adapter_info_membership_ops_membership_ops_m_c) {
+            const membership_ops& ops =
+                a.adapter_info_membership_ops.adapter_info_membership_ops_membership_ops_m;
+            d.hasMembershipOps = true;
+            d.membershipOps[QStringLiteral("invite")] = ops.membership_ops_invite;
+            d.membershipOps[QStringLiteral("remove")] = ops.membership_ops_remove;
+            d.membershipOps[QStringLiteral("ban")] = ops.membership_ops_ban;
+            d.membershipOps[QStringLiteral("setRole")] = ops.membership_ops_set_role;
+        }
+        if (a.adapter_info_contacts_ops_present &&
+            a.adapter_info_contacts_ops.adapter_info_contacts_ops_choice ==
+                adapter_info_contacts_ops_r::adapter_info_contacts_ops_contacts_ops_m_c) {
+            const contacts_ops& ops =
+                a.adapter_info_contacts_ops.adapter_info_contacts_ops_contacts_ops_m;
+            d.hasContactsOps = true;
+            d.contactsOps[QStringLiteral("getProfile")] = ops.contacts_ops_get_profile;
+            d.contactsOps[QStringLiteral("actionMenu")] = ops.contacts_ops_action_menu;
+            d.contactsOps[QStringLiteral("setAlias")] = ops.contacts_ops_set_alias;
+        }
+        if (a.adapter_info_roster_ops_present &&
+            a.adapter_info_roster_ops.adapter_info_roster_ops_choice ==
+                adapter_info_roster_ops_r::adapter_info_roster_ops_roster_ops_m_c) {
+            const roster_ops& ops = a.adapter_info_roster_ops.adapter_info_roster_ops_roster_ops_m;
+            d.hasRosterOps = true;
+            d.rosterOps[QStringLiteral("add")] = ops.roster_ops_add;
+            d.rosterOps[QStringLiteral("update")] = ops.roster_ops_update;
+            d.rosterOps[QStringLiteral("remove")] = ops.roster_ops_remove;
+        }
+        if (a.adapter_info_directory_present) {
+            d.hasDirectory = true;
+            d.directory = a.adapter_info_directory.adapter_info_directory;
+        }
         out->append(d);
     }
     return true;

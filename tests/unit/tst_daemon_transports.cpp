@@ -81,6 +81,93 @@ QByteArray adaptersResponse() {
     return encodeResponse(*resp);
 }
 
+// [acct-mgmt] {"Adapters":[ AdapterInfo{ matrix + all four per-verb ops + directory } ]} — the
+// wire v33 shape. Conversation ops: everything but delete; membership: everything but ban, so the
+// decode proves per-verb values (not just presence).
+QByteArray adaptersResponseWithOps() {
+    const QByteArray fam = QByteArrayLiteral("matrix");
+    const QByteArray disp = QByteArrayLiteral("Matrix");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_adapters_m_c;
+    response_adapters& ra = resp->api_response_response_adapters_m;
+    ra.response_adapters_Adapters_adapter_info_m_count = 1;
+    adapter_info& a = ra.response_adapters_Adapters_adapter_info_m[0];
+    setZ(a.adapter_info_family, fam);
+    setZ(a.adapter_info_display_name, disp);
+    a.adapter_info_capabilities.adapter_capabilities_rooms = true;
+    a.adapter_info_capabilities.adapter_capabilities_direct_messages = true;
+    a.adapter_info_capabilities.adapter_capabilities_presence = true;
+    a.adapter_info_capabilities.adapter_capabilities_room_enumeration = true;
+    a.adapter_info_capabilities.adapter_capabilities_file_transfer = false;
+    a.adapter_info_capabilities.adapter_capabilities_interactive_auth = true;
+    a.adapter_info_conversation_ops_present = true;
+    a.adapter_info_conversation_ops.adapter_info_conversation_ops_choice =
+        adapter_info_conversation_ops_r::adapter_info_conversation_ops_conversation_ops_m_c;
+    conversation_ops& co =
+        a.adapter_info_conversation_ops.adapter_info_conversation_ops_conversation_ops_m;
+    co.conversation_ops_create = true;
+    co.conversation_ops_join_channel = true;
+    co.conversation_ops_leave = true;
+    co.conversation_ops_delete = false;
+    co.conversation_ops_send = true;
+    co.conversation_ops_set_topic = true;
+    co.conversation_ops_set_title = false;
+    co.conversation_ops_set_description = false;
+    a.adapter_info_membership_ops_present = true;
+    a.adapter_info_membership_ops.adapter_info_membership_ops_choice =
+        adapter_info_membership_ops_r::adapter_info_membership_ops_membership_ops_m_c;
+    membership_ops& mo = a.adapter_info_membership_ops.adapter_info_membership_ops_membership_ops_m;
+    mo.membership_ops_invite = true;
+    mo.membership_ops_remove = true;
+    mo.membership_ops_ban = false;
+    mo.membership_ops_set_role = true;
+    a.adapter_info_contacts_ops_present = true;
+    a.adapter_info_contacts_ops.adapter_info_contacts_ops_choice =
+        adapter_info_contacts_ops_r::adapter_info_contacts_ops_contacts_ops_m_c;
+    contacts_ops& cto = a.adapter_info_contacts_ops.adapter_info_contacts_ops_contacts_ops_m;
+    cto.contacts_ops_get_profile = true;
+    cto.contacts_ops_action_menu = false;
+    cto.contacts_ops_set_alias = true;
+    a.adapter_info_roster_ops_present = true;
+    a.adapter_info_roster_ops.adapter_info_roster_ops_choice =
+        adapter_info_roster_ops_r::adapter_info_roster_ops_roster_ops_m_c;
+    roster_ops& ro = a.adapter_info_roster_ops.adapter_info_roster_ops_roster_ops_m;
+    ro.roster_ops_add = true;
+    ro.roster_ops_update = false;
+    ro.roster_ops_remove = true;
+    a.adapter_info_directory_present = true;
+    a.adapter_info_directory.adapter_info_directory = true;
+    return encodeResponse(*resp);
+}
+
+// [acct-mgmt] AdapterInfo with all four ops fields PRESENT but carrying the null arm (an adapter
+// without those features) — must decode exactly like the absent (v32) shape: has*Ops false.
+QByteArray adaptersResponseNullOps() {
+    const QByteArray fam = QByteArrayLiteral("http");
+    const QByteArray disp = QByteArrayLiteral("HTTP");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_adapters_m_c;
+    response_adapters& ra = resp->api_response_response_adapters_m;
+    ra.response_adapters_Adapters_adapter_info_m_count = 1;
+    adapter_info& a = ra.response_adapters_Adapters_adapter_info_m[0];
+    setZ(a.adapter_info_family, fam);
+    setZ(a.adapter_info_display_name, disp);
+    a.adapter_info_conversation_ops_present = true;
+    a.adapter_info_conversation_ops.adapter_info_conversation_ops_choice =
+        adapter_info_conversation_ops_r::adapter_info_conversation_ops_null_m_c;
+    a.adapter_info_membership_ops_present = true;
+    a.adapter_info_membership_ops.adapter_info_membership_ops_choice =
+        adapter_info_membership_ops_r::adapter_info_membership_ops_null_m_c;
+    a.adapter_info_contacts_ops_present = true;
+    a.adapter_info_contacts_ops.adapter_info_contacts_ops_choice =
+        adapter_info_contacts_ops_r::adapter_info_contacts_ops_null_m_c;
+    a.adapter_info_roster_ops_present = true;
+    a.adapter_info_roster_ops.adapter_info_roster_ops_choice =
+        adapter_info_roster_ops_r::adapter_info_roster_ops_null_m_c;
+    a.adapter_info_directory_present = false;
+    return encodeResponse(*resp);
+}
+
 // {"TransportInstances":[ TransportInstanceInfo{ matrix/@bot:hs, Connected, Unknown } ]}
 QByteArray instancesResponse() {
     const QByteArray t = QByteArrayLiteral("matrix/@bot:hs");
@@ -351,6 +438,145 @@ private slots:
                  QStringLiteral("Auto-accept invites"));
         QCOMPARE(out.at(0).policies.at(0).value(QStringLiteral("value")).toString(),
                  QStringLiteral("trusted only"));
+        // [acct-mgmt] the legacy (v32) shape omits every per-verb ops field -> has*Ops false
+        // ("no per-verb info"; the UI falls back to the coarse capability).
+        QVERIFY(!out.at(0).hasConversationOps);
+        QVERIFY(!out.at(0).hasMembershipOps);
+        QVERIFY(!out.at(0).hasContactsOps);
+        QVERIFY(!out.at(0).hasRosterOps);
+        QVERIFY(!out.at(0).hasDirectory);
+    }
+
+    // [acct-mgmt] Concrete per-verb ops maps (wire v33) decode with per-verb values; directory
+    // rides along.
+    void adapterOpsRoundTrip() {
+        QList<DecodedAdapterInfo> out;
+        QVERIFY(NodeApiCodec::decodeAdapters(adaptersResponseWithOps(), &out));
+        QCOMPARE(out.size(), 1);
+        const DecodedAdapterInfo& a = out.at(0);
+        QVERIFY(a.hasConversationOps);
+        QVERIFY(a.conversationOps.value(QStringLiteral("create")).toBool());
+        QVERIFY(a.conversationOps.value(QStringLiteral("joinChannel")).toBool());
+        QVERIFY(a.conversationOps.value(QStringLiteral("leave")).toBool());
+        QVERIFY(!a.conversationOps.value(QStringLiteral("delete")).toBool());
+        QVERIFY(a.conversationOps.value(QStringLiteral("send")).toBool());
+        QVERIFY(a.conversationOps.value(QStringLiteral("setTopic")).toBool());
+        QVERIFY(!a.conversationOps.value(QStringLiteral("setTitle")).toBool());
+        QVERIFY(a.hasMembershipOps);
+        QVERIFY(a.membershipOps.value(QStringLiteral("invite")).toBool());
+        QVERIFY(a.membershipOps.value(QStringLiteral("remove")).toBool());
+        QVERIFY(!a.membershipOps.value(QStringLiteral("ban")).toBool());
+        QVERIFY(a.membershipOps.value(QStringLiteral("setRole")).toBool());
+        QVERIFY(a.hasContactsOps);
+        QVERIFY(a.contactsOps.value(QStringLiteral("getProfile")).toBool());
+        QVERIFY(!a.contactsOps.value(QStringLiteral("actionMenu")).toBool());
+        QVERIFY(a.contactsOps.value(QStringLiteral("setAlias")).toBool());
+        QVERIFY(a.hasRosterOps);
+        QVERIFY(a.rosterOps.value(QStringLiteral("add")).toBool());
+        QVERIFY(!a.rosterOps.value(QStringLiteral("update")).toBool());
+        QVERIFY(a.rosterOps.value(QStringLiteral("remove")).toBool());
+        QVERIFY(a.hasDirectory);
+        QVERIFY(a.directory);
+    }
+
+    // [acct-mgmt] The null arm (adapter without those features) decodes exactly like absent:
+    // has*Ops false — the client cannot tell them apart and must not try.
+    void adapterOpsNullDecodesAsAbsent() {
+        QList<DecodedAdapterInfo> out;
+        QVERIFY(NodeApiCodec::decodeAdapters(adaptersResponseNullOps(), &out));
+        QCOMPARE(out.size(), 1);
+        QVERIFY(!out.at(0).hasConversationOps);
+        QVERIFY(out.at(0).conversationOps.isEmpty());
+        QVERIFY(!out.at(0).hasMembershipOps);
+        QVERIFY(!out.at(0).hasContactsOps);
+        QVERIFY(!out.at(0).hasRosterOps);
+        QVERIFY(!out.at(0).hasDirectory);
+    }
+
+    // [acct-mgmt] The daemon registry projects a present ops map into the adapter row (the key is
+    // present ONLY then), so QML/TUI distinguish authoritative per-verb info from the fallback.
+    void registryProjectsPerVerbOps() {
+        const QString sock = m_tmp.filePath(QStringLiteral("ops.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplyPayload(adaptersResponseWithOps());
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("ops.db")));
+        TransportRepository repo(&tx.client, &cache);
+        DaemonTransportRegistry registry(&repo);
+
+        QSignalSpy adapters(&registry, &transports::ITransportRegistry::adaptersChanged);
+        repo.refreshAdapters();
+        QTRY_COMPARE_WITH_TIMEOUT(adapters.count(), 1, 3000);
+        const QVariantMap row = registry.availableAdapters().at(0).toMap();
+        QVERIFY(row.contains(QStringLiteral("conversationOps")));
+        QVERIFY(!row.value(QStringLiteral("conversationOps"))
+                     .toMap()
+                     .value(QStringLiteral("delete"))
+                     .toBool());
+        QVERIFY(row.value(QStringLiteral("conversationOps"))
+                    .toMap()
+                    .value(QStringLiteral("joinChannel"))
+                    .toBool());
+        QVERIFY(row.contains(QStringLiteral("membershipOps")));
+        QVERIFY(!row.value(QStringLiteral("membershipOps"))
+                     .toMap()
+                     .value(QStringLiteral("ban"))
+                     .toBool());
+        QVERIFY(row.value(QStringLiteral("directory")).toBool());
+
+        // The null-ops shape projects NO ops keys (fallback signal for consumers).
+        fake.setReplyPayload(adaptersResponseNullOps());
+        repo.refreshAdapters();
+        QTRY_COMPARE_WITH_TIMEOUT(adapters.count(), 2, 3000);
+        const QVariantMap nullRow = registry.availableAdapters().at(0).toMap();
+        QVERIFY(!nullRow.contains(QStringLiteral("conversationOps")));
+        QVERIFY(!nullRow.contains(QStringLiteral("membershipOps")));
+        QVERIFY(!nullRow.contains(QStringLiteral("contactsOps")));
+        QVERIFY(!nullRow.contains(QStringLiteral("rosterOps")));
+        QVERIFY(!nullRow.contains(QStringLiteral("directory")));
+    }
+
+    // [acct-mgmt] The mock's canned families carry differing per-verb ops so offline dev
+    // exercises the gating: matrix allows delete/ban/setRole, the Rooms loopback does not — the
+    // exact bits the GUI buttons / TUI keys read.
+    void mockAdvertisesPerVerbOps() {
+        transports::MockTransportRegistry mock;
+        const QVariantList adapters = mock.availableAdapters();
+        QCOMPARE(adapters.size(), 2);
+        const QVariantMap matrix = adapters.at(0).toMap();
+        const QVariantMap rooms = adapters.at(1).toMap();
+        QCOMPARE(matrix.value(QStringLiteral("family")).toString(), QStringLiteral("matrix"));
+        QCOMPARE(rooms.value(QStringLiteral("family")).toString(), QStringLiteral("room"));
+        QVERIFY(matrix.value(QStringLiteral("conversationOps"))
+                    .toMap()
+                    .value(QStringLiteral("delete"))
+                    .toBool());
+        QVERIFY(!rooms.value(QStringLiteral("conversationOps"))
+                     .toMap()
+                     .value(QStringLiteral("delete"))
+                     .toBool());
+        QVERIFY(matrix.value(QStringLiteral("membershipOps"))
+                    .toMap()
+                    .value(QStringLiteral("ban"))
+                    .toBool());
+        QVERIFY(!rooms.value(QStringLiteral("membershipOps"))
+                     .toMap()
+                     .value(QStringLiteral("ban"))
+                     .toBool());
+        QVERIFY(!rooms.value(QStringLiteral("membershipOps"))
+                     .toMap()
+                     .value(QStringLiteral("setRole"))
+                     .toBool());
+        // Both canned families still advertise join/create/invite (functional offline flows).
+        QVERIFY(rooms.value(QStringLiteral("conversationOps"))
+                    .toMap()
+                    .value(QStringLiteral("joinChannel"))
+                    .toBool());
+        QVERIFY(rooms.value(QStringLiteral("membershipOps"))
+                    .toMap()
+                    .value(QStringLiteral("invite"))
+                    .toBool());
     }
 
     void instancesRoundTrip() {

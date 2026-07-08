@@ -28,6 +28,30 @@ QVariantMap adapterRow(const QString& family, const QString& displayName, bool r
     return row;
 }
 
+// [acct-mgmt] Per-verb ops maps (wire v33) for the canned families, so offline dev exercises the
+// real gating paths (keys follow the daemon registry's camelCase convention).
+QVariantMap conversationOps(bool create, bool joinChannel, bool leave, bool del) {
+    QVariantMap ops;
+    ops.insert(QStringLiteral("create"), create);
+    ops.insert(QStringLiteral("joinChannel"), joinChannel);
+    ops.insert(QStringLiteral("leave"), leave);
+    ops.insert(QStringLiteral("delete"), del);
+    ops.insert(QStringLiteral("send"), true);
+    ops.insert(QStringLiteral("setTopic"), false);
+    ops.insert(QStringLiteral("setTitle"), false);
+    ops.insert(QStringLiteral("setDescription"), false);
+    return ops;
+}
+
+QVariantMap membershipOps(bool invite, bool remove, bool ban, bool setRole) {
+    QVariantMap ops;
+    ops.insert(QStringLiteral("invite"), invite);
+    ops.insert(QStringLiteral("remove"), remove);
+    ops.insert(QStringLiteral("ban"), ban);
+    ops.insert(QStringLiteral("setRole"), setRole);
+    return ops;
+}
+
 QVariantMap roomRow(const QString& transport, const QString& id, const QString& title,
                     const QString& kind) {
     QVariantMap m;
@@ -73,11 +97,18 @@ MockTransportRegistry::MockTransportRegistry(QObject* parent) : ITransportRegist
 }
 
 QVariantList MockTransportRegistry::availableAdapters() const {
-    return QVariantList{
-        adapterRow(QStringLiteral("matrix"), QStringLiteral("Matrix"), true, true, true, true),
-        adapterRow(QStringLiteral("room"), QStringLiteral("Rooms (internal)"), true, true, false,
-                   false),
-    };
+    // [acct-mgmt] Matrix advertises the full room/member verb set; the internal Rooms loopback a
+    // deliberately narrower one (no ban / no role changes, no room delete) so the per-verb gating
+    // visibly differs between the two canned families in offline dev.
+    QVariantMap matrix =
+        adapterRow(QStringLiteral("matrix"), QStringLiteral("Matrix"), true, true, true, true);
+    matrix.insert(QStringLiteral("conversationOps"), conversationOps(true, true, true, true));
+    matrix.insert(QStringLiteral("membershipOps"), membershipOps(true, true, true, true));
+    QVariantMap rooms = adapterRow(QStringLiteral("room"), QStringLiteral("Rooms (internal)"), true,
+                                   true, false, false);
+    rooms.insert(QStringLiteral("conversationOps"), conversationOps(true, true, true, false));
+    rooms.insert(QStringLiteral("membershipOps"), membershipOps(true, true, false, false));
+    return QVariantList{matrix, rooms};
 }
 
 QVariantList MockTransportRegistry::instances() const {
