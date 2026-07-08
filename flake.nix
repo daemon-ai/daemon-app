@@ -298,6 +298,9 @@
           inherit pkgs versionStr baseVersion;
           appSrc = ./.;
           depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          # TUI + embedded-terminal sources for the static TUI / GUI builds
+          # (mirrors the dynamic tuiwidgets/qmltermwidget derivations above).
+          tuiSources = { inherit tuiwidgets posixsignalmanager qmltermwidget; };
         };
 
         # --- Windows desktop (MinGW cross, static Qt) -------------------------
@@ -860,6 +863,13 @@
         packages.portable = portableStack.portable;
         packages.portable-tarball = portableStack.tarball;
         packages.qt-linux-static = portableStack.qtStatic;
+        # The raw static GUI+TUI app (nix-store loader; runs on NixOS) - what the
+        # superproject bundle consumes, distinct from the patchelf'd `portable`.
+        packages.app-static = portableStack.app;
+        # Static desktop deps exposed for isolated debugging / cache seeding.
+        packages.qtkeychain-static = portableStack.qtkeychain;
+        packages.tuiwidgets-static = portableStack.tuiwidgets;
+        packages.qmltermwidget-static = portableStack.qmltermwidget;
 
         # Windows desktop (MinGW cross, static Qt): the portable layout
         # (bin/daemon-app.exe + share/daemon-app/microtex-res + notices) and

@@ -48,6 +48,9 @@
   baseVersion,
   versionStr,
   depSources,
+  # TUI + embedded-terminal upstream sources (tuiwidgets, posixsignalmanager,
+  # qmltermwidget) for the static TUI / GUI builds.
+  tuiSources,
 }:
 let
   inherit (pkgs) lib;
@@ -324,6 +327,19 @@ let
     ];
   };
 
+  # Core5Compat: the TUI's Tui Widgets stack links Qt6Core5Compat, and some GUI
+  # engine TUs use it too. qtdeclarative is handed in so the module's optional
+  # Qt5Compat.GraphicalEffects QML piece configures; Core5Compat itself is
+  # qtbase-only.
+  qt5compatStatic = mkQtModule {
+    name = "qt5compat";
+    src = pkgs.qt6.qt5compat.src;
+    qtDeps = [
+      qtdeclarativeStatic
+      qtshadertoolsStatic
+    ];
+  };
+
   # One prefix for the app configure: find_package(Qt6 ...) sees every
   # module because the Qt6 config resolves its install prefix from its own
   # (symlinked) location, and CMake does not resolve symlinks for list files.
@@ -335,8 +351,28 @@ let
       qtdeclarativeStatic
       qtsvgStatic
       qtwebsocketsStatic
+      qt5compatStatic
     ];
   };
+
+  # meson's qt6 dependency locates modules via qmake's `-query` (config-tool),
+  # and qmake bakes qtbase's OWN prefix - so it only searches qtbase/lib and
+  # misses the separately-built qt5compat (Core5Compat) that CMake consumers find
+  # through the symlink join's CMake config files. Give the meson builds a
+  # RELOCATED qmake: a real qmake6 copy beside a qt.conf whose Prefix points at
+  # the join, so QT_INSTALL_LIBS/HEADERS resolve to the join (which carries every
+  # module's lib/headers). The remaining host tools are symlinked in for PATH
+  # discovery. (Qt's qt.conf relocation is the supported mechanism here.)
+  qtStaticQmakeHost = pkgs.runCommand "qt-linux-static-qmake-host-${qtVersion}" { } ''
+    mkdir -p "$out/bin"
+    cp -L ${qtStaticJoined}/bin/qmake6 "$out/bin/qmake6"
+    printf '[Paths]\nPrefix=%s\n' "${qtStaticJoined}" > "$out/bin/qt.conf"
+    for t in moc rcc uic qmlcachegen qmltyperegistrar qmlimportscanner qsb; do
+      if [ -e "${qtStaticJoined}/bin/$t" ]; then
+        ln -s "${qtStaticJoined}/bin/$t" "$out/bin/$t"
+      fi
+    done
+  '';
 
   # MicroTeX links tinyxml2 via pkg-config; nixpkgs' tinyxml-2 is a shared
   # library that would put a /nix/store path into the portable binary's
@@ -364,21 +400,170 @@ let
     ];
   };
 
+  # OS keychain for the server-token store (auth6), built STATIC against the
+  # static Qt. LIBSECRET_SUPPORT=OFF selects the D-Bus Secret Service backend,
+  # which rides the static qtbase's QtDBus (FEATURE_dbus=ON, dbus_linked=OFF) -
+  # so it adds NO libsecret/glib/dbus floor to the portable binary. qtkeychain
+  # is BSD-3-Clause, so static-linking it carries no license obligation.
+  # qttools is deliberately NOT an input (its qtbase setup hook would export the
+  # shared desktop Qt onto the prefix and shadow the static one); translations
+  # are skipped when LinguistTools is absent.
+  qtkeychainStatic = staticStdenv.mkDerivation {
+    pname = "qtkeychain-linux-static";
+    version = pkgs.qt6Packages.qtkeychain.version;
+    src = pkgs.qt6Packages.qtkeychain.src;
+
+    nativeBuildInputs = with pkgs; [
+      cmake
+      ninja
+      pkg-config
+    ];
+    buildInputs = [ qtStaticJoined ];
+
+    cmakeFlags = [
+      "-DBUILD_SHARED_LIBS=OFF"
+      "-DBUILD_WITH_QT6=ON"
+      "-DLIBSECRET_SUPPORT=OFF"
+      "-DBUILD_TEST_APPLICATION=OFF"
+      "-DBUILD_TRANSLATIONS=OFF"
+    ];
+  };
+
+  # --- Static TUI stack (termpaint + Tui Widgets) ------------------------------
+  # The TUI frontend links Qt6 Core + Core5Compat + Tui Widgets (which links
+  # termpaint + posixsignalmanager). For a portable static TUI these are static
+  # archives; the Qt-linking ones (posixsignalmanager, tuiwidgets) build against
+  # the static Qt so their compiled objects match the app's Qt ABI - the Qt
+  # symbols stay undefined in the archives and resolve when tuiStatic links
+  # qtStaticJoined. All are Boost-licensed.
+  termpaintStatic = pkgs.termpaint.overrideAttrs (old: {
+    pname = "termpaint-static";
+    mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Ddefault_library=static" ];
+    doCheck = false;
+  });
+
+  posixSignalManagerStatic = staticStdenv.mkDerivation {
+    pname = "posixsignalmanager-static";
+    version = "0.3.1";
+    src = tuiSources.posixsignalmanager;
+    nativeBuildInputs = with pkgs; [
+      meson
+      ninja
+      pkg-config
+      qtStaticQmakeHost # relocated qmake6 + host tools for meson's qt6 dependency
+    ];
+    buildInputs = [ qtStaticJoined ];
+    mesonFlags = [
+      "-Dqt=qt6"
+      "-Dtests=false"
+      "-Ddefault_library=static"
+    ];
+  };
+
+  tuiWidgetsStatic = staticStdenv.mkDerivation {
+    pname = "tuiwidgets-static";
+    version = "0.2.3";
+    src = tuiSources.tuiwidgets;
+    nativeBuildInputs = with pkgs; [
+      meson
+      ninja
+      pkg-config
+      python3 # src/symver_qt6.py at build time
+      qtStaticQmakeHost
+    ];
+    buildInputs = [
+      termpaintStatic
+      qtStaticJoined # provides Core5Compat via qt5compatStatic in the join
+      posixSignalManagerStatic
+    ];
+    mesonFlags = [
+      "-Dqt=qt6"
+      "-Dtests=false"
+      "-Dsystem-posixsignalmanager=enabled"
+      "-Ddefault_library=static"
+    ];
+    # patchShebangs: src/symver_qt6.py runs via `/usr/bin/env python3`.
+    # The .pc `requires: [qt_dep]` rejects our qmake (config-tool) Qt dependency
+    # (the from-source static Qt ships no .pc, unlike nixpkgs' dynamic Qt). The
+    # static consumer (tuiStatic) links the Qt archives directly, so drop qt from
+    # the generated TuiWidgetsQt6.pc Requires.
+    postPatch = ''
+      patchShebangs .
+      substituteInPlace src/meson.build \
+        --replace-fail 'requires: [qt_dep],' 'requires: [],'
+      # The examples/tuiwidgets-demo executable links the static Qt and needs
+      # Qt's bundled pcre2/zlib archives, which meson's qmake (config-tool)
+      # dependency does not add. We only consume the static lib, so skip the demo.
+      substituteInPlace meson.build \
+        --replace-fail "subdir('examples')" ""
+    '';
+  };
+
+  # --- Embedded terminal QML plugin, STATIC (GPL-2.0) --------------------------
+  # qmltermwidget is a qmake QQmlExtensionPlugin. For a static-Qt GUI it must be
+  # a STATIC QML plugin: a static archive the app Q_IMPORT_PLUGIN's, with a
+  # qmldir carrying `classname` so the QML engine instantiates the plugin without
+  # a runtime .so. Built with the relocated qmake (qml/quick live in the separate
+  # qtdeclarative module the plain qmake prefix misses). GPL-2.0: statically
+  # linking it makes the shipped artifact a GPL-2.0 combined work (see
+  # THIRD-PARTY-NOTICES.md). The QML assets (qmldir, QMLTermScrollbar.qml,
+  # color-schemes incl. our per-theme ones, kb-layouts) install beside the .a.
+  qmltermwidgetStatic = staticStdenv.mkDerivation {
+    pname = "qmltermwidget-linux-static";
+    version = "unstable";
+    src = tuiSources.qmltermwidget;
+
+    nativeBuildInputs = [
+      qtStaticQmakeHost
+    ];
+    buildInputs = [ qtStaticJoined ];
+
+    dontWrapQtApps = true;
+
+    postPatch = ''
+      # Static QML plugins are instantiated by class name (no .so to dlopen).
+      if ! grep -q '^classname ' src/qmldir; then
+        echo "classname QmltermwidgetPlugin" >> src/qmldir
+      fi
+    '';
+
+    configurePhase = ''
+      runHook preConfigure
+      ${qtStaticQmakeHost}/bin/qmake6 CONFIG+=staticlib CONFIG-=shared
+      runHook postConfigure
+    '';
+
+    installPhase = ''
+      runHook preInstall
+      dest="$out/qml/QMLTermWidget"
+      mkdir -p "$dest/color-schemes"
+      # qmake's DESTDIR is $OUT_PWD/QMLTermWidget; grab the static archive there.
+      find . -name 'libqmltermwidget*.a' -exec cp {} "$dest/" \;
+      cp src/qmldir "$dest/qmldir"
+      cp src/QMLTermScrollbar.qml "$dest/"
+      cp -r lib/color-schemes/. "$dest/color-schemes/" 2>/dev/null || true
+      cp -r lib/kb-layouts "$dest/" 2>/dev/null || true
+      cp ${appSrc}/src/DaemonApp/Terminal/color-schemes/*.colorscheme "$dest/color-schemes/" 2>/dev/null || true
+      runHook postInstall
+    '';
+  };
+
   # --- daemon-app against the static Qt --------------------------------------
-  # DAEMON_APP_STATIC=ON is the app-side gate: TerminalPanelStub instead of
-  # the shared QMLTermWidget plugin (GPL-2.0 stays out of this artifact, see
-  # THIRD-PARTY-NOTICES.md), no qtkeychain (QSettings token-store fallback),
-  # and the static platform-plugin imports. GUI only - the TUI stays a
-  # dynamic build.
+  # DAEMON_APP_STATIC=ON is the app-side gate for the static platform-plugin
+  # imports and the portable update dials. Unlike before, the POSIX static
+  # desktop is now FEATURE-COMPLETE: the real QMLTermWidget embedded terminal
+  # (linked as a prebuilt static QML plugin, GPL-2.0 - see THIRD-PARTY-NOTICES.md)
+  # and a real OS keychain (static qtkeychain, D-Bus Secret Service backend), and
+  # it builds the TUI too (daemon-tui) from the static Tui Widgets stack.
   #
   # Unlike the wasm app derivation this one keeps the normal nixpkgs cmake
   # hook: the toolchain is the host toolchain, and the hook's buildInputs ->
   # CMAKE_PREFIX_PATH wiring is exactly what the static Qt6*Config's
-  # find_dependency(XCB/Fontconfig/...) calls need. Qt6LinguistTools comes
-  # from the host qttools package pinned by _DIR (same 6.x version) instead
-  # of buildInputs: the nixpkgs qtbase setup hook it drags along would
-  # export the SHARED desktop Qt onto the prefix path and shadow the static
-  # one.
+  # find_dependency(XCB/Fontconfig/...) calls need (and how Qt6Keychain +
+  # TuiWidgetsQt6 are found). Qt6LinguistTools comes from the host qttools
+  # package pinned by _DIR (same 6.x version) instead of buildInputs: the
+  # nixpkgs qtbase setup hook it drags along would export the SHARED desktop Qt
+  # onto the prefix path and shadow the static one.
   appStatic = staticStdenv.mkDerivation {
     pname = "daemon-app-static";
     version = baseVersion;
@@ -396,6 +581,12 @@ let
     buildInputs = [
       qtStaticJoined
       tinyxml2Static
+      qtkeychainStatic # find_package(Qt6Keychain) -> real OS keychain on static
+      # The TUI links the static Tui Widgets stack (pkg-config: TuiWidgetsQt6,
+      # which Requires termpaint + PosixSignalManagerQt6).
+      tuiWidgetsStatic
+      termpaintStatic
+      posixSignalManagerStatic
     ]
     ++ platformLibs;
 
@@ -403,8 +594,15 @@ let
       "-DCMAKE_BUILD_TYPE=Release"
       "-DBUILD_SHARED_LIBS=OFF"
       "-DBUILD_TESTING=OFF"
-      "-DDAEMON_APP_TUI=OFF"
+      # One static build emits BOTH the GUI (daemon-app) and the TUI (daemon-tui).
+      "-DDAEMON_APP_TUI=ON"
       "-DDAEMON_APP_STATIC=ON"
+      # The prebuilt static qmltermwidget QML plugin: its archive is linked into
+      # the app and its qmldir dir goes on the QML import path (App/CMakeLists.txt
+      # + main.cpp). QMLTERMWIDGET_QML_DIR also points qmllint at it.
+      "-DQMLTERMWIDGET_STATIC_LIB=${qmltermwidgetStatic}/qml/QMLTermWidget/libqmltermwidget.a"
+      "-DQMLTERMWIDGET_STATIC_QML_DIR=${qmltermwidgetStatic}/qml"
+      "-DQMLTERMWIDGET_QML_DIR=${qmltermwidgetStatic}/qml"
       "-DQt6LinguistTools_DIR=${pkgs.qt6.qttools}/lib/cmake/Qt6LinguistTools"
       "-DMD4QT_SOURCE_DIR=${depSources.md4qt}"
       "-DEARCUT_SOURCE_DIR=${depSources.earcut}"
@@ -443,6 +641,11 @@ let
       cmakeFlagsArray+=("-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++ -static-libgcc")
       cmakeFlagsArray+=("-DCMAKE_CXX_STANDARD_LIBRARIES=${
         lib.concatMapStringsSep " " (a: "${a}") [
+          # Archive-order insurance for the TUI: libtuiwidgets-qt6.a references
+          # QTextCodec (Qt6Core5Compat); appending Core5Compat here resolves it
+          # after every target's libs (its QString/QByteArray deps are already
+          # pulled from Qt6Core, linked throughout the app).
+          "${qtStaticJoined}/lib/libQt6Core5Compat.a"
           "${xcbCursorStatic}/lib/libxcb-cursor.a"
           "${xcbWmStatic}/lib/libxcb-icccm.a"
           "${xcbWmStatic}/lib/libxcb-ewmh.a"
@@ -713,8 +916,14 @@ in
   qtdeclarative = qtdeclarativeStatic;
   qtsvg = qtsvgStatic;
   qtwebsockets = qtwebsocketsStatic;
+  qt5compat = qt5compatStatic;
   qtStatic = qtStaticJoined;
   tinyxml2 = tinyxml2Static;
+  qtkeychain = qtkeychainStatic;
+  termpaint = termpaintStatic;
+  posixsignalmanager = posixSignalManagerStatic;
+  tuiwidgets = tuiWidgetsStatic;
+  qmltermwidget = qmltermwidgetStatic;
   app = appStatic;
   inherit
     portable

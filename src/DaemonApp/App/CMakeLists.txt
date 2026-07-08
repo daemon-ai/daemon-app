@@ -277,6 +277,19 @@ target_compile_definitions(daemon-app
     PRIVATE DAEMON_APP_BUILD_QML_DIR="${CMAKE_BINARY_DIR}/qml"
 )
 
+# Embedded terminal on the POSIX static desktop: qmltermwidget is a prebuilt
+# STATIC QML plugin (the flake builds it against the static Qt). Link the archive
+# and register it via Q_IMPORT_QML_PLUGIN in main.cpp (same mechanism as
+# KSyntaxHighlighting on static/mobile), with its qmldir dir on the engine import
+# path. Skipped on Windows (no Unix PTY -> terminal stub) and wasm/mobile.
+if(DAEMON_APP_STATIC AND NOT WIN32 AND QMLTERMWIDGET_STATIC_LIB)
+    target_link_libraries(daemon-app PRIVATE "${QMLTERMWIDGET_STATIC_LIB}")
+    target_compile_definitions(daemon-app PRIVATE
+        DAEMON_APP_STATIC_QMLTERMWIDGET
+        DAEMON_APP_QMLTERMWIDGET_QML_DIR="${QMLTERMWIDGET_STATIC_QML_DIR}"
+    )
+endif()
+
 # On desktop the QApplication base lives in QtWidgets (for the tray). Mobile
 # and the browser build run QGuiApplication (see main.cpp) and never link it.
 if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM)

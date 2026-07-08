@@ -195,6 +195,14 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_StatusBarPlugin)
 Q_IMPORT_QML_PLUGIN(org_kde_syntaxhighlightingPlugin)
 #endif
 
+#ifdef DAEMON_APP_STATIC_QMLTERMWIDGET
+// POSIX static desktop: the embedded terminal (import QMLTermWidget) is a
+// prebuilt static QML plugin linked into the app (App/CMakeLists.txt), so its
+// plugin class must be referenced explicitly. Its qmldir dir is added to the
+// engine import path in main() below.
+Q_IMPORT_QML_PLUGIN(QmltermwidgetPlugin)
+#endif
+
 int main(int argc, char* argv[]) {
     AppBase app(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("daemon-app"));
@@ -234,6 +242,12 @@ int main(int argc, char* argv[]) {
     engine.addImportPath(QCoreApplication::applicationDirPath() + QStringLiteral("/../lib/qml"));
 #ifdef DAEMON_APP_BUILD_QML_DIR
     engine.addImportPath(QStringLiteral(DAEMON_APP_BUILD_QML_DIR));
+#endif
+#ifdef DAEMON_APP_QMLTERMWIDGET_QML_DIR
+    // Static build: the prebuilt qmltermwidget static QML plugin ships its qmldir
+    // (module QMLTermWidget) here; the plugin itself is registered via
+    // Q_IMPORT_QML_PLUGIN(QmltermwidgetPlugin) above.
+    engine.addImportPath(QStringLiteral(DAEMON_APP_QMLTERMWIDGET_QML_DIR));
 #endif
 
     application.registerContext(engine);
