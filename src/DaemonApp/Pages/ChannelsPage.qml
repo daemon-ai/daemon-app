@@ -98,6 +98,23 @@ Item {
         return legacyRooms(adapterForFamily(family));
     }
 
+    // [acct-mgmt] Contacts gating (wire v34). Unlike rooms there is NO legacy coarse heuristic for
+    // contacts: a family surfaces the Contacts section ONLY when the node reported rosterOps with
+    // `list` true. Missing rosterOps/contactsOps/directory ⇒ the verb is unavailable (return false).
+    // verb ∈ list|add|update|remove
+    function canRosterOp(family, verb) {
+        var a = adapterForFamily(family);
+        return a.rosterOps !== undefined && a.rosterOps[verb] === true;
+    }
+    // verb ∈ getProfile|actionMenu|setAlias
+    function canContactOp(family, verb) {
+        var a = adapterForFamily(family);
+        return a.contactsOps !== undefined && a.contactsOps[verb] === true;
+    }
+    function hasDirectory(family) {
+        return adapterForFamily(family).directory === true;
+    }
+
     function accountLabelFor(transport) {
         for (var i = 0; i < root.accounts.length; ++i)
             if (root.accounts[i].transport === transport)
@@ -116,6 +133,110 @@ Item {
     // rendered form is always the node's — nothing hardcoded per family.
     JoinRoomDialog { id: joinRoomDialog }
     NewRoomDialog { id: newRoomDialog }
+
+    // [acct-mgmt] Contacts dialogs (Phase D). Profile is opened when the seam fires profileReady;
+    // the people-picker is opened by the account header and fed by directoryResults.
+    ContactProfileDialog { id: contactProfileDialog }
+    FindPeopleDialog { id: findPeopleDialog; dotColor: root.dotColor }
+
+    // [acct-mgmt] Add a contact (RosterAdd): a typed-id prompt (the node validates + the roster
+    // refreshes off ContactsChanged — no optimistic insert).
+    Kit.Dialog {
+        id: addContactDialog
+        property string transport: ""
+        title: qsTr("Add contact")
+        acceptText: qsTr("Add")
+        acceptEnabled: addContactField.text.trim().length > 0
+        onAccepted: {
+            if (transport.length > 0)
+                Contacts.addContact(transport, addContactField.text.trim());
+            transport = "";
+        }
+        onRejected: transport = ""
+        contentItem: ColumnLayout {
+            spacing: 6
+            Text {
+                text: qsTr("Contact id")
+                font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+            }
+            Kit.TextField {
+                id: addContactField
+                Layout.fillWidth: true
+                Layout.minimumWidth: 300
+                placeholderText: qsTr("@bob:matrix.org")
+            }
+        }
+        function openFor(t) { transport = t; addContactField.text = ""; open(); }
+    }
+
+    // [acct-mgmt] Set/clear a contact alias (ContactSetAlias): a text prompt seeded with the
+    // current alias; an empty value clears it node-side.
+    Kit.Dialog {
+        id: aliasDialog
+        property string transport: ""
+        property string contactId: ""
+        title: qsTr("Set alias")
+        acceptText: qsTr("Save")
+        onAccepted: {
+            if (transport.length > 0 && contactId.length > 0)
+                Contacts.setAlias(transport, contactId, aliasField.text.trim());
+            transport = ""; contactId = "";
+        }
+        onRejected: { transport = ""; contactId = ""; }
+        contentItem: ColumnLayout {
+            spacing: 6
+            Text {
+                text: qsTr("Local alias for %1 (empty clears it)").arg(aliasDialog.contactId)
+                font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+                Layout.maximumWidth: 320; wrapMode: Text.WordWrap
+            }
+            Kit.TextField {
+                id: aliasField
+                Layout.fillWidth: true
+                Layout.minimumWidth: 300
+            }
+        }
+        function openFor(t, id, current) {
+            transport = t; contactId = id; aliasField.text = current || ""; open();
+        }
+    }
+
+    // [acct-mgmt] Remove a contact (RosterRemove) — confirm.
+    Kit.Dialog {
+        id: removeContactDialog
+        property string transport: ""
+        property string contactId: ""
+        title: qsTr("Remove contact?")
+        acceptText: qsTr("Remove")
+        destructive: true
+        onAccepted: {
+            if (transport.length > 0 && contactId.length > 0)
+                Contacts.removeContact(transport, contactId);
+            transport = ""; contactId = "";
+        }
+        onRejected: { transport = ""; contactId = ""; }
+        contentItem: Text {
+            Layout.maximumWidth: 340
+            text: qsTr("Remove %1 from your contacts?").arg(removeContactDialog.contactId)
+            font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
+            wrapMode: Text.WordWrap
+        }
+        function openFor(t, id) { transport = t; contactId = id; open(); }
+    }
+
+    // [acct-mgmt] Contacts seam signals: profile → read-only dialog; directory results → the
+    // people-picker; op errors → the shared toast (parity with the room error path).
+    Connections {
+        target: Contacts
+        function onProfileReady(transport, contactId, profile) {
+            contactProfileDialog.openFor(contactId, profile);
+        }
+        function onDirectoryResults(transport, contacts) {
+            if (findPeopleDialog.transport === transport)
+                findPeopleDialog.setResults(contacts);
+        }
+        function onContactOperationFailed(message) { roomErrorToast.show(message); }
+    }
 
     // A room/member operation failed on the node — surface it (parity with the TUI notice).
     QQC.Popup {
@@ -381,6 +502,9 @@ Item {
                     property string conn: Presence.connectionState(modelData.transport)
                     property bool expanded: false
                     property var rooms: []
+                    // [acct-mgmt] The account's contact roster (RosterList), refreshed on expand +
+                    // the Contacts seam's contactsChanged.
+                    property var contacts: []
 
                     Layout.fillWidth: true
                     implicitHeight: abody.implicitHeight + 20
@@ -404,6 +528,15 @@ Item {
                                 acctRow.rooms = Transports.conversations(transport);
                         }
                     }
+                    // [acct-mgmt] Refresh the contact roster when a live RosterList lands (the
+                    // Contacts seam re-projects on ContactsChanged / a mutation Ok).
+                    Connections {
+                        target: Contacts
+                        function onContactsChanged(transport, contacts) {
+                            if (transport === acctRow.modelData.transport)
+                                acctRow.contacts = contacts;
+                        }
+                    }
 
                     MouseArea {
                         anchors.fill: parent
@@ -413,8 +546,15 @@ Item {
                             // [waveB:app-v30] D2: the per-expand live ConvList refetch is RETIRED.
                             // Read the cached rooms (seeded once per connect; kept fresh by the
                             // ConversationsChanged / MembershipChanged feed) — no client poll.
-                            if (acctRow.expanded)
+                            if (acctRow.expanded) {
                                 acctRow.rooms = Transports.conversations(acctRow.modelData.transport);
+                                // [acct-mgmt] Contacts are fetched lazily on first expand (a roster
+                                // can be large); the ContactsChanged feed keeps them fresh after.
+                                if (root.canRosterOp(acctRow.modelData.family, "list")) {
+                                    acctRow.contacts = Contacts.contacts(acctRow.modelData.transport);
+                                    Contacts.refreshContacts(acctRow.modelData.transport);
+                                }
+                            }
                         }
                     }
 
@@ -768,6 +908,119 @@ Item {
                                             onClicked: inviteMemberDialog.openFor(
                                                 roomItem.transport, roomItem.convId)
                                         }
+                                    }
+                                }
+                            }
+                        }
+
+                        // --- Contacts for this account (RosterList; wire v34) ---
+                        // Per-verb gating: the section shows ONLY when the node reports
+                        // rosterOps.list — there is no legacy coarse heuristic for contacts, so a
+                        // family that did not report roster ops hides the section entirely.
+                        ColumnLayout {
+                            visible: acctRow.expanded
+                                     && root.canRosterOp(acctRow.modelData.family, "list")
+                            Layout.fillWidth: true
+                            spacing: 4
+                            Rectangle {
+                                Layout.fillWidth: true; Layout.preferredHeight: 1
+                                color: Theme.border
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                Text {
+                                    text: qsTr("Contacts")
+                                    font.family: FontIcons.display; font.pixelSize: 11
+                                    font.weight: Font.DemiBold; color: Theme.textMuted
+                                    Layout.fillWidth: true
+                                }
+                                // Add contact gates on roster_ops.add; Find people on directory.
+                                Kit.TextButton {
+                                    visible: root.canRosterOp(acctRow.modelData.family, "add")
+                                    text: qsTr("Add contact…")
+                                    onClicked: addContactDialog.openFor(acctRow.modelData.transport)
+                                }
+                                Kit.TextButton {
+                                    visible: root.hasDirectory(acctRow.modelData.family)
+                                    text: qsTr("Find people…")
+                                    onClicked: findPeopleDialog.openFor(
+                                        acctRow.modelData.transport,
+                                        root.accountLabelFor(acctRow.modelData.transport),
+                                        root.canRosterOp(acctRow.modelData.family, "add"),
+                                        root.canConversationOp(acctRow.modelData.family, "create"))
+                                }
+                            }
+
+                            Text {
+                                visible: acctRow.contacts.length === 0
+                                text: qsTr("No contacts.")
+                                font.family: FontIcons.display; font.pixelSize: 11
+                                color: Theme.textMuted
+                            }
+                            Repeater {
+                                model: acctRow.contacts
+                                delegate: RowLayout {
+                                    id: contactItem
+                                    required property var modelData
+                                    property string transport: acctRow.modelData.transport
+                                    property string family: acctRow.modelData.family
+                                    property string contactId: modelData.id
+                                    Layout.fillWidth: true
+                                    spacing: 8
+                                    Text {
+                                        text: FontIcons.fa_circle
+                                        font.family: FontIcons.faSolid; font.pixelSize: 8
+                                        color: root.dotColor(modelData.presence)
+                                    }
+                                    // Display name doubles as the alias overlay (the node reflects a
+                                    // set alias into display_name); falls back to the id.
+                                    Text {
+                                        text: modelData.displayName.length > 0
+                                              ? modelData.displayName : modelData.id
+                                        font.family: FontIcons.display; font.pixelSize: 12
+                                        color: Theme.text; elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+                                    Text {
+                                        visible: modelData.displayName.length > 0
+                                        text: modelData.id
+                                        font.family: FontIcons.mono; font.pixelSize: 10
+                                        color: Theme.textMuted; elide: Text.ElideMiddle
+                                        Layout.maximumWidth: 150
+                                    }
+                                    // DM: the conv-create seam with the contact as participant (no
+                                    // new wire op), gated on conversation_ops.create.
+                                    Kit.TextButton {
+                                        visible: root.canConversationOp(contactItem.family, "create")
+                                        text: qsTr("DM")
+                                        onClicked: Transports.createRoom(
+                                            contactItem.transport,
+                                            { "participants": [contactItem.contactId] })
+                                    }
+                                    // Alias (ContactSetAlias) gated per-verb; Profile
+                                    // (ContactGetProfile) opens the read-only dialog on profileReady.
+                                    Kit.TextButton {
+                                        visible: root.canContactOp(contactItem.family, "setAlias")
+                                        text: qsTr("Alias…")
+                                        onClicked: aliasDialog.openFor(
+                                            contactItem.transport, contactItem.contactId,
+                                            modelData.displayName)
+                                    }
+                                    Kit.TextButton {
+                                        visible: root.canContactOp(contactItem.family, "getProfile")
+                                        text: qsTr("Profile")
+                                        onClicked: Contacts.getProfile(
+                                            contactItem.transport, contactItem.contactId)
+                                    }
+                                    // Remove (RosterRemove), confirmed, gated on roster_ops.remove.
+                                    Kit.TextButton {
+                                        visible: root.canRosterOp(contactItem.family, "remove")
+                                        text: qsTr("Remove")
+                                        textColor: Theme.danger
+                                        onClicked: removeContactDialog.openFor(
+                                            contactItem.transport, contactItem.contactId)
                                     }
                                 }
                             }

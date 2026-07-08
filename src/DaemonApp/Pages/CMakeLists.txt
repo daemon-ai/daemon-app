@@ -57,6 +57,9 @@ qt_add_qml_module(da_pages
         # [acct-mgmt] room lifecycle dialogs (Phase B)
         JoinRoomDialog.qml
         NewRoomDialog.qml
+        # [acct-mgmt] contacts / roster dialogs (Phase D)
+        ContactProfileDialog.qml
+        FindPeopleDialog.qml
         SessionsPage.qml
         ApprovalsPage.qml
         RoutingPage.qml
