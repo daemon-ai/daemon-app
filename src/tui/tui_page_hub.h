@@ -61,6 +61,7 @@ namespace tools {
 class IToolInventory; // [wave2:app-approvals-safety] D2
 }
 namespace transports {
+class IContactsService;
 class IPresenceService;
 class ITransportRegistry;
 } // namespace transports
@@ -103,6 +104,8 @@ public:
         daemonapp::daemon::PrincipalModel* principal = nullptr;
         transports::ITransportRegistry* transportRegistry = nullptr;
         transports::IPresenceService* presence = nullptr;
+        // [acct-mgmt] Transport contacts / roster (Phase D): backs the per-account Contacts group.
+        transports::IContactsService* contacts = nullptr;
         // Release-feed updater: backs the Settings "Updates" auto-check toggle
         // (gated to builds that actually have a feed).
         update::UpdateManager* update = nullptr;

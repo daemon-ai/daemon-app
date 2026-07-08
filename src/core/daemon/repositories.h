@@ -838,6 +838,82 @@ private:
     static constexpr auto kMemberOpPrefix = "repo/member-op/";
 };
 
+// [acct-mgmt] Transport contacts / roster (Phase D, wire v34). The node owns the roster; this
+// repository is a thin seam over its verbs. refreshContacts(transport) issues RosterList and loops
+// the `next` cursor (kWirePageMax) into an in-memory per-transport list (re-fetched on focus + the
+// ContactsChanged feed event — not persisted, like RoutingRepository's rooms); addContact/
+// updateContact/removeContact/setAlias mutate (RosterAdd/Update/Remove/ContactSetAlias) and, on Ok,
+// re-refresh that transport (the node's ContactsChanged event also refetches). getProfile fires
+// profileReady with the node-rendered ContactProfile string; searchDirectory fires directoryReady
+// with the DirectorySearch results (a separate list from the roster). NOTHING is derived client-
+// side. DISTINCT from the session-inbox roster (SessionRepository / RosterChanged).
+class ContactsRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    ContactsRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    // The last-known contacts / directory results for `transport` (empty until a refresh/search
+    // resolves). In-memory — the wire is never touched by these getters.
+    [[nodiscard]] QList<DecodedContact> contacts(const QString& transport) const {
+        return m_contacts.value(transport);
+    }
+    [[nodiscard]] QList<DecodedContact> directory(const QString& transport) const {
+        return m_directory.value(transport);
+    }
+
+    // RosterList (paged): accumulate across `next` cursors, then swap contacts(transport) and emit
+    // contactsRefreshed ONCE.
+    void refreshContacts(const QString& transport);
+    // RosterAdd/Update/Remove: `contactId` names the target (add/remove need only the id; update
+    // carries the editable fields). On Ok the transport re-refreshes.
+    void addContact(const QString& transport, const QString& contactId);
+    void updateContact(const QString& transport, const DecodedContact& contact);
+    void removeContact(const QString& transport, const QString& contactId);
+    // ContactSetAlias: empty `alias` clears the local alias. On Ok the transport re-refreshes.
+    void setAlias(const QString& transport, const QString& contactId, const QString& alias);
+    // ContactGetProfile -> profileReady(transport, contactId, profile).
+    void getProfile(const QString& transport, const QString& contactId);
+    // DirectorySearch -> directoryReady(transport) with directory(transport) populated.
+    void searchDirectory(const QString& transport, const QString& query = QString());
+
+signals:
+    void contactsRefreshed(const QString& transport);
+    void directoryReady(const QString& transport);
+    void profileReady(const QString& transport, const QString& contactId, const QString& profile);
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    void handleRosterListResponse(const QString& transport, const QByteArray& responseCbor);
+    void handleDirectoryResponse(const QString& transport, const QByteArray& responseCbor);
+    void handleProfileResponse(const QString& transport, const QString& contactId,
+                               const QByteArray& responseCbor);
+    // Shared Ok-or-error tail for the mutation verbs (add/update/remove/alias): Ok -> re-refresh
+    // the transport; Error/transport-failure -> operationFailed.
+    void handleMutationResponse(const QString& transport, const QByteArray& responseCbor,
+                                const QString& failMessage);
+    [[nodiscard]] static bool isOwnCorrelation(const QString& correlationId);
+
+    // The transport (and contact id for the two-key profile op) ride the correlation tail; a
+    // unit-separator (\x1f, never in an id) splits transport from contact (the TransportRepository
+    // member-op precedent).
+    static constexpr auto kListPrefix = "repo/roster-list/";
+    static constexpr auto kAddPrefix = "repo/roster-add/";
+    static constexpr auto kUpdatePrefix = "repo/roster-update/";
+    static constexpr auto kRemovePrefix = "repo/roster-remove/";
+    static constexpr auto kAliasPrefix = "repo/contact-alias/";
+    static constexpr auto kProfilePrefix = "repo/contact-profile/";
+    static constexpr auto kDirectoryPrefix = "repo/directory-search/";
+
+    QHash<QString, QList<DecodedContact>> m_contacts;  // transport -> its roster
+    QHash<QString, QList<DecodedContact>> m_directory; // transport -> last directory results
+    // Per-transport RosterList page loop (wire v34): accumulate across `next` pages, then swap.
+    QHash<QString, PageLoop<DecodedContact>> m_contactLoops;
+};
+
 // Durable checkpoints (E4/TOOL-9): refresh(session) issues a CheckpointList (page loop) and
 // checkpointsRefreshed() fires with checkpoints() populated; rewind(session, id) issues a
 // CheckpointRewind and rewound() fires on Ok. DISTINCT from the turn-level Rewind/RewindTo ops:

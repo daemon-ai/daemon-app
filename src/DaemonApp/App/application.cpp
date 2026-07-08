@@ -43,6 +43,7 @@
 #include "status_bar_model.h"
 #include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2
 #include "transcript_exporter.h"
+#include "transports/icontacts_service.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "turn_engine_factory.h"
@@ -319,6 +320,9 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("Transports"),
                                              m_services.transportRegistry);
     engine.rootContext()->setContextProperty(QStringLiteral("Presence"), m_services.presence);
+    // [acct-mgmt] Transport contacts / roster (Phase D, wire v34): the per-account Contacts section
+    // in ChannelsPage binds this seam (RosterList + contact ops).
+    engine.rootContext()->setContextProperty(QStringLiteral("Contacts"), m_services.contacts);
 
     // The unified mock DaemonNet (actors/places + sessions-as-nodes); surfaces project from it. See
     // multi-protocol-client-surface.md §1 + the DaemonNet meta-plan.

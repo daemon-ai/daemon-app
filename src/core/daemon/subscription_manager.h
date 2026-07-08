@@ -20,6 +20,7 @@ class FleetRepository;
 class ProfileRepository;
 class TransportRepository; // [wave2:app-channels-liveness]
 class RoutingRepository;   // [waveB:app-v30] D2
+class ContactsRepository;  // [acct-mgmt] transport contacts / roster (wire v34)
 class DaemonCacheStore;
 struct DecodedNodeEvent;
 
@@ -75,6 +76,11 @@ public:
     // Wired via a setter because the repo is constructed after this manager. Optional.
     void setRoutingRepository(RoutingRepository* routing) { m_routing = routing; }
 
+    // [acct-mgmt] The contacts repository refetched on a ContactsChanged feed event (wire v34). The
+    // node owns the roster; this refetches that transport's RosterList. Wired via a setter because
+    // the repo is constructed after this manager. Optional; ContactsChanged is ignored when unset.
+    void setContactsRepository(ContactsRepository* contacts) { m_contacts = contacts; }
+
     [[nodiscard]] quint64 feedCursor() const { return m_feedCursor; }
 
 signals:
@@ -96,6 +102,7 @@ private:
     ProfileRepository* m_profiles = nullptr;
     TransportRepository* m_transports = nullptr; // [wave2:app-channels-liveness]
     RoutingRepository* m_routing = nullptr;      // [waveB:app-v30] D2
+    ContactsRepository* m_contacts = nullptr;    // [acct-mgmt] wire v34
     DaemonCacheStore* m_cache = nullptr;
 
     quint64 m_feedStreamId = 0; // the open EventsSince stream id (0 = none)

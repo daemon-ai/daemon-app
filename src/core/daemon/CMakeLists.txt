@@ -102,6 +102,8 @@ add_library(da_daemon_client STATIC
     daemon_dashboard.cpp
     daemon_transport_registry.h
     daemon_transport_registry.cpp
+    daemon_contacts_service.h
+    daemon_contacts_service.cpp
     daemon_presence_service.h
     daemon_presence_service.cpp
     daemon_cache_store.h

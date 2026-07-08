@@ -2730,6 +2730,211 @@ void TransportRepository::handleFailure(const QString& correlationId, const QStr
     }
 }
 
+// --- [acct-mgmt] ContactsRepository (transport contacts / roster; wire v34) -------------------
+
+ContactsRepository::ContactsRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                       QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &ContactsRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &ContactsRepository::handleFailure);
+    }
+}
+
+void ContactsRepository::refreshContacts(const QString& transport) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    // A fresh refresh restarts the transport's page loop.
+    m_contactLoops[transport].reset();
+    client()->sendRequest(NodeApiCodec::encodeRosterListRequest(transport),
+                          QLatin1String(kListPrefix) + transport);
+}
+
+void ContactsRepository::addContact(const QString& transport, const QString& contactId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    DecodedContact contact;
+    contact.id = contactId;
+    client()->sendRequest(NodeApiCodec::encodeRosterAddRequest(transport, contact),
+                          QLatin1String(kAddPrefix) + transport);
+}
+
+void ContactsRepository::updateContact(const QString& transport, const DecodedContact& contact) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeRosterUpdateRequest(transport, contact),
+                          QLatin1String(kUpdatePrefix) + transport);
+}
+
+void ContactsRepository::removeContact(const QString& transport, const QString& contactId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    DecodedContact contact;
+    contact.id = contactId;
+    client()->sendRequest(NodeApiCodec::encodeRosterRemoveRequest(transport, contact),
+                          QLatin1String(kRemovePrefix) + transport);
+}
+
+void ContactsRepository::setAlias(const QString& transport, const QString& contactId,
+                                  const QString& alias) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    // Empty alias clears the local alias (the optional is omitted node-side).
+    client()->sendRequest(
+        NodeApiCodec::encodeContactSetAliasRequest(transport, contactId, !alias.isEmpty(), alias),
+        QLatin1String(kAliasPrefix) + transport);
+}
+
+void ContactsRepository::getProfile(const QString& transport, const QString& contactId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeContactGetProfileRequest(transport, contactId),
+                          QLatin1String(kProfilePrefix) + transport + QChar(0x1f) + contactId);
+}
+
+void ContactsRepository::searchDirectory(const QString& transport, const QString& query) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeDirectorySearchRequest(transport, query),
+                          QLatin1String(kDirectoryPrefix) + transport);
+}
+
+void ContactsRepository::handleResponse(const QString& correlationId,
+                                        const QByteArray& responseCbor) {
+    const auto tailOf = [&](const char* prefix) { return correlationId.mid(int(qstrlen(prefix))); };
+    if (correlationId.startsWith(QLatin1String(kListPrefix))) {
+        handleRosterListResponse(tailOf(kListPrefix), responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kDirectoryPrefix))) {
+        handleDirectoryResponse(tailOf(kDirectoryPrefix), responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kProfilePrefix))) {
+        const QString tail = tailOf(kProfilePrefix);
+        const qsizetype us = tail.indexOf(QChar(0x1f));
+        const QString transport = us < 0 ? tail : tail.left(us);
+        const QString contactId = us < 0 ? QString() : tail.mid(us + 1);
+        handleProfileResponse(transport, contactId, responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kAddPrefix))) {
+        handleMutationResponse(tailOf(kAddPrefix), responseCbor, tr("Failed to add the contact"));
+    } else if (correlationId.startsWith(QLatin1String(kUpdatePrefix))) {
+        handleMutationResponse(tailOf(kUpdatePrefix), responseCbor,
+                               tr("Failed to update the contact"));
+    } else if (correlationId.startsWith(QLatin1String(kRemovePrefix))) {
+        handleMutationResponse(tailOf(kRemovePrefix), responseCbor,
+                               tr("Failed to remove the contact"));
+    } else if (correlationId.startsWith(QLatin1String(kAliasPrefix))) {
+        handleMutationResponse(tailOf(kAliasPrefix), responseCbor,
+                               tr("Failed to set the contact alias"));
+    }
+}
+
+void ContactsRepository::handleRosterListResponse(const QString& transport,
+                                                  const QByteArray& responseCbor) {
+    QList<DecodedContact> page;
+    QString next;
+    if (!NodeApiCodec::decodeContactPage(responseCbor, &page, &next)) {
+        m_contactLoops.remove(transport);
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(QStringLiteral("Failed to decode ContactPage response"));
+        }
+        return;
+    }
+    // Page loop: accumulate and re-issue with the cursor until it clears, then swap ONCE.
+    PageLoop<DecodedContact>& loop = m_contactLoops[transport];
+    loop.items.append(page);
+    if (!next.isEmpty() && loop.guard(next) && client() != nullptr) {
+        client()->sendRequest(NodeApiCodec::encodeRosterListRequest(transport, next),
+                              QLatin1String(kListPrefix) + transport);
+        return;
+    }
+    m_contacts[transport] = loop.items;
+    m_contactLoops.remove(transport);
+    emit contactsRefreshed(transport);
+}
+
+void ContactsRepository::handleDirectoryResponse(const QString& transport,
+                                                 const QByteArray& responseCbor) {
+    QList<DecodedContact> results;
+    if (!NodeApiCodec::decodeContacts(responseCbor, &results)) {
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(tr("Failed to search the directory"));
+        }
+        return;
+    }
+    m_directory[transport] = results;
+    emit directoryReady(transport);
+}
+
+void ContactsRepository::handleProfileResponse(const QString& transport, const QString& contactId,
+                                               const QByteArray& responseCbor) {
+    QString profile;
+    if (!NodeApiCodec::decodeContactProfile(responseCbor, &profile)) {
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(tr("Failed to load the contact profile"));
+        }
+        return;
+    }
+    emit profileReady(transport, contactId, profile);
+}
+
+void ContactsRepository::handleMutationResponse(const QString& transport,
+                                                const QByteArray& responseCbor,
+                                                const QString& failMessage) {
+    const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+    if (kind == ApiResponseKind::Ok) {
+        // The node's ContactsChanged event also refetches, but refresh now so the roster reflects
+        // the mutation without waiting for the feed.
+        refreshContacts(transport);
+        return;
+    }
+    DecodedApiError err;
+    if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+        emit operationFailed(err.message);
+    } else {
+        emit operationFailed(failMessage);
+    }
+}
+
+bool ContactsRepository::isOwnCorrelation(const QString& correlationId) {
+    const std::array prefixes = {kListPrefix,  kAddPrefix,     kUpdatePrefix,   kRemovePrefix,
+                                 kAliasPrefix, kProfilePrefix, kDirectoryPrefix};
+    return std::ranges::any_of(prefixes, [&](const char* prefix) {
+        return correlationId.startsWith(QLatin1String(prefix));
+    });
+}
+
+void ContactsRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (isOwnCorrelation(correlationId)) {
+        // A dead roster page loop must not leak its partial accumulation.
+        if (correlationId.startsWith(QLatin1String(kListPrefix))) {
+            m_contactLoops.remove(correlationId.mid(int(qstrlen(kListPrefix))));
+        }
+        emit operationFailed(message);
+    }
+}
+
 // --- AgentRepository (foreign engines; wire v29) ----------------------------------------------
 
 AgentRepository::AgentRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)

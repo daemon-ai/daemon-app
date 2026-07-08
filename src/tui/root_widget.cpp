@@ -244,6 +244,7 @@ RootWidget::RootWidget()
         .principal = m_services.principal,
         .transportRegistry = m_services.transportRegistry,
         .presence = m_services.presence,
+        .contacts = m_services.contacts,
         .update = m_services.update,
         .caps = m_services.capsRepository,           // [wave2:app-delegation] F7/DEL-7
         .engineIdentity = m_services.engineIdentity, // [wave2:integration] C5

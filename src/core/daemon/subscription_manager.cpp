@@ -239,6 +239,15 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             scheduleRosterRefetch();
         }
         break;
+    // [acct-mgmt] A transport's contact roster changed (wire v34). Refetch that transport's
+    // RosterList — invalidation pointer only; the node owns the roster. Mirrors
+    // ConversationsChanged for rooms. (This is the transport contacts feed, NOT the session-inbox
+    // RosterChanged above.)
+    case DecodedNodeEvent::Kind::ContactsChanged:
+        if (m_contacts != nullptr) {
+            m_contacts->refreshContacts(event.transport);
+        }
+        break;
     case DecodedNodeEvent::Kind::Unknown:
         break;
     }

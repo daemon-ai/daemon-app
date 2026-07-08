@@ -66,6 +66,7 @@ namespace tools {
 class IToolInventory; // [wave2:app-approvals-safety] D2
 }
 namespace transports {
+class IContactsService;
 class IPresenceService;
 class ITransportRegistry;
 } // namespace transports
@@ -76,6 +77,7 @@ class UpdateManager;
 namespace daemonapp::daemon {
 
 class AgentRepository;
+class ContactsRepository; // [acct-mgmt] transport contacts / roster (wire v34)
 class EngineIdentity;
 class ApprovalRepository;
 class AuthRepository;
@@ -136,6 +138,9 @@ struct AppServiceGraph {
     automation::ICronStore* cron = nullptr;
     transports::ITransportRegistry* transportRegistry = nullptr;
     transports::IPresenceService* presence = nullptr;
+    // [acct-mgmt] Transport contacts / roster (Phase D). Mock-backed by default; a
+    // DaemonContactsService replaces it in Daemon mode (projects ContactsRepository).
+    transports::IContactsService* contacts = nullptr;
     daemonnet::IDaemonNet* daemonNet = nullptr;
     session::ISessionSettings* sessionSettings = nullptr;
     session::ICheckpointTimeline* checkpoints = nullptr;
@@ -162,7 +167,10 @@ struct AppServiceGraph {
     // [wave2:app-delegation] F7/DEL-7: delegation guardrail ceilings (read-only). Daemon mode only.
     CapsRepository* capsRepository = nullptr;
     TransportRepository* transportRepository = nullptr; // Channels (EIO-1/3/8/9); Daemon mode only
-    RoutingRepository* routingRepository = nullptr;     // Routing pins (B6/ROU); Daemon mode only
+    // [acct-mgmt] Transport contacts / roster (RosterList/Add/Update/Remove + contact ops, wire
+    // v34); Daemon mode only (the DaemonContactsService projects it).
+    ContactsRepository* contactsRepository = nullptr;
+    RoutingRepository* routingRepository = nullptr; // Routing pins (B6/ROU); Daemon mode only
     // The foreign-agent catalog (foreign engines; wire v29): backs the new-agent dialog's engine
     // picker and the Agents settings surface (register/remove). Constructed with the other
     // repositories (inert without a connection).

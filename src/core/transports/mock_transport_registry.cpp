@@ -52,6 +52,24 @@ QVariantMap membershipOps(bool invite, bool remove, bool ban, bool setRole) {
     return ops;
 }
 
+// [acct-mgmt] Contacts/roster per-verb ops (wire v34). `list` gates the whole Contacts section.
+QVariantMap rosterOps(bool list, bool add, bool update, bool remove) {
+    QVariantMap ops;
+    ops.insert(QStringLiteral("list"), list);
+    ops.insert(QStringLiteral("add"), add);
+    ops.insert(QStringLiteral("update"), update);
+    ops.insert(QStringLiteral("remove"), remove);
+    return ops;
+}
+
+QVariantMap contactsOps(bool getProfile, bool actionMenu, bool setAlias) {
+    QVariantMap ops;
+    ops.insert(QStringLiteral("getProfile"), getProfile);
+    ops.insert(QStringLiteral("actionMenu"), actionMenu);
+    ops.insert(QStringLiteral("setAlias"), setAlias);
+    return ops;
+}
+
 QVariantMap roomRow(const QString& transport, const QString& id, const QString& title,
                     const QString& kind) {
     QVariantMap m;
@@ -104,10 +122,20 @@ QVariantList MockTransportRegistry::availableAdapters() const {
         adapterRow(QStringLiteral("matrix"), QStringLiteral("Matrix"), true, true, true, true);
     matrix.insert(QStringLiteral("conversationOps"), conversationOps(true, true, true, true));
     matrix.insert(QStringLiteral("membershipOps"), membershipOps(true, true, true, true));
+    // [acct-mgmt] Matrix advertises the full contacts/roster verb set + a people directory.
+    matrix.insert(QStringLiteral("rosterOps"), rosterOps(true, true, true, true));
+    matrix.insert(QStringLiteral("contactsOps"), contactsOps(true, true, true));
+    matrix.insert(QStringLiteral("directory"), true);
     QVariantMap rooms = adapterRow(QStringLiteral("room"), QStringLiteral("Rooms (internal)"), true,
                                    true, false, false);
     rooms.insert(QStringLiteral("conversationOps"), conversationOps(true, true, true, false));
     rooms.insert(QStringLiteral("membershipOps"), membershipOps(true, true, false, false));
+    // [acct-mgmt] The internal Rooms loopback has a deliberately narrower roster surface (list +
+    // add/remove, no update, no alias/profile, no directory) so the per-verb gating visibly differs
+    // between the two canned families in offline dev.
+    rooms.insert(QStringLiteral("rosterOps"), rosterOps(true, true, false, true));
+    rooms.insert(QStringLiteral("contactsOps"), contactsOps(false, false, false));
+    rooms.insert(QStringLiteral("directory"), false);
     return QVariantList{matrix, rooms};
 }
 

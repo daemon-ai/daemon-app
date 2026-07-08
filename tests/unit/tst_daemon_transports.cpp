@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "daemon/daemon_cache_store.h"
+#include "daemon/daemon_contacts_service.h"
 #include "daemon/daemon_presence_service.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
@@ -10,6 +11,7 @@
 #include "daemon/repositories.h"
 #include "daemon_api_client_encode.h"
 #include "daemon_api_client_types.h"
+#include "transports/mock_contacts_service.h"
 #include "transports/mock_transport_registry.h"
 #include "wire_mux_fixture.h"
 
@@ -19,6 +21,7 @@
 #include <QtTest/QtTest>
 
 using daemonapp::daemon::CachedTransportInstanceRow;
+using daemonapp::daemon::ContactsRepository;
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
 using daemonapp::daemon::DecodedAdapterInfo;
@@ -390,6 +393,20 @@ QByteArray contactPageResponse(const QByteArray& next) {
             contact_page_next_r::contact_page_next_tstr_c;
         setZ(page.contact_page_next.contact_page_next_tstr, next);
     }
+    return encodeResponse(*resp);
+}
+
+// [acct-mgmt] The second RosterList page (one contact, no next) for the paging test.
+QByteArray contactPageResponsePage2() {
+    static const QByteArray carol = QByteArrayLiteral("@carol:matrix.org");
+    static const QByteArray carolName = QByteArrayLiteral("Carol");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_contact_page_m_c;
+    contact_page& page =
+        resp->api_response_response_contact_page_m.response_contact_page_ContactPage;
+    page.contact_page_items_contact_info_m_count = 1;
+    putContact(page.contact_page_items_contact_info_m[0], carol, carolName);
+    page.contact_page_next_present = false;
     return encodeResponse(*resp);
 }
 
@@ -1108,6 +1125,130 @@ private slots:
         QCOMPARE(out.events.size(), 1);
         QCOMPARE(out.events.at(0).kind, DecodedNodeEvent::Kind::ContactsChanged);
         QCOMPARE(out.events.at(0).transport, QStringLiteral("matrix/@bot:hs"));
+    }
+
+    // ContactsRepository loops RosterList through the `next` cursor and swaps contacts() ONCE.
+    void rosterPagesThroughNext() {
+        const QString sock = m_tmp.filePath(QStringLiteral("roster.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplySequence({contactPageResponse(QByteArrayLiteral("@bob:matrix.org")),
+                               contactPageResponsePage2()});
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("roster.db")));
+        ContactsRepository repo(&tx.client, &cache);
+
+        QSignalSpy refreshed(&repo, &ContactsRepository::contactsRefreshed);
+        repo.refreshContacts(t);
+        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
+        QTest::qWait(100); // a page-loop bug would emit again / issue extra requests
+        QCOMPARE(refreshed.count(), 1);
+        // Both pages accumulated into one roster (2 + 1 = 3).
+        QCOMPARE(repo.contacts(t).size(), 3);
+        QCOMPARE(repo.contacts(t).at(2).id, QStringLiteral("@carol:matrix.org"));
+        // The continuation carried the cursor: byte-identical to the codec's own encoding.
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 2);
+        QCOMPARE(calls.at(0), NodeApiCodec::encodeRosterListRequest(t));
+        QCOMPARE(calls.at(1),
+                 NodeApiCodec::encodeRosterListRequest(t, QStringLiteral("@bob:matrix.org")));
+    }
+
+    // A roster mutation (RosterAdd) replies Ok, then the repo re-issues RosterList (a second
+    // contactsRefreshed) — the node's ContactsChanged event drives the same refetch in production.
+    void contactMutationRefreshesOnOk() {
+        const QString sock = m_tmp.filePath(QStringLiteral("radd.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplySequence({okResponse(), contactPageResponse(QByteArray())});
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("radd.db")));
+        ContactsRepository repo(&tx.client, &cache);
+
+        QSignalSpy refreshed(&repo, &ContactsRepository::contactsRefreshed);
+        repo.addContact(t, QStringLiteral("@zoe:matrix.org"));
+        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
+        QCOMPARE(repo.contacts(t).size(), 2);
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 2); // RosterAdd, RosterList
+        DecodedContact zoe;
+        zoe.id = QStringLiteral("@zoe:matrix.org");
+        QCOMPARE(calls.at(0), NodeApiCodec::encodeRosterAddRequest(t, zoe));
+        QCOMPARE(calls.at(1), NodeApiCodec::encodeRosterListRequest(t));
+    }
+
+    // setAlias("") clears the alias (the optional is omitted): byte-identical to the codec's
+    // no-alias encoding.
+    void setAliasEmptyClearsOptional() {
+        const QString sock = m_tmp.filePath(QStringLiteral("alias.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        const QString id = QStringLiteral("@alice:matrix.org");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplySequence({okResponse(), contactPageResponse(QByteArray())});
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("alias.db")));
+        ContactsRepository repo(&tx.client, &cache);
+
+        QSignalSpy refreshed(&repo, &ContactsRepository::contactsRefreshed);
+        repo.setAlias(t, id, QString());
+        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.at(0),
+                 NodeApiCodec::encodeContactSetAliasRequest(t, id, /*hasAlias=*/false, QString()));
+    }
+
+    // The DaemonContactsService projects the repo: searchDirectory -> directoryResults rows,
+    // getProfile -> profileReady string.
+    void serviceProjectsDirectoryAndProfile() {
+        const QString sock = m_tmp.filePath(QStringLiteral("svc.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("svc.db")));
+        ContactsRepository repo(&tx.client, &cache);
+        transports::DaemonContactsService svc(&repo);
+
+        fake.setReplyPayload(directoryResponse());
+        QSignalSpy dir(&svc, &transports::IContactsService::directoryResults);
+        svc.searchDirectory(t, QStringLiteral("dave"));
+        QTRY_COMPARE_WITH_TIMEOUT(dir.count(), 1, 3000);
+        const QVariantList people = dir.at(0).at(1).toList();
+        QCOMPARE(people.size(), 1);
+        QCOMPARE(people.at(0).toMap().value(QStringLiteral("id")).toString(),
+                 QStringLiteral("@dave:matrix.org"));
+
+        fake.setReplyPayload(contactProfileResponse());
+        QSignalSpy prof(&svc, &transports::IContactsService::profileReady);
+        svc.getProfile(t, QStringLiteral("@alice:matrix.org"));
+        QTRY_COMPARE_WITH_TIMEOUT(prof.count(), 1, 3000);
+        QCOMPARE(prof.at(0).at(2).toString(), QStringLiteral("Alice\n@alice:matrix.org"));
+    }
+
+    // The mock service exposes canned per-transport contacts offline; mutations emit
+    // contactsChanged.
+    void mockContactsCannedData() {
+        transports::MockContactsService mock;
+        const QString t = QStringLiteral("matrix/@you:matrix.org");
+        QVERIFY(mock.contacts(t).size() >= 1);
+        QSignalSpy changed(&mock, &transports::IContactsService::contactsChanged);
+        mock.addContact(t, QStringLiteral("@new:matrix.org"));
+        QCOMPARE(changed.count(), 1);
+        bool found = false;
+        for (const QVariant& v : mock.contacts(t)) {
+            if (v.toMap().value(QStringLiteral("id")).toString() ==
+                QStringLiteral("@new:matrix.org")) {
+                found = true;
+            }
+        }
+        QVERIFY(found);
+        // getProfile fires profileReady (the canned profile string).
+        QSignalSpy prof(&mock, &transports::IContactsService::profileReady);
+        mock.getProfile(t, QStringLiteral("@new:matrix.org"));
+        QCOMPARE(prof.count(), 1);
     }
 };
 

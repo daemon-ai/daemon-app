@@ -17,6 +17,7 @@
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_checkpoint_timeline.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/daemon_contacts_service.h"
 #include "daemon/daemon_daemonnet.h"
 #include "daemon/daemon_dashboard.h"
 #include "daemon/daemon_fleet_tree.h"
@@ -54,6 +55,7 @@
 #include "session/mock_session_settings.h"
 #include "settings/qt_settings_store.h"
 #include "tools/mock_tool_inventory.h" // [wave2:app-approvals-safety] D2
+#include "transports/mock_contacts_service.h"
 #include "transports/mock_presence_service.h"
 #include "transports/mock_transport_registry.h"
 #include "update/update_manager.h"
@@ -137,6 +139,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // existing adapter families for the "Add channel" picker; presence reports offline/unknown.
     graph.transportRegistry = new transports::MockTransportRegistry(owner);
     graph.presence = new transports::MockPresenceService(owner);
+    // [acct-mgmt] Transport contacts / roster (Phase D): inert canned mock until a daemon adapter
+    // decodes the node's roster ops (replaced in the Daemon branch below).
+    graph.contacts = new transports::MockContactsService(owner);
     // sessionSettings is constructed per-mode below (the daemon variant needs nodeApi to send
     // SetSessionMode); checkpoints starts as the mock and is REPLACED in the daemon branch with
     // the repo-backed DaemonCheckpointTimeline (CheckpointList/CheckpointRewind; E4/TOOL-9).
@@ -256,6 +261,16 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             new transports::DaemonTransportRegistry(graph.transportRepository, owner);
         delete graph.presence;
         graph.presence = new transports::DaemonPresenceService(graph.transportRepository, owner);
+        // [acct-mgmt] Daemon-backed transport contacts / roster (Phase D, wire v34): replace the
+        // inert mock with the DaemonContactsService projecting the ContactsRepository. The feed's
+        // ContactsChanged event refetches a transport's roster in place (wired via the setter
+        // because the repo is built after the SubscriptionManager).
+        graph.contactsRepository = new ContactsRepository(graph.nodeApi, graph.cache, owner);
+        if (graph.subscriptions != nullptr) {
+            graph.subscriptions->setContactsRepository(graph.contactsRepository);
+        }
+        delete graph.contacts;
+        graph.contacts = new transports::DaemonContactsService(graph.contactsRepository, owner);
         // Daemon-backed, offline-first session roster + dashboard (replaces the mock pair). The
         // roster projects the (offline-first) CachedSessionStore; the dashboard derives its
         // counters from the FINAL seam pointers (DaemonFleetTree + DaemonApprovalsInbox) and its
