@@ -64,10 +64,200 @@ Item {
         return false;
     }
 
+    // [acct-mgmt] gating seam: per-verb ops (wire v33) land here. Until the node reports per-verb
+    // conversation_ops / membership_ops on AdapterInfo, gate the room-lifecycle affordances on
+    // what exists today: the adapter family's coarse `rooms` capability. When wave-2 lands, replace
+    // these lookups with the per-verb ops (create/join_channel/leave/delete, invite/remove/ban/
+    // set_role) joined to the account by family — the buttons/keys stay, only the gate changes.
+    function capsForFamily(family) {
+        for (var i = 0; i < root.adapters.length; ++i)
+            if (root.adapters[i].family === family)
+                return root.adapters[i].capabilities || ({});
+        return ({});
+    }
+    // [acct-mgmt] gating seam: per-verb ops (wire v33) land here — today keyed on `rooms`.
+    function canManageRooms(family) {
+        return capsForFamily(family).rooms === true;
+    }
+    // [acct-mgmt] gating seam: per-verb ops (wire v33) land here — today keyed on `rooms`.
+    function canManageMembers(family) {
+        return capsForFamily(family).rooms === true;
+    }
+
+    function accountLabelFor(transport) {
+        for (var i = 0; i < root.accounts.length; ++i)
+            if (root.accounts[i].transport === transport)
+                return root.accounts[i].displayName.length > 0
+                       ? root.accounts[i].displayName : transport;
+        return transport;
+    }
+
     // The shared interactive-auth sheet (B1): the "Connect" button opens it pre-narrowed to the
     // adapter's family. On success the shared service graph refetches instances + that account's
     // rooms, so the new account appears here (and its live status lights up via TransportChanged).
     AuthFlowSheet { id: authSheet }
+
+    // [acct-mgmt] Two-phase room dialogs. The node describes the form (ConvJoinDetails /
+    // ConvCreateDetails); we open the matching dialog when the seam fires its ready signal, so the
+    // rendered form is always the node's — nothing hardcoded per family.
+    JoinRoomDialog { id: joinRoomDialog }
+    NewRoomDialog { id: newRoomDialog }
+
+    // A room/member operation failed on the node — surface it (parity with the TUI notice).
+    QQC.Popup {
+        id: roomErrorToast
+        property string message: ""
+        modal: false
+        closePolicy: QQC.Popup.CloseOnPressOutside | QQC.Popup.CloseOnEscape
+        anchors.centerIn: QQC.Overlay.overlay
+        padding: 12
+        background: Rectangle { color: Theme.surface; border.color: Theme.danger; radius: Theme.radius }
+        contentItem: Text {
+            text: roomErrorToast.message
+            font.family: FontIcons.display; font.pixelSize: 12; color: Theme.text
+            wrapMode: Text.Wrap
+        }
+        function show(msg) { message = msg; open(); }
+    }
+
+    Connections {
+        target: Transports
+        function onJoinDetailsReady(transport, form) {
+            joinRoomDialog.openFor(transport, root.accountLabelFor(transport), form);
+        }
+        function onCreateDetailsReady(transport, form) {
+            newRoomDialog.openFor(transport, root.accountLabelFor(transport), form);
+        }
+        function onRoomOperationFailed(message) { roomErrorToast.show(message); }
+    }
+
+    // [acct-mgmt] Leave a room (ConvLeave). Non-destructive to the room itself but the operator
+    // loses membership; confirm, matching the removeAccountDialog pattern.
+    Kit.Dialog {
+        id: leaveRoomDialog
+        property string transport: ""
+        property string conv: ""
+        property string roomLabel: ""
+        title: qsTr("Leave room?")
+        acceptText: qsTr("Leave room")
+        destructive: true
+        onAccepted: {
+            if (transport.length > 0 && conv.length > 0)
+                Transports.leaveRoom(transport, conv);
+            transport = ""; conv = "";
+        }
+        onRejected: { transport = ""; conv = ""; }
+        contentItem: Text {
+            Layout.maximumWidth: 340
+            text: qsTr("Leave “%1”? You can re-join later if the room allows it.").arg(leaveRoomDialog.roomLabel)
+            font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
+            wrapMode: Text.WordWrap
+        }
+        function openFor(t, c, label) { transport = t; conv = c; roomLabel = label; open(); }
+    }
+
+    // [acct-mgmt] Delete a room (ConvDelete) — destructive; confirm.
+    Kit.Dialog {
+        id: deleteRoomDialog
+        property string transport: ""
+        property string conv: ""
+        property string roomLabel: ""
+        title: qsTr("Delete room?")
+        acceptText: qsTr("Delete room")
+        destructive: true
+        onAccepted: {
+            if (transport.length > 0 && conv.length > 0)
+                Transports.deleteRoom(transport, conv);
+            transport = ""; conv = "";
+        }
+        onRejected: { transport = ""; conv = ""; }
+        contentItem: Text {
+            Layout.maximumWidth: 340
+            text: qsTr("Delete “%1” on the node? This cannot be undone.").arg(deleteRoomDialog.roomLabel)
+            font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
+            wrapMode: Text.WordWrap
+        }
+        function openFor(t, c, label) { transport = t; conv = c; roomLabel = label; open(); }
+    }
+
+    // [acct-mgmt] Kick a member (MemberRemove) — destructive; confirm.
+    Kit.Dialog {
+        id: kickMemberDialog
+        property string transport: ""
+        property string conv: ""
+        property string contactId: ""
+        title: qsTr("Kick member?")
+        acceptText: qsTr("Kick")
+        destructive: true
+        onAccepted: {
+            if (transport.length > 0 && conv.length > 0 && contactId.length > 0)
+                Transports.memberKick(transport, conv, contactId);
+            transport = ""; conv = ""; contactId = "";
+        }
+        onRejected: { transport = ""; conv = ""; contactId = ""; }
+        contentItem: Text {
+            Layout.maximumWidth: 340
+            text: qsTr("Remove %1 from this room? They can be invited back.").arg(kickMemberDialog.contactId)
+            font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
+            wrapMode: Text.WordWrap
+        }
+        function openFor(t, c, id) { transport = t; conv = c; contactId = id; open(); }
+    }
+
+    // [acct-mgmt] Ban a member (MemberBan) — destructive; confirm.
+    Kit.Dialog {
+        id: banMemberDialog
+        property string transport: ""
+        property string conv: ""
+        property string contactId: ""
+        title: qsTr("Ban member?")
+        acceptText: qsTr("Ban")
+        destructive: true
+        onAccepted: {
+            if (transport.length > 0 && conv.length > 0 && contactId.length > 0)
+                Transports.memberBan(transport, conv, contactId);
+            transport = ""; conv = ""; contactId = "";
+        }
+        onRejected: { transport = ""; conv = ""; contactId = ""; }
+        contentItem: Text {
+            Layout.maximumWidth: 340
+            text: qsTr("Ban %1 from this room? They cannot re-join until unbanned.").arg(banMemberDialog.contactId)
+            font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
+            wrapMode: Text.WordWrap
+        }
+        function openFor(t, c, id) { transport = t; conv = c; contactId = id; open(); }
+    }
+
+    // [acct-mgmt] Invite a member (MemberInvite): a single contact-id prompt (the directory-backed
+    // picker lands with the contacts UI in Phase D).
+    Kit.Dialog {
+        id: inviteMemberDialog
+        property string transport: ""
+        property string conv: ""
+        title: qsTr("Invite to room")
+        acceptText: qsTr("Invite")
+        acceptEnabled: inviteField.text.trim().length > 0
+        onAccepted: {
+            if (transport.length > 0 && conv.length > 0)
+                Transports.memberInvite(transport, conv, inviteField.text.trim());
+            transport = ""; conv = "";
+        }
+        onRejected: { transport = ""; conv = ""; }
+        contentItem: ColumnLayout {
+            spacing: 6
+            Text {
+                text: qsTr("Contact id")
+                font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+            }
+            Kit.TextField {
+                id: inviteField
+                Layout.fillWidth: true
+                Layout.minimumWidth: 300
+                placeholderText: qsTr("@bob:matrix.org")
+            }
+        }
+        function openFor(t, c) { transport = t; conv = c; inviteField.text = ""; open(); }
+    }
 
     // Pin a room to an agent/session (B4/B6): the same RouteDialog the routing manager uses,
     // driven by a page-local controller over the shared DaemonNet.
@@ -315,6 +505,32 @@ Item {
                             Layout.fillWidth: true
                             spacing: 4
                             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+
+                            // [acct-mgmt] Rooms header: Join / New (gated on the family's coarse
+                            // rooms capability today; per-verb ops replace the gate at wire v33).
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                Text {
+                                    text: qsTr("Rooms")
+                                    font.family: FontIcons.display; font.pixelSize: 11
+                                    font.weight: Font.DemiBold; color: Theme.textMuted
+                                    Layout.fillWidth: true
+                                }
+                                Kit.TextButton {
+                                    visible: root.canManageRooms(acctRow.modelData.family)
+                                    text: qsTr("Join room…")
+                                    onClicked: Transports.conversationJoinDetails(
+                                        acctRow.modelData.transport)
+                                }
+                                Kit.TextButton {
+                                    visible: root.canManageRooms(acctRow.modelData.family)
+                                    text: qsTr("New room…")
+                                    onClicked: Transports.conversationCreateDetails(
+                                        acctRow.modelData.transport)
+                                }
+                            }
+
                             Text {
                                 visible: acctRow.rooms.length === 0
                                 text: qsTr("No rooms.")
@@ -322,91 +538,206 @@ Item {
                             }
                             Repeater {
                                 model: acctRow.rooms
-                                delegate: RowLayout {
-                                    id: roomRow
+                                delegate: ColumnLayout {
+                                    id: roomItem
                                     required property var modelData
+                                    property string transport: acctRow.modelData.transport
+                                    property string family: acctRow.modelData.family
+                                    property string convId: modelData.id
+                                    property string roomLabel: modelData.title.length > 0
+                                                               ? modelData.title : modelData.id
+                                    // Members expansion state + the ConvGet-loaded member list.
+                                    property bool membersExpanded: false
+                                    property var members: []
                                     // The room's routing pin (B6/EIO-12): re-read on pin changes.
                                     property string pinnedSession:
-                                        DaemonNet.pinnedSessionFor(acctRow.modelData.transport,
-                                                                   modelData.id)
+                                        DaemonNet.pinnedSessionFor(transport, convId)
                                     // [wave2:app-channels-liveness] B2: badged when the node
-                                    // surfaced this room after the operator's baseline for the
-                                    // account (e.g. an auto-accepted invite). Re-read when a live
-                                    // ConvList lands; tap the chip to dismiss.
+                                    // surfaced this room after the operator's baseline.
                                     property bool isNew:
-                                        Transports.isNewConversation(acctRow.modelData.transport,
-                                                                     modelData.id)
+                                        Transports.isNewConversation(transport, convId)
+                                    Layout.fillWidth: true
+                                    spacing: 3
+
                                     Connections {
                                         target: DaemonNet
                                         function onChanged() {
-                                            roomRow.pinnedSession = DaemonNet.pinnedSessionFor(
-                                                acctRow.modelData.transport, roomRow.modelData.id);
+                                            roomItem.pinnedSession =
+                                                DaemonNet.pinnedSessionFor(roomItem.transport,
+                                                                           roomItem.convId);
                                         }
                                     }
                                     Connections {
                                         target: Transports
                                         function onConversationsChanged(transport) {
-                                            if (transport === acctRow.modelData.transport)
-                                                roomRow.isNew = Transports.isNewConversation(
-                                                    acctRow.modelData.transport,
-                                                    roomRow.modelData.id);
+                                            if (transport === roomItem.transport)
+                                                roomItem.isNew = Transports.isNewConversation(
+                                                    roomItem.transport, roomItem.convId);
+                                        }
+                                        // [acct-mgmt] the ConvGet member list for this room lands.
+                                        function onMembersChanged(transport, conversation, members) {
+                                            if (transport === roomItem.transport
+                                                && conversation === roomItem.convId)
+                                                roomItem.members = members;
                                         }
                                     }
-                                    Layout.fillWidth: true
-                                    spacing: 8
-                                    Text {
-                                        text: FontIcons.fa_hashtag
-                                        font.family: FontIcons.faSolid; font.pixelSize: 10
-                                        color: Theme.iconMuted
-                                    }
-                                    // Newly-joined-room affordance (B2): dismiss on tap.
-                                    Kit.Chip {
-                                        visible: roomRow.isNew
-                                        text: qsTr("new")
-                                        tone: "accent"
-                                        interactive: true
-                                        tooltipText: qsTr("Newly joined room")
-                                        onClicked: {
-                                            Transports.markConversationSeen(
-                                                acctRow.modelData.transport, roomRow.modelData.id);
-                                            roomRow.isNew = false;
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 8
+                                        Text {
+                                            text: FontIcons.fa_hashtag
+                                            font.family: FontIcons.faSolid; font.pixelSize: 10
+                                            color: Theme.iconMuted
+                                        }
+                                        // Newly-joined-room affordance (B2): dismiss on tap.
+                                        Kit.Chip {
+                                            visible: roomItem.isNew
+                                            text: qsTr("new")
+                                            tone: "accent"
+                                            interactive: true
+                                            tooltipText: qsTr("Newly joined room")
+                                            onClicked: {
+                                                Transports.markConversationSeen(
+                                                    roomItem.transport, roomItem.convId);
+                                                roomItem.isNew = false;
+                                            }
+                                        }
+                                        Text {
+                                            text: roomItem.roomLabel
+                                            font.family: FontIcons.display; font.pixelSize: 12
+                                            color: Theme.text; elide: Text.ElideRight
+                                            Layout.fillWidth: true
+                                        }
+                                        // Route-pin chip: pinned rooms open the routing manager.
+                                        Kit.Chip {
+                                            visible: roomItem.pinnedSession.length > 0
+                                            text: qsTr("⇄ %1").arg(roomItem.pinnedSession)
+                                            tone: "accent"
+                                            interactive: true
+                                            tooltipText: qsTr("Pinned to this session — open the routing manager")
+                                            onClicked: Nav.open("routing")
+                                        }
+                                        Kit.Chip {
+                                            visible: roomItem.pinnedSession.length === 0
+                                            text: qsTr("Pin to agent…")
+                                            tone: "muted"
+                                            interactive: true
+                                            tooltipText: qsTr("Route this room's messages to a session")
+                                            onClicked: pinDialog.openFor({
+                                                id: roomItem.transport + "|group|"
+                                                    + roomItem.convId + "|",
+                                                session: "",
+                                                profile: ""
+                                            })
+                                        }
+                                        Text {
+                                            text: modelData.kind
+                                            font.family: FontIcons.mono; font.pixelSize: 10
+                                            color: Theme.textMuted
+                                        }
+                                        // [acct-mgmt] Members expand (ConvGet). Fetch on first open.
+                                        Kit.TextButton {
+                                            visible: root.canManageMembers(roomItem.family)
+                                            text: roomItem.membersExpanded
+                                                  ? qsTr("Members ▾") : qsTr("Members ▸")
+                                            onClicked: {
+                                                roomItem.membersExpanded = !roomItem.membersExpanded;
+                                                if (roomItem.membersExpanded)
+                                                    Transports.conversationMembers(
+                                                        roomItem.transport, roomItem.convId);
+                                            }
+                                        }
+                                        // [acct-mgmt] Leave / Delete (confirmed). Gated on rooms
+                                        // capability today; per-verb ops replace the gate at v33.
+                                        Kit.TextButton {
+                                            visible: root.canManageRooms(roomItem.family)
+                                            text: qsTr("Leave")
+                                            onClicked: leaveRoomDialog.openFor(
+                                                roomItem.transport, roomItem.convId,
+                                                roomItem.roomLabel)
+                                        }
+                                        Kit.TextButton {
+                                            visible: root.canManageRooms(roomItem.family)
+                                            text: qsTr("Delete")
+                                            textColor: Theme.danger
+                                            onClicked: deleteRoomDialog.openFor(
+                                                roomItem.transport, roomItem.convId,
+                                                roomItem.roomLabel)
                                         }
                                     }
-                                    Text {
-                                        text: modelData.title.length > 0 ? modelData.title : modelData.id
-                                        font.family: FontIcons.display; font.pixelSize: 12
-                                        color: Theme.text; elide: Text.ElideRight; Layout.fillWidth: true
-                                    }
-                                    // Route-pin chip: this room's inbound messages route to the
-                                    // pinned session; tap opens the routing manager.
-                                    Kit.Chip {
-                                        visible: roomRow.pinnedSession.length > 0
-                                        text: qsTr("⇄ %1").arg(roomRow.pinnedSession)
-                                        tone: "accent"
-                                        interactive: true
-                                        tooltipText: qsTr("Pinned to this session — open the routing manager")
-                                        onClicked: Nav.open("routing")
-                                    }
-                                    // Unpinned rooms: pinning is an EXPLICIT act (B4 - no lazy
-                                    // session create) via the shared RouteDialog, preselected to
-                                    // this room's origin (the canonical originKey format from
-                                    // routing_dtos.h: "<transport>|group|<chat>|").
-                                    Kit.Chip {
-                                        visible: roomRow.pinnedSession.length === 0
-                                        text: qsTr("Pin to agent…")
-                                        tone: "muted"
-                                        interactive: true
-                                        tooltipText: qsTr("Route this room's messages to a session")
-                                        onClicked: pinDialog.openFor({
-                                            id: acctRow.modelData.transport + "|group|"
-                                                + roomRow.modelData.id + "|",
-                                            session: "",
-                                            profile: ""
-                                        })
-                                    }
-                                    Text {
-                                        text: modelData.kind
-                                        font.family: FontIcons.mono; font.pixelSize: 10; color: Theme.textMuted
+
+                                    // --- Members (ConvGet → ConversationInfo.members) ----------
+                                    ColumnLayout {
+                                        visible: roomItem.membersExpanded
+                                        Layout.fillWidth: true
+                                        Layout.leftMargin: 16
+                                        spacing: 3
+                                        Text {
+                                            visible: roomItem.members.length === 0
+                                            text: qsTr("No members.")
+                                            font.family: FontIcons.display; font.pixelSize: 11
+                                            color: Theme.textMuted
+                                        }
+                                        Repeater {
+                                            model: roomItem.members
+                                            delegate: RowLayout {
+                                                required property var modelData
+                                                Layout.fillWidth: true
+                                                spacing: 8
+                                                Text {
+                                                    text: FontIcons.fa_circle
+                                                    font.family: FontIcons.faSolid; font.pixelSize: 8
+                                                    color: root.dotColor(modelData.presence)
+                                                }
+                                                Text {
+                                                    text: modelData.displayName.length > 0
+                                                          ? modelData.displayName : modelData.contactId
+                                                    font.family: FontIcons.display; font.pixelSize: 12
+                                                    color: Theme.text; elide: Text.ElideRight
+                                                    Layout.fillWidth: true
+                                                }
+                                                Text {
+                                                    text: modelData.contactId
+                                                    font.family: FontIcons.mono; font.pixelSize: 10
+                                                    color: Theme.textMuted; elide: Text.ElideMiddle
+                                                    Layout.maximumWidth: 160
+                                                }
+                                                // Role picker (MemberSetRole). None/Voice/HalfOp/
+                                                // Op/Founder — the node's MemberRole ladder.
+                                                Kit.Dropdown {
+                                                    readonly property var roles:
+                                                        ["None","Voice","HalfOp","Op","Founder"]
+                                                    model: roles
+                                                    currentIndex: Math.max(0, roles.indexOf(modelData.role))
+                                                    onActivated: function(index) {
+                                                        if (roles[index] !== modelData.role)
+                                                            Transports.memberSetRole(
+                                                                roomItem.transport, roomItem.convId,
+                                                                modelData.contactId, roles[index]);
+                                                    }
+                                                }
+                                                Kit.TextButton {
+                                                    text: qsTr("Kick")
+                                                    onClicked: kickMemberDialog.openFor(
+                                                        roomItem.transport, roomItem.convId,
+                                                        modelData.contactId)
+                                                }
+                                                Kit.TextButton {
+                                                    text: qsTr("Ban")
+                                                    textColor: Theme.danger
+                                                    onClicked: banMemberDialog.openFor(
+                                                        roomItem.transport, roomItem.convId,
+                                                        modelData.contactId)
+                                                }
+                                            }
+                                        }
+                                        // Invite… affordance (MemberInvite).
+                                        Kit.TextButton {
+                                            text: qsTr("⊕ Invite…")
+                                            onClicked: inviteMemberDialog.openFor(
+                                                roomItem.transport, roomItem.convId)
+                                        }
                                     }
                                 }
                             }

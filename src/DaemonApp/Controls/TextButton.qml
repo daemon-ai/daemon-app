@@ -14,6 +14,9 @@ QQC.Button {
     // Fill color used when accentFilled (defaults to the accent; set to a danger
     // token for destructive primary actions).
     property color fillColor: Theme.accent
+    // [acct-mgmt] Optional label-color override for a flat (non-accentFilled) button — set to a
+    // danger token to tint a destructive text action (Delete / Kick / Ban). Empty = the default.
+    property color textColor: "transparent"
 
     font.family: FontIcons.display
     font.pixelSize: 14
@@ -26,7 +29,9 @@ QQC.Button {
         text: root.text
         font: root.font
         color: root.accentFilled ? Theme.background
-             : root.enabled ? Theme.text : Theme.textMuted
+             : !root.enabled ? Theme.textMuted
+             : root.textColor.a > 0 ? root.textColor
+             : Theme.text
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight

@@ -28,6 +28,8 @@ qt_add_qml_module(da_controls
         EngineOriginChip.qml
         # [wave2:backlog-app] TOOL-8 pending-count pill badge
         Badge.qml
+        # [acct-mgmt] node-described AccountSettingsSchema form (join/create room extras)
+        SettingsSchemaForm.qml
 )
 add_library(daemon-app::controls ALIAS da_controls)
 

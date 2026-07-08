@@ -54,6 +54,9 @@ qt_add_qml_module(da_pages
         DashboardPage.qml
         FleetPage.qml
         ChannelsPage.qml
+        # [acct-mgmt] room lifecycle dialogs (Phase B)
+        JoinRoomDialog.qml
+        NewRoomDialog.qml
         SessionsPage.qml
         ApprovalsPage.qml
         RoutingPage.qml
