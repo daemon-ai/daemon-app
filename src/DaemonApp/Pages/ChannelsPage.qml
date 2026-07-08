@@ -448,6 +448,40 @@ Item {
         }
     }
 
+    // [acct-mgmt] wire v35: set/clear the node-persisted account label (TransportSetLabel). Seeded
+    // with the current label; an empty value clears it node-side (the display then falls back to the
+    // account's real display name). Node-decides — the row re-renders off the refetched instances.
+    Kit.Dialog {
+        id: renameAccountDialog
+        property string transport: ""
+        title: qsTr("Rename account")
+        acceptText: qsTr("Save")
+        onAccepted: {
+            if (transport.length > 0)
+                Transports.setLabel(transport, renameAccountField.text.trim());
+            transport = "";
+        }
+        onRejected: transport = ""
+        contentItem: ColumnLayout {
+            spacing: 6
+            Text {
+                text: qsTr("Display label (empty clears it)")
+                font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+                Layout.maximumWidth: 320; wrapMode: Text.WordWrap
+            }
+            Kit.TextField {
+                id: renameAccountField
+                Layout.fillWidth: true
+                Layout.minimumWidth: 300
+            }
+        }
+        function openFor(t, current) {
+            transport = t;
+            renameAccountField.text = current || "";
+            open();
+        }
+    }
+
     PageHeader {
         id: header
         anchors.top: parent.top
@@ -567,6 +601,9 @@ Item {
                         anchors.rightMargin: 12
                         anchors.topMargin: 10
                         spacing: 6
+                        // [acct-mgmt] wire v35: a node-disabled account renders dimmed (the Enabled
+                        // switch stays interactive through the reduced opacity so it can be re-enabled).
+                        opacity: acctRow.modelData.enabled === false ? 0.55 : 1.0
 
                         RowLayout {
                             Layout.fillWidth: true
@@ -597,6 +634,34 @@ Item {
                                 text: acctRow.conn
                                 font.family: FontIcons.display; font.pixelSize: 11
                                 color: acctRow.conn === "connected" ? Theme.accent : Theme.textMuted
+                            }
+                            // --- Reversible lifecycle + persisted metadata ([acct-mgmt] wire v35) --
+                            // Connect: re-spawn the adapter family serve loop (TransportConnect).
+                            // Shown when the account is offline/errored and credentialed; the presence
+                            // dot updates via the TransportChanged/Presence flow (no optimistic state).
+                            Kit.IconButton {
+                                visible: (acctRow.conn === "offline" || acctRow.conn === "error")
+                                         && acctRow.modelData.boundProfile.length > 0
+                                icon: FontIcons.fa_play
+                                iconColor: Theme.accent
+                                iconPointSize: 11; implicitWidth: 30; implicitHeight: 26
+                                tooltipText: qsTr("Connect this account")
+                                onClicked: Transports.connectAccount(acctRow.modelData.transport)
+                            }
+                            // Enabled: persist the desired state (TransportSetEnabled). Node-decides —
+                            // re-assert the binding after toggling so the refetched state re-drives it.
+                            Text {
+                                text: qsTr("Enabled")
+                                font.family: FontIcons.display; font.pixelSize: 10; color: Theme.textMuted
+                            }
+                            Kit.Switch {
+                                checked: acctRow.modelData.enabled !== false
+                                onToggled: {
+                                    Transports.setEnabled(acctRow.modelData.transport, checked);
+                                    checked = Qt.binding(function() {
+                                        return acctRow.modelData.enabled !== false;
+                                    });
+                                }
                             }
                             // --- Account lifecycle (EIO-2/EIO-7; [waveB:app-v30] D1) ----------
                             // Re-authenticate: shown ONLY when the node marks the disconnect fatal
@@ -632,6 +697,15 @@ Item {
                                     acctRow.modelData.displayName.length > 0
                                         ? acctRow.modelData.displayName
                                         : acctRow.modelData.transport)
+                            }
+                            // Rename: set/clear the node-persisted display label (TransportSetLabel).
+                            // Pre-filled with the current label; an empty value clears it to null.
+                            Kit.IconButton {
+                                icon: FontIcons.fa_pen_to_square
+                                iconPointSize: 11; implicitWidth: 30; implicitHeight: 26
+                                tooltipText: qsTr("Rename this account…")
+                                onClicked: renameAccountDialog.openFor(
+                                    acctRow.modelData.transport, acctRow.modelData.label)
                             }
                         }
 
