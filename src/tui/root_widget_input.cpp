@@ -478,6 +478,21 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // [acct-mgmt] Accounts: 'r' renames the selected credential (CredentialSetLabel via the wire;
+    // empty clears the label). GUI AccountsPage inline-rename parity.
+    if (kind == TabModel::Accounts && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("r") && m_services.accounts != nullptr) {
+        const QList<QVariantMap> rows = pageActionRows(kind);
+        if (!rows.isEmpty()) {
+            const int sel =
+                qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
+            const QVariantMap& row = rows.at(sel);
+            openAccountRename(row.value(QStringLiteral("id")).toString(),
+                              row.value(QStringLiteral("label")).toString());
+            event->accept();
+            return true;
+        }
+    }
     // [acct-mgmt] Channels row-contextual keys. Every key here opens a dialog / palette (TuiPageHub
     // cannot host dialogs); 'd' (disconnect, non-destructive) stays in the hub key handler. The
     // acted-on verb depends on the selected row's kind (account vs room).
@@ -555,12 +570,24 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         };
         bool handled = false;
         if (isAccount) {
-            // [wave2:app-channels-liveness] B1: 'c' connects via the shared interactive-auth
-            // launcher; 'x' removes the account (confirmed); 'g'/'n' open the room flows, gated
-            // per-verb on conversation_ops.join_channel / .create. [acct-mgmt] 'a'/'f' add/find
-            // contacts (gated on roster_ops.add / directory).
+            // [wave2:app-channels-liveness] B1: 'c' connects. [acct-mgmt] wire v35: a credentialed
+            // account that only lost its serve loop re-spawns via TransportConnect (no interactive
+            // sign-in); an uncredentialed or fatal account still needs the shared interactive-auth
+            // launcher. 'r' renames (set/clear the node label). 'x' removes the account
+            // (confirmed); 'g'/'n' open the room flows, gated per-verb on
+            // conversation_ops.join_channel / .create. [acct-mgmt] 'a'/'f' add/find contacts (gated
+            // on roster_ops.add / directory).
             if (text == QStringLiteral("c")) {
-                openAuthFlow();
+                const bool fatal = row.value(QStringLiteral("fatal")).toBool();
+                const QString bound = row.value(QStringLiteral("boundProfile")).toString();
+                if (!fatal && !bound.isEmpty() && m_services.transportRegistry != nullptr) {
+                    m_services.transportRegistry->connectAccount(transport);
+                } else {
+                    openAuthFlow();
+                }
+                handled = true;
+            } else if (text == QStringLiteral("r")) {
+                openChannelRename(transport, row.value(QStringLiteral("label")).toString());
                 handled = true;
             } else if (text == QStringLiteral("x")) {
                 openChannelRemoveConfirm(transport,

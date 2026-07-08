@@ -621,6 +621,38 @@ void RootWidget::openChannelRemoveConfirm(const QString& transport, const QStrin
     removeBtn->setFocus();
 }
 
+// [acct-mgmt] wire v35: set/clear the node-persisted account label (TransportSetLabel). A text
+// prompt seeded with the current label; an empty value clears it node-side. Node-decides — the row
+// re-renders off the refetched instances. Mirrors the GUI ChannelsPage renameAccountDialog.
+void RootWidget::openChannelRename(const QString& transport, const QString& currentLabel) {
+    if (m_services.transportRegistry == nullptr || transport.isEmpty()) {
+        return;
+    }
+    auto* dialog = new TextPromptDialog(tr("Rename account (empty clears the label)"), currentLabel,
+                                        /*masked=*/false, this);
+    connect(dialog, &TextPromptDialog::submitted, this, [this, transport](const QString& text) {
+        if (m_services.transportRegistry != nullptr) {
+            m_services.transportRegistry->setLabel(transport, text.trimmed());
+        }
+    });
+}
+
+// [acct-mgmt] wire v35: rename a credential (CredentialSetLabel via the accounts seam; an empty
+// value clears the label node-side). A text prompt seeded with the current label. GUI AccountsPage
+// inline-rename parity — the node owns the label, the row re-renders off the refetched list.
+void RootWidget::openAccountRename(const QString& accountId, const QString& currentLabel) {
+    if (m_services.accounts == nullptr || accountId.isEmpty()) {
+        return;
+    }
+    auto* dialog = new TextPromptDialog(tr("Rename account (empty clears the label)"), currentLabel,
+                                        /*masked=*/false, this);
+    connect(dialog, &TextPromptDialog::submitted, this, [this, accountId](const QString& text) {
+        if (m_services.accounts != nullptr) {
+            m_services.accounts->rename(accountId, text.trimmed());
+        }
+    });
+}
+
 // [acct-mgmt] Lazily build the shared room flow (join/create/invite/members chained dialogs) the
 // way openAddAccount builds AddAccountFlow: refresh the page on a seam mutation, restore page focus
 // when the dialogs close.

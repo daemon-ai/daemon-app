@@ -137,7 +137,8 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
     // [acct-mgmt] j/k walks accounts AND their rooms; keys are row-contextual (account vs room).
     md += tr("Events-IO transport accounts, their rooms, members and contacts, shared with the "
              "GUI. **j/k** move.\n\n"
-             "Account row: **c** connect · **d** disconnect · **x** remove account · "
+             "Account row: **c** connect · **d** disconnect · **e** enable/disable · "
+             "**r** rename · **x** remove account · "
              "**g** join room · **n** new room · **a** add contact · **f** find people.\n"
              "Room row: **Enter** members · **i** invite · **l** leave · **x** delete · "
              "**p** pin to agent.\n"
@@ -193,9 +194,13 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
             const QString conn = row.value(QStringLiteral("connection")).toString();
             const QString sub =
                 boundProfile.isEmpty() ? family : tr("%1 · %2").arg(family, boundProfile);
-            md += tr("- %1%2 **%3** — %4 · %5\n")
+            // [acct-mgmt] wire v35: the display name is already the node label overlay (registry
+            // projection). A node-disabled account is marked (GUI dims the card; the TUI appends
+            // the token). `enabled` defaults true when absent.
+            const bool enabled = row.value(QStringLiteral("enabled"), true).toBool();
+            md += tr("- %1%2 **%3** — %4 · %5%6\n")
                       .arg(mark(i), dotFor(conn), displayName.isEmpty() ? transport : displayName,
-                           sub, conn);
+                           sub, conn, enabled ? QString() : tr(" · _disabled_"));
             // [waveB:app-v30] D1: node-reported disconnect provenance (verbatim message wins).
             const QString message = row.value(QStringLiteral("connectionMessage")).toString();
             const QString reasonText =

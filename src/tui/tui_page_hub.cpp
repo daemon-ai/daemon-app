@@ -342,15 +342,23 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
             acted = true;
         }
         break;
-    // [acct-mgmt] 'd' disconnects the selected ACCOUNT row (non-destructive; handled here). Every
-    // other Channels key (account: c/x/g/n; room: Enter/i/l/x/p) opens a dialog / palette and is
-    // therefore intercepted at RootWidget level (TuiPageHub cannot host dialogs).
+    // [acct-mgmt] 'd' disconnects the selected ACCOUNT row (non-destructive; handled here). 'e'
+    // toggles the account's enabled state (TransportSetEnabled; reversible, so no confirm — also
+    // non-dialog). Every other Channels key (account: c/r/x/g/n; room: Enter/i/l/x/p) opens a
+    // dialog / palette and is therefore intercepted at RootWidget level (TuiPageHub cannot host
+    // dialogs).
     case TabModel::Channels:
-        if (text == QStringLiteral("d") && m_deps.transportRegistry != nullptr &&
+        if (m_deps.transportRegistry != nullptr &&
             row.value(QStringLiteral("rowKind")).toString() == QLatin1String("account")) {
-            const QString conn = row.value(QStringLiteral("connection")).toString();
-            if (conn != QLatin1String("offline") && conn != QLatin1String("disconnecting")) {
-                m_deps.transportRegistry->disconnect(id);
+            if (text == QStringLiteral("d")) {
+                const QString conn = row.value(QStringLiteral("connection")).toString();
+                if (conn != QLatin1String("offline") && conn != QLatin1String("disconnecting")) {
+                    m_deps.transportRegistry->disconnect(id);
+                    acted = true;
+                }
+            } else if (text == QStringLiteral("e")) {
+                const bool enabled = row.value(QStringLiteral("enabled"), true).toBool();
+                m_deps.transportRegistry->setEnabled(id, !enabled);
                 acted = true;
             }
         }

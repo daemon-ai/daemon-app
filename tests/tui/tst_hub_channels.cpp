@@ -41,15 +41,21 @@ public:
 
     [[nodiscard]] QVariantList instances() const override {
         return {
+            // [acct-mgmt] wire v35: the display name is the label overlay (registry contract);
+            // `label` rides along for the rename pre-fill; this account is enabled.
             QVariantMap{{QStringLiteral("transport"), QStringLiteral("matrix/@bot:hs.org")},
                         {QStringLiteral("family"), QStringLiteral("matrix")},
                         {QStringLiteral("displayName"), QStringLiteral("Ops bot")},
+                        {QStringLiteral("label"), QStringLiteral("Ops bot")},
+                        {QStringLiteral("enabled"), true},
                         {QStringLiteral("boundProfile"), QStringLiteral("triage")}},
             // No display name + no bound profile: the row falls back to the
-            // transport id and the bare family.
+            // transport id and the bare family. [acct-mgmt] wire v35: node-disabled (no label).
             QVariantMap{{QStringLiteral("transport"), QStringLiteral("room/local")},
                         {QStringLiteral("family"), QStringLiteral("room")},
                         {QStringLiteral("displayName"), QString()},
+                        {QStringLiteral("label"), QString()},
+                        {QStringLiteral("enabled"), false},
                         {QStringLiteral("boundProfile"), QString()}},
         };
     }
@@ -176,6 +182,27 @@ private slots:
         QVERIFY(md.contains(QStringLiteral("@bob:hs.org")));
         // The contact-row key hints are surfaced.
         QVERIFY(md.contains(QStringLiteral("Contact row:")));
+    }
+
+    // [acct-mgmt] wire v35: the account row renders the label overlay (displayName) + a marker for
+    // a node-disabled account; the enabled account carries no marker. The connect/enable/rename key
+    // hints are surfaced on the account-row help line.
+    void channelsPageRendersEnabledAndLabel() {
+        SeededTransportRegistry registry;
+        SeededPresenceService presence;
+        TuiPageHub::Dependencies deps;
+        deps.transportRegistry = &registry;
+        deps.presence = &presence;
+        const TuiPageHub hub(deps);
+
+        const QString md = hub.pageMarkdownForKind(TabModel::Channels);
+
+        // The label overlay renders as the account name; the disabled account is marked.
+        QVERIFY(md.contains(QStringLiteral("Ops bot")));
+        QVERIFY(md.contains(QStringLiteral("disabled")));
+        // The account-row key legend advertises connect / enable-disable / rename.
+        QVERIFY(md.contains(QStringLiteral("**e** enable/disable")));
+        QVERIFY(md.contains(QStringLiteral("**r** rename")));
     }
 
     // Absent seams: no transports registry renders the explicit unavailable

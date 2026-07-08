@@ -374,6 +374,10 @@ private:
     // [waveB:app-v30] D1: Channels 'x' — a destructive confirm before TransportRemove (the node
     // sequences the full account teardown). On accept: ITransportRegistry::remove(transport).
     void openChannelRemoveConfirm(const QString& transport, const QString& label);
+    // [acct-mgmt] wire v35: set/clear the node-persisted account label (TransportSetLabel).
+    void openChannelRename(const QString& transport, const QString& currentLabel);
+    // [acct-mgmt] wire v35: set/clear the node-persisted credential label (CredentialSetLabel).
+    void openAccountRename(const QString& accountId, const QString& currentLabel);
     // [acct-mgmt] Channels room-lifecycle key handlers. Join/create/invite/members go through the
     // shared RoomFlow (chained dialogs); leave/delete are RootWidget confirms (the account-remove
     // pattern); pin opens a session picker then IDaemonNet::bindChat with the canonical originKey.
