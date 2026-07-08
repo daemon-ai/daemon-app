@@ -248,6 +248,16 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             m_contacts->refreshContacts(event.transport);
         }
         break;
+    // Profile roster mutation (wire v31, phase H): a create/edit/delete/select (operator or
+    // agent-authored via profile_manage) bumped the profile revision. Invalidation pointer only —
+    // refetch ProfileList, which re-runs DaemonProfileStore::rebuild() so the provenance/filter
+    // surfaces re-render. Direct (not debounced): the node coalesces ProfilesChanged, and a profile
+    // CRUD burst is small. Complements the "profiles"-scoped ResyncNeeded re-baseline above.
+    case DecodedNodeEvent::Kind::ProfilesChanged:
+        if (m_profiles != nullptr) {
+            m_profiles->refreshProfiles();
+        }
+        break;
     case DecodedNodeEvent::Kind::Unknown:
         break;
     }

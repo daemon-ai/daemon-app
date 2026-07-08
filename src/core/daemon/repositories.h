@@ -677,6 +677,11 @@ class CapsRepository : public RepositoryBase {
     Q_OBJECT
     Q_PROPERTY(quint32 orchestrateMaxDepth READ orchestrateMaxDepth NOTIFY capsRefreshed)
     Q_PROPERTY(quint32 orchestrateMaxFanout READ orchestrateMaxFanout NOTIFY capsRefreshed)
+    // Agent-authored-profile guardrail ceilings (wire v31, phase H): profiles a session may author
+    // and concurrent inline/ephemeral children per session. Advisory display only — the node
+    // enforces. Already decoded into m_caps; surfaced read-only beside depth/fanout.
+    Q_PROPERTY(quint32 maxComposedProfiles READ maxComposedProfiles NOTIFY capsRefreshed)
+    Q_PROPERTY(quint32 maxEphemeralPerSession READ maxEphemeralPerSession NOTIFY capsRefreshed)
     Q_PROPERTY(bool loaded READ loaded NOTIFY capsRefreshed)
 
 public:
@@ -684,6 +689,8 @@ public:
 
     [[nodiscard]] quint32 orchestrateMaxDepth() const { return m_caps.orchestrateMaxDepth; }
     [[nodiscard]] quint32 orchestrateMaxFanout() const { return m_caps.orchestrateMaxFanout; }
+    [[nodiscard]] quint32 maxComposedProfiles() const { return m_caps.maxComposedProfiles; }
+    [[nodiscard]] quint32 maxEphemeralPerSession() const { return m_caps.maxEphemeralPerSession; }
     [[nodiscard]] bool loaded() const { return m_loaded; }
 
     Q_INVOKABLE void refresh();

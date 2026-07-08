@@ -242,6 +242,23 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
                           ? tr("%1 — enforced by the node").arg(m_deps.caps->orchestrateMaxFanout())
                           : tr("— — enforced by the node"));
         rows << fanout;
+        // Agent-authored-profile ceilings (phase H): profiles a session may author + concurrent
+        // ephemeral children per session. Advisory display, mirrors the GUI
+        // DelegationLimitsSection.
+        QVariantMap composed = configManaged(safety, safetyLabel, "safety/maxComposedProfiles",
+                                             tr("Max composed profiles"));
+        composed.insert(
+            QStringLiteral("note"),
+            have ? tr("%1 — enforced by the node").arg(m_deps.caps->maxComposedProfiles())
+                 : tr("— — enforced by the node"));
+        rows << composed;
+        QVariantMap ephemeral = configManaged(safety, safetyLabel, "safety/maxEphemeralPerSession",
+                                              tr("Max ephemeral children per session"));
+        ephemeral.insert(
+            QStringLiteral("note"),
+            have ? tr("%1 — enforced by the node").arg(m_deps.caps->maxEphemeralPerSession())
+                 : tr("— — enforced by the node"));
+        rows << ephemeral;
     }
 
     // Memory & Context - MemorySettingsSection.qml (IDaemonConfig).

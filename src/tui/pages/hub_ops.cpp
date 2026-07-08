@@ -52,6 +52,22 @@ QString fleetLifetimeToken(const QVariantMap& row) {
     }
     return {};
 }
+
+// [phase H] The TUI projection of the GUI Fleet role badge, off the node-stamped UnitNode `role`
+// (Primary / ManagedChild / EphemeralSubagent) rendered verbatim — never inverted from lifetime.
+QString fleetRoleToken(const QVariantMap& row) {
+    const QString role = row.value(QStringLiteral("role")).toString();
+    if (role == QStringLiteral("ManagedChild")) {
+        return QCoreApplication::translate("TuiPageHub", "managed child");
+    }
+    if (role == QStringLiteral("EphemeralSubagent")) {
+        return QCoreApplication::translate("TuiPageHub", "subagent");
+    }
+    if (role == QStringLiteral("Primary")) {
+        return QCoreApplication::translate("TuiPageHub", "primary");
+    }
+    return {};
+}
 } // namespace
 
 QString TuiPageHub::buildDashboardMarkdown() const {
@@ -93,14 +109,21 @@ QString TuiPageHub::buildFleetMarkdown(int sel) const {
             const int depth = n.value(QStringLiteral("depth")).toInt();
             md += QString(static_cast<qsizetype>(depth) * 2, QLatin1Char(' '));
             // [wave2:app-delegation] Engine + lifetime chips (C3/F3), off the wire UnitNode fields.
+            // Role badge (phase H) mirrors the GUI Fleet role chip.
             const QString lifetime = fleetLifetimeToken(n);
-            const QString lifetimeSuffix =
-                lifetime.isEmpty() ? QString() : QStringLiteral(" · %1").arg(lifetime);
+            const QString role = fleetRoleToken(n);
+            QString suffix;
+            if (!role.isEmpty()) {
+                suffix += QStringLiteral(" · %1").arg(role);
+            }
+            if (!lifetime.isEmpty()) {
+                suffix += QStringLiteral(" · %1").arg(lifetime);
+            }
             md += tr("- %1%2 — %3 (`%4`) · %5%6\n")
                       .arg(mark(i), n.value(QStringLiteral("name")).toString(),
                            n.value(QStringLiteral("status")).toString(),
                            n.value(QStringLiteral("model")).toString(),
-                           fleetEngineToken(n, m_deps.engineIdentity), lifetimeSuffix);
+                           fleetEngineToken(n, m_deps.engineIdentity), suffix);
         }
     }
     return md;

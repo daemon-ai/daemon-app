@@ -377,6 +377,9 @@ private slots:
             // [wave2:app-delegation] F7/DEL-7: read-only node delegation guardrail ceilings.
             QStringLiteral("safety/delegationDepth"),
             QStringLiteral("safety/delegationFanout"),
+            // [phase H] agent-authored-profile ceilings (advisory caps display).
+            QStringLiteral("safety/maxComposedProfiles"),
+            QStringLiteral("safety/maxEphemeralPerSession"),
             QStringLiteral("memory/contextWindow"),
             QStringLiteral("memory/autoCompact"),
             QStringLiteral("memory/persistMemory"),
