@@ -793,7 +793,7 @@ void RootWidget::openContactRemoveConfirm(const QString& transport, const QStrin
     });
 }
 
-void RootWidget::openContactDm(const QString& transport, const QString& contactId) {
+void RootWidget::openContactDm(const QString& transport, const QString& contactId) const {
     // The conv-create seam with the contact as participant (no new wire op).
     if (m_services.transportRegistry == nullptr || transport.isEmpty() || contactId.isEmpty()) {
         return;

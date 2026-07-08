@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 import QtQuick
-import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
@@ -37,7 +36,7 @@ Kit.Dialog {
             color: Theme.textMuted
             elide: Text.ElideMiddle
         }
-        Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Theme.border }
         Text {
             Layout.fillWidth: true
             Layout.maximumWidth: 380

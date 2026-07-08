@@ -395,7 +395,7 @@ private:
                           const QString& currentName);
     void openContactProfile(const QString& transport, const QString& contactId);
     void openContactRemoveConfirm(const QString& transport, const QString& contactId);
-    void openContactDm(const QString& transport, const QString& contactId);
+    void openContactDm(const QString& transport, const QString& contactId) const;
     // [wave2:app-approvals-safety] D3: inline transcript "Deny with reason" — open a prompt and
     // resolve the parked gate with the operator reason (Respond{Approved{reason}}, wire v29).
     void openInlineDenyReasonPrompt(const QString& callId);

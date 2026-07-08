@@ -83,25 +83,27 @@ Kit.Dialog {
                 Repeater {
                     model: dialog.results
                     delegate: RowLayout {
+                        id: personRow
                         required property var modelData
                         Layout.fillWidth: true
                         spacing: 8
                         Text {
                             text: FontIcons.fa_circle
                             font.family: FontIcons.faSolid; font.pixelSize: 8
-                            color: dialog.dotColor ? dialog.dotColor(modelData.presence)
-                                                   : Theme.iconMuted
+                            color: dialog.dotColor
+                                   ? dialog.dotColor(personRow.modelData.presence)
+                                   : Theme.iconMuted
                         }
                         Text {
-                            text: modelData.displayName !== undefined
-                                  && modelData.displayName.length > 0
-                                  ? modelData.displayName : modelData.id
+                            text: personRow.modelData.displayName !== undefined
+                                  && personRow.modelData.displayName.length > 0
+                                  ? personRow.modelData.displayName : personRow.modelData.id
                             font.family: FontIcons.display; font.pixelSize: 12
                             color: Theme.text; elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
                         Text {
-                            text: modelData.id
+                            text: personRow.modelData.id
                             font.family: FontIcons.mono; font.pixelSize: 10
                             color: Theme.textMuted; elide: Text.ElideMiddle
                             Layout.maximumWidth: 150
@@ -109,13 +111,15 @@ Kit.Dialog {
                         Kit.TextButton {
                             visible: dialog.canAdd
                             text: qsTr("Add")
-                            onClicked: Contacts.addContact(dialog.transport, modelData.id)
+                            onClicked: Contacts.addContact(dialog.transport,
+                                                           personRow.modelData.id)
                         }
                         Kit.TextButton {
                             visible: dialog.canDm
                             text: qsTr("DM")
-                            onClicked: Transports.createRoom(dialog.transport,
-                                                             { "participants": [modelData.id] })
+                            onClicked: Transports.createRoom(
+                                dialog.transport,
+                                { "participants": [personRow.modelData.id] })
                         }
                     }
                 }
