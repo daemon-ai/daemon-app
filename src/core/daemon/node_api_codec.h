@@ -325,13 +325,88 @@ struct DecodedTransportInstance {
     bool fatal = false;
 };
 
-// One live conversation/room within a transport (ConvList -> Conversations; EIO-8).
+// [acct-mgmt] One field of an AccountSettingsSchema ({key,label,required}). Shared by the
+// ChannelJoinDetails / CreateConversationDetails extras schemas (SettingsSchemaForm renders these).
+struct DecodedSettingsField {
+    QString key;
+    QString label;
+    bool required = false;
+};
+
+// [acct-mgmt] One member of a conversation (ConversationInfo.members; ConvGet). Contact identity +
+// membership facets, projected to display strings. `presence`/`permission`/`typing`/`role` are the
+// wire enum names lowercased where the family uses them; `session` is the pinned session id (empty
+// = none). The node owns all of these — the app renders, never derives.
+struct DecodedConversationMember {
+    QString contactId;
+    QString displayName; // empty = use contactId
+    QString
+        presence; // offline|available|idle|invisible|away|dnd|streaming|out_of_office (empty=none)
+    QString permission; // unset|allow|deny (empty = absent)
+    QString alias;      // operator-set local alias (empty = none)
+    QString nickname;   // in-room nickname (empty = none)
+    QString typing;     // none|typing|paused (empty = absent)
+    QString role;       // None|Voice|HalfOp|Op|Founder (empty = absent)
+    QString session;    // pinned session id (empty = none)
+};
+
+// One live conversation/room within a transport (ConvList -> Conversations; EIO-8). [acct-mgmt]
+// Extended with `description` and the optional `members` list (ConvGet -> ConversationInfo carries
+// members; ConvList typically omits them — `hasMembers` marks presence).
 struct DecodedConversation {
     QString transport;
     QString id;
     QString kind; // unset|dm|groupdm|channel|thread
     QString title;
     QString topic;
+    QString description;
+    bool hasMembers = false;
+    QList<DecodedConversationMember> members;
+};
+
+// [acct-mgmt] The node-described join form (ConvJoinDetails -> ChannelJoinDetails). Honor the
+// *_supported flags (hide unsupported fields) and *_max_length (input constraints) when rendering.
+struct DecodedChannelJoinDetails {
+    bool hasName = false;
+    QString name; // pre-filled channel name (usually empty)
+    bool hasNameMaxLength = false;
+    quint32 nameMaxLength = 0;
+    bool nicknameSupported = false;
+    bool hasNicknameMaxLength = false;
+    quint32 nicknameMaxLength = 0;
+    bool passwordSupported = false;
+    bool hasPasswordMaxLength = false;
+    quint32 passwordMaxLength = 0;
+    QList<DecodedSettingsField> extrasSchema;
+};
+
+// [acct-mgmt] The node-described create form (ConvCreateDetails -> CreateConversationDetails).
+// `maxParticipants` is 0 = unlimited; participants are chosen client-side at create time (not part
+// of the details schema).
+struct DecodedCreateConversationDetails {
+    bool hasMaxParticipants = false;
+    quint32 maxParticipants = 0;
+    QList<DecodedSettingsField> extrasSchema;
+};
+
+// [acct-mgmt] The filled join form the app sends back (ConvJoin -> ChannelJoinDetails). Optional
+// nickname/password ride only when the schema advertised support; extras is the filled schema map.
+struct ConvJoinForm {
+    QString name;
+    bool hasNickname = false;
+    QString nickname;
+    bool hasPassword = false;
+    QString password;
+    QMap<QString, QString> extras;
+};
+
+// [acct-mgmt] The filled create form (ConvCreate -> CreateConversationDetails). `participants` is
+// a list of contact ids (create-time only); extras is the filled schema map.
+struct ConvCreateForm {
+    bool hasMaxParticipants = false;
+    quint32 maxParticipants = 0;
+    QStringList participants;
+    QMap<QString, QString> extras;
 };
 
 // The agent-event arms a turn produces (daemon-protocol AgentEvent). Carried inside a
@@ -1438,9 +1513,50 @@ public:
     static bool decodeTransportInstances(const QByteArray& responseCbor,
                                          QList<DecodedTransportInstance>* out);
     // Decode one conv-page (wire v25). `*next` (when non-null) gets the resume cursor (cleared on
-    // the last page).
+    // the last page). [acct-mgmt] Now also decodes each conversation's optional `members`.
     static bool decodeConversations(const QByteArray& responseCbor, QList<DecodedConversation>* out,
                                     QString* next = nullptr);
+
+    // --- [acct-mgmt] Room lifecycle + member management (wire v32) -----------------------------
+    // Two-phase form ops: the node describes the form (ConvJoinDetails / ConvCreateDetails), the
+    // app renders it, then sends the filled form (ConvJoin / ConvCreate). Single-verb ops
+    // (leave/delete) name the target conversation. ConvGet hydrates one conversation incl. members.
+    [[nodiscard]] static QByteArray encodeConvJoinDetailsRequest(const QString& transport);
+    [[nodiscard]] static QByteArray encodeConvJoinRequest(const QString& transport,
+                                                          const ConvJoinForm& form);
+    [[nodiscard]] static QByteArray encodeConvCreateDetailsRequest(const QString& transport);
+    [[nodiscard]] static QByteArray encodeConvCreateRequest(const QString& transport,
+                                                            const ConvCreateForm& form);
+    [[nodiscard]] static QByteArray encodeConvLeaveRequest(const QString& transport,
+                                                           const QString& conv);
+    [[nodiscard]] static QByteArray encodeConvDeleteRequest(const QString& transport,
+                                                            const QString& conv);
+    [[nodiscard]] static QByteArray encodeConvGetRequest(const QString& transport,
+                                                         const QString& conv);
+    // Membership verbs: `contactId` names the target member; `role` is a MemberRole wire string
+    // (None|Voice|HalfOp|Op|Founder). Kick/Ban carry an optional reason (empty = absent).
+    [[nodiscard]] static QByteArray encodeMemberInviteRequest(const QString& transport,
+                                                              const QString& conv,
+                                                              const QString& contactId);
+    [[nodiscard]] static QByteArray encodeMemberRemoveRequest(const QString& transport,
+                                                              const QString& conv,
+                                                              const QString& contactId,
+                                                              const QString& reason = QString());
+    [[nodiscard]] static QByteArray encodeMemberBanRequest(const QString& transport,
+                                                           const QString& conv,
+                                                           const QString& contactId,
+                                                           const QString& reason = QString());
+    [[nodiscard]] static QByteArray encodeMemberSetRoleRequest(const QString& transport,
+                                                               const QString& conv,
+                                                               const QString& contactId,
+                                                               const QString& role);
+    // Decode the two details responses + the ConvGet response (Some/None -> *found).
+    static bool decodeConvJoinDetails(const QByteArray& responseCbor,
+                                      DecodedChannelJoinDetails* out);
+    static bool decodeConvCreateDetails(const QByteArray& responseCbor,
+                                        DecodedCreateConversationDetails* out);
+    static bool decodeConversation(const QByteArray& responseCbor, DecodedConversation* out,
+                                   bool* found);
 
     // --- Multiplexed socket envelope (wire L0; daemon-sync-protocol-spec.md §2) ---
     // The envelope is hand-coded (not zcbor-generated): it wraps the already-encoded request bytes

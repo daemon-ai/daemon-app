@@ -620,6 +620,214 @@ QString conversationTypeName(const conversation_type_r& t) {
     }
 }
 
+// [acct-mgmt] MemberRole <-> wire string. The GUI Kit.Dropdown + the TUI role palette use the exact
+// case ("None"/"Voice"/"HalfOp"/"Op"/"Founder"), so roundtrip is symmetric.
+QString memberRoleName(const member_role_r& r) {
+    switch (r.member_role_choice) {
+    case member_role_r::member_role_Voice_tstr_c:
+        return QStringLiteral("Voice");
+    case member_role_r::member_role_HalfOp_tstr_c:
+        return QStringLiteral("HalfOp");
+    case member_role_r::member_role_Op_tstr_c:
+        return QStringLiteral("Op");
+    case member_role_r::member_role_Founder_tstr_c:
+        return QStringLiteral("Founder");
+    case member_role_r::member_role_None_tstr_c:
+    default:
+        return QStringLiteral("None");
+    }
+}
+
+int memberRoleChoice(const QString& role) {
+    if (role == QLatin1String("Voice")) {
+        return member_role_r::member_role_Voice_tstr_c;
+    }
+    if (role == QLatin1String("HalfOp")) {
+        return member_role_r::member_role_HalfOp_tstr_c;
+    }
+    if (role == QLatin1String("Op")) {
+        return member_role_r::member_role_Op_tstr_c;
+    }
+    if (role == QLatin1String("Founder")) {
+        return member_role_r::member_role_Founder_tstr_c;
+    }
+    return member_role_r::member_role_None_tstr_c;
+}
+
+// [acct-mgmt] Contact presence primitive -> lowercase token (distinct from the transport
+// presence_state enum — contacts carry the richer presence-primitive set).
+QString contactPresenceName(const presence_primitive_t_r& p) {
+    switch (p.presence_primitive_t_choice) {
+    case presence_primitive_t_r::presence_primitive_t_Available_tstr_c:
+        return QStringLiteral("available");
+    case presence_primitive_t_r::presence_primitive_t_Idle_tstr_c:
+        return QStringLiteral("idle");
+    case presence_primitive_t_r::presence_primitive_t_Invisible_tstr_c:
+        return QStringLiteral("invisible");
+    case presence_primitive_t_r::presence_primitive_t_Away_tstr_c:
+        return QStringLiteral("away");
+    case presence_primitive_t_r::presence_primitive_t_DoNotDisturb_tstr_c:
+        return QStringLiteral("dnd");
+    case presence_primitive_t_r::presence_primitive_t_Streaming_tstr_c:
+        return QStringLiteral("streaming");
+    case presence_primitive_t_r::presence_primitive_t_OutOfOffice_tstr_c:
+        return QStringLiteral("out_of_office");
+    case presence_primitive_t_r::presence_primitive_t_Offline_tstr_c:
+    default:
+        return QStringLiteral("offline");
+    }
+}
+
+QString contactPermissionName(const contact_permission_r& p) {
+    switch (p.contact_permission_choice) {
+    case contact_permission_r::contact_permission_Allow_tstr_c:
+        return QStringLiteral("allow");
+    case contact_permission_r::contact_permission_Deny_tstr_c:
+        return QStringLiteral("deny");
+    case contact_permission_r::contact_permission_Unset_tstr_c:
+    default:
+        return QStringLiteral("unset");
+    }
+}
+
+QString typingStateName(const typing_state_r& t) {
+    switch (t.typing_state_choice) {
+    case typing_state_r::typing_state_Typing_tstr_c:
+        return QStringLiteral("typing");
+    case typing_state_r::typing_state_Paused_tstr_c:
+        return QStringLiteral("paused");
+    case typing_state_r::typing_state_None_tstr_c:
+    default:
+        return QStringLiteral("none");
+    }
+}
+
+// [acct-mgmt] Project one AccountSettingsSchema into the flattened field list.
+QList<DecodedSettingsField> decodeSettingsSchema(const account_settings_schema& s) {
+    QList<DecodedSettingsField> out;
+    if (!s.account_settings_schema_fields_present) {
+        return out;
+    }
+    const account_settings_schema_fields_r& f = s.account_settings_schema_fields;
+    for (size_t i = 0; i < f.account_settings_schema_fields_auth_param_field_m_count; ++i) {
+        const auth_param_field& fld = f.account_settings_schema_fields_auth_param_field_m[i];
+        DecodedSettingsField d;
+        d.key = fromZcbor(fld.auth_param_field_key);
+        d.label = fromZcbor(fld.auth_param_field_label);
+        d.required = fld.auth_param_field_required;
+        out.append(d);
+    }
+    return out;
+}
+
+// [acct-mgmt] Project one ConversationMember into the display struct.
+DecodedConversationMember decodeMemberStruct(const conversation_member& m) {
+    DecodedConversationMember d;
+    const contact_info& c = m.conversation_member_contact;
+    d.contactId = fromZcbor(c.contact_info_id);
+    if (c.contact_info_display_name_present &&
+        c.contact_info_display_name.contact_info_display_name_choice ==
+            contact_info_display_name_r::contact_info_display_name_tstr_c) {
+        d.displayName = fromZcbor(c.contact_info_display_name.contact_info_display_name_tstr);
+    }
+    if (c.contact_info_presence_present) {
+        d.presence =
+            contactPresenceName(c.contact_info_presence.contact_info_presence.presence_primitive);
+    }
+    if (c.contact_info_permission_present) {
+        d.permission = contactPermissionName(c.contact_info_permission.contact_info_permission);
+    }
+    if (m.conversation_member_alias_present &&
+        m.conversation_member_alias.conversation_member_alias_choice ==
+            conversation_member_alias_r::conversation_member_alias_tstr_c) {
+        d.alias = fromZcbor(m.conversation_member_alias.conversation_member_alias_tstr);
+    }
+    if (m.conversation_member_nickname_present &&
+        m.conversation_member_nickname.conversation_member_nickname_choice ==
+            conversation_member_nickname_r::conversation_member_nickname_tstr_c) {
+        d.nickname = fromZcbor(m.conversation_member_nickname.conversation_member_nickname_tstr);
+    }
+    if (m.conversation_member_typing_present) {
+        d.typing = typingStateName(m.conversation_member_typing.conversation_member_typing);
+    }
+    if (m.conversation_member_role_present) {
+        d.role = memberRoleName(m.conversation_member_role.conversation_member_role);
+    }
+    if (m.conversation_member_session_present &&
+        m.conversation_member_session.conversation_member_session_choice ==
+            conversation_member_session_r::conversation_member_session_session_id_m_c) {
+        d.session =
+            fromZcbor(m.conversation_member_session.conversation_member_session_session_id_m);
+    }
+    return d;
+}
+
+// [acct-mgmt] Project one ConversationInfo into DecodedConversation (title/topic/description +
+// optional members). Shared by decodeConversations (list) and decodeConversation (ConvGet).
+DecodedConversation decodeConversationInfoStruct(const conversation_info& cv) {
+    DecodedConversation d;
+    d.transport = fromZcbor(cv.conversation_info_transport);
+    d.id = fromZcbor(cv.conversation_info_id);
+    d.kind = conversationTypeName(cv.conversation_info_kind);
+    if (cv.conversation_info_title_present &&
+        cv.conversation_info_title.conversation_info_title_choice ==
+            conversation_info_title_r::conversation_info_title_tstr_c) {
+        d.title = fromZcbor(cv.conversation_info_title.conversation_info_title_tstr);
+    }
+    if (cv.conversation_info_topic_present &&
+        cv.conversation_info_topic.conversation_info_topic_choice ==
+            conversation_info_topic_r::conversation_info_topic_tstr_c) {
+        d.topic = fromZcbor(cv.conversation_info_topic.conversation_info_topic_tstr);
+    }
+    if (cv.conversation_info_description_present &&
+        cv.conversation_info_description.conversation_info_description_choice ==
+            conversation_info_description_r::conversation_info_description_tstr_c) {
+        d.description =
+            fromZcbor(cv.conversation_info_description.conversation_info_description_tstr);
+    }
+    if (cv.conversation_info_members_present) {
+        d.hasMembers = true;
+        const conversation_info_members_r& mm = cv.conversation_info_members;
+        for (size_t i = 0; i < mm.conversation_info_members_conversation_member_m_count; ++i) {
+            d.members.append(
+                decodeMemberStruct(mm.conversation_info_members_conversation_member_m[i]));
+        }
+    }
+    return d;
+}
+
+// [acct-mgmt] Fill a generated participant_r as a contact (participant_contact) carrying only the
+// id. Scratch outlives the encode (zcbor borrows the id bytes).
+void fillContactParticipant(participant_r& who, const QByteArray& idScratch) {
+    who.participant_choice = participant_r::participant_contact_m_c;
+    contact_info& c = who.participant_contact_m.participant_contact_Contact;
+    setZcbor(c.contact_info_id, idScratch);
+    c.contact_info_display_name_present = false;
+    c.contact_info_presence_present = false;
+    c.contact_info_permission_present = false;
+}
+
+// [acct-mgmt] Fill a generated account_settings_values from a key->value map. The zcbor_strings
+// borrow into `scratch` (a stable list the caller keeps alive across the encode).
+void fillSettingsValues(account_settings_values& out, const QMap<QString, QString>& values,
+                        QList<QByteArray>& scratch) {
+    if (values.isEmpty()) {
+        out.account_settings_values_values_present = false;
+        return;
+    }
+    out.account_settings_values_values_present = true;
+    account_settings_values_values_r& vr = out.account_settings_values_values;
+    size_t n = 0;
+    for (auto it = values.constBegin(); it != values.constEnd() && n < 64; ++it, ++n) {
+        scratch.append(it.key().toUtf8());
+        scratch.append(it.value().toUtf8());
+        values_tstrtstr& kv = vr.values_tstrtstr[n];
+        setZcbor(kv.account_settings_values_values_tstrtstr_key, scratch.at(scratch.size() - 2));
+        setZcbor(kv.values_tstrtstr, scratch.at(scratch.size() - 1));
+    }
+    vr.values_tstrtstr_count = n;
+}
+
 } // namespace
 
 QByteArray NodeApiCodec::encodeTransportAdaptersRequest() {
@@ -780,22 +988,8 @@ bool NodeApiCodec::decodeConversations(const QByteArray& responseCbor,
         response->api_response_response_conversations_m.response_conversations_Conversations;
     out->clear();
     for (size_t i = 0; i < page.conv_page_items_conversation_info_m_count; ++i) {
-        const conversation_info& cv = page.conv_page_items_conversation_info_m[i];
-        DecodedConversation d;
-        d.transport = fromZcbor(cv.conversation_info_transport);
-        d.id = fromZcbor(cv.conversation_info_id);
-        d.kind = conversationTypeName(cv.conversation_info_kind);
-        if (cv.conversation_info_title_present &&
-            cv.conversation_info_title.conversation_info_title_choice ==
-                conversation_info_title_r::conversation_info_title_tstr_c) {
-            d.title = fromZcbor(cv.conversation_info_title.conversation_info_title_tstr);
-        }
-        if (cv.conversation_info_topic_present &&
-            cv.conversation_info_topic.conversation_info_topic_choice ==
-                conversation_info_topic_r::conversation_info_topic_tstr_c) {
-            d.topic = fromZcbor(cv.conversation_info_topic.conversation_info_topic_tstr);
-        }
-        out->append(d);
+        // [acct-mgmt] Use the shared projection so any members the page carries decode too.
+        out->append(decodeConversationInfoStruct(page.conv_page_items_conversation_info_m[i]));
     }
     if (next != nullptr) {
         // The resume cursor (wire v25): present + non-null => more pages remain.
@@ -803,6 +997,321 @@ bool NodeApiCodec::decodeConversations(const QByteArray& responseCbor,
             page.conv_page_next_present &&
             page.conv_page_next.conv_page_next_choice == conv_page_next_r::conv_page_next_tstr_c;
         *next = hasNext ? fromZcbor(page.conv_page_next.conv_page_next_tstr) : QString();
+    }
+    return true;
+}
+
+// --- [acct-mgmt] Room lifecycle + member management (wire v32) -----------------------------------
+
+QByteArray NodeApiCodec::encodeConvJoinDetailsRequest(const QString& transport) {
+    const QByteArray t = transport.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_conv_join_details_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_conv_join_details_m.ConvJoinDetails_transport, t);
+        });
+}
+
+QByteArray NodeApiCodec::encodeConvCreateDetailsRequest(const QString& transport) {
+    const QByteArray t = transport.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_conv_create_details_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_conv_create_details_m.ConvCreateDetails_transport,
+                     t);
+        });
+}
+
+QByteArray NodeApiCodec::encodeConvJoinRequest(const QString& transport, const ConvJoinForm& form) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray name = form.name.toUtf8();
+    const QByteArray nickname = form.nickname.toUtf8();
+    const QByteArray password = form.password.toUtf8();
+    QList<QByteArray> extrasScratch;
+    return encodeWithFill(
+        api_request_r::api_request_request_conv_join_m_c, [&](api_request_r& request) {
+            request_conv_join& j = request.api_request_request_conv_join_m;
+            setZcbor(j.ConvJoin_transport, t);
+            channel_join_details& d = j.ConvJoin_details;
+            d.channel_join_details_name_present = true;
+            d.channel_join_details_name.channel_join_details_name_choice =
+                channel_join_details_name_r::channel_join_details_name_tstr_c;
+            setZcbor(d.channel_join_details_name.channel_join_details_name_tstr, name);
+            d.channel_join_details_name_max_length_present = false;
+            d.channel_join_details_nickname_present = form.hasNickname;
+            if (form.hasNickname) {
+                d.channel_join_details_nickname.channel_join_details_nickname_choice =
+                    channel_join_details_nickname_r::channel_join_details_nickname_tstr_c;
+                setZcbor(d.channel_join_details_nickname.channel_join_details_nickname_tstr,
+                         nickname);
+            }
+            d.channel_join_details_nickname_supported_present = false;
+            d.channel_join_details_nickname_max_length_present = false;
+            d.channel_join_details_password_present = form.hasPassword;
+            if (form.hasPassword) {
+                d.channel_join_details_password.channel_join_details_password_choice =
+                    channel_join_details_password_r::channel_join_details_password_tstr_c;
+                setZcbor(d.channel_join_details_password.channel_join_details_password_tstr,
+                         password);
+            }
+            d.channel_join_details_password_supported_present = false;
+            d.channel_join_details_password_max_length_present = false;
+            d.channel_join_details_extras_schema_present = false;
+            d.channel_join_details_extras_present = !form.extras.isEmpty();
+            if (!form.extras.isEmpty()) {
+                fillSettingsValues(d.channel_join_details_extras.channel_join_details_extras,
+                                   form.extras, extrasScratch);
+            }
+        });
+}
+
+QByteArray NodeApiCodec::encodeConvCreateRequest(const QString& transport,
+                                                 const ConvCreateForm& form) {
+    const QByteArray t = transport.toUtf8();
+    QList<QByteArray> participantScratch;
+    QList<QByteArray> extrasScratch;
+    return encodeWithFill(
+        api_request_r::api_request_request_conv_create_m_c, [&](api_request_r& request) {
+            request_conv_create& c = request.api_request_request_conv_create_m;
+            setZcbor(c.ConvCreate_transport, t);
+            create_conversation_details& d = c.ConvCreate_details;
+            d.create_conversation_details_max_participants_present = form.hasMaxParticipants;
+            if (form.hasMaxParticipants) {
+                d.create_conversation_details_max_participants
+                    .create_conversation_details_max_participants = form.maxParticipants;
+            }
+            d.create_conversation_details_participants_present = !form.participants.isEmpty();
+            if (!form.participants.isEmpty()) {
+                create_conversation_details_participants_r& pr =
+                    d.create_conversation_details_participants;
+                size_t n = 0;
+                for (const QString& pid : form.participants) {
+                    if (n >= 64) {
+                        break;
+                    }
+                    participantScratch.append(pid.toUtf8());
+                    contact_info& ci =
+                        pr.create_conversation_details_participants_contact_info_m[n];
+                    setZcbor(ci.contact_info_id, participantScratch.last());
+                    ci.contact_info_display_name_present = false;
+                    ci.contact_info_presence_present = false;
+                    ci.contact_info_permission_present = false;
+                    ++n;
+                }
+                pr.create_conversation_details_participants_contact_info_m_count = n;
+            }
+            d.create_conversation_details_extras_schema_present = false;
+            d.create_conversation_details_extras_present = !form.extras.isEmpty();
+            if (!form.extras.isEmpty()) {
+                fillSettingsValues(
+                    d.create_conversation_details_extras.create_conversation_details_extras,
+                    form.extras, extrasScratch);
+            }
+        });
+}
+
+QByteArray NodeApiCodec::encodeConvLeaveRequest(const QString& transport, const QString& conv) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray c = conv.toUtf8();
+    return encodeWithFill(api_request_r::api_request_request_conv_leave_m_c,
+                          [&](api_request_r& request) {
+                              request_conv_leave& l = request.api_request_request_conv_leave_m;
+                              setZcbor(l.ConvLeave_transport, t);
+                              setZcbor(l.ConvLeave_conv, c);
+                          });
+}
+
+QByteArray NodeApiCodec::encodeConvDeleteRequest(const QString& transport, const QString& conv) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray c = conv.toUtf8();
+    return encodeWithFill(api_request_r::api_request_request_conv_delete_m_c,
+                          [&](api_request_r& request) {
+                              request_conv_delete& del = request.api_request_request_conv_delete_m;
+                              setZcbor(del.ConvDelete_transport, t);
+                              setZcbor(del.ConvDelete_conv, c);
+                          });
+}
+
+QByteArray NodeApiCodec::encodeConvGetRequest(const QString& transport, const QString& conv) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray c = conv.toUtf8();
+    return encodeWithFill(api_request_r::api_request_request_conv_get_m_c,
+                          [&](api_request_r& request) {
+                              request_conv_get& g = request.api_request_request_conv_get_m;
+                              setZcbor(g.ConvGet_transport, t);
+                              setZcbor(g.ConvGet_conv, c);
+                          });
+}
+
+QByteArray NodeApiCodec::encodeMemberInviteRequest(const QString& transport, const QString& conv,
+                                                   const QString& contactId) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray c = conv.toUtf8();
+    const QByteArray who = contactId.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_member_invite_m_c, [&](api_request_r& request) {
+            member_invite_args& a =
+                request.api_request_request_member_invite_m.request_member_invite_MemberInvite;
+            setZcbor(a.member_invite_args_transport, t);
+            setZcbor(a.member_invite_args_conv, c);
+            fillContactParticipant(a.member_invite_args_who, who);
+            a.member_invite_args_message_present = false;
+        });
+}
+
+QByteArray NodeApiCodec::encodeMemberRemoveRequest(const QString& transport, const QString& conv,
+                                                   const QString& contactId,
+                                                   const QString& reason) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray c = conv.toUtf8();
+    const QByteArray who = contactId.toUtf8();
+    const QByteArray reasonU = reason.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_member_remove_m_c, [&](api_request_r& request) {
+            member_remove_args& a =
+                request.api_request_request_member_remove_m.request_member_remove_MemberRemove;
+            setZcbor(a.member_remove_args_transport, t);
+            setZcbor(a.member_remove_args_conv, c);
+            fillContactParticipant(a.member_remove_args_who, who);
+            a.member_remove_args_reason_present = !reason.isEmpty();
+            if (!reason.isEmpty()) {
+                a.member_remove_args_reason.member_remove_args_reason_choice =
+                    member_remove_args_reason_r::member_remove_args_reason_tstr_c;
+                setZcbor(a.member_remove_args_reason.member_remove_args_reason_tstr, reasonU);
+            }
+        });
+}
+
+QByteArray NodeApiCodec::encodeMemberBanRequest(const QString& transport, const QString& conv,
+                                                const QString& contactId, const QString& reason) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray c = conv.toUtf8();
+    const QByteArray who = contactId.toUtf8();
+    const QByteArray reasonU = reason.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_member_ban_m_c, [&](api_request_r& request) {
+            member_ban_args& a =
+                request.api_request_request_member_ban_m.request_member_ban_MemberBan;
+            setZcbor(a.member_ban_args_transport, t);
+            setZcbor(a.member_ban_args_conv, c);
+            fillContactParticipant(a.member_ban_args_who, who);
+            a.member_ban_args_reason_present = !reason.isEmpty();
+            if (!reason.isEmpty()) {
+                a.member_ban_args_reason.member_ban_args_reason_choice =
+                    member_ban_args_reason_r::member_ban_args_reason_tstr_c;
+                setZcbor(a.member_ban_args_reason.member_ban_args_reason_tstr, reasonU);
+            }
+        });
+}
+
+QByteArray NodeApiCodec::encodeMemberSetRoleRequest(const QString& transport, const QString& conv,
+                                                    const QString& contactId, const QString& role) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray c = conv.toUtf8();
+    const QByteArray who = contactId.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_member_set_role_m_c, [&](api_request_r& request) {
+            member_set_role_args& a =
+                request.api_request_request_member_set_role_m.request_member_set_role_MemberSetRole;
+            setZcbor(a.member_set_role_args_transport, t);
+            setZcbor(a.member_set_role_args_conv, c);
+            fillContactParticipant(a.member_set_role_args_who, who);
+            a.member_set_role_args_role.member_role_choice =
+                static_cast<decltype(a.member_set_role_args_role.member_role_choice)>(
+                    memberRoleChoice(role));
+        });
+}
+
+bool NodeApiCodec::decodeConvJoinDetails(const QByteArray& responseCbor,
+                                         DecodedChannelJoinDetails* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_conv_join_details_m_c);
+    if (!response) {
+        return false;
+    }
+    const channel_join_details& d = response->api_response_response_conv_join_details_m
+                                        .response_conv_join_details_ConvJoinDetails;
+    *out = DecodedChannelJoinDetails{};
+    if (d.channel_join_details_name_present &&
+        d.channel_join_details_name.channel_join_details_name_choice ==
+            channel_join_details_name_r::channel_join_details_name_tstr_c) {
+        out->hasName = true;
+        out->name = fromZcbor(d.channel_join_details_name.channel_join_details_name_tstr);
+    }
+    if (d.channel_join_details_name_max_length_present) {
+        out->hasNameMaxLength = true;
+        out->nameMaxLength =
+            d.channel_join_details_name_max_length.channel_join_details_name_max_length;
+    }
+    if (d.channel_join_details_nickname_supported_present) {
+        out->nicknameSupported =
+            d.channel_join_details_nickname_supported.channel_join_details_nickname_supported;
+    }
+    if (d.channel_join_details_nickname_max_length_present) {
+        out->hasNicknameMaxLength = true;
+        out->nicknameMaxLength =
+            d.channel_join_details_nickname_max_length.channel_join_details_nickname_max_length;
+    }
+    if (d.channel_join_details_password_supported_present) {
+        out->passwordSupported =
+            d.channel_join_details_password_supported.channel_join_details_password_supported;
+    }
+    if (d.channel_join_details_password_max_length_present) {
+        out->hasPasswordMaxLength = true;
+        out->passwordMaxLength =
+            d.channel_join_details_password_max_length.channel_join_details_password_max_length;
+    }
+    if (d.channel_join_details_extras_schema_present) {
+        out->extrasSchema = decodeSettingsSchema(
+            d.channel_join_details_extras_schema.channel_join_details_extras_schema);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeConvCreateDetails(const QByteArray& responseCbor,
+                                           DecodedCreateConversationDetails* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_conv_create_details_m_c);
+    if (!response) {
+        return false;
+    }
+    const create_conversation_details& d = response->api_response_response_conv_create_details_m
+                                               .response_conv_create_details_ConvCreateDetails;
+    *out = DecodedCreateConversationDetails{};
+    if (d.create_conversation_details_max_participants_present) {
+        out->hasMaxParticipants = true;
+        out->maxParticipants = d.create_conversation_details_max_participants
+                                   .create_conversation_details_max_participants;
+    }
+    if (d.create_conversation_details_extras_schema_present) {
+        out->extrasSchema = decodeSettingsSchema(
+            d.create_conversation_details_extras_schema.create_conversation_details_extras_schema);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeConversation(const QByteArray& responseCbor, DecodedConversation* out,
+                                      bool* found) {
+    if (out == nullptr || found == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_conversation_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_conversation& r = response->api_response_response_conversation_m;
+    if (r.response_conversation_Conversation_choice ==
+        response_conversation::response_conversation_Conversation_conversation_info_m_c) {
+        *out =
+            decodeConversationInfoStruct(r.response_conversation_Conversation_conversation_info_m);
+        *found = true;
+    } else {
+        *found = false;
     }
     return true;
 }
