@@ -84,6 +84,11 @@ public:
     [[nodiscard]] QString phase() const { return m_phase; }
     [[nodiscard]] bool active() const { return m_phase != QStringLiteral("done"); }
     [[nodiscard]] QString error() const { return m_error; }
+    // The shared setup view-model this gate delegates to (injected, or owned when standalone). The
+    // TUI wizard's AgentSetupView binds it directly so the engine/backend/inference steps and the
+    // wizard's commit/gate sequencing share one instance (the GUI reaches the same instance via the
+    // `AgentSetup` context property).
+    [[nodiscard]] setup::AgentSetupModel* agentSetup() const { return m_agentSetup; }
     [[nodiscard]] bool inferenceReady() const { return m_inferenceReady; }
     void setInferenceReady(bool ready);
     // The hoisted key gate now lives in AgentSetupModel; these delegate to it (the QML/TUI wizard
@@ -105,6 +110,18 @@ public:
     // the inference step unchanged. Non-empty = a foreign agent: applyForeignChoice(name, agent)
     // is the full commit (no provider/model/key applies).
     Q_INVOKABLE void chooseAgentType(const QString& foreignAgent);
+    // Phase G: advance from the agent-type pane into the inference step when the shared model says
+    // inference is needed (a Core engine, or a foreign agent on the NodeProvider backend). A
+    // foreign AgentNative selection needs no inference and instead finishes directly via
+    // commitSetup(). The engine/backend selection already lives in the shared AgentSetupModel
+    // (the pickers drive it), so this only routes the phase.
+    Q_INVOKABLE void continueFromAgentType();
+    // Phase G: commit the CURRENT shared-model selection (engine + backend + inference, whatever
+    // the pickers set) under `name`, then finish. Foreign-aware: it commits a Core, foreign
+    // AgentNative, or foreign NodeProvider profile identically because the engine/backend/inference
+    // dimensions are all held by AgentSetupModel. Async -> committed()/failed() route through
+    // onSetupCommitted/onSetupFailed as with the other apply paths.
+    Q_INVOKABLE void commitSetup(const QString& name);
     // Foreign-agent commit (CON-16): ONE named ProfileCreate carrying engine=Foreign{agent} (the
     // catalog NAME; recipes stay node-side), sequenced on fresh reflections exactly like the
     // native named path (create -> reflect -> setDefault -> drop the seeded placeholder ->

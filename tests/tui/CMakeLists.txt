@@ -186,6 +186,7 @@ qt_add_executable(tui_accounts_wizard_tests
     ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_setup_view.cpp
 )
 set_target_properties(tui_accounts_wizard_tests PROPERTIES AUTOMOC ON)
 target_include_directories(tui_accounts_wizard_tests PRIVATE
@@ -200,6 +201,9 @@ target_link_libraries(tui_accounts_wizard_tests
         daemon-app::uimodels
         daemon-app::profiles
         daemon-app::daemon_client
+        # NewAgentDialog now embeds AgentSetupView over the shared setup view-model.
+        daemon-app::setup
+        daemon-app::models
 )
 add_test(NAME tui_accounts_wizard_tests COMMAND tui_accounts_wizard_tests)
 set_tests_properties(tui_accounts_wizard_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -225,6 +229,7 @@ qt_add_executable(tui_settings_page_tests
     ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_setup_view.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_palette.cpp
 )
 set_target_properties(tui_settings_page_tests PROPERTIES AUTOMOC ON)
@@ -248,6 +253,8 @@ target_link_libraries(tui_settings_page_tests
         daemon-app::uimodels
         daemon-app::daemon_client
         daemon-app::tui_viewmodels
+        # NewAgentDialog (tui_dialogs.cpp) embeds AgentSetupView over the shared setup view-model.
+        daemon-app::setup
         # hub_users_access.cpp / hub_channels.cpp (compiled with the dispatcher)
         # bind PrincipalModel (daemon_client, above) + the transports seams.
         daemon-app::transports
@@ -297,6 +304,7 @@ qt_add_executable(tui_first_run_dialog_tests
     tst_first_run_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/dialogs/first_run_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_setup_view.cpp
 )
 set_target_properties(tui_first_run_dialog_tests PROPERTIES AUTOMOC ON)
 target_include_directories(tui_first_run_dialog_tests PRIVATE
@@ -313,6 +321,8 @@ target_link_libraries(tui_first_run_dialog_tests
         daemon-app::models
         daemon-app::profiles
         daemon-app::accounts
+        # AgentSetupView binds the shared setup view-model (Phase D).
+        daemon-app::setup
         # AgentTypeView (the agenttype step's shared picker) reads AcpRepository.
         daemon-app::daemon_client
 )
@@ -355,6 +365,7 @@ qt_add_executable(tui_profile_editor_tests
     ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_setup_view.cpp
 )
 set_target_properties(tui_profile_editor_tests PROPERTIES AUTOMOC ON)
 target_include_directories(tui_profile_editor_tests PRIVATE
@@ -369,6 +380,8 @@ target_link_libraries(tui_profile_editor_tests
         daemon-app::models
         daemon-app::uimodels
         daemon-app::daemon_client
+        # tui_dialogs.cpp's NewAgentDialog embeds AgentSetupView over the shared setup view-model.
+        daemon-app::setup
 )
 add_test(NAME tui_profile_editor_tests COMMAND tui_profile_editor_tests)
 set_tests_properties(tui_profile_editor_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

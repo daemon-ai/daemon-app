@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 import QtQuick
-import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
@@ -139,34 +138,54 @@ Item {
         }
     }
 
-    // New-profile dialog: a name/id plus an optional clone source (PRO-2). Empty clone source
-    // creates from scratch; a chosen source clones that profile's spec (a copy, not a live link).
-    QQC.Dialog {
+    // New-profile dialog (Phase D): the SHARED AgentSetupForm over the ONE AgentSetupModel
+    // pipeline (engine + backend + inference), so a Core or foreign profile is created from the
+    // same surface as the "+ New agent" dialog and the wizard. An optional clone source (PRO-2) is
+    // retained as an alternative: choosing a source copies that profile's spec (a copy, not a live
+    // link) under the entered name and ignores the setup selection; "Empty profile" configures a
+    // fresh profile through the form's AgentSetup.commit.
+    Kit.Dialog {
         id: createDialog
-        anchors.centerIn: parent
-        modal: true
+        width: 460
         title: qsTr("New profile")
-        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
+        acceptText: qsTr("Create")
+        readonly property bool cloning: cloneBox.currentIndex > 0
+        acceptEnabled: setupForm.nameText.trim().length > 0
+                       && (cloning || setupForm.commitReady)
         onAboutToShow: {
-            nameField.text = "";
+            setupForm.resetForm();
             cloneBox.currentIndex = 0;
+            setupForm.focusName();
         }
         onAccepted: {
-            if (nameField.text.length === 0)
+            const name = setupForm.nameText.trim();
+            if (name.length === 0)
                 return;
-            var src = cloneBox.currentIndex > 0 ? Profiles.profileNames()[cloneBox.currentIndex - 1] : "";
-            root.selectedId = src.length > 0 ? Profiles.cloneProfile(src, nameField.text)
-                                             : Profiles.createProfile(nameField.text);
+            if (createDialog.cloning) {
+                var src = Profiles.profileNames()[cloneBox.currentIndex - 1];
+                root.selectedId = Profiles.cloneProfile(src, name);
+            } else {
+                setupForm.submit(); // async: committed(id) selects the new profile
+            }
         }
 
-        ColumnLayout {
+        contentItem: ColumnLayout {
             spacing: 10
-            Kit.TextField {
-                id: nameField
+            AgentSetupForm {
+                id: setupForm
                 Layout.fillWidth: true
-                Layout.preferredWidth: 280
-                placeholderText: qsTr("Profile id (e.g. work)")
+                // A fresh, configured profile becomes the selection once the node reflects it.
+                onCommitted: function(profileId) {
+                    if (profileId && profileId.length > 0)
+                        root.selectedId = profileId;
+                }
+                onFailed: function(message) {
+                    root.notice = message;
+                    noticeClear.restart();
+                    createDialog.open(); // re-surface with the reason
+                }
             }
+            SectionLabel { text: qsTr("Or clone from") }
             Kit.Dropdown {
                 id: cloneBox
                 Layout.fillWidth: true

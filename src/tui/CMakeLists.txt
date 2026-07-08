@@ -132,6 +132,8 @@ qt_add_executable(daemon-tui
     # "+ New agent" dialog and the first-run wizard's agent-type step (app-wizard-auth stream).
     agent_type_view.h
     agent_type_view.cpp
+    agent_setup_view.h
+    agent_setup_view.cpp
     # Settings-page dialog edits (list picks / text prompts / live re-apply),
     # owned by the settings workstream next to pages/hub_settings.cpp.
     settings_editor.h
@@ -266,6 +268,8 @@ target_link_libraries(daemon-tui
         daemon-app::connection
         daemon-app::nav
         daemon-app::firstrun
+        # AgentSetupView / TUI dialogs bind the shared setup view-model (Phase D).
+        daemon-app::setup
         daemon-app::config
         daemon-app::uimodels
         daemon-app::models

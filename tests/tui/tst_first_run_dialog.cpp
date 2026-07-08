@@ -144,9 +144,9 @@ private slots:
                                           QStringLiteral("/tmp/x"), &root);
 
         auto* agentName = dialog->findChild<Tui::ZInputBox*>(QStringLiteral("firstRunAgentName"));
-        auto* key = dialog->findChild<Tui::ZInputBox*>(QStringLiteral("firstRunKey"));
-        auto* gateMsg = dialog->findChild<Tui::ZLabel*>(QStringLiteral("firstRunKeyGateMsg"));
-        auto* modelList = dialog->findChild<Tui::ZListView*>(QStringLiteral("firstRunModelList"));
+        auto* key = dialog->findChild<Tui::ZInputBox*>(QStringLiteral("setupKey"));
+        auto* gateMsg = dialog->findChild<Tui::ZLabel*>(QStringLiteral("setupKeyGateMsg"));
+        auto* modelList = dialog->findChild<Tui::ZListView*>(QStringLiteral("setupModelList"));
         auto* primary = dialog->findChild<Tui::ZButton*>(QStringLiteral("firstRunPrimary"));
         QVERIFY(agentName != nullptr);
         QVERIFY(key != nullptr);
@@ -239,7 +239,7 @@ private slots:
 
         auto* agentName = dialog->findChild<Tui::ZInputBox*>(QStringLiteral("firstRunAgentName"));
         auto* providerList =
-            dialog->findChild<Tui::ZListView*>(QStringLiteral("firstRunProviderList"));
+            dialog->findChild<Tui::ZListView*>(QStringLiteral("setupProviderList"));
         QVERIFY(agentName != nullptr);
         QVERIFY(providerList != nullptr);
 

@@ -11,16 +11,12 @@ import DaemonApp.Pages
 // "+ New agent" (A7 + foreign engines): the Daemon-Kit-themed create-agent dialog, extracted from
 // Sidebar.qml so the sidebar only instantiates it.
 //
-// Structure: a required Name field + the SHARED AgentTypePicker (native + ACP catalog with
-// installed badges — the same component the first-run wizard mounts, so they cannot drift).
-//   - daemon-core: embeds the SHARED node-driven AgentInferencePicker (provider -> key -> model;
-//     a FROZEN component) + optional persona, and commits through the SAME node-authoritative
-//     path as before: ProfileCreate -> configure provider/model/base-url (+ key + persona) ->
-//     setDefault -> a blank node SessionCreate under it (App.openNewAgentChat).
-//   - a foreign agent: the inference picker is hidden (no provider/model/key — the launch recipe
-//     is fixed by the node's catalog, referenced BY NAME ONLY), and accept issues the named
-//     ProfileCreate carrying engine=Foreign{agent} (Profiles.createForeignProfile).
-// Accept is gated: native -> name + inferenceComplete; foreign -> name + an INSTALLED agent.
+// Phase D: the bespoke Name + AgentTypePicker + AgentInferencePicker + foreign-copy layout is
+// replaced by the SHARED AgentSetupForm over the ONE AgentSetupModel pipeline — Core and every
+// foreign backend (AgentNative / NodeProvider) flow through the same form, and Create commits
+// through AgentSetup.commit (never a bespoke create path). Success (committed) makes the new agent
+// the default and opens its first chat, exactly as before; a failed provider probe / node
+// rejection re-surfaces the dialog with the node's honest reason.
 Kit.Dialog {
     id: root
     title: qsTr("New agent")
@@ -28,103 +24,46 @@ Kit.Dialog {
     acceptText: qsTr("Create")
     closePolicy: QQC.Popup.CloseOnEscape
 
-    // Mirrors of the shared picker's selection (read by the accept gate + commit).
-    readonly property string engineAgent: enginePicker.engineAgent
-    readonly property bool engineAgentInstalled: enginePicker.engineAgentInstalled
-    readonly property bool nativeEngine: enginePicker.nativeEngine
+    // Create is gated on the shared model's completeness (engine + backend + inference + name).
+    acceptEnabled: setupForm.commitReady
 
-    // C6/ENG-8: a foreign ProfileCreate the node rejects (unknown / uninstalled agent) arrives async
-    // via Profiles.profileOpFailed. Instead of a silent close + a stray toast, re-surface the dialog
-    // with the node's honest, agent-named error so the user can fix the selection.
+    // C6/ENG-8: a create the node rejects (unknown/uninstalled agent, probe failure) arrives async
+    // via AgentSetup.failed or Profiles.profileOpFailed. Re-surface the dialog with the honest
+    // reason so the user can fix the selection instead of a silent close + stray toast.
     property string createError: ""
-    property bool foreignCreateInFlight: false
+    property bool commitInFlight: false
+
     Connections {
         target: (typeof Profiles !== "undefined" && Profiles) ? Profiles : null
         function onProfileOpFailed(message) {
-            if (root.foreignCreateInFlight) {
-                root.foreignCreateInFlight = false;
+            if (root.commitInFlight) {
+                root.commitInFlight = false;
                 root.createError = message;
                 root.open(); // re-surface (accept already closed it) with the failure named
             }
         }
     }
 
-    acceptEnabled: nameField.text.trim().length > 0
-                   && (nativeEngine ? agentPicker.inferenceComplete
-                                    : engineAgentInstalled)
-
     function openForm() {
-        nameField.text = "";
-        personaField.text = "";
         root.createError = "";
-        root.foreignCreateInFlight = false;
-        enginePicker.refresh(); // native default + fresh catalog/discovery badges each open
-        nameField.forceActiveFocus();
+        root.commitInFlight = false;
+        setupForm.resetForm(); // fresh Core setup + fresh catalog/verification badges
+        setupForm.focusName();
         open();
     }
 
     onAccepted: {
-        var name = nameField.text.trim();
-        if (name.length === 0)
+        if (!setupForm.commitReady)
             return;
-        if (!root.nativeEngine) {
-            // Foreign engine: the named ProfileCreate carries engine=Foreign{agent} — a catalog
-            // NAME, never a recipe; no provider/model/key applies. Same activate + open as native.
-            if (!root.engineAgentInstalled)
-                return;
-            root.createError = "";
-            root.foreignCreateInFlight = true; // a node rejection re-surfaces this dialog (C6)
-            var foreignId = Profiles.createForeignProfile(name, root.engineAgent);
-            if (!foreignId || foreignId.length === 0)
-                return;
-            Profiles.setDefault(foreignId);
-            if (typeof App !== "undefined" && App)
-                App.openNewAgentChat();
-            return;
-        }
-        if (!agentPicker.inferenceComplete)
-            return;
-        var fields = {};
-        // A1 (CON-10): a custom endpoint pins genai's OpenAI-compatible adapter ("daemon_api")
-        // at the user-supplied base URL with a typed model — there is no catalog descriptor.
-        if (agentPicker.customEndpoint) {
-            fields.provider = "daemon_api";
-            fields.model = agentPicker.model;
-            fields.baseUrl = agentPicker.customBaseUrl.trim();
-        } else {
-            var desc = (ProviderCatalog && agentPicker.providerId.length > 0)
-                       ? ProviderCatalog.descriptorFor(agentPicker.providerId) : ({});
-            // Persist the ProviderSelector wire string + base URL from the node descriptor
-            // (never a hardcoded provider); the model is the picker's selection (never free
-            // text).
-            if (desc && desc.wireSelector)
-                fields.provider = desc.wireSelector;
-            if (agentPicker.model.length > 0)
-                fields.model = agentPicker.model;
-            if (desc && desc.defaultBaseUrl && desc.defaultBaseUrl.length > 0)
-                fields.baseUrl = desc.defaultBaseUrl;
-        }
-        if (personaField.text.trim().length > 0)
-            fields.systemPrompt = personaField.text.trim();
-        // ONE full-spec ProfileCreate (same seam as the wizard): the node dispatches pipelined
-        // Calls concurrently, so a create + follow-up update could race node-side.
-        var id = Profiles.createProfileWithSpec(name, fields);
-        if (!id || id.length === 0)
-            return;
-        // Profile-scoped credential for a key-requiring provider (stored under the new agent).
-        if (agentPicker.key.length > 0 && typeof Accounts !== "undefined" && Accounts)
-            Accounts.addApiKeyForProfile(id, agentPicker.providerId, "", agentPicker.key, "");
-        // Same create path as the wizard: make the new agent active, then a blank node
-        // SessionCreate under it opens + auto-selects a transcript (event-driven, node-minted id).
-        Profiles.setDefault(id);
-        if (typeof App !== "undefined" && App)
-            App.openNewAgentChat();
+        root.createError = "";
+        root.commitInFlight = true;
+        setupForm.submit(); // async: AgentSetup.commit -> committed(id)/failed(msg)
     }
 
     contentItem: ColumnLayout {
         spacing: 10
 
-        // C6/ENG-8: the node's honest, agent-named rejection of a foreign create.
+        // C6/ENG-8: the node's honest, agent-named rejection of a create.
         Rectangle {
             visible: root.createError.length > 0
             Layout.fillWidth: true
@@ -145,46 +84,22 @@ Kit.Dialog {
             }
         }
 
-        SectionLabel { text: qsTr("Name") }
-        Kit.TextField {
-            id: nameField
+        AgentSetupForm {
+            id: setupForm
             Layout.fillWidth: true
-            placeholderText: qsTr("agent name")
-        }
 
-        SectionLabel { text: qsTr("Engine") }
-        // The SHARED native-vs-foreign picker (also the wizard's agent-type step).
-        AgentTypePicker {
-            id: enginePicker
-            Layout.fillWidth: true
-        }
-
-        // Native engine: the SHARED node-driven provider/model/key picker (A7; FROZEN component)
-        // + optional persona. Hidden entirely for a foreign engine.
-        AgentInferencePicker {
-            id: agentPicker
-            visible: root.nativeEngine
-            Layout.fillWidth: true
-        }
-        SectionLabel { visible: root.nativeEngine; text: qsTr("Persona (optional)") }
-        Kit.TextField {
-            id: personaField
-            visible: root.nativeEngine
-            Layout.fillWidth: true
-            placeholderText: qsTr("system prompt")
-        }
-
-        // Foreign engine: no inference to configure — the launch recipe is fixed by the node's
-        // agent catalog and the profile references it by name only.
-        Text {
-            visible: !root.nativeEngine
-            text: qsTr("This agent runs a foreign engine. Its launch recipe is managed by the "
-                       + "daemon's agent catalog — no provider, model, or key to configure.")
-            font.family: FontIcons.display
-            font.pixelSize: 12
-            color: Theme.textMuted
-            wrapMode: Text.WordWrap
-            Layout.fillWidth: true
+            onCommitted: function(profileId) {
+                root.commitInFlight = false;
+                if (profileId && profileId.length > 0 && typeof Profiles !== "undefined" && Profiles)
+                    Profiles.setDefault(profileId);
+                if (typeof App !== "undefined" && App)
+                    App.openNewAgentChat();
+            }
+            onFailed: function(message) {
+                root.commitInFlight = false;
+                root.createError = message;
+                root.open(); // re-surface with the actionable reason
+            }
         }
     }
 }

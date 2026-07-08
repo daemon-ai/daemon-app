@@ -103,6 +103,11 @@ Item {
         wModel = p.model !== undefined ? p.model : "";
         wEngine = p.engine !== undefined ? p.engine : "Core";
         wForeignAgent = p.acpAgent !== undefined ? p.acpAgent : "";
+        // C4/Phase D: a foreign profile's backend + inference are edited through the SHARED
+        // AgentSetupModel (engine is locked to its create-time choice). Hydrate it so the backend
+        // sub-form + inference picker below reflect the persisted foreign_backend.
+        if (root.foreign && typeof AgentSetup !== "undefined" && AgentSetup)
+            AgentSetup.loadProfile(profileId);
         wProviderId = _inferProviderId(wProvider, wModel);
         providerCombo.syncFromModel();
         baseUrlField.text = wBaseUrl;
@@ -128,6 +133,41 @@ Item {
     }
 
     function save() {
+        // Foreign profile (Phase D): persist the edited foreign_backend (from the shared model);
+        // the launch recipe + engine stay the agent's create-time binding. Provider/model/baseUrl
+        // are inference-only and do not apply to a foreign profile's top-level spec.
+        if (root.foreign) {
+            var backend = {};
+            if (typeof AgentSetup !== "undefined" && AgentSetup) {
+                if (AgentSetup.backendMode === "NodeProvider") {
+                    backend = { "mode": "NodeProvider", "provider": AgentSetup.providerId,
+                                "model": AgentSetup.model };
+                    if (AgentSetup.credentialRef.length > 0)
+                        backend.credentialRef = AgentSetup.credentialRef;
+                } else {
+                    backend = { "mode": "AgentNative" };
+                    if (AgentSetup.agentNativeModel.length > 0)
+                        backend.model = AgentSetup.agentNativeModel;
+                }
+            }
+            Profiles.updateProfile(profileId, {
+                "name": nameField.text,
+                "description": descField.text,
+                "systemPrompt": promptArea.text,
+                "skills": wSkills,
+                "tools": wTools,
+                "foreignBackend": backend,
+            });
+            // NodeProvider: store the entered key profile-scoped so the node's gateway can resolve
+            // the credential (it never reaches the agent).
+            if (typeof AgentSetup !== "undefined" && AgentSetup
+                && AgentSetup.backendMode === "NodeProvider"
+                && foreignInference.key.length > 0
+                && typeof Accounts !== "undefined" && Accounts)
+                Accounts.addApiKeyForProfile(profileId, AgentSetup.providerId, "",
+                                             foreignInference.key, "");
+            return;
+        }
         Profiles.updateProfile(profileId, {
             "name": nameField.text,
             // wProvider is written verbatim (an unlisted Mock value survives untouched); baseUrl only
@@ -201,8 +241,10 @@ Item {
 
             Kit.TextField { id: nameField; Layout.fillWidth: true; placeholderText: qsTr("Name") }
 
-            // C4: engine identity is read-only in the editor (a create-time choice). For a foreign
-            // profile the inference config below is hidden — the recipe + model are the agent's.
+            // C4: engine identity is read-only in the editor (a create-time choice), rendered as a
+            // locked identity chip. Phase D: a foreign profile is no longer "brings its own model"
+            // read-only text — its BACKEND (AgentNative vs NodeProvider) and, for NodeProvider, its
+            // inference are editable through the shared AgentSetupModel (hydrated in load()).
             Kit.Chip {
                 visible: root.foreign
                 text: root.wForeignAgent.length > 0 ? root.wForeignAgent : qsTr("Foreign")
@@ -210,14 +252,16 @@ Item {
                 tone: "accent"
                 tooltipText: qsTr("Foreign engine (set at create time)")
             }
-            Text {
+            SectionLabel { visible: root.foreign; text: qsTr("Backend") }
+            ForeignBackendPicker {
                 visible: root.foreign
                 Layout.fillWidth: true
-                text: qsTr("This agent runs a foreign engine — its launch recipe and model are "
-                           + "managed by the daemon's agent catalog, so there is no provider, "
-                           + "model, or base URL to configure here.")
-                wrapMode: Text.WordWrap
-                font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
+            }
+            AgentInferencePicker {
+                id: foreignInference
+                visible: root.foreign && typeof AgentSetup !== "undefined" && AgentSetup
+                         && AgentSetup.needsInference
+                Layout.fillWidth: true
             }
 
             // --- Provider (native engines only) ---------------------------

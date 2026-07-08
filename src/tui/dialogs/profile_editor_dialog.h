@@ -97,6 +97,11 @@ public:
     void setSystemPrompt(const QString& prompt);
     void toggleSkill(const QString& id);
     void toggleTool(const QString& id);
+    // Foreign-engine backend (Phase D): cycle AgentNative <-> NodeProvider; the AgentNative model
+    // steer hint is edited through setModelHint. The provider/model rows above are reused for the
+    // NodeProvider inference (unhidden only then). save() persists the compact foreign_backend map.
+    void cycleBackend();
+    void setModelHint(const QString& hint);
     // One updateProfile with the GUI editor's exact field map, then saved() + close.
     void save();
 
@@ -149,8 +154,14 @@ private:
     // Read-only engine binding ("Core"/"" = native; "Foreign" = foreign agent).
     QString m_engineKind;
     QString m_engineAgent;
+    // Foreign-engine backend working copy (Phase D): "AgentNative" | "NodeProvider" + the optional
+    // AgentNative model steer hint. NodeProvider's provider/model reuse m_wProviderId/m_wModel.
+    QString m_foreignBackendMode = QStringLiteral("AgentNative");
+    QString m_agentNativeHint;
 
     Tui::ZLabel* m_engineLabel = nullptr;
+    Tui::ZButton* m_backendRow = nullptr;   // foreign: AgentNative <-> NodeProvider
+    Tui::ZButton* m_modelHintRow = nullptr; // foreign AgentNative: optional model steer hint
     Tui::ZButton* m_nameRow = nullptr;
     Tui::ZButton* m_providerRow = nullptr;
     Tui::ZButton* m_signInRow = nullptr; // [waveB:app-v30] CON-15

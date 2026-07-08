@@ -19,6 +19,13 @@ Rectangle {
 
     readonly property string phase: FirstRun ? FirstRun.phase : "connect"
 
+    // The name the Finish commit uses: a foreign profile is named in the agent-type pane
+    // (acpNameField); a native profile is named on the inference step (agentNameField).
+    readonly property bool foreignEngine: (typeof AgentSetup !== "undefined" && AgentSetup)
+                                          && AgentSetup.engineKind === "Foreign"
+    readonly property string finishName: foreignEngine ? acpNameField.text.trim()
+                                                       : agentNameField.text.trim()
+
     // A7: the guided inference selection (provider -> key -> model) is now the SHARED
     // AgentInferencePicker, so the wizard and "+ New agent" use one node-driven picker. These read
     // the picker's live selection (or defaults before the inference step mounts the picker).
@@ -26,12 +33,6 @@ Rectangle {
     readonly property string model: inferencePicker.item ? inferencePicker.item.model : ""
     readonly property bool inferenceComplete: inferencePicker.item
                                               && inferencePicker.item.inferenceComplete
-    readonly property string pickerKey: inferencePicker.item ? inferencePicker.item.key : ""
-    // A1 (CON-10): non-empty only on the picker's custom-endpoint path; rides the commit so the
-    // profile persists the user-supplied base URL.
-    readonly property string pickerBaseUrl: (inferencePicker.item
-                                             && inferencePicker.item.customEndpoint)
-                                            ? inferencePicker.item.customBaseUrl : ""
 
     // The chosen provider's catalog label (e.g. "Anthropic"), the seed for the agent-name
     // prefill. Falls back to the descriptor id when the catalog has no display name.
@@ -158,11 +159,11 @@ Rectangle {
                 }
             }
 
-            // --- Phase: agenttype (CON-16): the SHARED native-vs-foreign engine picker --------
-            // Shown only when the node offered foreign ACP agents (FirstRun gates the phase).
-            // Native (default, preselected) continues into the inference step; an INSTALLED
-            // foreign agent finishes setup directly — it brings its own model, so the
-            // provider/model/key pages are skipped entirely.
+            // --- Phase: agenttype (CON-16 + Phase G): the SHARED engine picker, with the foreign
+            // BACKEND choice folded into this pane. Native (default) continues into the inference
+            // step. A foreign agent reveals the backend rows: "Agent's own backend" (AgentNative)
+            // finishes here — the agent brings its own model — while "Node provider (gateway)"
+            // (NodeProvider) needs the shared inference sub-form, so Continue advances to it.
             ColumnLayout {
                 visible: root.phase === "agenttype"
                 Layout.fillWidth: true
@@ -178,10 +179,20 @@ Rectangle {
                 Text {
                     text: agentTypePicker.nativeEngine
                           ? qsTr("Runs in the daemon — pick a provider and model next.")
-                          : qsTr("This agent runs a foreign ACP engine — it brings its own "
-                                 + "model, so no provider, model, or key is needed.")
+                          : (AgentSetup && AgentSetup.needsInference
+                             ? qsTr("Routed through the node's provider gateway — pick a provider "
+                                    + "and model next.")
+                             : qsTr("This agent runs a foreign engine using its own backend — it "
+                                    + "brings its own model, so no provider or key is needed."))
                     font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
+                }
+                // Foreign only: the backend choice (AgentNative vs NodeProvider) + optional model
+                // hint / gateway affordance, driving the shared AgentSetupModel.
+                SectionLabel { visible: !agentTypePicker.nativeEngine; text: qsTr("Backend") }
+                ForeignBackendPicker {
+                    visible: !agentTypePicker.nativeEngine
+                    Layout.fillWidth: true
                 }
                 // Foreign agents get their NAME here (the native path names on the inference
                 // step): prefilled from the agent, editable, required.
@@ -209,7 +220,9 @@ Rectangle {
             // editable, required. The wizard mints a NAMED agent instead of leaving the node's
             // seeded placeholder id in the Fleet.
             ColumnLayout {
-                visible: root.phase === "inference"
+                // A foreign (NodeProvider) profile was already named in the agent-type pane; only
+                // the native path names on the inference step.
+                visible: root.phase === "inference" && !root.foreignEngine
                 Layout.fillWidth: true
                 spacing: 10
                 SectionLabel { text: qsTr("Agent name") }
@@ -257,22 +270,24 @@ Rectangle {
                     onClicked: FirstRun.skip()
                 }
                 Item { Layout.fillWidth: true }
-                // Agent-type step commit (CON-16): native -> the inference step; an INSTALLED
-                // foreign agent -> Finish (named ProfileCreate with engine=Foreign{agent}, no
-                // provider/model/key).
+                // Agent-type step commit (CON-16 + Phase G): when inference is needed (native, or a
+                // foreign NodeProvider backend) -> Continue into the inference step; a foreign
+                // AgentNative agent brings its own model -> Finish here (commit the shared-model
+                // selection: engine=Foreign, AgentNative backend, optional model hint).
                 Kit.TextButton {
                     visible: root.phase === "agenttype"
-                    text: agentTypePicker.nativeEngine ? qsTr("Continue") : qsTr("Finish setup")
+                    text: (AgentSetup && AgentSetup.needsInference) ? qsTr("Continue")
+                                                                    : qsTr("Finish setup")
                     accentFilled: true
                     enabled: agentTypePicker.nativeEngine
                              || (agentTypePicker.engineAgentInstalled
-                                 && acpNameField.text.trim().length > 0)
+                                 && acpNameField.text.trim().length > 0
+                                 && !(AgentSetup && AgentSetup.gatewayRequired))
                     onClicked: {
-                        if (agentTypePicker.nativeEngine)
-                            FirstRun.chooseAgentType("");
+                        if (AgentSetup && AgentSetup.needsInference)
+                            FirstRun.continueFromAgentType();
                         else
-                            FirstRun.applyForeignChoice(acpNameField.text.trim(),
-                                                        agentTypePicker.engineAgent);
+                            FirstRun.commitSetup(acpNameField.text.trim());
                     }
                 }
                 Kit.TextButton {
@@ -281,18 +296,15 @@ Rectangle {
                     accentFilled: true
                     // Enabled once the agent has a non-empty name, a provider + concrete model
                     // are chosen and, for a key-required vendor, the key has been PROVEN to
-                    // authenticate - not merely typed. The key gate (FIX 4) is evaluated by the
-                    // shared FirstRunModel, so GUI and TUI block on one implementation.
+                    // authenticate - not merely typed. The key gate is evaluated by the shared
+                    // AgentSetupModel (via FirstRun), so GUI and TUI block on one implementation.
                     enabled: root.inferenceComplete
                              && (FirstRun ? FirstRun.keyGatePassed : true)
-                             && agentNameField.text.trim().length > 0
-                    // Persist a working profile (ProviderSelector + model + base URL) under the
-                    // chosen agent name + profile-scoped key + make default, then finish - zero
-                    // env required.
-                    onClicked: FirstRun.applyInferenceChoice(root.providerId, root.model,
-                                                             root.pickerKey,
-                                                             agentNameField.text.trim(),
-                                                             root.pickerBaseUrl)
+                             && root.finishName.length > 0
+                    // Commit the shared-model selection (Core, or foreign NodeProvider) under the
+                    // chosen name + profile-scoped key + make default, then finish. The pickers
+                    // already drove engine/backend/inference into AgentSetup.
+                    onClicked: FirstRun.commitSetup(root.finishName)
                 }
             }
         }

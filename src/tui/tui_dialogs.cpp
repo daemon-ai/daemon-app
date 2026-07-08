@@ -3,9 +3,10 @@
 
 #include "tui_dialogs.h"
 
+#include "agent_setup_view.h"
 #include "agent_type_view.h"
 #include "daemon/repositories.h"
-#include "profiles/iprofile_store.h"
+#include "setup/agent_setup_model.h"
 
 #include <QAbstractItemModel>
 #include <Tui/ZHBoxLayout.h>
@@ -115,12 +116,18 @@ ConfirmDialog::ConfirmDialog(const QString& title, const QString& message, Tui::
     setGeometry(QRect(0, 0, qMax(40, static_cast<int>(message.size()) + 8), 7));
 }
 
-NewAgentDialog::NewAgentDialog(profiles::IProfileStore* profiles,
-                               daemonapp::daemon::AgentRepository* agents, Tui::ZWidget* parent)
-    : Tui::ZDialog(parent), m_profiles(profiles) {
+NewAgentDialog::NewAgentDialog(setup::AgentSetupModel* setup,
+                               daemonapp::daemon::AgentRepository* agents,
+                               models::IProviderCatalog* providerCatalog, Tui::ZWidget* parent)
+    : Tui::ZDialog(parent), m_setup(setup) {
     setOptions(Tui::ZWindow::DeleteOnClose);
     setWindowTitle(tr("New agent"));
     setContentsMargins({2, 1, 2, 1});
+
+    // Fresh Core setup each open (the shared model is reused across surfaces).
+    if (m_setup != nullptr) {
+        m_setup->reset();
+    }
 
     auto* layout = new Tui::ZVBoxLayout();
     setLayout(layout);
@@ -130,46 +137,117 @@ NewAgentDialog::NewAgentDialog(profiles::IProfileStore* profiles,
     layout->addWidget(m_name);
 
     layout->addWidget(new Tui::ZLabel(tr("Engine (Enter to pick):"), this));
-    // The shared native+foreign picker projection (installed markers; same rows as the GUI).
+    // The shared native+foreign picker projection (verification badges; same rows as the GUI).
     m_engines = new AgentTypeView(agents, this);
     layout->addWidget(m_engines);
+
+    // The shared backend + inference steps over the same AgentSetupModel (auto-visible: backend
+    // when foreign, inference when Core or NodeProvider).
+    m_setupView = new AgentSetupView(m_setup, providerCatalog, this);
+    layout->addWidget(m_setupView);
+
+    m_error = new Tui::ZLabel(QString(), this);
+    m_error->setVisible(false);
+    layout->addWidget(m_error);
     layout->addSpacing(1);
 
     auto* buttons = new Tui::ZHBoxLayout();
     layout->add(buttons);
     buttons->addStretch();
-    auto* create = new Tui::ZButton(tr("Create"), this);
-    create->setDefault(true);
-    buttons->addWidget(create);
+    m_create = new Tui::ZButton(tr("Create"), this);
+    m_create->setDefault(true);
+    buttons->addWidget(m_create);
     auto* cancel = new Tui::ZButton(tr("Cancel"), this);
     buttons->addWidget(cancel);
 
-    connect(create, &Tui::ZButton::clicked, this, &NewAgentDialog::commit);
+    connect(m_create, &Tui::ZButton::clicked, this, &NewAgentDialog::commit);
     connect(cancel, &Tui::ZButton::clicked, this, &Tui::ZDialog::reject);
 
+    // Engine selection drives the shared model (the TUI picker is selection-only), then re-gates
+    // Create.
+    connect(m_engines, &AgentTypeView::selectionChanged, this, [this] {
+        applyEngineFromPicker();
+        refreshCommit();
+    });
+    connect(m_engines, &Tui::ZListView::enterPressed, this, [this](int) {
+        applyEngineFromPicker();
+        refreshCommit();
+    });
+    connect(m_setupView, &AgentSetupView::selectionChanged, this, &NewAgentDialog::refreshCommit);
+    connect(m_setupView, &AgentSetupView::modelDiscoverRequested, this,
+            &NewAgentDialog::modelDiscoverRequested);
+    connect(m_name, &Tui::ZInputBox::textChanged, this,
+            [this](const QString&) { refreshCommit(); });
+    if (m_setup != nullptr) {
+        connect(m_setup, &setup::AgentSetupModel::stateChanged, this,
+                &NewAgentDialog::refreshCommit);
+        // A commit resolved / failed: surface the new agent or the node's honest reason. Guard on
+        // m_committing so another surface's commit on the shared model cannot close this dialog.
+        connect(m_setup, &setup::AgentSetupModel::committed, this, [this](const QString& id) {
+            if (!m_committing) {
+                return;
+            }
+            m_committing = false;
+            emit created(id);
+            close();
+        });
+        connect(m_setup, &setup::AgentSetupModel::failed, this, [this](const QString& message) {
+            if (!m_committing) {
+                return;
+            }
+            m_committing = false;
+            if (m_error != nullptr) {
+                m_error->setText(message);
+                m_error->setVisible(true);
+            }
+            if (m_create != nullptr) {
+                m_create->setEnabled(true);
+            }
+        });
+    }
+
     m_engines->refresh(); // fresh catalog + discovery badges each open
+    applyEngineFromPicker();
+    refreshCommit();
     m_name->setFocus();
-    setGeometry(QRect(0, 0, 52, 14));
+    setGeometry(QRect(0, 0, 60, 22));
+}
+
+void NewAgentDialog::applyEngineFromPicker() {
+    if (m_setup == nullptr || m_engines == nullptr) {
+        return;
+    }
+    const QString agent = m_engines->selectedAgent();
+    m_setup->chooseEngine(agent.isEmpty() ? QStringLiteral("Core") : QStringLiteral("Foreign"),
+                          agent);
+}
+
+void NewAgentDialog::refreshCommit() {
+    if (m_create == nullptr) {
+        return;
+    }
+    const QString name = m_name != nullptr ? m_name->text().trimmed() : QString();
+    const bool ready = m_setup != nullptr && m_setup->commitReady() && !name.isEmpty() &&
+                       (m_engines == nullptr || m_engines->selectionValid());
+    m_create->setEnabled(ready);
 }
 
 void NewAgentDialog::commit() {
     const QString name = m_name != nullptr ? m_name->text().trimmed() : QString();
-    if (name.isEmpty() || m_profiles == nullptr) {
+    if (name.isEmpty() || m_setup == nullptr || !m_setup->commitReady()) {
         return;
     }
     // Parity with the GUI accept gate: an uninstalled foreign row is not committable.
     if (m_engines != nullptr && !m_engines->selectionValid()) {
         return;
     }
-    const QString agent = m_engines != nullptr ? m_engines->selectedAgent() : QString();
-    // Empty agent = the native engine (plain create; provider/model configured on the Profile
-    // page); otherwise a foreign agent (the named ProfileCreate carries engine=Foreign{agent}).
-    const QString id = agent.isEmpty() ? m_profiles->createProfile(name)
-                                       : m_profiles->createForeignProfile(name, agent);
-    if (id.isEmpty()) {
-        return;
+    if (m_error != nullptr) {
+        m_error->setVisible(false);
     }
-    m_profiles->setDefault(id);
-    emit created(id);
-    close();
+    if (m_create != nullptr) {
+        m_create->setEnabled(false); // in-flight; committed()/failed() re-enables / closes
+    }
+    // Commit the shared-model selection (engine + backend + inference) — the one create path.
+    m_committing = true;
+    m_setup->commit(name);
 }

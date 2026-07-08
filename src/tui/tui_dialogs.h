@@ -16,11 +16,15 @@
 namespace daemonapp::daemon {
 class AgentRepository;
 }
-namespace profiles {
-class IProfileStore;
+namespace models {
+class IProviderCatalog;
+}
+namespace setup {
+class AgentSetupModel;
 }
 
 class AgentTypeView;
+class AgentSetupView;
 
 // A small modal "Quit daemon-app?" confirmation. ZDialog auto-centers, handles
 // Esc -> reject(), and routes Enter to the default button; we add Quit/Cancel and
@@ -66,29 +70,38 @@ signals:
     void confirmed();
 };
 
-// The TUI "+ New agent" dialog (foreign engines; wire v29): a Name field + the SHARED
-// AgentTypeView engine list — "daemon-core" (the native engine, default) plus every foreign catalog
-// entry with installed markers (the same AgentRepository rows the GUI AgentTypePicker renders) —
-// committing through the SAME IProfileStore create path the GUI dialog uses: native ->
-// createProfile(name) (provider/model then configured via the Profile page), foreign ->
-// createForeignProfile(name, agent) carrying engine=Foreign{agent} (a catalog NAME; recipes stay
-// node-side), then setDefault. An uninstalled foreign row is not committable (parity with the
-// GUI's unselectable rows).
+// The TUI "+ New agent" dialog (Phase D): the full ONE setup pipeline over the shared
+// AgentSetupModel — a Name field + the SHARED AgentTypeView engine list (native + the foreign
+// catalog with verification badges), the SHARED AgentSetupView (foreign backend choice + the
+// provider/model/key inference sub-form), committing through AgentSetup.commit (never a bespoke
+// create path). Native, foreign AgentNative, and foreign NodeProvider all flow through one form;
+// Create is gated on AgentSetup.commitReady, and an uninstalled foreign row is not selectable
+// (parity with the GUI). The TUI twin of the GUI AgentSetupForm dialog.
 class NewAgentDialog : public Tui::ZDialog {
     Q_OBJECT
 
 public:
-    NewAgentDialog(profiles::IProfileStore* profiles, daemonapp::daemon::AgentRepository* agents,
-                   Tui::ZWidget* parent);
+    NewAgentDialog(setup::AgentSetupModel* setup, daemonapp::daemon::AgentRepository* agents,
+                   models::IProviderCatalog* providerCatalog, Tui::ZWidget* parent);
 
 signals:
-    // A ProfileCreate was issued under `profileId` (the row appears when the repo re-lists).
+    // A ProfileCreate resolved under `profileId` (the row appears when the repo re-lists).
     void created(const QString& profileId);
+    // The user picked the local "Discover More Models" row; the host opens the download flow.
+    void modelDiscoverRequested();
 
 private:
+    void applyEngineFromPicker();
     void commit();
+    void refreshCommit();
 
-    profiles::IProfileStore* m_profiles = nullptr;
+    setup::AgentSetupModel* m_setup = nullptr;
     Tui::ZInputBox* m_name = nullptr;
-    AgentTypeView* m_engines = nullptr; // the shared native+ACP picker projection
+    Tui::ZLabel* m_error = nullptr;
+    AgentTypeView* m_engines = nullptr;    // the shared native + foreign engine picker projection
+    AgentSetupView* m_setupView = nullptr; // shared backend + inference steps over AgentSetup
+    Tui::ZButton* m_create = nullptr;
+    // The shared AgentSetupModel's committed()/failed() reach every bound surface; only react to
+    // the outcome of a commit THIS dialog started.
+    bool m_committing = false;
 };

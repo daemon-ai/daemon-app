@@ -7,14 +7,11 @@
 #include "firstrun/first_run_model.h"
 #include "settings/isettings_store.h"
 
-#include <QStringList>
-#include <QVariantList>
-#include <QVariantMap>
+#include <QString>
 #include <Tui/ZButton.h>
 #include <Tui/ZDialog.h>
 #include <Tui/ZInputBox.h>
 #include <Tui/ZLabel.h>
-#include <Tui/ZListView.h>
 
 namespace models {
 class IProviderCatalog;
@@ -23,17 +20,20 @@ namespace daemonapp::daemon {
 class AgentRepository;
 }
 class AgentTypeView;
+class AgentSetupView;
 
-// The TUI first-run gate: a lighter "Setup Required" modal mirroring the GUI's
-// FirstRunGate. A target field + Connect drives the shared connection seam; the
-// FirstRunModel advances connect -> connecting -> [agenttype ->] inference, and
-// Finish completes setup. Reuses the same shared FirstRunModel the GUI binds.
-// The agenttype step (CON-16) mounts the shared AgentTypeView (native + foreign
-// catalog with installed markers): native continues into inference; an
-// INSTALLED foreign agent finishes directly (engine=Foreign{agent}; no
-// provider/model/key). Lives in its own dialogs/ TU (split out of
-// tui_dialogs.cpp) so the first-run workstream owns one focused file; the
-// small generic dialogs stay in tui_dialogs.{h,cpp}.
+// The TUI first-run gate: a lighter "Setup Required" modal mirroring the GUI's FirstRunGate. A
+// target field + Connect drives the shared connection seam; the FirstRunModel advances
+// connect -> connecting -> [agenttype ->] inference, and Finish completes setup. Reuses the same
+// shared FirstRunModel the GUI binds.
+//
+// Phase D/G: the hand-rolled provider/model/key lists are gone — the inference (and the foreign
+// backend) are rendered by the shared AgentSetupView over the wizard's AgentSetupModel
+// (model->agentSetup()), the TUI twin of AgentSetupForm's inner steps. The agent-type phase shows
+// the engine picker (AgentTypeView) + the backend rows (AgentSetupView, backend section) folded in;
+// the inference phase shows the inference section. Continue advances only when the model needs
+// inference; a foreign AgentNative agent finishes from the agent-type phase. Finish commits the
+// shared-model selection (FirstRunModel::commitSetup), foreign-aware.
 class FirstRunDialog : public Tui::ZDialog {
     Q_OBJECT
 
@@ -49,26 +49,21 @@ signals:
 
 private:
     void syncToPhase();
-    // Apply the selected transport mode to the editable fields: swap the target
-    // placeholder/seed and show the token field only for "remote" (parity with the
-    // GUI ConnectionPicker's mode cards).
+    // Apply the selected transport mode to the editable fields (target placeholder + token
+    // visibility), parity with the GUI ConnectionPicker's mode cards.
     void applyMode(const QString& mode);
-    // The inference step's commit: persist a working profile for the chosen provider + model
-    // (ProviderSelector + base URL) + profile-scoped key + make default under the chosen agent
-    // NAME (empty / placeholder-equal configures the placeholder in place), then finish.
-    void commitInference();
-    // Node-driven provider->model wiring (inference phase).
-    void rebuildProviderList();
-    void selectProvider(int row);
-    void rebuildModelList();
-    void selectModel(int row);
-    void refreshInferenceControls();
-    // Prefill the agent name from the chosen provider's catalog label (lowercased), exactly like
-    // the GUI wizard seeds agentNameField; stops once the user edits the field.
+    // Push the engine picker's current selection into the shared model so the backend rows +
+    // needsInference reflect it (the TUI AgentTypeView is selection-only; it does not drive the
+    // model itself).
+    void applyEngineFromPicker();
+    // Prefill the agent name: from the chosen provider's catalog label (native inference) or the
+    // selected foreign agent (foreign), lowercased, until the user edits the field.
     void seedAgentName();
-    [[nodiscard]] QVariantMap currentProviderDescriptor() const;
-    // Whether the synthetic custom-endpoint provider row is selected (A1 / CON-10).
-    [[nodiscard]] bool customSelected() const;
+    // The name the Finish commit uses (a foreign profile is named in the agent-type pane, a native
+    // one on the inference step — both write the single m_agentName field, so this just trims it).
+    [[nodiscard]] QString finishName() const;
+    // Whether the shared model currently needs the inference step (Core or NodeProvider).
+    [[nodiscard]] bool needsInference() const;
 
     firstrun::FirstRunModel* m_model = nullptr;
     connection::IConnectionService* m_connection = nullptr;
@@ -77,37 +72,21 @@ private:
     Tui::ZLabel* m_status = nullptr;
     Tui::ZInputBox* m_target = nullptr;
     Tui::ZInputBox* m_token = nullptr;
-    Tui::ZInputBox* m_key = nullptr;         // provider API key (inference phase)
     Tui::ZInputBox* m_username = nullptr;    // SASL username (auth phase)
     Tui::ZInputBox* m_password = nullptr;    // SASL password (auth phase; masked)
-    Tui::ZLabel* m_nameLabel = nullptr;      // "Agent name" (inference phase)
+    Tui::ZLabel* m_nameLabel = nullptr;      // "Agent name"
     Tui::ZInputBox* m_agentName = nullptr;   // agent name = the profile id the node keys it by
     Tui::ZLabel* m_agentTypeLabel = nullptr; // "Agent type" (agenttype phase, CON-16)
     AgentTypeView* m_agentType = nullptr;    // the shared native+ACP picker projection
-    Tui::ZLabel* m_providerLabel = nullptr;
-    Tui::ZListView* m_providerList = nullptr; // provider picker (inference phase)
-    Tui::ZLabel* m_modelLabel = nullptr;
-    Tui::ZListView* m_modelList = nullptr; // per-provider model picker (inference phase)
-    // A1 (CON-10): the custom-endpoint row's fields (base URL + typed model), shown only when
-    // the synthetic "Custom endpoint…" provider row is selected.
-    Tui::ZLabel* m_baseUrlLabel = nullptr;
-    Tui::ZInputBox* m_baseUrl = nullptr;
-    Tui::ZLabel* m_customModelLabel = nullptr;
-    Tui::ZInputBox* m_customModel = nullptr;
-    Tui::ZButton* m_listModelsBtn = nullptr; // re-list a key-requiring provider's models
-    Tui::ZLabel* m_keyGateMsg = nullptr;     // the shared key gate's blocking reason (FIX 4)
+    AgentSetupView* m_setupView = nullptr;   // shared backend + inference steps over AgentSetup
     Tui::ZButton* m_localBtn = nullptr;
     Tui::ZButton* m_remoteBtn = nullptr;
     Tui::ZButton* m_managedBtn = nullptr; // local: App-managed (spawn) vs Attach (existing socket)
     Tui::ZButton* m_testBtn = nullptr;
     Tui::ZLabel* m_testResult = nullptr;
-    Tui::ZButton* m_primary = nullptr; // Connect / Finish
+    Tui::ZButton* m_primary = nullptr; // Connect / Continue / Finish
     QString m_mode = QStringLiteral("local");
-    QString m_providerId;        // selected ProviderCatalog descriptor id
-    QString m_selectedModel;     // selected model id (selection-only)
-    QVariantList m_providerRows; // cached providers() rows for row->id mapping
-    QVariantList m_modelRows;    // cached offeredModels() rows for row->id mapping
-    // Once the user edits the agent name it is theirs; provider changes stop re-seeding (the
+    // Once the user edits the agent name it is theirs; selection changes stop re-seeding (the
     // guard suppresses the programmatic seed's own textChanged).
     bool m_agentNameEdited = false;
     bool m_seedingName = false;

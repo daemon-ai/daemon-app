@@ -18,13 +18,14 @@ import DaemonApp.Controls as Kit
 //   - Daemon Kit theming throughout.
 //
 // Consumers read `providerId` / `model` / `key` and gate their commit on `inferenceComplete`
-// (+ FirstRun.keyGatePassed for a key-required vendor). `descriptorFor(providerId)` on
+// (+ AgentSetup.keyGatePassed for a key-required vendor). `descriptorFor(providerId)` on
 // ProviderCatalog yields the ProviderSelector + base URL the persisted profile needs.
 //
-// FIX 4 (hoisted): the blocking key-validation gate is evaluated by the SHARED FirstRunModel,
-// not here - the picker only reports its live provider/key selection
-// (FirstRun.setInferenceSelection) and renders the model's keyGateMessage, so the GUI wizard and
-// the TUI dialog consume one gate implementation.
+// Phase D: the picker is the shared inference sub-form for the ONE setup pipeline, so it reports
+// its live selection to the shared AgentSetupModel — both the full provider/model/key/baseUrl
+// selection (AgentSetup.setInference, what commit persists) and the key-gate re-arm
+// (AgentSetup.setInferenceSelection) — and renders the model's keyGateMessage. The first-run
+// wizard, the "+ New agent" form, and the profiles "+ New" path all bind one gate + commit path.
 ColumnLayout {
     id: picker
     spacing: 10
@@ -74,16 +75,39 @@ ColumnLayout {
                               kind: "custom", requiresKey: false }]);
     }
 
+    readonly property bool _hasSetup: (typeof AgentSetup !== "undefined" && AgentSetup)
+
     // Report the live provider/key selection to the shared key gate (re-arms it: a proven key
     // must re-prove via the next authenticated LIST after any change).
     function _reportSelection() {
-        if (typeof FirstRun !== "undefined" && FirstRun)
-            FirstRun.setInferenceSelection(picker.providerId, keyField.text);
+        if (picker._hasSetup)
+            AgentSetup.setInferenceSelection(picker.providerId, keyField.text);
+        picker._pushInference();
+    }
+
+    // Push the full inference selection into the shared model (what commit persists): provider,
+    // selected model, transient key, and — on the custom-endpoint path — the user base URL.
+    function _pushInference() {
+        if (picker._hasSetup)
+            AgentSetup.setInference(picker.providerId, picker.model, keyField.text,
+                                    picker.customEndpoint ? baseUrlField.text.trim() : "");
     }
 
     function _seedProvider() {
         if (providerId.length > 0 || providerRows.length === 0)
             return;
+        // Editor hydration / re-open: prefer a selection the shared model already holds
+        // (AgentSetup.providerId/model) over the fresh default, so re-editing a NodeProvider
+        // foreign profile shows its persisted provider + model.
+        if (picker._hasSetup && AgentSetup.providerId && AgentSetup.providerId.length > 0) {
+            var hydrateModel = AgentSetup.model ? AgentSetup.model : "";
+            picker.selectProvider(AgentSetup.providerId);
+            if (hydrateModel.length > 0) {
+                picker.model = hydrateModel;
+                picker._pushInference();
+            }
+            return;
+        }
         // Seed the preferred default: Daemon Cloud (keyless listing) or the first LOCAL engine
         // (llama.cpp — first-run wants zero-key local inference). Falls back to row 0.
         var wantKind = preferDaemonCloud ? "daemon_cloud" : "local";
@@ -99,7 +123,7 @@ ColumnLayout {
         picker.providerId = id;
         picker.model = "";
         picker.revealKey = false;
-        picker._reportSelection();
+        picker._reportSelection(); // re-arms the key gate + pushes the (model-less) selection
         // The custom endpoint has nothing to list: no wire op can enumerate an arbitrary
         // OpenAI-compatible server's models (the model is typed instead).
         if (ProviderCatalog && id !== picker.kCustomId)
@@ -181,6 +205,7 @@ ColumnLayout {
             id: baseUrlField
             Layout.fillWidth: true
             placeholderText: qsTr("Base URL (e.g. https://…)")
+            onTextEdited: picker._pushInference() // the custom-endpoint base URL rides the commit
         }
         SectionLabel { text: qsTr("Model id") }
         Kit.TextField {
@@ -188,7 +213,7 @@ ColumnLayout {
             Layout.fillWidth: true
             placeholderText: qsTr("model id (as your server names it)")
             // The typed model IS the selection on the custom path (nothing to list).
-            onTextEdited: picker.model = text.trim()
+            onTextEdited: { picker.model = text.trim(); picker._pushInference(); }
         }
         Text {
             text: qsTr("The endpoint is used as-is — your first message verifies it, and a "
@@ -228,7 +253,7 @@ ColumnLayout {
     // The shared key gate's blocking reason (empty until an authenticated LIST fails).
     Text {
         visible: picker.providerRequiresKey && text.length > 0
-        text: (typeof FirstRun !== "undefined" && FirstRun) ? FirstRun.keyGateMessage : ""
+        text: picker._hasSetup ? AgentSetup.keyGateMessage : ""
         font.family: FontIcons.display; font.pixelSize: 12; color: Theme.danger
         Layout.fillWidth: true; wrapMode: Text.WordWrap
     }
@@ -300,6 +325,7 @@ ColumnLayout {
                         discoverDialog.openDialog();
                     } else {
                         picker.model = modelData.id;
+                        picker._pushInference();
                     }
                 }
             }
@@ -332,6 +358,7 @@ ColumnLayout {
             for (var i = 0; i < offered.length; ++i)
                 if (offered[i].id === modelId) {
                     picker.model = modelId;
+                    picker._pushInference();
                     return;
                 }
         }
@@ -353,6 +380,7 @@ ColumnLayout {
         // offered-model rows); the dialog closes itself.
         onUseModelRequested: function(modelId) {
             picker.model = modelId;
+            picker._pushInference();
         }
     }
 }

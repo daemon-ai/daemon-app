@@ -133,6 +133,13 @@ bool FirstRunModel::activeModelConfigured() const {
         return false;
     }
     const QVariantMap p = m_profiles->profile(id);
+    // A Foreign profile is configured by its engine binding alone: the agent brings its own model
+    // (AgentNative) or the node routes it through the gateway (NodeProvider), so there is no
+    // top-level model to check — treating it as unconfigured would re-open the wizard forever on a
+    // foreign-only setup (phase G).
+    if (p.value(QStringLiteral("engine")).toString() == QStringLiteral("Foreign")) {
+        return true;
+    }
     return !p.value(QStringLiteral("model")).toString().isEmpty();
 }
 
@@ -173,6 +180,25 @@ void FirstRunModel::chooseAgentType(const QString& foreignAgent) {
         setPhase(QStringLiteral("inference"));
     }
     // Foreign selections commit through applyForeignChoice (the front ends pass the chosen name).
+}
+
+void FirstRunModel::continueFromAgentType() {
+    if (m_phase != QStringLiteral("agenttype")) {
+        return;
+    }
+    // Inference is needed (Core, or a foreign NodeProvider backend): advance to the inference step.
+    // A foreign AgentNative selection needs no inference and finishes via commitSetup() instead.
+    if (m_agentSetup->needsInference()) {
+        setPhase(QStringLiteral("inference"));
+    }
+}
+
+void FirstRunModel::commitSetup(const QString& name) {
+    // The user decided: close the auto-gate so a post-apply reflection cannot race a second
+    // finish(). The setup model owns the create/apply/probe sequencing for whatever engine +
+    // backend + inference the pickers have set, and answers with committed()/failed().
+    m_gating = false;
+    m_agentSetup->commit(name);
 }
 
 void FirstRunModel::setInferenceReady(bool ready) {

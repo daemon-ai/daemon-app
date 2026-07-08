@@ -222,6 +222,8 @@ ProfileEditorDialog::ProfileEditorDialog(profiles::IProfileStore* profiles,
 
     m_nameRow = new Tui::ZButton(QString(), this);
     m_engineLabel = new Tui::ZLabel(QString(), this);
+    m_backendRow = new Tui::ZButton(QString(), this);
+    m_modelHintRow = new Tui::ZButton(QString(), this);
     m_providerRow = new Tui::ZButton(QString(), this);
     m_signInRow = new Tui::ZButton(QString(), this); // [waveB:app-v30] CON-15
     m_baseUrlRow = new Tui::ZButton(QString(), this);
@@ -232,6 +234,8 @@ ProfileEditorDialog::ProfileEditorDialog(profiles::IProfileStore* profiles,
     m_toolsRow = new Tui::ZButton(QString(), this);
     layout->addWidget(m_nameRow);
     layout->addWidget(m_engineLabel);
+    layout->addWidget(m_backendRow);
+    layout->addWidget(m_modelHintRow);
     layout->addWidget(m_providerRow);
     layout->addWidget(m_signInRow);
     layout->addWidget(m_baseUrlRow);
@@ -251,6 +255,14 @@ ProfileEditorDialog::ProfileEditorDialog(profiles::IProfileStore* profiles,
     buttons->addWidget(cancelBtn);
 
     connect(m_nameRow, &Tui::ZButton::clicked, this, &ProfileEditorDialog::openNamePrompt);
+    connect(m_backendRow, &Tui::ZButton::clicked, this, &ProfileEditorDialog::cycleBackend);
+    connect(m_modelHintRow, &Tui::ZButton::clicked, this, [this] {
+        auto* dlg =
+            new TextPromptDialog(tr("Model hint (optional)"), m_agentNativeHint, false, this);
+        connect(dlg, &TextPromptDialog::submitted, this, &ProfileEditorDialog::setModelHint);
+        connect(dlg, &QObject::destroyed, m_modelHintRow,
+                [row = m_modelHintRow] { row->setFocus(); });
+    });
     connect(m_providerRow, &Tui::ZButton::clicked, this, &ProfileEditorDialog::openProviderPalette);
     // [waveB:app-v30] CON-15: emit the node-advertised sign-in family; RootWidget opens the shared
     // AuthFlowLauncher narrowed to it (zero vendor knowledge here — everything is off the wire).
@@ -305,8 +317,24 @@ void ProfileEditorDialog::load() {
     m_wTools = p.value(QStringLiteral("tools")).toStringList();
     m_engineKind = p.value(QStringLiteral("engine")).toString();
     m_engineAgent = p.value(QStringLiteral("acpAgent")).toString();
+    // Foreign-engine backend (Phase D): hydrate the backend mode + inference from the compact
+    // foreign_backend map. NodeProvider reuses the provider/model rows (its provider is the
+    // ProviderCatalog descriptor id); AgentNative carries only the optional model steer hint.
+    m_foreignBackendMode = QStringLiteral("AgentNative");
+    m_agentNativeHint.clear();
+    if (m_engineKind == QStringLiteral("Foreign")) {
+        const QVariantMap fb = p.value(QStringLiteral("foreignBackend")).toMap();
+        if (fb.value(QStringLiteral("mode")).toString() == QStringLiteral("NodeProvider")) {
+            m_foreignBackendMode = QStringLiteral("NodeProvider");
+            m_wProviderId = fb.value(QStringLiteral("provider")).toString();
+            m_wModel = fb.value(QStringLiteral("model")).toString();
+        } else {
+            m_agentNativeHint = fb.value(QStringLiteral("model")).toString();
+        }
+    }
     // Warm the provider's model list with the profile's stored credential so
-    // the Model palette offers real, selectable rows (GUI load() parity).
+    // the Model palette offers real, selectable rows (GUI load() parity). For a NodeProvider
+    // foreign profile the provider id was set from foreign_backend above.
     if (m_catalog != nullptr && !m_wProviderId.isEmpty()) {
         m_catalog->refreshModels(m_wProviderId, m_profileId, QString());
     }
@@ -328,11 +356,24 @@ void ProfileEditorDialog::syncRowLabels() {
         m_engineKind == QStringLiteral("Foreign")
             ? tr("Engine: foreign agent · %1 (set at create time)").arg(m_engineAgent)
             : tr("Engine: daemon-core (native)"));
-    // C4: a foreign engine hides the inference config (provider/model/base URL) — the agent
-    // resolves its own model; only the read-only engine line + name/prompt/skills/tools remain.
+    // C4/Phase D: a foreign engine's inference depends on its backend. AgentNative brings its own
+    // model (only an optional steer hint); NodeProvider routes through the node gateway and reuses
+    // the provider/model rows. The base URL never applies to a foreign engine.
     const bool foreign = m_engineKind == QStringLiteral("Foreign");
+    const bool nodeProvider = foreign && m_foreignBackendMode == QStringLiteral("NodeProvider");
+    const bool agentNative = foreign && !nodeProvider;
+    // Backend row (foreign only): the AgentNative vs NodeProvider choice.
+    m_backendRow->setVisible(foreign);
+    m_backendRow->setText(row(tr("Backend"), nodeProvider ? tr("Node provider (gateway)")
+                                                          : tr("Agent's own backend")));
+    // AgentNative model steer hint (foreign AgentNative only).
+    m_modelHintRow->setVisible(agentNative);
+    m_modelHintRow->setText(row(tr("Model hint"), m_agentNativeHint.isEmpty()
+                                                      ? tr("(optional)")
+                                                      : elide(m_agentNativeHint, 34)));
     m_providerRow->setText(row(tr("Provider"), providerDisplayName()));
-    m_providerRow->setVisible(!foreign);
+    // Provider/model shown for a native engine, or a foreign NodeProvider backend.
+    m_providerRow->setVisible(!foreign || nodeProvider);
     // [waveB:app-v30] CON-15: a sign-in row shown IFF the node's catalog row for the selected
     // provider carries a sign_in. Label = node-supplied; hidden otherwise (and for foreign
     // engines).
@@ -340,14 +381,14 @@ void ProfileEditorDialog::syncRowLabels() {
     const QString signInLabel = desc.value(QStringLiteral("signInLabel")).toString();
     const bool hasSignIn = !desc.value(QStringLiteral("signInFamily")).toString().isEmpty();
     m_signInRow->setText(signInLabel.isEmpty() ? tr("Sign in") : signInLabel);
-    m_signInRow->setVisible(!foreign && hasSignIn);
+    m_signInRow->setVisible((!foreign || nodeProvider) && hasSignIn);
     m_baseUrlRow->setText(row(tr("Base URL"), m_wBaseUrl.isEmpty() ? tr("(provider default)")
                                                                    : elide(m_wBaseUrl, 38)));
     // Base URL only applies to cloud providers (GUI parity), and never to a foreign engine.
     m_baseUrlRow->setVisible(!foreign && providerIsCloud());
     m_modelRow->setText(
         row(tr("Model"), m_wModel.isEmpty() ? tr("(pick a model)") : elide(m_wModel, 40)));
-    m_modelRow->setVisible(!foreign);
+    m_modelRow->setVisible(!foreign || nodeProvider);
     m_descriptionRow->setText(row(tr("Description"), elide(m_wDescription, 36)));
     m_promptRow->setText(
         row(tr("System prompt"), elide(m_wSystemPrompt.section(QLatin1Char('\n'), 0, 0), 34)));
@@ -455,8 +496,47 @@ void ProfileEditorDialog::toggleTool(const QString& id) {
     syncRowLabels();
 }
 
+void ProfileEditorDialog::cycleBackend() {
+    m_foreignBackendMode = m_foreignBackendMode == QStringLiteral("NodeProvider")
+                               ? QStringLiteral("AgentNative")
+                               : QStringLiteral("NodeProvider");
+    syncRowLabels();
+}
+
+void ProfileEditorDialog::setModelHint(const QString& hint) {
+    m_agentNativeHint = hint;
+    syncRowLabels();
+}
+
 void ProfileEditorDialog::save() {
     if (m_profiles == nullptr) {
+        return;
+    }
+    // Foreign profile (Phase D): persist the edited foreign_backend map (parity with the GUI
+    // editor's wire output); provider/model/baseUrl are inference-only and do not apply to a
+    // foreign profile's top-level spec. The engine binding itself stays the create-time choice.
+    if (m_engineKind == QStringLiteral("Foreign")) {
+        QVariantMap backend;
+        if (m_foreignBackendMode == QStringLiteral("NodeProvider")) {
+            backend[QStringLiteral("mode")] = QStringLiteral("NodeProvider");
+            backend[QStringLiteral("provider")] = m_wProviderId;
+            backend[QStringLiteral("model")] = m_wModel;
+        } else {
+            backend[QStringLiteral("mode")] = QStringLiteral("AgentNative");
+            if (!m_agentNativeHint.isEmpty()) {
+                backend[QStringLiteral("model")] = m_agentNativeHint;
+            }
+        }
+        QVariantMap fields;
+        fields[QStringLiteral("name")] = m_wName;
+        fields[QStringLiteral("description")] = m_wDescription;
+        fields[QStringLiteral("systemPrompt")] = m_wSystemPrompt;
+        fields[QStringLiteral("skills")] = m_wSkills;
+        fields[QStringLiteral("tools")] = m_wTools;
+        fields[QStringLiteral("foreignBackend")] = backend;
+        m_profiles->updateProfile(m_profileId, fields);
+        emit saved(m_profileId);
+        close();
         return;
     }
     // EXACTLY ProfileEditor.qml's save() field map: the selector is written

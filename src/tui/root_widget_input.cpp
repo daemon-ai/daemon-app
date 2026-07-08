@@ -138,8 +138,9 @@ bool RootWidget::handleSidebarAgentShortcuts(Tui::ZKeyEvent* event) {
     // 'a' with the Fleet tree focused mints a NEW agent (the GUI "+ New agent" analog): a minimal
     // name + engine list (daemon-core + the foreign catalog names) over the shared create path.
     if (mods == Qt::NoModifier && m_sidebarView != nullptr && m_sidebarView->focus() &&
-        event->text() == QStringLiteral("a") && m_services.profiles != nullptr) {
-        auto* dialog = new NewAgentDialog(m_services.profiles, m_services.agents, this);
+        event->text() == QStringLiteral("a") && m_services.agentSetup != nullptr) {
+        auto* dialog = new NewAgentDialog(m_services.agentSetup, m_services.agents,
+                                          m_services.providerCatalog, this);
         dialog->setVisible(true);
         event->accept();
         return true;
@@ -721,8 +722,9 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         // 'a' mints a NEW agent (name + engine list: daemon-core / ACP catalog)
         // over the shared create path - the sidebar shortcut, reachable from
         // the Profiles page too (engine choice is create-time).
-        if (event->text() == QStringLiteral("a") && m_services.profiles != nullptr) {
-            auto* dialog = new NewAgentDialog(m_services.profiles, m_services.agents, this);
+        if (event->text() == QStringLiteral("a") && m_services.agentSetup != nullptr) {
+            auto* dialog = new NewAgentDialog(m_services.agentSetup, m_services.agents,
+                                              m_services.providerCatalog, this);
             dialog->setVisible(true);
             event->accept();
             return true;
