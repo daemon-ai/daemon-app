@@ -1164,6 +1164,22 @@ struct request_credential_remove {
 	struct zcbor_string CredentialRemove_profile;
 };
 
+struct CredentialSetLabel_label_r {
+	union {
+		struct zcbor_string CredentialSetLabel_label_tstr;
+	};
+	enum {
+		CredentialSetLabel_label_tstr_c,
+		CredentialSetLabel_label_null_m_c,
+	} CredentialSetLabel_label_choice;
+};
+
+struct request_credential_set_label {
+	struct zcbor_string CredentialSetLabel_profile;
+	struct CredentialSetLabel_label_r CredentialSetLabel_label;
+	bool CredentialSetLabel_label_present;
+};
+
 struct model_engine_r {
 	enum {
 		model_engine_Llama_tstr_c,
@@ -2232,6 +2248,31 @@ struct request_transport_remove {
 	struct zcbor_string TransportRemove_transport;
 };
 
+struct request_transport_connect {
+	struct zcbor_string TransportConnect_transport;
+};
+
+struct request_transport_set_enabled {
+	struct zcbor_string TransportSetEnabled_transport;
+	bool TransportSetEnabled_enabled;
+};
+
+struct TransportSetLabel_label_r {
+	union {
+		struct zcbor_string TransportSetLabel_label_tstr;
+	};
+	enum {
+		TransportSetLabel_label_tstr_c,
+		TransportSetLabel_label_null_m_c,
+	} TransportSetLabel_label_choice;
+};
+
+struct request_transport_set_label {
+	struct zcbor_string TransportSetLabel_transport;
+	struct TransportSetLabel_label_r TransportSetLabel_label;
+	bool TransportSetLabel_label_present;
+};
+
 struct ConvList_after_r {
 	union {
 		struct zcbor_string ConvList_after_tstr;
@@ -3206,6 +3247,7 @@ struct api_request_r {
 		struct request_curator_run api_request_request_curator_run_m;
 		struct request_credential_set api_request_request_credential_set_m;
 		struct request_credential_remove api_request_request_credential_remove_m;
+		struct request_credential_set_label api_request_request_credential_set_label_m;
 		struct request_model_search api_request_request_model_search_m;
 		struct request_model_files api_request_request_model_files_m;
 		struct request_model_download api_request_request_model_download_m;
@@ -3258,6 +3300,9 @@ struct api_request_r {
 		struct request_transport_rooms api_request_request_transport_rooms_m;
 		struct request_transport_disconnect api_request_request_transport_disconnect_m;
 		struct request_transport_remove api_request_request_transport_remove_m;
+		struct request_transport_connect api_request_request_transport_connect_m;
+		struct request_transport_set_enabled api_request_request_transport_set_enabled_m;
+		struct request_transport_set_label api_request_request_transport_set_label_m;
 		struct request_conv_list api_request_request_conv_list_m;
 		struct request_conv_get api_request_request_conv_get_m;
 		struct request_conv_create_details api_request_request_conv_create_details_m;
@@ -3364,6 +3409,7 @@ struct api_request_r {
 		api_request_request_credential_set_m_c,
 		api_request_request_credential_list_m_c,
 		api_request_request_credential_remove_m_c,
+		api_request_request_credential_set_label_m_c,
 		api_request_request_model_search_m_c,
 		api_request_request_model_files_m_c,
 		api_request_request_model_download_m_c,
@@ -3433,6 +3479,9 @@ struct api_request_r {
 		api_request_request_transport_instances_m_c,
 		api_request_request_transport_disconnect_m_c,
 		api_request_request_transport_remove_m_c,
+		api_request_request_transport_connect_m_c,
+		api_request_request_transport_set_enabled_m_c,
+		api_request_request_transport_set_label_m_c,
 		api_request_request_conv_list_m_c,
 		api_request_request_conv_get_m_c,
 		api_request_request_conv_create_details_m_c,
@@ -5245,10 +5294,22 @@ struct response_profile {
 	} response_profile_Profile_choice;
 };
 
+struct credential_info_label_r {
+	union {
+		struct zcbor_string credential_info_label_tstr;
+	};
+	enum {
+		credential_info_label_tstr_c,
+		credential_info_label_null_m_c,
+	} credential_info_label_choice;
+};
+
 struct credential_info {
 	struct zcbor_string credential_info_profile;
 	bool credential_info_present;
 	struct zcbor_string credential_info_hint;
+	struct credential_info_label_r credential_info_label;
+	bool credential_info_label_present;
 };
 
 struct response_credentials {
@@ -6382,6 +6443,20 @@ struct transport_instance_info_fatal {
 	bool transport_instance_info_fatal;
 };
 
+struct transport_instance_info_enabled {
+	bool transport_instance_info_enabled;
+};
+
+struct transport_instance_info_label_r {
+	union {
+		struct zcbor_string transport_instance_info_label_tstr;
+	};
+	enum {
+		transport_instance_info_label_tstr_c,
+		transport_instance_info_label_null_m_c,
+	} transport_instance_info_label_choice;
+};
+
 struct transport_instance_info {
 	struct zcbor_string transport_instance_info_transport;
 	struct zcbor_string transport_instance_info_family;
@@ -6398,6 +6473,10 @@ struct transport_instance_info {
 	bool transport_instance_info_message_present;
 	struct transport_instance_info_fatal transport_instance_info_fatal;
 	bool transport_instance_info_fatal_present;
+	struct transport_instance_info_enabled transport_instance_info_enabled;
+	bool transport_instance_info_enabled_present;
+	struct transport_instance_info_label_r transport_instance_info_label;
+	bool transport_instance_info_label_present;
 };
 
 struct response_transport_instances {

@@ -172,6 +172,8 @@ static bool encode_repeated_CuratorRun_profile(zcbor_state_t *state, const struc
 static bool encode_request_curator_run(zcbor_state_t *state, const struct request_curator_run *input);
 static bool encode_request_credential_set(zcbor_state_t *state, const struct request_credential_set *input);
 static bool encode_request_credential_remove(zcbor_state_t *state, const struct request_credential_remove *input);
+static bool encode_repeated_CredentialSetLabel_label(zcbor_state_t *state, const struct CredentialSetLabel_label_r *input);
+static bool encode_request_credential_set_label(zcbor_state_t *state, const struct request_credential_set_label *input);
 static bool encode_model_engine(zcbor_state_t *state, const struct model_engine_r *input);
 static bool encode_search_sort(zcbor_state_t *state, const struct search_sort_r *input);
 static bool encode_search_query(zcbor_state_t *state, const struct search_query *input);
@@ -316,6 +318,10 @@ static bool encode_repeated_TransportRooms_after(zcbor_state_t *state, const str
 static bool encode_request_transport_rooms(zcbor_state_t *state, const struct request_transport_rooms *input);
 static bool encode_request_transport_disconnect(zcbor_state_t *state, const struct request_transport_disconnect *input);
 static bool encode_request_transport_remove(zcbor_state_t *state, const struct request_transport_remove *input);
+static bool encode_request_transport_connect(zcbor_state_t *state, const struct request_transport_connect *input);
+static bool encode_request_transport_set_enabled(zcbor_state_t *state, const struct request_transport_set_enabled *input);
+static bool encode_repeated_TransportSetLabel_label(zcbor_state_t *state, const struct TransportSetLabel_label_r *input);
+static bool encode_request_transport_set_label(zcbor_state_t *state, const struct request_transport_set_label *input);
 static bool encode_repeated_ConvList_after(zcbor_state_t *state, const struct ConvList_after_r *input);
 static bool encode_request_conv_list(zcbor_state_t *state, const struct request_conv_list *input);
 static bool encode_request_conv_get(zcbor_state_t *state, const struct request_conv_get *input);
@@ -650,6 +656,7 @@ static bool encode_repeated_profile_info_owner(zcbor_state_t *state, const struc
 static bool encode_profile_info(zcbor_state_t *state, const struct profile_info *input);
 static bool encode_response_profiles(zcbor_state_t *state, const struct response_profiles *input);
 static bool encode_response_profile(zcbor_state_t *state, const struct response_profile *input);
+static bool encode_repeated_credential_info_label(zcbor_state_t *state, const struct credential_info_label_r *input);
 static bool encode_credential_info(zcbor_state_t *state, const struct credential_info *input);
 static bool encode_response_credentials(zcbor_state_t *state, const struct response_credentials *input);
 static bool encode_repeated_model_descriptor_display_name(zcbor_state_t *state, const struct model_descriptor_display_name_r *input);
@@ -791,6 +798,8 @@ static bool encode_repeated_transport_instance_info_bound_profile(zcbor_state_t 
 static bool encode_repeated_transport_instance_info_reason(zcbor_state_t *state, const struct transport_instance_info_reason_r *input);
 static bool encode_repeated_transport_instance_info_message(zcbor_state_t *state, const struct transport_instance_info_message_r *input);
 static bool encode_repeated_transport_instance_info_fatal(zcbor_state_t *state, const struct transport_instance_info_fatal *input);
+static bool encode_repeated_transport_instance_info_enabled(zcbor_state_t *state, const struct transport_instance_info_enabled *input);
+static bool encode_repeated_transport_instance_info_label(zcbor_state_t *state, const struct transport_instance_info_label_r *input);
 static bool encode_transport_instance_info(zcbor_state_t *state, const struct transport_instance_info *input);
 static bool encode_response_transport_instances(zcbor_state_t *state, const struct response_transport_instances *input);
 static bool encode_conversation_type(zcbor_state_t *state, const struct conversation_type_r *input);
@@ -3125,6 +3134,36 @@ static bool encode_request_credential_remove(
 	return res;
 }
 
+static bool encode_repeated_CredentialSetLabel_label(
+		zcbor_state_t *state, const struct CredentialSetLabel_label_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"label", tmp_str.len = sizeof("label") - 1, &tmp_str)))))
+	&& (((*input).CredentialSetLabel_label_choice == CredentialSetLabel_label_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).CredentialSetLabel_label_tstr))))
+	: (((*input).CredentialSetLabel_label_choice == CredentialSetLabel_label_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_credential_set_label(
+		zcbor_state_t *state, const struct request_credential_set_label *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"CredentialSetLabel", tmp_str.len = sizeof("CredentialSetLabel") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"profile", tmp_str.len = sizeof("profile") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).CredentialSetLabel_profile))))
+	&& (!(*input).CredentialSetLabel_label_present || encode_repeated_CredentialSetLabel_label(state, (&(*input).CredentialSetLabel_label)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_model_engine(
 		zcbor_state_t *state, const struct model_engine_r *input)
 {
@@ -5273,6 +5312,66 @@ static bool encode_request_transport_remove(
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TransportRemove", tmp_str.len = sizeof("TransportRemove") - 1, &tmp_str)))))
 	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).TransportRemove_transport))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_transport_connect(
+		zcbor_state_t *state, const struct request_transport_connect *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TransportConnect", tmp_str.len = sizeof("TransportConnect") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).TransportConnect_transport))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_transport_set_enabled(
+		zcbor_state_t *state, const struct request_transport_set_enabled *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TransportSetEnabled", tmp_str.len = sizeof("TransportSetEnabled") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).TransportSetEnabled_transport))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).TransportSetEnabled_enabled))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_TransportSetLabel_label(
+		zcbor_state_t *state, const struct TransportSetLabel_label_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"label", tmp_str.len = sizeof("label") - 1, &tmp_str)))))
+	&& (((*input).TransportSetLabel_label_choice == TransportSetLabel_label_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).TransportSetLabel_label_tstr))))
+	: (((*input).TransportSetLabel_label_choice == TransportSetLabel_label_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_transport_set_label(
+		zcbor_state_t *state, const struct request_transport_set_label *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TransportSetLabel", tmp_str.len = sizeof("TransportSetLabel") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).TransportSetLabel_transport))))
+	&& (!(*input).TransportSetLabel_label_present || encode_repeated_TransportSetLabel_label(state, (&(*input).TransportSetLabel_label)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -10567,18 +10666,34 @@ static bool encode_response_profile(
 	return res;
 }
 
+static bool encode_repeated_credential_info_label(
+		zcbor_state_t *state, const struct credential_info_label_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"label", tmp_str.len = sizeof("label") - 1, &tmp_str)))))
+	&& (((*input).credential_info_label_choice == credential_info_label_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).credential_info_label_tstr))))
+	: (((*input).credential_info_label_choice == credential_info_label_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_credential_info(
 		zcbor_state_t *state, const struct credential_info *input)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"profile", tmp_str.len = sizeof("profile") - 1, &tmp_str)))))
+	bool res = (((zcbor_map_start_encode(state, 4) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"profile", tmp_str.len = sizeof("profile") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).credential_info_profile))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"present", tmp_str.len = sizeof("present") - 1, &tmp_str)))))
 	&& (zcbor_bool_encode(state, (&(*input).credential_info_present))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"hint", tmp_str.len = sizeof("hint") - 1, &tmp_str)))))
-	&& (zcbor_tstr_encode(state, (&(*input).credential_info_hint))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3))));
+	&& (zcbor_tstr_encode(state, (&(*input).credential_info_hint))))
+	&& (!(*input).credential_info_label_present || encode_repeated_credential_info_label(state, (&(*input).credential_info_label)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 4))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -12776,13 +12891,41 @@ static bool encode_repeated_transport_instance_info_fatal(
 	return res;
 }
 
+static bool encode_repeated_transport_instance_info_enabled(
+		zcbor_state_t *state, const struct transport_instance_info_enabled *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).transport_instance_info_enabled)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_transport_instance_info_label(
+		zcbor_state_t *state, const struct transport_instance_info_label_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"label", tmp_str.len = sizeof("label") - 1, &tmp_str)))))
+	&& (((*input).transport_instance_info_label_choice == transport_instance_info_label_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).transport_instance_info_label_tstr))))
+	: (((*input).transport_instance_info_label_choice == transport_instance_info_label_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_transport_instance_info(
 		zcbor_state_t *state, const struct transport_instance_info *input)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_encode(state, 9) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	bool res = (((zcbor_map_start_encode(state, 11) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).transport_instance_info_transport))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"family", tmp_str.len = sizeof("family") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).transport_instance_info_family))))
@@ -12793,7 +12936,9 @@ static bool encode_transport_instance_info(
 	&& (!(*input).transport_instance_info_bound_profile_present || encode_repeated_transport_instance_info_bound_profile(state, (&(*input).transport_instance_info_bound_profile)))
 	&& (!(*input).transport_instance_info_reason_present || encode_repeated_transport_instance_info_reason(state, (&(*input).transport_instance_info_reason)))
 	&& (!(*input).transport_instance_info_message_present || encode_repeated_transport_instance_info_message(state, (&(*input).transport_instance_info_message)))
-	&& (!(*input).transport_instance_info_fatal_present || encode_repeated_transport_instance_info_fatal(state, (&(*input).transport_instance_info_fatal)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 9))));
+	&& (!(*input).transport_instance_info_fatal_present || encode_repeated_transport_instance_info_fatal(state, (&(*input).transport_instance_info_fatal)))
+	&& (!(*input).transport_instance_info_enabled_present || encode_repeated_transport_instance_info_enabled(state, (&(*input).transport_instance_info_enabled)))
+	&& (!(*input).transport_instance_info_label_present || encode_repeated_transport_instance_info_label(state, (&(*input).transport_instance_info_label)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 11))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -14041,6 +14186,7 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_credential_set_m_c) ? ((encode_request_credential_set(state, (&(*input).api_request_request_credential_set_m))))
 	: (((*input).api_request_choice == api_request_request_credential_list_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"CredentialList", tmp_str.len = sizeof("CredentialList") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_credential_remove_m_c) ? ((encode_request_credential_remove(state, (&(*input).api_request_request_credential_remove_m))))
+	: (((*input).api_request_choice == api_request_request_credential_set_label_m_c) ? ((encode_request_credential_set_label(state, (&(*input).api_request_request_credential_set_label_m))))
 	: (((*input).api_request_choice == api_request_request_model_search_m_c) ? ((encode_request_model_search(state, (&(*input).api_request_request_model_search_m))))
 	: (((*input).api_request_choice == api_request_request_model_files_m_c) ? ((encode_request_model_files(state, (&(*input).api_request_request_model_files_m))))
 	: (((*input).api_request_choice == api_request_request_model_download_m_c) ? ((encode_request_model_download(state, (&(*input).api_request_request_model_download_m))))
@@ -14110,6 +14256,9 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_transport_instances_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TransportInstances", tmp_str.len = sizeof("TransportInstances") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_transport_disconnect_m_c) ? ((encode_request_transport_disconnect(state, (&(*input).api_request_request_transport_disconnect_m))))
 	: (((*input).api_request_choice == api_request_request_transport_remove_m_c) ? ((encode_request_transport_remove(state, (&(*input).api_request_request_transport_remove_m))))
+	: (((*input).api_request_choice == api_request_request_transport_connect_m_c) ? ((encode_request_transport_connect(state, (&(*input).api_request_request_transport_connect_m))))
+	: (((*input).api_request_choice == api_request_request_transport_set_enabled_m_c) ? ((encode_request_transport_set_enabled(state, (&(*input).api_request_request_transport_set_enabled_m))))
+	: (((*input).api_request_choice == api_request_request_transport_set_label_m_c) ? ((encode_request_transport_set_label(state, (&(*input).api_request_request_transport_set_label_m))))
 	: (((*input).api_request_choice == api_request_request_conv_list_m_c) ? ((encode_request_conv_list(state, (&(*input).api_request_request_conv_list_m))))
 	: (((*input).api_request_choice == api_request_request_conv_get_m_c) ? ((encode_request_conv_get(state, (&(*input).api_request_request_conv_get_m))))
 	: (((*input).api_request_choice == api_request_request_conv_create_details_m_c) ? ((encode_request_conv_create_details(state, (&(*input).api_request_request_conv_create_details_m))))
@@ -14160,7 +14309,7 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_feedback_submit_m_c) ? ((encode_request_feedback_submit(state, (&(*input).api_request_request_feedback_submit_m))))
 	: (((*input).api_request_choice == api_request_request_telemetry_consent_get_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TelemetryConsentGet", tmp_str.len = sizeof("TelemetryConsentGet") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_telemetry_consent_set_m_c) ? ((encode_request_telemetry_consent_set(state, (&(*input).api_request_request_telemetry_consent_set_m))))
-	: false))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: false))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;

@@ -172,6 +172,8 @@ static bool decode_repeated_CuratorRun_profile(zcbor_state_t *state, struct Cura
 static bool decode_request_curator_run(zcbor_state_t *state, struct request_curator_run *result);
 static bool decode_request_credential_set(zcbor_state_t *state, struct request_credential_set *result);
 static bool decode_request_credential_remove(zcbor_state_t *state, struct request_credential_remove *result);
+static bool decode_repeated_CredentialSetLabel_label(zcbor_state_t *state, struct CredentialSetLabel_label_r *result);
+static bool decode_request_credential_set_label(zcbor_state_t *state, struct request_credential_set_label *result);
 static bool decode_model_engine(zcbor_state_t *state, struct model_engine_r *result);
 static bool decode_search_sort(zcbor_state_t *state, struct search_sort_r *result);
 static bool decode_search_query(zcbor_state_t *state, struct search_query *result);
@@ -316,6 +318,10 @@ static bool decode_repeated_TransportRooms_after(zcbor_state_t *state, struct Tr
 static bool decode_request_transport_rooms(zcbor_state_t *state, struct request_transport_rooms *result);
 static bool decode_request_transport_disconnect(zcbor_state_t *state, struct request_transport_disconnect *result);
 static bool decode_request_transport_remove(zcbor_state_t *state, struct request_transport_remove *result);
+static bool decode_request_transport_connect(zcbor_state_t *state, struct request_transport_connect *result);
+static bool decode_request_transport_set_enabled(zcbor_state_t *state, struct request_transport_set_enabled *result);
+static bool decode_repeated_TransportSetLabel_label(zcbor_state_t *state, struct TransportSetLabel_label_r *result);
+static bool decode_request_transport_set_label(zcbor_state_t *state, struct request_transport_set_label *result);
 static bool decode_repeated_ConvList_after(zcbor_state_t *state, struct ConvList_after_r *result);
 static bool decode_request_conv_list(zcbor_state_t *state, struct request_conv_list *result);
 static bool decode_request_conv_get(zcbor_state_t *state, struct request_conv_get *result);
@@ -650,6 +656,7 @@ static bool decode_repeated_profile_info_owner(zcbor_state_t *state, struct prof
 static bool decode_profile_info(zcbor_state_t *state, struct profile_info *result);
 static bool decode_response_profiles(zcbor_state_t *state, struct response_profiles *result);
 static bool decode_response_profile(zcbor_state_t *state, struct response_profile *result);
+static bool decode_repeated_credential_info_label(zcbor_state_t *state, struct credential_info_label_r *result);
 static bool decode_credential_info(zcbor_state_t *state, struct credential_info *result);
 static bool decode_response_credentials(zcbor_state_t *state, struct response_credentials *result);
 static bool decode_repeated_model_descriptor_display_name(zcbor_state_t *state, struct model_descriptor_display_name_r *result);
@@ -791,6 +798,8 @@ static bool decode_repeated_transport_instance_info_bound_profile(zcbor_state_t 
 static bool decode_repeated_transport_instance_info_reason(zcbor_state_t *state, struct transport_instance_info_reason_r *result);
 static bool decode_repeated_transport_instance_info_message(zcbor_state_t *state, struct transport_instance_info_message_r *result);
 static bool decode_repeated_transport_instance_info_fatal(zcbor_state_t *state, struct transport_instance_info_fatal *result);
+static bool decode_repeated_transport_instance_info_enabled(zcbor_state_t *state, struct transport_instance_info_enabled *result);
+static bool decode_repeated_transport_instance_info_label(zcbor_state_t *state, struct transport_instance_info_label_r *result);
 static bool decode_transport_instance_info(zcbor_state_t *state, struct transport_instance_info *result);
 static bool decode_response_transport_instances(zcbor_state_t *state, struct response_transport_instances *result);
 static bool decode_conversation_type(zcbor_state_t *state, struct conversation_type_r *result);
@@ -3340,6 +3349,43 @@ static bool decode_request_credential_remove(
 	return res;
 }
 
+static bool decode_repeated_CredentialSetLabel_label(
+		zcbor_state_t *state, struct CredentialSetLabel_label_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"label", tmp_str.len = sizeof("label") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).CredentialSetLabel_label_tstr)))) && (((*result).CredentialSetLabel_label_choice = CredentialSetLabel_label_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).CredentialSetLabel_label_choice = CredentialSetLabel_label_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_credential_set_label(
+		zcbor_state_t *state, struct request_credential_set_label *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"CredentialSetLabel", tmp_str.len = sizeof("CredentialSetLabel") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"profile", tmp_str.len = sizeof("profile") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).CredentialSetLabel_profile))))
+	&& zcbor_present_decode(&((*result).CredentialSetLabel_label_present), (zcbor_decoder_t *)decode_repeated_CredentialSetLabel_label, state, (&(*result).CredentialSetLabel_label))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_CredentialSetLabel_label(state, (&(*result).CredentialSetLabel_label));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_model_engine(
 		zcbor_state_t *state, struct model_engine_r *result)
 {
@@ -5695,6 +5741,73 @@ static bool decode_request_transport_remove(
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"TransportRemove", tmp_str.len = sizeof("TransportRemove") - 1, &tmp_str)))))
 	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
 	&& (zcbor_tstr_decode(state, (&(*result).TransportRemove_transport))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_transport_connect(
+		zcbor_state_t *state, struct request_transport_connect *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"TransportConnect", tmp_str.len = sizeof("TransportConnect") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).TransportConnect_transport))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_transport_set_enabled(
+		zcbor_state_t *state, struct request_transport_set_enabled *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"TransportSetEnabled", tmp_str.len = sizeof("TransportSetEnabled") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).TransportSetEnabled_transport))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).TransportSetEnabled_enabled))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_TransportSetLabel_label(
+		zcbor_state_t *state, struct TransportSetLabel_label_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"label", tmp_str.len = sizeof("label") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).TransportSetLabel_label_tstr)))) && (((*result).TransportSetLabel_label_choice = TransportSetLabel_label_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).TransportSetLabel_label_choice = TransportSetLabel_label_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_transport_set_label(
+		zcbor_state_t *state, struct request_transport_set_label *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"TransportSetLabel", tmp_str.len = sizeof("TransportSetLabel") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).TransportSetLabel_transport))))
+	&& zcbor_present_decode(&((*result).TransportSetLabel_label_present), (zcbor_decoder_t *)decode_repeated_TransportSetLabel_label, state, (&(*result).TransportSetLabel_label))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_TransportSetLabel_label(state, (&(*result).TransportSetLabel_label));
+	}
 
 	log_result(state, res, __func__);
 	return res;
@@ -11530,6 +11643,21 @@ static bool decode_response_profile(
 	return res;
 }
 
+static bool decode_repeated_credential_info_label(
+		zcbor_state_t *state, struct credential_info_label_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"label", tmp_str.len = sizeof("label") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).credential_info_label_tstr)))) && (((*result).credential_info_label_choice = credential_info_label_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).credential_info_label_choice = credential_info_label_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_credential_info(
 		zcbor_state_t *state, struct credential_info *result)
 {
@@ -11541,7 +11669,15 @@ static bool decode_credential_info(
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"present", tmp_str.len = sizeof("present") - 1, &tmp_str)))))
 	&& (zcbor_bool_decode(state, (&(*result).credential_info_present))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"hint", tmp_str.len = sizeof("hint") - 1, &tmp_str)))))
-	&& (zcbor_tstr_decode(state, (&(*result).credential_info_hint))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& (zcbor_tstr_decode(state, (&(*result).credential_info_hint))))
+	&& zcbor_present_decode(&((*result).credential_info_label_present), (zcbor_decoder_t *)decode_repeated_credential_info_label, state, (&(*result).credential_info_label))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_credential_info_label(state, (&(*result).credential_info_label));
+	}
 
 	log_result(state, res, __func__);
 	return res;
@@ -14041,6 +14177,34 @@ static bool decode_repeated_transport_instance_info_fatal(
 	return res;
 }
 
+static bool decode_repeated_transport_instance_info_enabled(
+		zcbor_state_t *state, struct transport_instance_info_enabled *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).transport_instance_info_enabled)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_transport_instance_info_label(
+		zcbor_state_t *state, struct transport_instance_info_label_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"label", tmp_str.len = sizeof("label") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).transport_instance_info_label_tstr)))) && (((*result).transport_instance_info_label_choice = transport_instance_info_label_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).transport_instance_info_label_choice = transport_instance_info_label_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_transport_instance_info(
 		zcbor_state_t *state, struct transport_instance_info *result)
 {
@@ -14058,7 +14222,9 @@ static bool decode_transport_instance_info(
 	&& zcbor_present_decode(&((*result).transport_instance_info_bound_profile_present), (zcbor_decoder_t *)decode_repeated_transport_instance_info_bound_profile, state, (&(*result).transport_instance_info_bound_profile))
 	&& zcbor_present_decode(&((*result).transport_instance_info_reason_present), (zcbor_decoder_t *)decode_repeated_transport_instance_info_reason, state, (&(*result).transport_instance_info_reason))
 	&& zcbor_present_decode(&((*result).transport_instance_info_message_present), (zcbor_decoder_t *)decode_repeated_transport_instance_info_message, state, (&(*result).transport_instance_info_message))
-	&& zcbor_present_decode(&((*result).transport_instance_info_fatal_present), (zcbor_decoder_t *)decode_repeated_transport_instance_info_fatal, state, (&(*result).transport_instance_info_fatal))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& zcbor_present_decode(&((*result).transport_instance_info_fatal_present), (zcbor_decoder_t *)decode_repeated_transport_instance_info_fatal, state, (&(*result).transport_instance_info_fatal))
+	&& zcbor_present_decode(&((*result).transport_instance_info_enabled_present), (zcbor_decoder_t *)decode_repeated_transport_instance_info_enabled, state, (&(*result).transport_instance_info_enabled))
+	&& zcbor_present_decode(&((*result).transport_instance_info_label_present), (zcbor_decoder_t *)decode_repeated_transport_instance_info_label, state, (&(*result).transport_instance_info_label))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
@@ -14070,6 +14236,8 @@ static bool decode_transport_instance_info(
 		decode_repeated_transport_instance_info_reason(state, (&(*result).transport_instance_info_reason));
 		decode_repeated_transport_instance_info_message(state, (&(*result).transport_instance_info_message));
 		decode_repeated_transport_instance_info_fatal(state, (&(*result).transport_instance_info_fatal));
+		decode_repeated_transport_instance_info_enabled(state, (&(*result).transport_instance_info_enabled));
+		decode_repeated_transport_instance_info_label(state, (&(*result).transport_instance_info_label));
 	}
 
 	log_result(state, res, __func__);
@@ -15479,6 +15647,7 @@ static bool decode_api_request(
 	|| (zcbor_union_elem_code(state) && (((decode_request_credential_set(state, (&(*result).api_request_request_credential_set_m)))) && (((*result).api_request_choice = api_request_request_credential_set_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"CredentialList", tmp_str.len = sizeof("CredentialList") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_credential_list_m_c), true)))
 	|| (((decode_request_credential_remove(state, (&(*result).api_request_request_credential_remove_m)))) && (((*result).api_request_choice = api_request_request_credential_remove_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((decode_request_credential_set_label(state, (&(*result).api_request_request_credential_set_label_m)))) && (((*result).api_request_choice = api_request_request_credential_set_label_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_model_search(state, (&(*result).api_request_request_model_search_m)))) && (((*result).api_request_choice = api_request_request_model_search_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_model_files(state, (&(*result).api_request_request_model_files_m)))) && (((*result).api_request_choice = api_request_request_model_files_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_model_download(state, (&(*result).api_request_request_model_download_m)))) && (((*result).api_request_choice = api_request_request_model_download_m_c), true)))
@@ -15548,6 +15717,9 @@ static bool decode_api_request(
 	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"TransportInstances", tmp_str.len = sizeof("TransportInstances") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_transport_instances_m_c), true))
 	|| (((decode_request_transport_disconnect(state, (&(*result).api_request_request_transport_disconnect_m)))) && (((*result).api_request_choice = api_request_request_transport_disconnect_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((decode_request_transport_remove(state, (&(*result).api_request_request_transport_remove_m)))) && (((*result).api_request_choice = api_request_request_transport_remove_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_transport_connect(state, (&(*result).api_request_request_transport_connect_m)))) && (((*result).api_request_choice = api_request_request_transport_connect_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_transport_set_enabled(state, (&(*result).api_request_request_transport_set_enabled_m)))) && (((*result).api_request_choice = api_request_request_transport_set_enabled_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_transport_set_label(state, (&(*result).api_request_request_transport_set_label_m)))) && (((*result).api_request_choice = api_request_request_transport_set_label_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_conv_list(state, (&(*result).api_request_request_conv_list_m)))) && (((*result).api_request_choice = api_request_request_conv_list_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_conv_get(state, (&(*result).api_request_request_conv_get_m)))) && (((*result).api_request_choice = api_request_request_conv_get_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_conv_create_details(state, (&(*result).api_request_request_conv_create_details_m)))) && (((*result).api_request_choice = api_request_request_conv_create_details_m_c), true)))
