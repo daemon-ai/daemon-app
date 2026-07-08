@@ -494,29 +494,45 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         const bool isAccount =
             row.value(QStringLiteral("rowKind")).toString() == QLatin1String("account");
         const QString transport = row.value(QStringLiteral("transport")).toString();
-        // [acct-mgmt] gating seam: per-verb ops (wire v33) land here. Gate the room affordances on
-        // the family's coarse `rooms` capability today (parity with the GUI canManageRooms), keyed
-        // off availableAdapters(); swap to the per-verb conversation_ops when they arrive.
-        const auto familyManagesRooms = [this](const QString& family) {
+        // [acct-mgmt] Per-verb capability gating (wire v33, GUI canConversationOp/canMembershipOp
+        // parity): when the family's AdapterInfo carries a concrete conversationOps/membershipOps
+        // map it is AUTHORITATIVE for that verb; a missing map (a v32 node, or the adapter
+        // reported null) falls back to the legacy coarse `rooms` capability so older nodes keep
+        // working. Hidden verbs = dead keys.
+        const QString family = row.value(QStringLiteral("family")).toString();
+        const auto adapterForFamily = [this](const QString& fam) -> QVariantMap {
             if (m_services.transportRegistry == nullptr) {
-                return false;
+                return {};
             }
             for (const QVariant& v : m_services.transportRegistry->availableAdapters()) {
                 const QVariantMap a = v.toMap();
-                if (a.value(QStringLiteral("family")).toString() == family) {
-                    return a.value(QStringLiteral("capabilities"))
-                        .toMap()
-                        .value(QStringLiteral("rooms"))
-                        .toBool();
+                if (a.value(QStringLiteral("family")).toString() == fam) {
+                    return a;
                 }
             }
-            return false;
+            return {};
+        };
+        const QVariantMap adapter = adapterForFamily(family);
+        const auto canOp = [&adapter](const QString& opsKey, const QString& verb) {
+            if (adapter.contains(opsKey)) {
+                return adapter.value(opsKey).toMap().value(verb).toBool();
+            }
+            return adapter.value(QStringLiteral("capabilities"))
+                .toMap()
+                .value(QStringLiteral("rooms"))
+                .toBool();
+        };
+        const auto canConversationOp = [&canOp](const QString& verb) {
+            return canOp(QStringLiteral("conversationOps"), verb);
+        };
+        const auto canMembershipOp = [&canOp](const QString& verb) {
+            return canOp(QStringLiteral("membershipOps"), verb);
         };
         bool handled = false;
         if (isAccount) {
             // [wave2:app-channels-liveness] B1: 'c' connects via the shared interactive-auth
-            // launcher; 'x' removes the account (confirmed); 'g'/'n' open the room flows (gated).
-            const bool manages = familyManagesRooms(row.value(QStringLiteral("family")).toString());
+            // launcher; 'x' removes the account (confirmed); 'g'/'n' open the room flows, gated
+            // per-verb on conversation_ops.join_channel / .create.
             if (text == QStringLiteral("c")) {
                 openAuthFlow();
                 handled = true;
@@ -524,28 +540,31 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
                 openChannelRemoveConfirm(transport,
                                          row.value(QStringLiteral("displayName")).toString());
                 handled = true;
-            } else if (text == QStringLiteral("g") && manages) {
+            } else if (text == QStringLiteral("g") &&
+                       canConversationOp(QStringLiteral("joinChannel"))) {
                 openRoomJoinFlow(transport);
                 handled = true;
-            } else if (text == QStringLiteral("n") && manages) {
+            } else if (text == QStringLiteral("n") && canConversationOp(QStringLiteral("create"))) {
                 openRoomCreateFlow(transport);
                 handled = true;
             }
         } else {
-            // Room row: Enter members palette; 'i' invite; 'l' leave (confirm); 'x' delete
-            // (confirm); 'p' pin to agent (session picker → bindChat).
+            // Room row: Enter members palette (a read affordance — coarse gate via the ops
+            // fallback path); 'i' invite ⇒ membership_ops.invite; 'l' leave ⇒
+            // conversation_ops.leave; 'x' delete ⇒ conversation_ops.delete; 'p' pin to agent
+            // (routing, not capability-gated).
             const QString conv = row.value(QStringLiteral("convId")).toString();
             const QString label = row.value(QStringLiteral("roomLabel")).toString();
             if (enter) {
                 openRoomMembers(transport, conv);
                 handled = true;
-            } else if (text == QStringLiteral("i")) {
+            } else if (text == QStringLiteral("i") && canMembershipOp(QStringLiteral("invite"))) {
                 openRoomInvite(transport, conv);
                 handled = true;
-            } else if (text == QStringLiteral("l")) {
+            } else if (text == QStringLiteral("l") && canConversationOp(QStringLiteral("leave"))) {
                 openRoomLeaveConfirm(transport, conv, label);
                 handled = true;
-            } else if (text == QStringLiteral("x")) {
+            } else if (text == QStringLiteral("x") && canConversationOp(QStringLiteral("delete"))) {
                 openRoomDeleteConfirm(transport, conv, label);
                 handled = true;
             } else if (text == QStringLiteral("p")) {

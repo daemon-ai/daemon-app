@@ -261,13 +261,54 @@ void RoomFlow::showMemberActions(const QVariantMap& member) {
                         });
             }
         });
+    // [acct-mgmt] Rows present only when the verb is supported (per-verb membership_ops, wire
+    // v33; legacy `rooms` fallback) — GUI member-row button parity: hidden verbs = hidden rows.
     QVector<PaletteDialog::Item> items;
-    items.push_back({QStringLiteral("invite"), tr("Invite another…"), QString()});
-    items.push_back({QStringLiteral("role"), tr("Change role…"), QString()});
-    items.push_back({QStringLiteral("kick"), tr("Kick"), QString()});
-    items.push_back({QStringLiteral("ban"), tr("Ban"), QString()});
+    if (canMembershipOp(QStringLiteral("invite"))) {
+        items.push_back({QStringLiteral("invite"), tr("Invite another…"), QString()});
+    }
+    if (canMembershipOp(QStringLiteral("setRole"))) {
+        items.push_back({QStringLiteral("role"), tr("Change role…"), QString()});
+    }
+    if (canMembershipOp(QStringLiteral("remove"))) {
+        items.push_back({QStringLiteral("kick"), tr("Kick"), QString()});
+    }
+    if (canMembershipOp(QStringLiteral("ban"))) {
+        items.push_back({QStringLiteral("ban"), tr("Ban"), QString()});
+    }
     m_actionPick->setItems(items);
     m_actionPick->openCentered();
+}
+
+bool RoomFlow::canMembershipOp(const QString& verb) const {
+    if (m_registry == nullptr) {
+        return false;
+    }
+    // Resolve the flow's transport to its adapter family (the instances row carries it).
+    QString family;
+    for (const QVariant& v : m_registry->instances()) {
+        const QVariantMap row = v.toMap();
+        if (row.value(QStringLiteral("transport")).toString() == m_transport) {
+            family = row.value(QStringLiteral("family")).toString();
+            break;
+        }
+    }
+    for (const QVariant& v : m_registry->availableAdapters()) {
+        const QVariantMap a = v.toMap();
+        if (a.value(QStringLiteral("family")).toString() != family) {
+            continue;
+        }
+        if (a.contains(QStringLiteral("membershipOps"))) {
+            return a.value(QStringLiteral("membershipOps")).toMap().value(verb).toBool();
+        }
+        return a.value(QStringLiteral("capabilities"))
+            .toMap()
+            .value(QStringLiteral("rooms"))
+            .toBool();
+    }
+    // No adapter row (offline / picker not yet fetched): do not hide the action palette entirely —
+    // the node still validates every verb server-side.
+    return true;
 }
 
 void RoomFlow::showRolePalette(const QVariantMap& member) {

@@ -64,24 +64,38 @@ Item {
         return false;
     }
 
-    // [acct-mgmt] gating seam: per-verb ops (wire v33) land here. Until the node reports per-verb
-    // conversation_ops / membership_ops on AdapterInfo, gate the room-lifecycle affordances on
-    // what exists today: the adapter family's coarse `rooms` capability. When wave-2 lands, replace
-    // these lookups with the per-verb ops (create/join_channel/leave/delete, invite/remove/ban/
-    // set_role) joined to the account by family — the buttons/keys stay, only the gate changes.
-    function capsForFamily(family) {
+    // [acct-mgmt] Per-verb capability gating (wire v33). Each account row joins its family's
+    // AdapterInfo; when the node reported a concrete conversationOps / membershipOps map it is
+    // AUTHORITATIVE for that verb. A missing map (a v32 node, or the adapter reported null) means
+    // "no per-verb info" — fall back to the legacy coarse `rooms` capability so older nodes keep
+    // working. No client-side per-family heuristics.
+    function adapterForFamily(family) {
         for (var i = 0; i < root.adapters.length; ++i)
             if (root.adapters[i].family === family)
-                return root.adapters[i].capabilities || ({});
+                return root.adapters[i];
         return ({});
     }
-    // [acct-mgmt] gating seam: per-verb ops (wire v33) land here — today keyed on `rooms`.
-    function canManageRooms(family) {
-        return capsForFamily(family).rooms === true;
+    function legacyRooms(adapter) {
+        return adapter.capabilities !== undefined && adapter.capabilities.rooms === true;
     }
-    // [acct-mgmt] gating seam: per-verb ops (wire v33) land here — today keyed on `rooms`.
-    function canManageMembers(family) {
-        return capsForFamily(family).rooms === true;
+    // verb ∈ create|joinChannel|leave|delete|send|setTopic|setTitle|setDescription
+    function canConversationOp(family, verb) {
+        var a = adapterForFamily(family);
+        if (a.conversationOps !== undefined)
+            return a.conversationOps[verb] === true;
+        return legacyRooms(a);
+    }
+    // verb ∈ invite|remove|ban|setRole
+    function canMembershipOp(family, verb) {
+        var a = adapterForFamily(family);
+        if (a.membershipOps !== undefined)
+            return a.membershipOps[verb] === true;
+        return legacyRooms(a);
+    }
+    // The member LIST is a read affordance (ConvGet → ConversationInfo.members, part of the rooms
+    // feature) — it stays on the coarse gate; the per-member ACTIONS gate per-verb above.
+    function canListMembers(family) {
+        return legacyRooms(adapterForFamily(family));
     }
 
     function accountLabelFor(transport) {
@@ -506,8 +520,8 @@ Item {
                             spacing: 4
                             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
 
-                            // [acct-mgmt] Rooms header: Join / New (gated on the family's coarse
-                            // rooms capability today; per-verb ops replace the gate at wire v33).
+                            // [acct-mgmt] Rooms header: Join gates on conversation_ops.join_channel,
+                            // New on conversation_ops.create (wire v33; legacy `rooms` fallback).
                             RowLayout {
                                 Layout.fillWidth: true
                                 spacing: 8
@@ -518,13 +532,15 @@ Item {
                                     Layout.fillWidth: true
                                 }
                                 Kit.TextButton {
-                                    visible: root.canManageRooms(acctRow.modelData.family)
+                                    visible: root.canConversationOp(acctRow.modelData.family,
+                                                                    "joinChannel")
                                     text: qsTr("Join room…")
                                     onClicked: Transports.conversationJoinDetails(
                                         acctRow.modelData.transport)
                                 }
                                 Kit.TextButton {
-                                    visible: root.canManageRooms(acctRow.modelData.family)
+                                    visible: root.canConversationOp(acctRow.modelData.family,
+                                                                    "create")
                                     text: qsTr("New room…")
                                     onClicked: Transports.conversationCreateDetails(
                                         acctRow.modelData.transport)
@@ -636,9 +652,10 @@ Item {
                                             font.family: FontIcons.mono; font.pixelSize: 10
                                             color: Theme.textMuted
                                         }
-                                        // [acct-mgmt] Members expand (ConvGet). Fetch on first open.
+                                        // [acct-mgmt] Members expand (ConvGet — a read affordance,
+                                        // coarse gate). Fetch on first open.
                                         Kit.TextButton {
-                                            visible: root.canManageMembers(roomItem.family)
+                                            visible: root.canListMembers(roomItem.family)
                                             text: roomItem.membersExpanded
                                                   ? qsTr("Members ▾") : qsTr("Members ▸")
                                             onClicked: {
@@ -648,17 +665,19 @@ Item {
                                                         roomItem.transport, roomItem.convId);
                                             }
                                         }
-                                        // [acct-mgmt] Leave / Delete (confirmed). Gated on rooms
-                                        // capability today; per-verb ops replace the gate at v33.
+                                        // [acct-mgmt] Leave / Delete (confirmed), gated per-verb on
+                                        // conversation_ops.leave / .delete (wire v33).
                                         Kit.TextButton {
-                                            visible: root.canManageRooms(roomItem.family)
+                                            visible: root.canConversationOp(roomItem.family,
+                                                                            "leave")
                                             text: qsTr("Leave")
                                             onClicked: leaveRoomDialog.openFor(
                                                 roomItem.transport, roomItem.convId,
                                                 roomItem.roomLabel)
                                         }
                                         Kit.TextButton {
-                                            visible: root.canManageRooms(roomItem.family)
+                                            visible: root.canConversationOp(roomItem.family,
+                                                                            "delete")
                                             text: qsTr("Delete")
                                             textColor: Theme.danger
                                             onClicked: deleteRoomDialog.openFor(
@@ -703,9 +722,12 @@ Item {
                                                     color: Theme.textMuted; elide: Text.ElideMiddle
                                                     Layout.maximumWidth: 160
                                                 }
-                                                // Role picker (MemberSetRole). None/Voice/HalfOp/
-                                                // Op/Founder — the node's MemberRole ladder.
+                                                // Role picker (MemberSetRole), gated per-verb on
+                                                // membership_ops.set_role. None/Voice/HalfOp/Op/
+                                                // Founder — the node's MemberRole ladder.
                                                 Kit.Dropdown {
+                                                    visible: root.canMembershipOp(roomItem.family,
+                                                                                  "setRole")
                                                     readonly property var roles:
                                                         ["None","Voice","HalfOp","Op","Founder"]
                                                     model: roles
@@ -717,13 +739,18 @@ Item {
                                                                 modelData.contactId, roles[index]);
                                                     }
                                                 }
+                                                // Kick/Ban gate per-verb on membership_ops.remove/.ban.
                                                 Kit.TextButton {
+                                                    visible: root.canMembershipOp(roomItem.family,
+                                                                                  "remove")
                                                     text: qsTr("Kick")
                                                     onClicked: kickMemberDialog.openFor(
                                                         roomItem.transport, roomItem.convId,
                                                         modelData.contactId)
                                                 }
                                                 Kit.TextButton {
+                                                    visible: root.canMembershipOp(roomItem.family,
+                                                                                  "ban")
                                                     text: qsTr("Ban")
                                                     textColor: Theme.danger
                                                     onClicked: banMemberDialog.openFor(
@@ -732,8 +759,11 @@ Item {
                                                 }
                                             }
                                         }
-                                        // Invite… affordance (MemberInvite).
+                                        // Invite… affordance (MemberInvite), gated per-verb on
+                                        // membership_ops.invite.
                                         Kit.TextButton {
+                                            visible: root.canMembershipOp(roomItem.family,
+                                                                          "invite")
                                             text: qsTr("⊕ Invite…")
                                             onClicked: inviteMemberDialog.openFor(
                                                 roomItem.transport, roomItem.convId)

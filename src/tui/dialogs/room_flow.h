@@ -53,6 +53,12 @@ private:
     void showMemberActions(const QVariantMap& member);
     void showRolePalette(const QVariantMap& member);
 
+    // [acct-mgmt] Per-verb membership gating for the action palette (wire v33): resolves the
+    // flow's transport to its family's AdapterInfo; a concrete membershipOps map is authoritative
+    // for `verb` (invite|remove|ban|setRole), a missing one (v32 node / null) falls back to the
+    // legacy coarse `rooms` capability — GUI canMembershipOp parity.
+    [[nodiscard]] bool canMembershipOp(const QString& verb) const;
+
     transports::ITransportRegistry* m_registry = nullptr;
     Tui::ZWidget* m_host = nullptr;
 
