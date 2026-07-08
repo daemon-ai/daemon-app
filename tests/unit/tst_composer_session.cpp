@@ -8,6 +8,57 @@
 
 #include <QSignalSpy>
 #include <QtTest>
+#include <QVariantList>
+#include <QVariantMap>
+
+// A catalog fake that surfaces a per-session FOREIGN backend + advertised model selector (Phase E),
+// so the composer controller's fork can be exercised without a live daemon. Subclasses the mock so
+// every other IModelCatalog method keeps working; records the last SetSessionModel + ensureDetail.
+// File-scoped (not in an anonymous namespace) so moc can generate its meta-object cleanly.
+class ForeignCatalogFake : public models::MockModelCatalog {
+    Q_OBJECT
+
+public:
+    QString backend;             // "" | "AgentNative" | "NodeProvider"
+    QVariantMap selector;        // { hasSelector, current, choices:[{id,label}] }
+    QString lastSetSession;      // recorded SetSessionModel target
+    QString lastSetModel;        // recorded SetSessionModel model
+    QStringList ensuredSessions; // recorded ensureSessionDetail ids
+
+    [[nodiscard]] QString sessionBackend(const QString& /*sessionId*/) const override {
+        return backend;
+    }
+    [[nodiscard]] QVariantMap sessionModelSelector(const QString& /*sessionId*/) const override {
+        return selector.isEmpty() ? QVariantMap{{QStringLiteral("hasSelector"), false}} : selector;
+    }
+    void ensureSessionDetail(const QString& sessionId) override { ensuredSessions << sessionId; }
+    void setSessionModel(const QString& sessionId, const QString& model) override {
+        lastSetSession = sessionId;
+        lastSetModel = model;
+    }
+    // Test seam: fire the base signal as the daemon adapter would on SessionMetaChanged.
+    void fireSelectorChanged(const QString& sessionId) {
+        emit sessionModelSelectorChanged(sessionId);
+    }
+};
+
+namespace {
+
+QVariantMap agentNativeSelector() {
+    return QVariantMap{
+        {QStringLiteral("hasSelector"), true},
+        {QStringLiteral("current"), QStringLiteral("sonnet")},
+        {QStringLiteral("choices"),
+         QVariantList{
+             QVariantMap{{QStringLiteral("id"), QStringLiteral("sonnet")},
+                         {QStringLiteral("label"), QStringLiteral("Claude Sonnet")}},
+             QVariantMap{{QStringLiteral("id"), QStringLiteral("opus")},
+                         {QStringLiteral("label"), QStringLiteral("Claude Opus")}},
+         }},
+    };
+}
+
+} // namespace
 
 // Exercises the composer-session logic extracted from QML in the "finish the
 // deferred seams" pass: the primary-action rule (send/queue/stop + enablement,
@@ -116,6 +167,77 @@ private slots:
         c.selectModel(target);
         QCOMPARE(catalog.currentModelId(), secondId);
         QCOMPARE(c.currentModelIndex(), target);
+    }
+
+    // --- Phase E: foreign-session live model selection ---------------------------
+    // A native session (default fake backend) exposes no foreign backend/selector, so the composer
+    // treats it exactly as before (the GUI keeps the pill hidden for a foreign engine only via the
+    // backend fork).
+    void foreignProjectionEmptyForNativeSession() {
+        ForeignCatalogFake fake; // backend defaults to "" (native)
+        ComposerSessionController c;
+        c.setModelSource(&fake);
+        c.setSessionId(QStringLiteral("s-native"));
+        QVERIFY(c.foreignBackend().isEmpty());
+        QVERIFY(!c.foreignModelSelector().value(QStringLiteral("hasSelector")).toBool());
+    }
+
+    // AgentNative: the controller projects the agent-advertised selector, and a pick routes through
+    // SetSessionModel by model id (never the default-model activate path).
+    void foreignAgentNativeProjectsSelectorAndSetsModel() {
+        ForeignCatalogFake fake;
+        fake.backend = QStringLiteral("AgentNative");
+        fake.selector = agentNativeSelector();
+        ComposerSessionController c;
+        c.setModelSource(&fake);
+        c.setSessionId(QStringLiteral("s-agent"));
+
+        QCOMPARE(c.foreignBackend(), QStringLiteral("AgentNative"));
+        const QVariantMap sel = c.foreignModelSelector();
+        QVERIFY(sel.value(QStringLiteral("hasSelector")).toBool());
+        QCOMPARE(sel.value(QStringLiteral("current")).toString(), QStringLiteral("sonnet"));
+        QCOMPARE(sel.value(QStringLiteral("choices")).toList().size(), 2);
+        // The bound session's detail is hydrated on bind.
+        QVERIFY(fake.ensuredSessions.contains(QStringLiteral("s-agent")));
+
+        // Picking sends SetSessionModel{session, model} — model only, never a provider.
+        c.selectForeignModel(QStringLiteral("opus"));
+        QCOMPARE(fake.lastSetSession, QStringLiteral("s-agent"));
+        QCOMPARE(fake.lastSetModel, QStringLiteral("opus"));
+    }
+
+    // NodeProvider: no advertised selector (choices come from the node catalog), but the backend is
+    // reported and a pick still routes through SetSessionModel by model id.
+    void foreignNodeProviderReportsBackendAndSetsModel() {
+        ForeignCatalogFake fake;
+        fake.backend = QStringLiteral("NodeProvider");
+        ComposerSessionController c;
+        c.setModelSource(&fake);
+        c.setSessionId(QStringLiteral("s-node"));
+
+        QCOMPARE(c.foreignBackend(), QStringLiteral("NodeProvider"));
+        QVERIFY(!c.foreignModelSelector().value(QStringLiteral("hasSelector")).toBool());
+
+        c.selectForeignModel(QStringLiteral("gpt-5.3"));
+        QCOMPARE(fake.lastSetSession, QStringLiteral("s-node"));
+        QCOMPARE(fake.lastSetModel, QStringLiteral("gpt-5.3"));
+    }
+
+    // A catalog-side selector change for the bound session re-emits foreignModelSelectorChanged so
+    // the GUI/TUI re-project (this is the SessionMetaChanged -> re-hydrate path's client end).
+    void foreignSelectorChangeReprojects() {
+        ForeignCatalogFake fake;
+        fake.backend = QStringLiteral("AgentNative");
+        fake.selector = agentNativeSelector();
+        ComposerSessionController c;
+        c.setModelSource(&fake);
+        c.setSessionId(QStringLiteral("s-agent"));
+
+        QSignalSpy spy(&c, &ComposerSessionController::foreignModelSelectorChanged);
+        fake.fireSelectorChanged(QStringLiteral("s-agent")); // bound session -> re-project
+        QCOMPARE(spy.count(), 1);
+        fake.fireSelectorChanged(QStringLiteral("other")); // unrelated session -> ignored
+        QCOMPARE(spy.count(), 1);
     }
 
     // --- Reverse incremental history search (Ctrl+R) -----------------------------

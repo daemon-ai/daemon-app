@@ -202,9 +202,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.authFlow = new auth::DaemonAuthFlowService(graph.authRepository, owner);
         // Provider + credential + profile repositories back the Providers tab with the node's
         // real ProviderCatalog and credential presence (no hardcoded provider fiction).
-        graph.modelCatalog = new models::DaemonModelCatalog(graph.models, graph.providerRepository,
-                                                            graph.credentialRepository,
-                                                            graph.profileRepository, owner);
+        graph.modelCatalog = new models::DaemonModelCatalog(
+            graph.models, graph.providerRepository, graph.credentialRepository,
+            graph.profileRepository, graph.sessions, owner);
         // Node-driven provider/model discovery (ProviderCatalog/ProviderModels), sharing the model
         // catalog for the local [installed]+Discover compose.
         graph.providerCatalog =

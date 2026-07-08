@@ -40,27 +40,56 @@ void TuiOverlayHost::openModelPicker(ComposerSessionController* composer,
     if (m_modelPicker == nullptr) {
         m_modelPicker = new PaletteDialog(tr("Model"), m_parent);
         connect(m_modelPicker, &PaletteDialog::activated, this,
-                [composer, focusComposer](const QString& id) {
-                    bool ok = false;
-                    const int index = id.toInt(&ok);
-                    if (ok) {
-                        composer->selectModel(index);
+                [this, composer, focusComposer](const QString& id) {
+                    // Phase E: a foreign session's item id is the model id (SetSessionModel);
+                    // a native session's is the catalog index (set default model).
+                    if (m_modelPickerForeign) {
+                        composer->selectForeignModel(id);
+                    } else {
+                        bool ok = false;
+                        const int index = id.toInt(&ok);
+                        if (ok) {
+                            composer->selectModel(index);
+                        }
                     }
                     if (focusComposer) {
                         focusComposer();
                     }
                 });
     }
-    const QVariantList catalog = composer->modelCatalog();
+    // Phase E: fork the choice set + selection route on the session's foreign backend, mirroring
+    // the GUI ModelPickerOverlay. AgentNative -> the agent-advertised selector choices;
+    // NodeProvider
+    // -> the node catalog (routed through the gateway); native -> the node catalog default-model.
+    const QString backend = composer->foreignBackend();
+    m_modelPickerForeign = !backend.isEmpty();
     QVector<PaletteDialog::Item> items;
-    items.reserve(catalog.size());
-    for (int i = 0; i < catalog.size(); ++i) {
-        const QVariantMap m = catalog.at(i).toMap();
-        const bool current = i == composer->currentModelIndex();
-        items.push_back({QString::number(i),
-                         (current ? QStringLiteral("✓ ") : QStringLiteral("  ")) +
-                             m.value(QStringLiteral("label")).toString(),
-                         m.value(QStringLiteral("provider")).toString()});
+    if (backend == QStringLiteral("AgentNative")) {
+        const QVariantMap sel = composer->foreignModelSelector();
+        const QString current = sel.value(QStringLiteral("current")).toString();
+        const QVariantList choices = sel.value(QStringLiteral("choices")).toList();
+        items.reserve(choices.size());
+        for (const QVariant& v : choices) {
+            const QVariantMap c = v.toMap();
+            const QString cid = c.value(QStringLiteral("id")).toString();
+            items.push_back({cid,
+                             (cid == current ? QStringLiteral("✓ ") : QStringLiteral("  ")) +
+                                 c.value(QStringLiteral("label")).toString(),
+                             {}});
+        }
+    } else {
+        const QVariantList catalog = composer->modelCatalog();
+        items.reserve(catalog.size());
+        for (int i = 0; i < catalog.size(); ++i) {
+            const QVariantMap m = catalog.at(i).toMap();
+            const QString mid = m.value(QStringLiteral("id")).toString();
+            // A NodeProvider session has no client-known current; native marks the active index.
+            const bool current = !m_modelPickerForeign && i == composer->currentModelIndex();
+            items.push_back({m_modelPickerForeign ? mid : QString::number(i),
+                             (current ? QStringLiteral("✓ ") : QStringLiteral("  ")) +
+                                 m.value(QStringLiteral("label")).toString(),
+                             m.value(QStringLiteral("provider")).toString()});
+        }
     }
     m_modelPicker->setItems(items);
     m_modelPicker->openCentered();

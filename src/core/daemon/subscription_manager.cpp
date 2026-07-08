@@ -110,8 +110,16 @@ void SubscriptionManager::onStreamEnded(quint64 id, bool /*error*/, const QStrin
 
 void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
     switch (event.kind) {
-    case DecodedNodeEvent::Kind::RosterChanged:
     case DecodedNodeEvent::Kind::SessionMetaChanged:
+        // A session's metadata changed. Refresh its hydrated SessionDetail so live per-session
+        // projections re-read (Phase E: the composer's foreign model selector / backend). Scoped to
+        // a session we ALREADY hydrated, so a burst of meta changes doesn't fetch detail for every
+        // roster row. Then fall through to the roster refetch below (debounced).
+        if (m_sessions != nullptr && m_sessions->cachedDetail(event.session, nullptr)) {
+            m_sessions->getSessionDetail(event.session);
+        }
+        [[fallthrough]];
+    case DecodedNodeEvent::Kind::RosterChanged:
         // The roster set or a row's metadata changed; refetch the roster (a delta query is L4).
         // Debounced so a burst of meta changes is one refetch, not N.
         scheduleRosterRefetch();

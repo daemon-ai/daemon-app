@@ -14,6 +14,7 @@
 #include <QStringList>
 #include <QtQml/qqmlregistration.h>
 #include <QVariantList>
+#include <QVariantMap>
 
 namespace models {
 class IModelCatalog;
@@ -85,6 +86,16 @@ class ComposerSessionController : public QObject {
     Q_PROPERTY(
         QObject* modelSource READ modelSource WRITE setModelSource NOTIFY modelCatalogChanged)
 
+    // Foreign-session live model selection (Phase E; wire v30). Projected from the bound session's
+    // node SessionDetail via the injected model source (IModelCatalog). `foreignBackend` is the
+    // AgentNative-vs-NodeProvider fork ("" for a native/unknown session); `foreignModelSelector` is
+    // the AgentNative agent-advertised selector { hasSelector, current, choices:[{id,label}] } (a
+    // NodeProvider session has hasSelector=false — its choices come from the node catalog above).
+    // The GUI ModelPill/overlay and the TUI picker read these so both surfaces fork identically.
+    Q_PROPERTY(QString foreignBackend READ foreignBackend NOTIFY foreignModelSelectorChanged)
+    Q_PROPERTY(QVariantMap foreignModelSelector READ foreignModelSelector NOTIFY
+                   foreignModelSelectorChanged)
+
     // Turn modes (client state; no backend yet). reasoningEffort is one of
     // off/low/medium/high; fastMode trades depth for latency; verbose surfaces
     // extra detail. The daemon later reads these off the same controller.
@@ -137,6 +148,9 @@ public:
     [[nodiscard]] QObject* modelSource() const;
     void setModelSource(QObject* source);
 
+    [[nodiscard]] QString foreignBackend() const;
+    [[nodiscard]] QVariantMap foreignModelSelector() const;
+
     [[nodiscard]] QString reasoningEffort() const { return m_reasoningEffort; }
     Q_INVOKABLE void setReasoningEffort(const QString& effort);
     [[nodiscard]] bool fastMode() const { return m_fastMode; }
@@ -160,6 +174,11 @@ public:
     Q_INVOKABLE void invokeCommand(const QString& command);
     Q_INVOKABLE void clear();                // clear draft + attachments
     Q_INVOKABLE void selectModel(int index); // pick the active model (clamped)
+    // Foreign-session model pick (Phase E): choose `model` for the bound foreign session via the
+    // model source's SetSessionModel (AgentNative matches over ACP; NodeProvider rebinds the
+    // gateway token). No-op for a native session / no source. `model` is a choice id (AgentNative)
+    // or a node catalog model id (NodeProvider).
+    Q_INVOKABLE void selectForeignModel(const QString& model);
     // Cycle reasoning effort off->low->medium->high->off (TUI chrome toggle).
     Q_INVOKABLE void cycleReasoningEffort();
     Q_INVOKABLE void toggleFastMode();
@@ -216,6 +235,7 @@ signals:
     void editingIndexChanged();
     void currentModelChanged();
     void modelCatalogChanged();
+    void foreignModelSelectorChanged();
     void modesChanged();
 
 private:

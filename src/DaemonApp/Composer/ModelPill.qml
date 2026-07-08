@@ -22,9 +22,24 @@ Item {
     // flat list + index; selection is reported via `selected`.
     property var models: []
     property int currentIndex: 0
-    readonly property string currentModel: session
-        ? session.currentModel
-        : (models[currentIndex] !== undefined ? models[currentIndex] : "")
+    // Phase E: for an AgentNative foreign session the current model is the agent-advertised
+    // selector's current value (resolved to its label), not a node-catalog row; otherwise the
+    // shared controller's current model (native / NodeProvider node catalog).
+    readonly property string currentModel: {
+        if (session && session.foreignBackend === "AgentNative") {
+            var sel = session.foreignModelSelector;
+            if (sel && sel.hasSelector === true) {
+                var choices = sel.choices || [];
+                for (var i = 0; i < choices.length; ++i)
+                    if (choices[i].id === sel.current)
+                        return choices[i].label;
+                return sel.current;
+            }
+        }
+        return session
+            ? session.currentModel
+            : (models[currentIndex] !== undefined ? models[currentIndex] : "");
+    }
 
     signal selected(int index)
 

@@ -41,6 +41,15 @@ RowLayout {
     // Whether the bound session runs on a foreign engine (gates rewind + model affordances - C4).
     readonly property bool foreignSession: engineChip.info.engine === "Foreign"
 
+    // Phase E: a foreign session's model IS selectable when the node reports a picker for it —
+    // an AgentNative agent that advertises a Model selector (choices), or a NodeProvider session
+    // (routed through the node gateway, so the node catalog is the choice set). The blanket
+    // foreign-hide of the model pill (C4) is lifted for exactly these cases.
+    readonly property bool foreignModelPickable: root.session
+        && ((root.session.foreignBackend === "NodeProvider")
+            || (root.session.foreignModelSelector
+                && root.session.foreignModelSelector.hasSelector === true))
+
     // Facade reads (profileFor/approvalModeFor) are invokables, so QML cannot track them; bump a
     // revision on the facades' change signals and reference it from the chip bindings.
     property int settingsRev: 0
@@ -187,11 +196,13 @@ RowLayout {
         }
     }
 
-    // Model picker: hidden for a foreign session — the foreign agent resolves its own model, so
-    // there is no provider/model for the client to pick (C4). The engine chip explains why.
+    // Model picker: hidden for a foreign session with NO node-offered picker — that agent resolves
+    // its own model and advertises no selector, so there is nothing for the client to pick (C4);
+    // the engine chip explains why. Shown for a native session, and (Phase E) for a foreign session
+    // the node exposes a picker for (AgentNative selector / NodeProvider gateway routing).
     ModelPill {
         id: modelPill
-        visible: !root.foreignSession
+        visible: !root.foreignSession || root.foreignModelPickable
         Layout.alignment: Qt.AlignVCenter
         enabled: root.composerEnabled
         session: root.session

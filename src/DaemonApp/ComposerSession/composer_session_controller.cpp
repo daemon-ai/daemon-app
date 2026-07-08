@@ -45,6 +45,12 @@ void ComposerSessionController::setSessionId(const QString& id) {
     m_sessionId = id;
     restore(id);
     emit sessionIdChanged();
+    // Foreign-session live model selection (Phase E): hydrate the bound session's SessionDetail so
+    // the foreign backend/selector projection can read it, and re-project for the new session.
+    if (m_modelSource != nullptr && !id.isEmpty()) {
+        m_modelSource->ensureSessionDetail(id);
+    }
+    emit foreignModelSelectorChanged();
 }
 
 void ComposerSessionController::setBusy(bool busy) {
@@ -239,6 +245,18 @@ void ComposerSessionController::setModelSource(QObject* source) {
         // The active model changing in the catalog is our current selection.
         connect(m_modelSource, &models::IModelCatalog::currentChanged, this,
                 &ComposerSessionController::currentModelChanged);
+        // Foreign-session selector (Phase E): re-project when the bound session's detail
+        // rehydrates.
+        connect(m_modelSource, &models::IModelCatalog::sessionModelSelectorChanged, this,
+                [this](const QString& id) {
+                    if (id == m_sessionId) {
+                        emit foreignModelSelectorChanged();
+                    }
+                });
+        // Hydrate the currently-bound session (a source set after the session id was assigned).
+        if (!m_sessionId.isEmpty()) {
+            m_modelSource->ensureSessionDetail(m_sessionId);
+        }
         // The installed list changing (install/remove) reshapes our model list and
         // can shift the current index, so refresh both.
         if (auto* installed =
@@ -255,6 +273,22 @@ void ComposerSessionController::setModelSource(QObject* source) {
     }
     emit modelCatalogChanged();
     emit currentModelChanged();
+    emit foreignModelSelectorChanged();
+}
+
+QString ComposerSessionController::foreignBackend() const {
+    return m_modelSource != nullptr ? m_modelSource->sessionBackend(m_sessionId) : QString();
+}
+
+QVariantMap ComposerSessionController::foreignModelSelector() const {
+    return m_modelSource != nullptr ? m_modelSource->sessionModelSelector(m_sessionId)
+                                    : QVariantMap{{QStringLiteral("hasSelector"), false}};
+}
+
+void ComposerSessionController::selectForeignModel(const QString& model) {
+    if (m_modelSource != nullptr && !m_sessionId.isEmpty()) {
+        m_modelSource->setSessionModel(m_sessionId, model);
+    }
 }
 
 void ComposerSessionController::setReasoningEffort(const QString& effort) {

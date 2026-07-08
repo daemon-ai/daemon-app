@@ -72,9 +72,10 @@ DaemonModelCatalog::DaemonModelCatalog(ModelRepository* models,
                                        daemonapp::daemon::ProviderRepository* providers,
                                        daemonapp::daemon::CredentialRepository* credentials,
                                        daemonapp::daemon::ProfileRepository* profiles,
+                                       daemonapp::daemon::SessionRepository* sessions,
                                        QObject* parent)
     : IModelCatalog(parent), m_models(models), m_providers(providers), m_credentials(credentials),
-      m_profiles(profiles), m_discover(new uimodels::VariantListModel(this)),
+      m_profiles(profiles), m_sessions(sessions), m_discover(new uimodels::VariantListModel(this)),
       m_files(new uimodels::VariantListModel(this)),
       m_downloads(new uimodels::VariantListModel(this)),
       m_installed(new uimodels::VariantListModel(this)),
@@ -155,6 +156,12 @@ DaemonModelCatalog::DaemonModelCatalog(ModelRepository* models,
         // previous app instance must render immediately, not only on the next progress event.
         m_models->refreshDownloads();
     }
+    // Foreign-session live model selection (Phase E): re-emit the selector-changed signal whenever
+    // a session's detail (re)hydrates, so the composer re-projects sessionBackend()/selector.
+    if (m_sessions != nullptr) {
+        connect(m_sessions, &daemonapp::daemon::SessionRepository::sessionDetailLoaded, this,
+                [this](const QString& id) { emit sessionModelSelectorChanged(id); });
+    }
 }
 
 QObject* DaemonModelCatalog::discover() const {
@@ -188,6 +195,56 @@ bool DaemonModelCatalog::isLocalInstalled(const QString& id) const {
     }
     const auto& list = m_models->installed();
     return std::ranges::any_of(list, [&id](const DecodedInstalledModel& m) { return m.id == id; });
+}
+
+QString DaemonModelCatalog::sessionBackend(const QString& sessionId) const {
+    daemonapp::daemon::DecodedSessionDetail detail;
+    if (m_sessions == nullptr || sessionId.isEmpty() ||
+        !m_sessions->cachedDetail(sessionId, &detail) || !detail.hasForeignBackend) {
+        return {}; // native / unknown / not yet hydrated: no foreign backend
+    }
+    return detail.foreignBackend.kind; // "AgentNative" | "NodeProvider"
+}
+
+QVariantMap DaemonModelCatalog::sessionModelSelector(const QString& sessionId) const {
+    daemonapp::daemon::DecodedSessionDetail detail;
+    if (m_sessions == nullptr || sessionId.isEmpty() ||
+        !m_sessions->cachedDetail(sessionId, &detail) || !detail.hasModelSelector) {
+        return {QVariantMap{{QStringLiteral("hasSelector"), false}}};
+    }
+    QVariantList choices;
+    choices.reserve(detail.modelSelector.choices.size());
+    for (const auto& c : detail.modelSelector.choices) {
+        choices.append(QVariantMap{
+            {QStringLiteral("id"), c.id},
+            {QStringLiteral("label"), c.label.isEmpty() ? c.id : c.label},
+        });
+    }
+    return QVariantMap{
+        {QStringLiteral("hasSelector"), true},
+        {QStringLiteral("current"), detail.modelSelector.current},
+        {QStringLiteral("choices"), choices},
+    };
+}
+
+void DaemonModelCatalog::ensureSessionDetail(const QString& sessionId) {
+    // Hydrate once: getSessionDetail dedupes an in-flight fetch, and a cached detail (even the null
+    // arm) means no re-issue. Live refresh on change rides SessionMetaChanged
+    // (SubscriptionManager).
+    if (m_sessions == nullptr || sessionId.isEmpty() ||
+        m_sessions->cachedDetail(sessionId, nullptr)) {
+        return;
+    }
+    m_sessions->getSessionDetail(sessionId);
+}
+
+void DaemonModelCatalog::setSessionModel(const QString& sessionId, const QString& model) {
+    if (m_models == nullptr || sessionId.isEmpty()) {
+        return;
+    }
+    // Foreign-session model set: model only, NEVER a provider (the node rejects `provider` for a
+    // foreign session; AgentNative matches over ACP, NodeProvider rebinds the gateway token).
+    m_models->setSessionModel(sessionId, model);
 }
 
 QStringList DaemonModelCatalog::installedIds() const {
