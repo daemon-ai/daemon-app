@@ -491,8 +491,8 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         const int sel =
             qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
         const QVariantMap& row = rows.at(sel);
-        const bool isAccount =
-            row.value(QStringLiteral("rowKind")).toString() == QLatin1String("account");
+        const QString rowKind = row.value(QStringLiteral("rowKind")).toString();
+        const bool isAccount = rowKind == QLatin1String("account");
         const QString transport = row.value(QStringLiteral("transport")).toString();
         // [acct-mgmt] Per-verb capability gating (wire v33, GUI canConversationOp/canMembershipOp
         // parity): when the family's AdapterInfo carries a concrete conversationOps/membershipOps
@@ -528,11 +528,37 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         const auto canMembershipOp = [&canOp](const QString& verb) {
             return canOp(QStringLiteral("membershipOps"), verb);
         };
+        // [acct-mgmt] Contacts have NO legacy coarse fallback (GUI canRosterOp/canContactOp
+        // parity): a verb is available only when the node reported the concrete ops map.
+        const auto canRosterOp = [&adapter](const QString& verb) {
+            return adapter.contains(QStringLiteral("rosterOps")) &&
+                   adapter.value(QStringLiteral("rosterOps")).toMap().value(verb).toBool();
+        };
+        const auto canContactOp = [&adapter](const QString& verb) {
+            return adapter.contains(QStringLiteral("contactsOps")) &&
+                   adapter.value(QStringLiteral("contactsOps")).toMap().value(verb).toBool();
+        };
+        const auto hasDirectory = [&adapter] {
+            return adapter.value(QStringLiteral("directory")).toBool();
+        };
+        // Add-contact / find-people are offered on both the account row and the contacts-group row.
+        const auto handleContactHeaderKeys = [&]() -> bool {
+            if (text == QStringLiteral("a") && canRosterOp(QStringLiteral("add"))) {
+                openContactAdd(transport);
+                return true;
+            }
+            if (text == QStringLiteral("f") && hasDirectory()) {
+                openContactFind(transport);
+                return true;
+            }
+            return false;
+        };
         bool handled = false;
         if (isAccount) {
             // [wave2:app-channels-liveness] B1: 'c' connects via the shared interactive-auth
             // launcher; 'x' removes the account (confirmed); 'g'/'n' open the room flows, gated
-            // per-verb on conversation_ops.join_channel / .create.
+            // per-verb on conversation_ops.join_channel / .create. [acct-mgmt] 'a'/'f' add/find
+            // contacts (gated on roster_ops.add / directory).
             if (text == QStringLiteral("c")) {
                 openAuthFlow();
                 handled = true;
@@ -546,6 +572,30 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
                 handled = true;
             } else if (text == QStringLiteral("n") && canConversationOp(QStringLiteral("create"))) {
                 openRoomCreateFlow(transport);
+                handled = true;
+            } else {
+                handled = handleContactHeaderKeys();
+            }
+        } else if (rowKind == QLatin1String("contactsGroup")) {
+            // [acct-mgmt] The Contacts group header: 'a' add contact, 'f' find people.
+            handled = handleContactHeaderKeys();
+        } else if (rowKind == QLatin1String("contact")) {
+            // [acct-mgmt] Contact row: Enter profile (contacts_ops.get_profile), 'a' alias
+            // (contacts_ops.set_alias), 'x' remove (roster_ops.remove), 'm' open DM
+            // (conversation_ops.create — the conv-create seam with the contact as participant).
+            const QString contactId = row.value(QStringLiteral("contactId")).toString();
+            const QString name = row.value(QStringLiteral("displayName")).toString();
+            if (enter && canContactOp(QStringLiteral("getProfile"))) {
+                openContactProfile(transport, contactId);
+                handled = true;
+            } else if (text == QStringLiteral("a") && canContactOp(QStringLiteral("setAlias"))) {
+                openContactAlias(transport, contactId, name);
+                handled = true;
+            } else if (text == QStringLiteral("x") && canRosterOp(QStringLiteral("remove"))) {
+                openContactRemoveConfirm(transport, contactId);
+                handled = true;
+            } else if (text == QStringLiteral("m") && canConversationOp(QStringLiteral("create"))) {
+                openContactDm(transport, contactId);
                 handled = true;
             }
         } else {

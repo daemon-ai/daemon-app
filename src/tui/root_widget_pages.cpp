@@ -9,6 +9,7 @@
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "dialogs/add_account_flow.h"
 #include "dialogs/auth_flow_dialog.h"
+#include "dialogs/contact_flow.h" // [acct-mgmt] Channels transport-contacts flows (wire v34)
 #include "dialogs/profile_editor_dialog.h"
 #include "dialogs/room_flow.h" // [acct-mgmt] Channels room lifecycle + member flows
 #include "display_role_adapter.h"
@@ -38,6 +39,7 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "transports/icontacts_service.h"   // [acct-mgmt] Channels contacts (wire v34)
 #include "transports/itransport_registry.h" // [waveB:app-v30] D1: Channels remove-confirm
 #include "tui_dialogs.h"
 #include "tui_file_tab_controller.h"
@@ -734,6 +736,71 @@ void RootWidget::openRoomPin(const QString& transport, const QString& conversati
         }
     });
     picker->openCentered();
+}
+
+// [acct-mgmt] Lazily build the shared contact flow (add/find/alias/profile chained dialogs +
+// palettes), mirroring openRoomJoinFlow: refresh the page on a seam mutation, restore page focus
+// when the dialogs close.
+void RootWidget::openContactAdd(const QString& transport) {
+    if (m_services.contacts == nullptr || transport.isEmpty()) {
+        return;
+    }
+    if (m_contactFlow == nullptr) {
+        m_contactFlow = new ContactFlow(m_services.contacts, m_services.transportRegistry, this);
+        connect(m_contactFlow, &ContactFlow::changed, this, [this] { refreshActivePage(); });
+        connect(m_contactFlow, &ContactFlow::finished, this, [this] {
+            if (m_transcript != nullptr && activePageKind() >= 0) {
+                m_transcript->setFocus();
+            }
+        });
+    }
+    m_contactFlow->startAdd(transport);
+}
+
+void RootWidget::openContactFind(const QString& transport) {
+    if (m_services.contacts == nullptr || transport.isEmpty()) {
+        return;
+    }
+    openContactAdd(transport); // ensure m_contactFlow exists + is wired (does not start an add)
+    m_contactFlow->startFind(transport);
+}
+
+void RootWidget::openContactAlias(const QString& transport, const QString& contactId,
+                                  const QString& currentName) {
+    if (m_services.contacts == nullptr || transport.isEmpty() || contactId.isEmpty()) {
+        return;
+    }
+    openContactAdd(transport); // ensure m_contactFlow exists + is wired
+    m_contactFlow->startAlias(transport, contactId, currentName);
+}
+
+void RootWidget::openContactProfile(const QString& transport, const QString& contactId) {
+    if (m_services.contacts == nullptr || transport.isEmpty() || contactId.isEmpty()) {
+        return;
+    }
+    openContactAdd(transport); // ensure m_contactFlow exists + is wired
+    m_contactFlow->openProfile(transport, contactId);
+}
+
+void RootWidget::openContactRemoveConfirm(const QString& transport, const QString& contactId) {
+    if (m_services.contacts == nullptr || transport.isEmpty() || contactId.isEmpty()) {
+        return;
+    }
+    auto* confirm = new ConfirmDialog(tr("Remove contact"),
+                                      tr("Remove %1 from your contacts?").arg(contactId), this);
+    connect(confirm, &ConfirmDialog::confirmed, this, [this, transport, contactId] {
+        m_services.contacts->removeContact(transport, contactId);
+    });
+}
+
+void RootWidget::openContactDm(const QString& transport, const QString& contactId) {
+    // The conv-create seam with the contact as participant (no new wire op).
+    if (m_services.transportRegistry == nullptr || transport.isEmpty() || contactId.isEmpty()) {
+        return;
+    }
+    QVariantMap form;
+    form[QStringLiteral("participants")] = QVariantList{contactId};
+    m_services.transportRegistry->createRoom(transport, form);
 }
 
 void RootWidget::openFleetSteerPrompt(const QVariantMap& row) {

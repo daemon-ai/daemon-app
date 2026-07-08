@@ -8,6 +8,7 @@
 // page tab (the TUI mirror of the GUI cog menu -> Nav.open("channels")).
 
 #include "tab_model.h"
+#include "transports/icontacts_service.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "tui_page_hub.h"
@@ -24,9 +25,15 @@ public:
     using ITransportRegistry::ITransportRegistry;
 
     [[nodiscard]] QVariantList availableAdapters() const override {
+        // [acct-mgmt] matrix advertises rosterOps.list so the Contacts group renders (wire v34).
+        QVariantMap matrix{{QStringLiteral("family"), QStringLiteral("matrix")},
+                           {QStringLiteral("displayName"), QStringLiteral("Matrix")}};
+        matrix.insert(QStringLiteral("rosterOps"), QVariantMap{{QStringLiteral("list"), true},
+                                                               {QStringLiteral("add"), true},
+                                                               {QStringLiteral("update"), false},
+                                                               {QStringLiteral("remove"), true}});
         return {
-            QVariantMap{{QStringLiteral("family"), QStringLiteral("matrix")},
-                        {QStringLiteral("displayName"), QStringLiteral("Matrix")}},
+            matrix,
             QVariantMap{{QStringLiteral("family"), QStringLiteral("room")},
                         {QStringLiteral("displayName"), QStringLiteral("Rooms (internal)")}},
         };
@@ -78,6 +85,26 @@ public:
     }
 };
 
+// [acct-mgmt] Seeded contacts seam: two contacts on the matrix account (one aliased, one bare id).
+class SeededContactsService : public transports::IContactsService {
+public:
+    using IContactsService::IContactsService;
+
+    [[nodiscard]] QVariantList contacts(const QString& transport) const override {
+        if (transport != QLatin1String("matrix/@bot:hs.org")) {
+            return {};
+        }
+        return {
+            QVariantMap{{QStringLiteral("id"), QStringLiteral("@alice:hs.org")},
+                        {QStringLiteral("displayName"), QStringLiteral("Alice")},
+                        {QStringLiteral("presence"), QStringLiteral("available")}},
+            QVariantMap{{QStringLiteral("id"), QStringLiteral("@bob:hs.org")},
+                        {QStringLiteral("displayName"), QString()},
+                        {QStringLiteral("presence"), QStringLiteral("offline")}},
+        };
+    }
+};
+
 // An empty registry: connected-nothing, adapters need a live daemon.
 class EmptyTransportRegistry : public transports::ITransportRegistry {
 public:
@@ -125,6 +152,30 @@ private slots:
         // Adapter picker rows.
         QVERIFY(md.contains(QStringLiteral("Matrix")));
         QVERIFY(md.contains(QStringLiteral("Rooms (internal)")));
+    }
+
+    // [acct-mgmt] The Contacts group + its contact sub-rows render under the account that reports
+    // rosterOps.list, once a contacts seam is present (gated: the room/local account, which does
+    // not advertise rosterOps, shows no Contacts group).
+    void channelsPageProjectsContacts() {
+        SeededTransportRegistry registry;
+        SeededPresenceService presence;
+        SeededContactsService contacts;
+        TuiPageHub::Dependencies deps;
+        deps.transportRegistry = &registry;
+        deps.presence = &presence;
+        deps.contacts = &contacts;
+        const TuiPageHub hub(deps);
+
+        const QString md = hub.pageMarkdownForKind(TabModel::Channels);
+
+        // The group header with the count, plus both contacts (aliased name + bare id fallback).
+        QVERIFY(md.contains(QStringLiteral("~ Contacts (2)")));
+        QVERIFY(md.contains(QStringLiteral("Alice")));
+        QVERIFY(md.contains(QStringLiteral("@alice:hs.org")));
+        QVERIFY(md.contains(QStringLiteral("@bob:hs.org")));
+        // The contact-row key hints are surfaced.
+        QVERIFY(md.contains(QStringLiteral("Contact row:")));
     }
 
     // Absent seams: no transports registry renders the explicit unavailable

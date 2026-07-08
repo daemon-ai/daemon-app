@@ -33,6 +33,7 @@
 #include "todo_list_model.h"
 #include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2: live-refresh the inventory
 #include "transcript_exporter.h"
+#include "transports/icontacts_service.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "tui_file_tab_controller.h"
@@ -189,6 +190,15 @@ void RootWidget::wirePageLiveRefresh() {
     if (m_services.presence != nullptr) {
         connect(m_services.presence, &transports::IPresenceService::presenceChanged, this,
                 [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
+    }
+    // [acct-mgmt] The Contacts seam re-projects on a roster refresh / mutation / the node's
+    // ContactsChanged feed event; repaint the Channels page so the contact rows update (GUI
+    // parity: ChannelsPage's Connections re-read on contactsChanged).
+    if (m_services.contacts != nullptr) {
+        connect(m_services.contacts, &transports::IContactsService::contactsChanged, this,
+                [this](const QString&, const QVariantList&) {
+                    refreshPageIfActive(TabModel::Channels);
+                });
     }
     // The Settings page projects the daemon config + the app-pref store; re-render
     // it whenever either seam reports a write (an edit made on the page itself, or

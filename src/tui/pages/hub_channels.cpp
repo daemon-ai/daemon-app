@@ -10,6 +10,7 @@
 // workstream; the dispatch stays in TuiPageHub::pageMarkdownForKind.
 
 #include "daemonnet/idaemonnet.h"
+#include "transports/icontacts_service.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "tui_page_hub.h"
@@ -52,9 +53,25 @@ QList<QVariantMap> TuiPageHub::channelRows() const {
     if (m_deps.transportRegistry == nullptr) {
         return rows;
     }
+    // [acct-mgmt] Resolve a family's rosterOps.list (wire v34) — the Contacts group shows ONLY when
+    // the node reported it (no legacy coarse fallback for contacts, GUI canRosterOp parity).
+    const auto familyHasRosterList = [this](const QString& family) {
+        for (const QVariant& v : m_deps.transportRegistry->availableAdapters()) {
+            const QVariantMap a = v.toMap();
+            if (a.value(QStringLiteral("family")).toString() == family) {
+                return a.contains(QStringLiteral("rosterOps")) &&
+                       a.value(QStringLiteral("rosterOps"))
+                           .toMap()
+                           .value(QStringLiteral("list"))
+                           .toBool();
+            }
+        }
+        return false;
+    };
     for (const QVariant& v : m_deps.transportRegistry->instances()) {
         QVariantMap a = v.toMap();
         const QString transport = a.value(QStringLiteral("transport")).toString();
+        const QString family = a.value(QStringLiteral("family")).toString();
         a[QStringLiteral("rowKind")] = QStringLiteral("account");
         a[QStringLiteral("id")] = transport;
         a[QStringLiteral("connection")] = m_deps.presence != nullptr
@@ -70,10 +87,36 @@ QList<QVariantMap> TuiPageHub::channelRows() const {
             row[QStringLiteral("id")] = convId;
             row[QStringLiteral("transport")] = transport;
             row[QStringLiteral("convId")] = convId;
-            row[QStringLiteral("family")] = a.value(QStringLiteral("family")).toString();
+            row[QStringLiteral("family")] = family;
             row[QStringLiteral("roomLabel")] = title.isEmpty() ? convId : title;
             row[QStringLiteral("kind")] = r.value(QStringLiteral("kind")).toString();
             rows.append(row);
+        }
+        // [acct-mgmt] The Contacts group + its contact sub-rows (after the rooms), gated on
+        // rosterOps.list. `a`/`f` act on the group row; the contact rows carry Enter/`a`/`x`/`m`.
+        if (m_deps.contacts != nullptr && familyHasRosterList(family)) {
+            const QVariantList contacts = m_deps.contacts->contacts(transport);
+            QVariantMap group;
+            group[QStringLiteral("rowKind")] = QStringLiteral("contactsGroup");
+            group[QStringLiteral("id")] = transport;
+            group[QStringLiteral("transport")] = transport;
+            group[QStringLiteral("family")] = family;
+            group[QStringLiteral("count")] = contacts.size();
+            rows.append(group);
+            for (const QVariant& cv : contacts) {
+                const QVariantMap c = cv.toMap();
+                const QString id = c.value(QStringLiteral("id")).toString();
+                const QString name = c.value(QStringLiteral("displayName")).toString();
+                QVariantMap row;
+                row[QStringLiteral("rowKind")] = QStringLiteral("contact");
+                row[QStringLiteral("id")] = id;
+                row[QStringLiteral("transport")] = transport;
+                row[QStringLiteral("family")] = family;
+                row[QStringLiteral("contactId")] = id;
+                row[QStringLiteral("displayName")] = name;
+                row[QStringLiteral("presence")] = c.value(QStringLiteral("presence")).toString();
+                rows.append(row);
+            }
         }
     }
     return rows;
@@ -92,12 +135,14 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
     }
 
     // [acct-mgmt] j/k walks accounts AND their rooms; keys are row-contextual (account vs room).
-    md += tr("Events-IO transport accounts, their rooms and members, shared with the GUI. "
-             "**j/k** move.\n\n"
+    md += tr("Events-IO transport accounts, their rooms, members and contacts, shared with the "
+             "GUI. **j/k** move.\n\n"
              "Account row: **c** connect · **d** disconnect · **x** remove account · "
-             "**g** join room · **n** new room.\n"
+             "**g** join room · **n** new room · **a** add contact · **f** find people.\n"
              "Room row: **Enter** members · **i** invite · **l** leave · **x** delete · "
-             "**p** pin to agent.\n\n"
+             "**p** pin to agent.\n"
+             "Contacts group: **a** add contact · **f** find people.\n"
+             "Contact row: **Enter** profile · **a** alias · **x** remove · **m** open DM.\n\n"
              "Room invites are handled by the node; newly-joined rooms appear here "
              "automatically.\n\n");
 
@@ -165,6 +210,30 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
             }
             lastAccount = transport;
             lastAccountHadRoom = false;
+            continue;
+        }
+        // [acct-mgmt] Contacts group header (after the account's rooms): "~ Contacts (n)".
+        if (rowKind == QLatin1String("contactsGroup")) {
+            flushNoRooms();
+            lastAccount.clear(); // rooms for this account are done; suppress the no-rooms note
+            md += tr("  - %1~ Contacts (%2)\n")
+                      .arg(mark(i))
+                      .arg(row.value(QStringLiteral("count")).toInt());
+            continue;
+        }
+        // [acct-mgmt] Contact sub-row: presence glyph + name (alias overlay) + id.
+        if (rowKind == QLatin1String("contact")) {
+            const QString id = row.value(QStringLiteral("contactId")).toString();
+            const QString name = row.value(QStringLiteral("displayName")).toString();
+            const QString presence = row.value(QStringLiteral("presence")).toString();
+            const QString glyph =
+                presence == QLatin1String("available") || presence == QLatin1String("streaming")
+                    ? QStringLiteral("●")
+                    : (presence == QLatin1String("idle") || presence == QLatin1String("away")
+                           ? QStringLiteral("◐")
+                           : QStringLiteral("○"));
+            md += name.isEmpty() ? tr("    - %1%2 `%3`\n").arg(mark(i), glyph, id)
+                                 : tr("    - %1%2 %3 · `%4`\n").arg(mark(i), glyph, name, id);
             continue;
         }
         // Room row (EIO-8): rendered as a selectable, indented sub-row.

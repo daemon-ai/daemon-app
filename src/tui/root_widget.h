@@ -88,7 +88,8 @@ class MemoryGraphModel;
 } // namespace memoryui
 
 class AddAccountFlow;
-class RoomFlow; // [acct-mgmt] Channels room lifecycle + member flows
+class RoomFlow;    // [acct-mgmt] Channels room lifecycle + member flows
+class ContactFlow; // [acct-mgmt] Channels transport-contacts flows (wire v34)
 class AuthFlowLauncher;
 class SidebarModel;
 class SessionsListModel;
@@ -385,6 +386,16 @@ private:
     void openRoomDeleteConfirm(const QString& transport, const QString& conversation,
                                const QString& label);
     void openRoomPin(const QString& transport, const QString& conversation, const QString& kind);
+    // [acct-mgmt] Channels contact key handlers (wire v34). Add/find/alias/profile go through the
+    // shared ContactFlow (chained dialogs / palettes); remove is a RootWidget confirm; DM reuses
+    // the conv-create seam directly (the contact as participant, no new wire op).
+    void openContactAdd(const QString& transport);
+    void openContactFind(const QString& transport);
+    void openContactAlias(const QString& transport, const QString& contactId,
+                          const QString& currentName);
+    void openContactProfile(const QString& transport, const QString& contactId);
+    void openContactRemoveConfirm(const QString& transport, const QString& contactId);
+    void openContactDm(const QString& transport, const QString& contactId);
     // [wave2:app-approvals-safety] D3: inline transcript "Deny with reason" — open a prompt and
     // resolve the parked gate with the operator reason (Respond{Approved{reason}}, wire v29).
     void openInlineDenyReasonPrompt(const QString& callId);
@@ -482,6 +493,7 @@ private:
     // [acct-mgmt] Channels room lifecycle + member flows (join/create/invite/members; lazily
     // created, parented to this widget).
     RoomFlow* m_roomFlow = nullptr;
+    ContactFlow* m_contactFlow = nullptr; // [acct-mgmt] lazily built (room_flow precedent)
     // Interactive sign-in flow driver (lazily created; parented to this widget).
     AuthFlowLauncher* m_authFlow = nullptr;
     CommandRegistry* m_commands = nullptr;

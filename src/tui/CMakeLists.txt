@@ -148,6 +148,8 @@ qt_add_executable(daemon-tui
     # [acct-mgmt] room lifecycle + member management flows (Phase B)
     dialogs/room_flow.h
     dialogs/room_flow.cpp
+    dialogs/contact_flow.h
+    dialogs/contact_flow.cpp
     # Interactive sign-in flow ('o' on the Accounts page): the TUI AuthFlowSheet analog over
     # the shared AuthFlowController (app-wizard-auth stream's own TU).
     dialogs/auth_flow_dialog.h
