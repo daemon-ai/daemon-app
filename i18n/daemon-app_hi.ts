@@ -366,104 +366,104 @@ You&apos;ll return to first-run setup.</source>
     <name>AgentSetupForm</name>
     <message>
         <source>Name</source>
-        <translation type="unfinished">नाम</translation>
+        <translation>नाम</translation>
     </message>
     <message>
         <source>agent name</source>
-        <translation type="unfinished">एजेंट नाम</translation>
+        <translation>एजेंट नाम</translation>
     </message>
     <message>
         <source>Engine</source>
-        <translation type="unfinished">इंजन</translation>
+        <translation>इंजन</translation>
     </message>
     <message>
         <source>Foreign</source>
-        <translation type="unfinished"></translation>
+        <translation>फ़ॉरेन</translation>
     </message>
     <message>
         <source>Native</source>
-        <translation type="unfinished">नेटिव</translation>
+        <translation>नेटिव</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>बैकएंड</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
-        <translation type="unfinished">पर्सोना (वैकल्पिक)</translation>
+        <translation>पर्सोना (वैकल्पिक)</translation>
     </message>
     <message>
         <source>system prompt</source>
-        <translation type="unfinished">सिस्टम प्रॉम्प्ट</translation>
+        <translation>सिस्टम प्रॉम्प्ट</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">%1 के साथ इस API कुंजी की पुष्टि नहीं हो सकी — इसे जाँचें और फिर से प्रयास करें।</translation>
+        <translation>%1 के साथ इस API कुंजी की पुष्टि नहीं हो सकी — इसे जाँचें और फिर से प्रयास करें।</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">आपके मॉडल तक नहीं पहुँच सके — प्रदाता जाँचें और फिर से प्रयास करें।</translation>
+        <translation>आपके मॉडल तक नहीं पहुँच सके — प्रदाता जाँचें और फिर से प्रयास करें।</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupView</name>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>बैकएंड</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>नोड का प्रोवाइडर गेटवे अक्षम है।</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>गेटवे सक्षम करें</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>मॉडल संकेत (वैकल्पिक)</translation>
     </message>
     <message>
         <source>Provider</source>
-        <translation type="unfinished">प्रदाता</translation>
+        <translation>प्रदाता</translation>
     </message>
     <message>
         <source>List models</source>
-        <translation type="unfinished">मॉडल सूचीबद्ध करें</translation>
+        <translation>मॉडल सूचीबद्ध करें</translation>
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished">मॉडल</translation>
+        <translation>मॉडल</translation>
     </message>
     <message>
         <source>Base URL (e.g. https://…)</source>
-        <translation type="unfinished">बेस URL (जैसे https://…)</translation>
+        <translation>बेस URL (जैसे https://…)</translation>
     </message>
     <message>
         <source>Model id</source>
-        <translation type="unfinished">मॉडल id</translation>
+        <translation>मॉडल id</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
-        <translation type="unfinished">कस्टम एंडपॉइंट…</translation>
+        <translation>कस्टम एंडपॉइंट…</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>एजेंट का अपना बैकएंड</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>नोड प्रोवाइडर (गेटवे)</translation>
     </message>
 </context>
 <context>
     <name>AgentTypePicker</name>
     <message>
         <source>Native</source>
-        <translation type="unfinished">नेटिव</translation>
+        <translation>नेटिव</translation>
     </message>
     <message>
         <source>daemon-core (native)</source>
@@ -475,7 +475,7 @@ You&apos;ll return to first-run setup.</source>
     </message>
     <message>
         <source>  ·  ACP</source>
-        <translation type="unfinished"></translation>
+        <translation>  ·  ACP</translation>
     </message>
 </context>
 <context>
@@ -2478,19 +2478,19 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>अधिकतम कंपोज़्ड प्रोफ़ाइल</translation>
     </message>
     <message>
         <source>Profiles an agent may author. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रोफ़ाइल जो एक एजेंट बना सकता है। नोड द्वारा लागू किया जाता है।</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रति सत्र अधिकतम अस्थायी चाइल्ड</translation>
     </message>
     <message>
         <source>Concurrent ephemeral children a session may run. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>एक सत्र द्वारा एक साथ चलाए जा सकने वाले अस्थायी चाइल्ड। नोड द्वारा लागू किया जाता है।</translation>
     </message>
 </context>
 <context>
@@ -3028,7 +3028,7 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Choose the kind of agent: native picks a model next; a foreign agent uses its own backend or the node&apos;s gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>एजेंट का प्रकार चुनें: नेटिव अगले चरण में एक मॉडल चुनता है; एक फ़ॉरेन एजेंट अपना खुद का बैकएंड या नोड का गेटवे उपयोग करता है।</translation>
     </message>
     <message>
         <source>Test</source>
@@ -3144,15 +3144,15 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway — pick a provider and model next.</source>
-        <translation type="unfinished"></translation>
+        <translation>नोड के प्रोवाइडर गेटवे के माध्यम से रूट किया गया — अगले चरण में एक प्रोवाइडर और मॉडल चुनें।</translation>
     </message>
     <message>
         <source>This agent runs a foreign engine using its own backend — it brings its own model, so no provider or key is needed.</source>
-        <translation type="unfinished"></translation>
+        <translation>यह एजेंट अपने खुद के बैकएंड का उपयोग करके एक फ़ॉरेन इंजन चलाता है — यह अपना खुद का मॉडल लाता है, इसलिए किसी प्रोवाइडर या कुंजी की आवश्यकता नहीं है।</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>बैकएंड</translation>
     </message>
     <message>
         <source>Agent name</source>
@@ -3218,15 +3218,15 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रबंधित चाइल्ड</translation>
     </message>
     <message>
         <source>Subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>सबएजेंट</translation>
     </message>
     <message>
         <source>Primary</source>
-        <translation type="unfinished"></translation>
+        <translation>प्राथमिक</translation>
     </message>
     <message>
         <source>Ephemeral</source>
@@ -3296,35 +3296,35 @@ until it is re-registered.</source>
     <name>ForeignBackendPicker</name>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>एजेंट का अपना बैकएंड</translation>
     </message>
     <message>
         <source>Uses the agent&apos;s own login and config; the node only steers its model.</source>
-        <translation type="unfinished"></translation>
+        <translation>एजेंट का अपना लॉगिन और कॉन्फ़िग उपयोग करता है; नोड केवल उसके मॉडल को नियंत्रित करता है।</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>नोड प्रोवाइडर (गेटवे)</translation>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway; keys stay on the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>नोड के प्रोवाइडर गेटवे के माध्यम से रूट किया गया; कुंजियाँ नोड पर ही रहती हैं।</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>नोड का प्रोवाइडर गेटवे अक्षम है।</translation>
     </message>
     <message>
         <source>Enable</source>
-        <translation type="unfinished"></translation>
+        <translation>सक्षम करें</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>मॉडल संकेत (वैकल्पिक)</translation>
     </message>
     <message>
         <source>model id the agent should prefer</source>
-        <translation type="unfinished"></translation>
+        <translation>मॉडल id जिसे एजेंट को प्राथमिकता देनी चाहिए</translation>
     </message>
 </context>
 <context>
@@ -3339,7 +3339,7 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>OpenAI gateway: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI गेटवे: %1</translation>
     </message>
     <message>
         <source>View all logs</source>
@@ -3347,97 +3347,97 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>ठीक</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>बंद</translation>
     </message>
 </context>
 <context>
     <name>GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>गेटवे ऑपरेशन विफल</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>गेटवे स्थिति डिकोड करने में विफल</translation>
     </message>
 </context>
 <context>
     <name>GatewaySection</name>
     <message>
         <source>OpenAI-compatible gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI-संगत गेटवे</translation>
     </message>
     <message>
         <source>The node runs a resident OpenAI-compatible gateway so foreign agents (codex, opencode) can be routed through the node — keys stay on the node and never reach the agent.</source>
-        <translation type="unfinished"></translation>
+        <translation>नोड एक रेज़िडेंट OpenAI-संगत गेटवे चलाता है ताकि फ़ॉरेन एजेंट (codex, opencode) को नोड के माध्यम से रूट किया जा सके — कुंजियाँ नोड पर ही रहती हैं और कभी एजेंट तक नहीं पहुँचतीं।</translation>
     </message>
     <message>
         <source>Connect to a daemon to manage the gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>गेटवे प्रबंधित करने के लिए किसी डीमन से कनेक्ट करें।</translation>
     </message>
     <message>
         <source>This node does not provide the OpenAI-compatible gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>यह नोड OpenAI-संगत गेटवे प्रदान नहीं करता।</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>गेटवे सक्षम करें</translation>
     </message>
     <message>
         <source>Serve /v1/chat/completions and /v1/models from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>नोड से /v1/chat/completions और /v1/models सर्व करें।</translation>
     </message>
     <message>
         <source>Bind address</source>
-        <translation type="unfinished"></translation>
+        <translation>बाइंड पता</translation>
     </message>
     <message>
         <source>Optional. Leave blank to let the node choose (e.g. a loopback port).</source>
-        <translation type="unfinished"></translation>
+        <translation>वैकल्पिक। नोड को चुनने देने के लिए खाली छोड़ें (उदा. एक loopback पोर्ट)।</translation>
     </message>
     <message>
         <source>127.0.0.1:0</source>
-        <translation type="unfinished"></translation>
+        <translation>127.0.0.1:0</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation type="unfinished">अज्ञात</translation>
+        <translation>अज्ञात</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>अक्षम</translation>
     </message>
     <message>
         <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 पर सुन रहा है</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>सुन रहा है</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>त्रुटि: %1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>शुरू हो रहा है…</translation>
     </message>
     <message>
         <source>Service health</source>
-        <translation type="unfinished"></translation>
+        <translation>सेवा स्वास्थ्य</translation>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>ठीक</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>बंद</translation>
     </message>
 </context>
 <context>
@@ -4442,7 +4442,7 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>बैकएंड</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4557,7 +4557,7 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>मॉडल संकेत (वैकल्पिक)</translation>
     </message>
     <message>
         <source>Name</source>
@@ -4573,23 +4573,23 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>बैकएंड</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>नोड प्रोवाइडर (गेटवे)</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>एजेंट का अपना बैकएंड</translation>
     </message>
     <message>
         <source>Model hint</source>
-        <translation type="unfinished"></translation>
+        <translation>मॉडल संकेत</translation>
     </message>
     <message>
         <source>(optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>(वैकल्पिक)</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4722,15 +4722,15 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>All profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>सभी प्रोफ़ाइल</translation>
     </message>
     <message>
         <source>Operator</source>
-        <translation type="unfinished"></translation>
+        <translation>ऑपरेटर</translation>
     </message>
     <message>
         <source>Agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>एजेंट द्वारा बनाया गया</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -4742,19 +4742,19 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>एजेंट द्वारा बनाया गया</translation>
     </message>
     <message>
         <source>Owner: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>स्वामी: %1</translation>
     </message>
     <message>
         <source>Authored by an agent</source>
-        <translation type="unfinished"></translation>
+        <translation>किसी एजेंट द्वारा बनाया गया</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile</source>
-        <translation type="unfinished"></translation>
+        <translation>इस एजेंट-निर्मित प्रोफ़ाइल को रद्द करें</translation>
     </message>
     <message>
         <source>New profile</source>
@@ -4762,23 +4762,23 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">बनाएँ</translation>
+        <translation>बनाएँ</translation>
     </message>
     <message>
         <source>Or clone from</source>
-        <translation type="unfinished"></translation>
+        <translation>या इससे क्लोन करें</translation>
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रोफ़ाइल रद्द करें</translation>
     </message>
     <message>
         <source>Revoke</source>
-        <translation type="unfinished">रद्द करें</translation>
+        <translation>रद्द करें</translation>
     </message>
     <message>
         <source>Revoke the agent-authored profile “%1”? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>एजेंट-निर्मित प्रोफ़ाइल “%1” रद्द करें? यह इसे नोड से हटा देता है।</translation>
     </message>
     <message>
         <source>Empty profile</source>
@@ -5751,11 +5751,11 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रोफ़ाइल रद्द करें</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>इस एजेंट-निर्मित प्रोफ़ाइल को रद्द करें? यह इसे नोड से हटा देता है।</translation>
     </message>
 </context>
 <context>
@@ -6470,7 +6470,7 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">गेटवे</translation>
+        <translation>गेटवे</translation>
     </message>
     <message>
         <source>Model</source>
@@ -6787,23 +6787,23 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Not available</source>
-        <translation type="unfinished"></translation>
+        <translation>उपलब्ध नहीं</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>अक्षम</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>सुन रहा है</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>त्रुटि: %1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>शुरू हो रहा है…</translation>
     </message>
 </context>
 <context>
@@ -6814,25 +6814,25 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>off</source>
-        <translation type="unfinished">बंद</translation>
+        <translation>बंद</translation>
     </message>
     <message>
         <source>on</source>
-        <translation type="unfinished">चालू</translation>
+        <translation>चालू</translation>
     </message>
     <message>
         <source>…</source>
-        <translation type="unfinished"></translation>
+        <translation>…</translation>
     </message>
     <message>
         <source>OpenAI GW </source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI GW </translation>
     </message>
     <message numerus="yes">
         <source>%n service(s) down</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n सेवा बंद</numerusform>
+            <numerusform>%n सेवाएँ बंद</numerusform>
         </translation>
     </message>
     <message>
@@ -7512,11 +7512,11 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">गेटवे</translation>
+        <translation>गेटवे</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>गेटवे सक्षम करें</translation>
     </message>
     <message>
         <source>Updates</source>
@@ -7584,11 +7584,11 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>अधिकतम कंपोज़्ड प्रोफ़ाइल</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रति सत्र अधिकतम अस्थायी चाइल्ड</translation>
     </message>
     <message>
         <source>Tools</source>
@@ -7596,28 +7596,29 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>अक्षम</translation>
     </message>
     <message>
         <source>listening</source>
-        <translation type="unfinished"></translation>
+        <translation>सुन रहा है</translation>
     </message>
     <message>
         <source>listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 पर सुन रहा है</translation>
     </message>
     <message>
         <source>error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>त्रुटि: %1</translation>
     </message>
     <message>
         <source>starting</source>
-        <translation type="unfinished"></translation>
+        <translation>शुरू हो रहा है</translation>
     </message>
     <message>
         <source>- Status: **%1** — _routes foreign agents through the node; keys stay on the node_
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- स्थिति: **%1** — _फ़ॉरेन एजेंट को नोड के माध्यम से रूट करता है; कुंजियाँ नोड पर ही रहती हैं_
+</translation>
     </message>
     <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
@@ -7940,12 +7941,14 @@ Thanks — proceeding with: %1
     <message>
         <source>- Provenance: agent-authored
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- उद्गम: एजेंट द्वारा बनाया गया
+</translation>
     </message>
     <message>
         <source>- Provenance: agent-authored (owner `%1`)
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- उद्गम: एजेंट द्वारा बनाया गया (स्वामी `%1`)
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -8341,15 +8344,15 @@ _कोई एजेंट चयनित नहीं।_
     </message>
     <message>
         <source>managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रबंधित चाइल्ड</translation>
     </message>
     <message>
         <source>subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>सबएजेंट</translation>
     </message>
     <message>
         <source>primary</source>
-        <translation type="unfinished"></translation>
+        <translation>प्राथमिक</translation>
     </message>
     <message>
         <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
@@ -9040,11 +9043,11 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <name>daemonapp::daemon::GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>गेटवे ऑपरेशन विफल</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>गेटवे स्थिति डिकोड करने में विफल</translation>
     </message>
 </context>
 <context>
@@ -9298,11 +9301,11 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <name>setup::AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">%1 के साथ इस API कुंजी की पुष्टि नहीं हो सकी — इसे जाँचें और फिर से प्रयास करें।</translation>
+        <translation>%1 के साथ इस API कुंजी की पुष्टि नहीं हो सकी — इसे जाँचें और फिर से प्रयास करें।</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">आपके मॉडल तक नहीं पहुँच सके — प्रदाता जाँचें और फिर से प्रयास करें।</translation>
+        <translation>आपके मॉडल तक नहीं पहुँच सके — प्रदाता जाँचें और फिर से प्रयास करें।</translation>
     </message>
 </context>
 <context>

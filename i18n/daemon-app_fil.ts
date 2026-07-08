@@ -366,104 +366,104 @@ Babalik ka sa first-run setup.</translation>
     <name>AgentSetupForm</name>
     <message>
         <source>Name</source>
-        <translation type="unfinished">Pangalan</translation>
+        <translation>Pangalan</translation>
     </message>
     <message>
         <source>agent name</source>
-        <translation type="unfinished">pangalan ng agent</translation>
+        <translation>pangalan ng agent</translation>
     </message>
     <message>
         <source>Engine</source>
-        <translation type="unfinished">Engine</translation>
+        <translation>Engine</translation>
     </message>
     <message>
         <source>Foreign</source>
-        <translation type="unfinished">Foreign</translation>
+        <translation>Foreign</translation>
     </message>
     <message>
         <source>Native</source>
-        <translation type="unfinished">Native</translation>
+        <translation>Native</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
-        <translation type="unfinished">Persona (opsyonal)</translation>
+        <translation>Persona (opsyonal)</translation>
     </message>
     <message>
         <source>system prompt</source>
-        <translation type="unfinished">system prompt</translation>
+        <translation>system prompt</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">Hindi ma-verify ang API key na ito sa %1 — suriin ito at subukang muli.</translation>
+        <translation>Hindi ma-verify ang API key na ito sa %1 — suriin ito at subukang muli.</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">Hindi maabot ang iyong model — suriin ang provider at subukan muli.</translation>
+        <translation>Hindi maabot ang iyong model — suriin ang provider at subukan muli.</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupView</name>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Naka-disable ang provider gateway ng node.</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>I-enable ang gateway</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>Model hint (opsyonal)</translation>
     </message>
     <message>
         <source>Provider</source>
-        <translation type="unfinished">Provider</translation>
+        <translation>Provider</translation>
     </message>
     <message>
         <source>List models</source>
-        <translation type="unfinished">Ilista ang mga model</translation>
+        <translation>Ilista ang mga model</translation>
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished">Model</translation>
+        <translation>Model</translation>
     </message>
     <message>
         <source>Base URL (e.g. https://…)</source>
-        <translation type="unfinished">Base URL (hal. https://…)</translation>
+        <translation>Base URL (hal. https://…)</translation>
     </message>
     <message>
         <source>Model id</source>
-        <translation type="unfinished">Model id</translation>
+        <translation>Model id</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
-        <translation type="unfinished">Custom na endpoint…</translation>
+        <translation>Custom na endpoint…</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Sariling backend ng agent</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>Provider ng node (gateway)</translation>
     </message>
 </context>
 <context>
     <name>AgentTypePicker</name>
     <message>
         <source>Native</source>
-        <translation type="unfinished">Native</translation>
+        <translation>Native</translation>
     </message>
     <message>
         <source>daemon-core (native)</source>
@@ -475,7 +475,7 @@ Babalik ka sa first-run setup.</translation>
     </message>
     <message>
         <source>  ·  ACP</source>
-        <translation type="unfinished"></translation>
+        <translation>  ·  ACP</translation>
     </message>
 </context>
 <context>
@@ -2478,19 +2478,19 @@ hanggang muli itong mairehistro.</translation>
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Max na composed profiles</translation>
     </message>
     <message>
         <source>Profiles an agent may author. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Mga profile na maaaring likhain ng agent. Ipinatutupad ng node.</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>Max na ephemeral children kada session</translation>
     </message>
     <message>
         <source>Concurrent ephemeral children a session may run. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Mga sabay-sabay na ephemeral children na maaaring patakbuhin ng isang session. Ipinatutupad ng node.</translation>
     </message>
 </context>
 <context>
@@ -3028,7 +3028,7 @@ hanggang muli itong mairehistro.</translation>
     </message>
     <message>
         <source>Choose the kind of agent: native picks a model next; a foreign agent uses its own backend or the node&apos;s gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>Piliin ang uri ng agent: pumipili ang native ng model sa susunod; gumagamit ang foreign agent ng sarili nitong backend o ng gateway ng node.</translation>
     </message>
     <message>
         <source>Test</source>
@@ -3144,15 +3144,15 @@ hanggang muli itong mairehistro.</translation>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway — pick a provider and model next.</source>
-        <translation type="unfinished"></translation>
+        <translation>Iruruta sa pamamagitan ng provider gateway ng node — pumili ng provider at model sa susunod.</translation>
     </message>
     <message>
         <source>This agent runs a foreign engine using its own backend — it brings its own model, so no provider or key is needed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nagpapatakbo ang agent na ito ng foreign engine gamit ang sarili nitong backend — dala nito ang sarili nitong model, kaya hindi na kailangan ng provider o key.</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>Agent name</source>
@@ -3218,15 +3218,15 @@ hanggang muli itong mairehistro.</translation>
     </message>
     <message>
         <source>Managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>Managed child</translation>
     </message>
     <message>
         <source>Subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>Subagent</translation>
     </message>
     <message>
         <source>Primary</source>
-        <translation type="unfinished"></translation>
+        <translation>Pangunahin</translation>
     </message>
     <message>
         <source>Ephemeral</source>
@@ -3296,35 +3296,35 @@ hanggang muli itong mairehistro.</translation>
     <name>ForeignBackendPicker</name>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Sariling backend ng agent</translation>
     </message>
     <message>
         <source>Uses the agent&apos;s own login and config; the node only steers its model.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ginagamit ang sariling login at config ng agent; ang node lang ang umaakay sa model nito.</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>Provider ng node (gateway)</translation>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway; keys stay on the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Iruruta sa pamamagitan ng provider gateway ng node; nananatili sa node ang mga key.</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Naka-disable ang provider gateway ng node.</translation>
     </message>
     <message>
         <source>Enable</source>
-        <translation type="unfinished"></translation>
+        <translation>I-enable</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>Model hint (opsyonal)</translation>
     </message>
     <message>
         <source>model id the agent should prefer</source>
-        <translation type="unfinished"></translation>
+        <translation>model id na dapat piliin ng agent</translation>
     </message>
 </context>
 <context>
@@ -3339,7 +3339,7 @@ hanggang muli itong mairehistro.</translation>
     </message>
     <message>
         <source>OpenAI gateway: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI gateway: %1</translation>
     </message>
     <message>
         <source>View all logs</source>
@@ -3347,97 +3347,97 @@ hanggang muli itong mairehistro.</translation>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>ok</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>down</translation>
     </message>
 </context>
 <context>
     <name>GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Nabigo ang operasyon ng gateway</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>Nabigong i-decode ang status ng gateway</translation>
     </message>
 </context>
 <context>
     <name>GatewaySection</name>
     <message>
         <source>OpenAI-compatible gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>Gateway na compatible sa OpenAI</translation>
     </message>
     <message>
         <source>The node runs a resident OpenAI-compatible gateway so foreign agents (codex, opencode) can be routed through the node — keys stay on the node and never reach the agent.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nagpapatakbo ang node ng residenteng gateway na compatible sa OpenAI upang ang mga foreign agent (codex, opencode) ay maruruta sa pamamagitan ng node — nananatili sa node ang mga key at hindi kailanman umaabot sa agent.</translation>
     </message>
     <message>
         <source>Connect to a daemon to manage the gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kumonekta sa isang daemon upang pamahalaan ang gateway.</translation>
     </message>
     <message>
         <source>This node does not provide the OpenAI-compatible gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hindi nagbibigay ang node na ito ng gateway na compatible sa OpenAI.</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>I-enable ang gateway</translation>
     </message>
     <message>
         <source>Serve /v1/chat/completions and /v1/models from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ihain ang /v1/chat/completions at /v1/models mula sa node.</translation>
     </message>
     <message>
         <source>Bind address</source>
-        <translation type="unfinished"></translation>
+        <translation>Bind address</translation>
     </message>
     <message>
         <source>Optional. Leave blank to let the node choose (e.g. a loopback port).</source>
-        <translation type="unfinished"></translation>
+        <translation>Opsyonal. Iwanang blangko upang hayaang pumili ang node (hal. isang loopback port).</translation>
     </message>
     <message>
         <source>127.0.0.1:0</source>
-        <translation type="unfinished"></translation>
+        <translation>127.0.0.1:0</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation type="unfinished">hindi alam</translation>
+        <translation>hindi alam</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>Naka-disable</translation>
     </message>
     <message>
         <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nakikinig sa %1</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>Nakikinig</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Error: %1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>Sinisimulan…</translation>
     </message>
     <message>
         <source>Service health</source>
-        <translation type="unfinished"></translation>
+        <translation>Kalusugan ng serbisyo</translation>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>ok</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>down</translation>
     </message>
 </context>
 <context>
@@ -4442,7 +4442,7 @@ Magsimula ng isa mula sa Discover tab.</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4557,7 +4557,7 @@ Magsimula ng isa mula sa Discover tab.</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>Model hint (opsyonal)</translation>
     </message>
     <message>
         <source>Name</source>
@@ -4573,23 +4573,23 @@ Magsimula ng isa mula sa Discover tab.</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>Provider ng node (gateway)</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Sariling backend ng agent</translation>
     </message>
     <message>
         <source>Model hint</source>
-        <translation type="unfinished"></translation>
+        <translation>Model hint</translation>
     </message>
     <message>
         <source>(optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>(opsyonal)</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4722,15 +4722,15 @@ Magsimula ng isa mula sa Discover tab.</translation>
     </message>
     <message>
         <source>All profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Lahat ng profile</translation>
     </message>
     <message>
         <source>Operator</source>
-        <translation type="unfinished"></translation>
+        <translation>Operator</translation>
     </message>
     <message>
         <source>Agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>Ginawa ng agent</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -4742,19 +4742,19 @@ Magsimula ng isa mula sa Discover tab.</translation>
     </message>
     <message>
         <source>agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>ginawa ng agent</translation>
     </message>
     <message>
         <source>Owner: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>May-ari: %1</translation>
     </message>
     <message>
         <source>Authored by an agent</source>
-        <translation type="unfinished"></translation>
+        <translation>Ginawa ng isang agent</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile</source>
-        <translation type="unfinished"></translation>
+        <translation>Bawiin ang agent-authored na profile na ito</translation>
     </message>
     <message>
         <source>New profile</source>
@@ -4762,23 +4762,23 @@ Magsimula ng isa mula sa Discover tab.</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">Gumawa</translation>
+        <translation>Gumawa</translation>
     </message>
     <message>
         <source>Or clone from</source>
-        <translation type="unfinished"></translation>
+        <translation>O i-clone mula sa</translation>
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>Bawiin ang profile</translation>
     </message>
     <message>
         <source>Revoke</source>
-        <translation type="unfinished">I-revoke</translation>
+        <translation>I-revoke</translation>
     </message>
     <message>
         <source>Revoke the agent-authored profile “%1”? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bawiin ang agent-authored na profile na “%1”? Buburahin nito ito mula sa node.</translation>
     </message>
     <message>
         <source>Empty profile</source>
@@ -5751,11 +5751,11 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>Bawiin ang profile</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bawiin ang agent-authored na profile na ito? Buburahin nito ito mula sa node.</translation>
     </message>
 </context>
 <context>
@@ -6470,7 +6470,7 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">Gateway</translation>
+        <translation>Gateway</translation>
     </message>
     <message>
         <source>Model</source>
@@ -6787,23 +6787,23 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     </message>
     <message>
         <source>Not available</source>
-        <translation type="unfinished"></translation>
+        <translation>Hindi available</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>Naka-disable</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>Nakikinig</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Error: %1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>Sinisimulan…</translation>
     </message>
 </context>
 <context>
@@ -6814,25 +6814,25 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     </message>
     <message>
         <source>off</source>
-        <translation type="unfinished">off</translation>
+        <translation>off</translation>
     </message>
     <message>
         <source>on</source>
-        <translation type="unfinished">on</translation>
+        <translation>on</translation>
     </message>
     <message>
         <source>…</source>
-        <translation type="unfinished"></translation>
+        <translation>…</translation>
     </message>
     <message>
         <source>OpenAI GW </source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI GW </translation>
     </message>
     <message numerus="yes">
         <source>%n service(s) down</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n serbisyo ang down</numerusform>
+            <numerusform>%n na serbisyo ang down</numerusform>
         </translation>
     </message>
     <message>
@@ -7512,11 +7512,11 @@ Salamat — magpapatuloy sa: %1
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">Gateway</translation>
+        <translation>Gateway</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>I-enable ang gateway</translation>
     </message>
     <message>
         <source>Updates</source>
@@ -7584,11 +7584,11 @@ Salamat — magpapatuloy sa: %1
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Max na composed profiles</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>Max na ephemeral children kada session</translation>
     </message>
     <message>
         <source>Tools</source>
@@ -7596,28 +7596,29 @@ Salamat — magpapatuloy sa: %1
     </message>
     <message>
         <source>disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>naka-disable</translation>
     </message>
     <message>
         <source>listening</source>
-        <translation type="unfinished"></translation>
+        <translation>nakikinig</translation>
     </message>
     <message>
         <source>listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>nakikinig sa %1</translation>
     </message>
     <message>
         <source>error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>error: %1</translation>
     </message>
     <message>
         <source>starting</source>
-        <translation type="unfinished"></translation>
+        <translation>sinisimulan</translation>
     </message>
     <message>
         <source>- Status: **%1** — _routes foreign agents through the node; keys stay on the node_
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- Status: **%1** — _iruruta ang mga foreign agent sa pamamagitan ng node; nananatili sa node ang mga key_
+</translation>
     </message>
     <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
@@ -7940,12 +7941,14 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>- Provenance: agent-authored
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- Provenance: ginawa ng agent
+</translation>
     </message>
     <message>
         <source>- Provenance: agent-authored (owner `%1`)
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- Provenance: ginawa ng agent (may-ari `%1`)
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -8341,15 +8344,15 @@ _Walang piniling agent._
     </message>
     <message>
         <source>managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>managed child</translation>
     </message>
     <message>
         <source>subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>subagent</translation>
     </message>
     <message>
         <source>primary</source>
-        <translation type="unfinished"></translation>
+        <translation>pangunahin</translation>
     </message>
     <message>
         <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
@@ -9040,11 +9043,11 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <name>daemonapp::daemon::GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Nabigo ang operasyon ng gateway</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>Nabigong i-decode ang status ng gateway</translation>
     </message>
 </context>
 <context>
@@ -9298,11 +9301,11 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <name>setup::AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">Hindi ma-verify ang API key na ito sa %1 — suriin ito at subukang muli.</translation>
+        <translation>Hindi ma-verify ang API key na ito sa %1 — suriin ito at subukang muli.</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">Hindi maabot ang iyong model — suriin ang provider at subukan muli.</translation>
+        <translation>Hindi maabot ang iyong model — suriin ang provider at subukan muli.</translation>
     </message>
 </context>
 <context>
