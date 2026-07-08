@@ -366,104 +366,104 @@ You&apos;ll return to first-run setup.</source>
     <name>AgentSetupForm</name>
     <message>
         <source>Name</source>
-        <translation type="unfinished">名前</translation>
+        <translation>名前</translation>
     </message>
     <message>
         <source>agent name</source>
-        <translation type="unfinished">エージェント名</translation>
+        <translation>エージェント名</translation>
     </message>
     <message>
         <source>Engine</source>
-        <translation type="unfinished">エンジン</translation>
+        <translation>エンジン</translation>
     </message>
     <message>
         <source>Foreign</source>
-        <translation type="unfinished">外部</translation>
+        <translation>外部</translation>
     </message>
     <message>
         <source>Native</source>
-        <translation type="unfinished">ネイティブ</translation>
+        <translation>ネイティブ</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>バックエンド</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
-        <translation type="unfinished">ペルソナ（任意）</translation>
+        <translation>ペルソナ（任意）</translation>
     </message>
     <message>
         <source>system prompt</source>
-        <translation type="unfinished">システムプロンプト</translation>
+        <translation>システムプロンプト</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">%1 でこのAPIキーを検証できませんでした — 確認して再試行してください。</translation>
+        <translation>%1 でこのAPIキーを検証できませんでした — 確認して再試行してください。</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">モデルに接続できませんでした — プロバイダーを確認して再試行してください。</translation>
+        <translation>モデルに接続できませんでした — プロバイダーを確認して再試行してください。</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupView</name>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>バックエンド</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>ノードのプロバイダーゲートウェイは無効です。</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>ゲートウェイを有効化</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルヒント（任意）</translation>
     </message>
     <message>
         <source>Provider</source>
-        <translation type="unfinished">プロバイダー</translation>
+        <translation>プロバイダー</translation>
     </message>
     <message>
         <source>List models</source>
-        <translation type="unfinished">モデルを一覧表示</translation>
+        <translation>モデルを一覧表示</translation>
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished">モデル</translation>
+        <translation>モデル</translation>
     </message>
     <message>
         <source>Base URL (e.g. https://…)</source>
-        <translation type="unfinished"></translation>
+        <translation>ベース URL（例: https://…）</translation>
     </message>
     <message>
         <source>Model id</source>
-        <translation type="unfinished">モデル ID</translation>
+        <translation>モデル ID</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
-        <translation type="unfinished">カスタムエンドポイント…</translation>
+        <translation>カスタムエンドポイント…</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェント独自のバックエンド</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>ノードプロバイダー（ゲートウェイ）</translation>
     </message>
 </context>
 <context>
     <name>AgentTypePicker</name>
     <message>
         <source>Native</source>
-        <translation type="unfinished">ネイティブ</translation>
+        <translation>ネイティブ</translation>
     </message>
     <message>
         <source>daemon-core (native)</source>
@@ -475,7 +475,7 @@ You&apos;ll return to first-run setup.</source>
     </message>
     <message>
         <source>  ·  ACP</source>
-        <translation type="unfinished"></translation>
+        <translation>  ·  ACP</translation>
     </message>
 </context>
 <context>
@@ -2478,19 +2478,19 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>合成プロファイルの最大数</translation>
     </message>
     <message>
         <source>Profiles an agent may author. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェントが作成できるプロファイル。ノードによって適用されます。</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>セッションごとの一時的な子の最大数</translation>
     </message>
     <message>
         <source>Concurrent ephemeral children a session may run. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>セッションが同時に実行できる一時的な子の数。ノードによって適用されます。</translation>
     </message>
 </context>
 <context>
@@ -3026,7 +3026,7 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Choose the kind of agent: native picks a model next; a foreign agent uses its own backend or the node&apos;s gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェントの種類を選択してください: ネイティブは次にモデルを選びます。外部エージェントは独自のバックエンドまたはノードのゲートウェイを使用します。</translation>
     </message>
     <message>
         <source>Test</source>
@@ -3142,15 +3142,15 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway — pick a provider and model next.</source>
-        <translation type="unfinished"></translation>
+        <translation>ノードのプロバイダーゲートウェイ経由でルーティングされます — 次にプロバイダーとモデルを選択してください。</translation>
     </message>
     <message>
         <source>This agent runs a foreign engine using its own backend — it brings its own model, so no provider or key is needed.</source>
-        <translation type="unfinished"></translation>
+        <translation>このエージェントは独自のバックエンドを使用して外部エンジンを実行します — 独自のモデルを持ち込むため、プロバイダーやキーは不要です。</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>バックエンド</translation>
     </message>
     <message>
         <source>Agent name</source>
@@ -3216,15 +3216,15 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>管理された子</translation>
     </message>
     <message>
         <source>Subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>サブエージェント</translation>
     </message>
     <message>
         <source>Primary</source>
-        <translation type="unfinished"></translation>
+        <translation>プライマリ</translation>
     </message>
     <message>
         <source>Ephemeral</source>
@@ -3294,35 +3294,35 @@ until it is re-registered.</source>
     <name>ForeignBackendPicker</name>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェント独自のバックエンド</translation>
     </message>
     <message>
         <source>Uses the agent&apos;s own login and config; the node only steers its model.</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェント独自のログインと設定を使用します。ノードはモデルを制御するのみです。</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>ノードプロバイダー（ゲートウェイ）</translation>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway; keys stay on the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>ノードのプロバイダーゲートウェイ経由でルーティングされます。キーはノードに保持されます。</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>ノードのプロバイダーゲートウェイは無効です。</translation>
     </message>
     <message>
         <source>Enable</source>
-        <translation type="unfinished"></translation>
+        <translation>有効化</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルヒント（任意）</translation>
     </message>
     <message>
         <source>model id the agent should prefer</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェントが優先すべきモデル ID</translation>
     </message>
 </context>
 <context>
@@ -3337,7 +3337,7 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>OpenAI gateway: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI ゲートウェイ: %1</translation>
     </message>
     <message>
         <source>View all logs</source>
@@ -3345,97 +3345,97 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>正常</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>停止</translation>
     </message>
 </context>
 <context>
     <name>GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>ゲートウェイ操作に失敗しました</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>ゲートウェイステータスのデコードに失敗しました</translation>
     </message>
 </context>
 <context>
     <name>GatewaySection</name>
     <message>
         <source>OpenAI-compatible gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI 互換ゲートウェイ</translation>
     </message>
     <message>
         <source>The node runs a resident OpenAI-compatible gateway so foreign agents (codex, opencode) can be routed through the node — keys stay on the node and never reach the agent.</source>
-        <translation type="unfinished"></translation>
+        <translation>ノードは常駐の OpenAI 互換ゲートウェイを実行するため、外部エージェント（codex、opencode）をノード経由でルーティングできます — キーはノードに保持され、エージェントには渡りません。</translation>
     </message>
     <message>
         <source>Connect to a daemon to manage the gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>ゲートウェイを管理するにはデーモンに接続してください。</translation>
     </message>
     <message>
         <source>This node does not provide the OpenAI-compatible gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>このノードは OpenAI 互換ゲートウェイを提供していません。</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>ゲートウェイを有効化</translation>
     </message>
     <message>
         <source>Serve /v1/chat/completions and /v1/models from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>ノードから /v1/chat/completions と /v1/models を提供します。</translation>
     </message>
     <message>
         <source>Bind address</source>
-        <translation type="unfinished"></translation>
+        <translation>バインドアドレス</translation>
     </message>
     <message>
         <source>Optional. Leave blank to let the node choose (e.g. a loopback port).</source>
-        <translation type="unfinished"></translation>
+        <translation>任意。空欄のままにするとノードが選択します（例: ループバックポート）。</translation>
     </message>
     <message>
         <source>127.0.0.1:0</source>
-        <translation type="unfinished"></translation>
+        <translation>127.0.0.1:0</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation type="unfinished">不明</translation>
+        <translation>不明</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>無効</translation>
     </message>
     <message>
         <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 で待ち受け中</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>待ち受け中</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>エラー: %1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>起動中…</translation>
     </message>
     <message>
         <source>Service health</source>
-        <translation type="unfinished"></translation>
+        <translation>サービスの正常性</translation>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>正常</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>停止</translation>
     </message>
 </context>
 <context>
@@ -4438,7 +4438,7 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>バックエンド</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4553,7 +4553,7 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルヒント（任意）</translation>
     </message>
     <message>
         <source>Name</source>
@@ -4569,23 +4569,23 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>バックエンド</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>ノードプロバイダー（ゲートウェイ）</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェント独自のバックエンド</translation>
     </message>
     <message>
         <source>Model hint</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルヒント</translation>
     </message>
     <message>
         <source>(optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>（任意）</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4718,15 +4718,15 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>All profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのプロファイル</translation>
     </message>
     <message>
         <source>Operator</source>
-        <translation type="unfinished"></translation>
+        <translation>オペレーター</translation>
     </message>
     <message>
         <source>Agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェント作成</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -4738,19 +4738,19 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェント作成</translation>
     </message>
     <message>
         <source>Owner: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>所有者: %1</translation>
     </message>
     <message>
         <source>Authored by an agent</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェントによって作成</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile</source>
-        <translation type="unfinished"></translation>
+        <translation>このエージェント作成プロファイルを取り消す</translation>
     </message>
     <message>
         <source>New profile</source>
@@ -4758,23 +4758,23 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">作成</translation>
+        <translation>作成</translation>
     </message>
     <message>
         <source>Or clone from</source>
-        <translation type="unfinished"></translation>
+        <translation>またはクローン元</translation>
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>プロファイルを取り消す</translation>
     </message>
     <message>
         <source>Revoke</source>
-        <translation type="unfinished">取り消し</translation>
+        <translation>取り消し</translation>
     </message>
     <message>
         <source>Revoke the agent-authored profile “%1”? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェント作成プロファイル「%1」を取り消しますか？これによりノードから削除されます。</translation>
     </message>
     <message>
         <source>Empty profile</source>
@@ -5747,11 +5747,11 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>プロファイルを取り消す</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>このエージェント作成プロファイルを取り消しますか？これによりノードから削除されます。</translation>
     </message>
 </context>
 <context>
@@ -6465,7 +6465,7 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">ゲートウェイ</translation>
+        <translation>ゲートウェイ</translation>
     </message>
     <message>
         <source>Model</source>
@@ -6780,23 +6780,23 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Not available</source>
-        <translation type="unfinished"></translation>
+        <translation>利用不可</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>無効</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>待ち受け中</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>エラー: %1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>起動中…</translation>
     </message>
 </context>
 <context>
@@ -6807,24 +6807,24 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>off</source>
-        <translation type="unfinished">オフ</translation>
+        <translation>オフ</translation>
     </message>
     <message>
         <source>on</source>
-        <translation type="unfinished">オン</translation>
+        <translation>オン</translation>
     </message>
     <message>
         <source>…</source>
-        <translation type="unfinished"></translation>
+        <translation>…</translation>
     </message>
     <message>
         <source>OpenAI GW </source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI GW </translation>
     </message>
     <message numerus="yes">
         <source>%n service(s) down</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 件のサービスが停止しています</numerusform>
         </translation>
     </message>
     <message>
@@ -7504,11 +7504,11 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">ゲートウェイ</translation>
+        <translation>ゲートウェイ</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>ゲートウェイを有効化</translation>
     </message>
     <message>
         <source>Updates</source>
@@ -7576,11 +7576,11 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>合成プロファイルの最大数</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>セッションごとの一時的な子の最大数</translation>
     </message>
     <message>
         <source>Tools</source>
@@ -7588,28 +7588,29 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>無効</translation>
     </message>
     <message>
         <source>listening</source>
-        <translation type="unfinished"></translation>
+        <translation>待ち受け中</translation>
     </message>
     <message>
         <source>listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 で待ち受け中</translation>
     </message>
     <message>
         <source>error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>エラー: %1</translation>
     </message>
     <message>
         <source>starting</source>
-        <translation type="unfinished"></translation>
+        <translation>起動中</translation>
     </message>
     <message>
         <source>- Status: **%1** — _routes foreign agents through the node; keys stay on the node_
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- ステータス: **%1** — _外部エージェントをノード経由でルーティングします。キーはノードに保持されます_
+</translation>
     </message>
     <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
@@ -7932,12 +7933,14 @@ Thanks — proceeding with: %1
     <message>
         <source>- Provenance: agent-authored
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- 出所: エージェント作成
+</translation>
     </message>
     <message>
         <source>- Provenance: agent-authored (owner `%1`)
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- 出所: エージェント作成（所有者 `%1`）
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -8333,15 +8336,15 @@ _エージェントが選択されていません。_
     </message>
     <message>
         <source>managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>管理された子</translation>
     </message>
     <message>
         <source>subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>サブエージェント</translation>
     </message>
     <message>
         <source>primary</source>
-        <translation type="unfinished"></translation>
+        <translation>プライマリ</translation>
     </message>
     <message>
         <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
@@ -9032,11 +9035,11 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <name>daemonapp::daemon::GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>ゲートウェイ操作に失敗しました</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>ゲートウェイステータスのデコードに失敗しました</translation>
     </message>
 </context>
 <context>
@@ -9290,11 +9293,11 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <name>setup::AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">%1 でこのAPIキーを検証できませんでした — 確認して再試行してください。</translation>
+        <translation>%1 でこのAPIキーを検証できませんでした — 確認して再試行してください。</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">モデルに接続できませんでした — プロバイダーを確認して再試行してください。</translation>
+        <translation>モデルに接続できませんでした — プロバイダーを確認して再試行してください。</translation>
     </message>
 </context>
 <context>
