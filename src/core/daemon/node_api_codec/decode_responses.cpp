@@ -668,6 +668,12 @@ bool NodeApiCodec::decodeCredentials(const QByteArray& responseCbor,
         entry.profile = fromZcbor(info.credential_info_profile);
         entry.present = info.credential_info_present;
         entry.hint = fromZcbor(info.credential_info_hint);
+        // [acct-mgmt] wire v35: node-persisted display label (explicit-null / absent = none).
+        if (info.credential_info_label_present &&
+            info.credential_info_label.credential_info_label_choice ==
+                credential_info_label_r::credential_info_label_tstr_c) {
+            entry.label = fromZcbor(info.credential_info_label.credential_info_label_tstr);
+        }
         out->append(entry);
     }
     return true;

@@ -939,6 +939,51 @@ QByteArray NodeApiCodec::encodeTransportRemoveRequest(const QString& transport) 
         });
 }
 
+// [acct-mgmt] wire v35: re-spawn the adapter family serve loop (idempotent no-op Ok when already
+// running or fully disabled). The node reports the resulting state via TransportChanged.
+QByteArray NodeApiCodec::encodeTransportConnectRequest(const QString& transport) {
+    const QByteArray t = transport.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_transport_connect_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_transport_connect_m.TransportConnect_transport, t);
+        });
+}
+
+// [acct-mgmt] wire v35: persist the desired enabled state. Disable also disconnects (family-level);
+// enable does NOT auto-connect (the caller issues TransportConnect separately).
+QByteArray NodeApiCodec::encodeTransportSetEnabledRequest(const QString& transport, bool enabled) {
+    const QByteArray t = transport.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_transport_set_enabled_m_c, [&](api_request_r& request) {
+            request_transport_set_enabled& s = request.api_request_request_transport_set_enabled_m;
+            setZcbor(s.TransportSetEnabled_transport, t);
+            s.TransportSetEnabled_enabled = enabled;
+        });
+}
+
+// [acct-mgmt] wire v35: persist the display label. A tstr sets it; an explicit null
+// (hasLabel=false) clears it node-side. The node emits the per-transport TransportChanged nudge
+// after the label set.
+QByteArray NodeApiCodec::encodeTransportSetLabelRequest(const QString& transport, bool hasLabel,
+                                                        const QString& label) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray labelU = label.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_transport_set_label_m_c, [&](api_request_r& request) {
+            request_transport_set_label& s = request.api_request_request_transport_set_label_m;
+            setZcbor(s.TransportSetLabel_transport, t);
+            s.TransportSetLabel_label_present = true;
+            if (hasLabel) {
+                s.TransportSetLabel_label.TransportSetLabel_label_choice =
+                    TransportSetLabel_label_r::TransportSetLabel_label_tstr_c;
+                setZcbor(s.TransportSetLabel_label.TransportSetLabel_label_tstr, labelU);
+            } else {
+                s.TransportSetLabel_label.TransportSetLabel_label_choice =
+                    TransportSetLabel_label_r::TransportSetLabel_label_null_m_c;
+            }
+        });
+}
+
 QByteArray NodeApiCodec::encodeConvListRequest(const QString& transport, const QString& after) {
     const QByteArray t = transport.toUtf8();
     const QByteArray afterUtf8 = after.toUtf8();
@@ -1108,6 +1153,16 @@ bool NodeApiCodec::decodeTransportInstances(const QByteArray& responseCbor,
         }
         if (t.transport_instance_info_fatal_present) {
             d.fatal = t.transport_instance_info_fatal.transport_instance_info_fatal;
+        }
+        // [acct-mgmt] wire v35: node-persisted desired state (default true when absent) + display
+        // label (explicit-null / absent = none).
+        if (t.transport_instance_info_enabled_present) {
+            d.enabled = t.transport_instance_info_enabled.transport_instance_info_enabled;
+        }
+        if (t.transport_instance_info_label_present &&
+            t.transport_instance_info_label.transport_instance_info_label_choice ==
+                transport_instance_info_label_r::transport_instance_info_label_tstr_c) {
+            d.label = fromZcbor(t.transport_instance_info_label.transport_instance_info_label_tstr);
         }
         out->append(d);
     }

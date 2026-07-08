@@ -27,6 +27,7 @@ using daemonapp::daemon::DaemonTransport;
 using daemonapp::daemon::DecodedAdapterInfo;
 using daemonapp::daemon::DecodedContact;
 using daemonapp::daemon::DecodedConversation;
+using daemonapp::daemon::DecodedCredentialInfo;
 using daemonapp::daemon::DecodedEventsPage;
 using daemonapp::daemon::DecodedNodeEvent;
 using daemonapp::daemon::DecodedTransportInstance;
@@ -232,6 +233,63 @@ QByteArray instancesResponseFatal() {
     setZ(ti.transport_instance_info_message.transport_instance_info_message_tstr, msg);
     ti.transport_instance_info_fatal_present = true;
     ti.transport_instance_info_fatal.transport_instance_info_fatal = true;
+    return encodeResponse(*resp);
+}
+
+// [acct-mgmt] wire v35: a disabled, labeled instance — `enabled=false` + `label="Work bot"`.
+QByteArray instancesResponseDisabledLabeled() {
+    const QByteArray t = QByteArrayLiteral("matrix/@bot:hs");
+    const QByteArray fam = QByteArrayLiteral("matrix");
+    const QByteArray disp = QByteArrayLiteral("@bot:hs");
+    const QByteArray label = QByteArrayLiteral("Work bot");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_transport_instances_m_c;
+    response_transport_instances& ri = resp->api_response_response_transport_instances_m;
+    ri.response_transport_instances_TransportInstances_transport_instance_info_m_count = 1;
+    transport_instance_info& ti =
+        ri.response_transport_instances_TransportInstances_transport_instance_info_m[0];
+    setZ(ti.transport_instance_info_transport, t);
+    setZ(ti.transport_instance_info_family, fam);
+    setZ(ti.transport_instance_info_display_name, disp);
+    ti.transport_instance_info_connection_present = true;
+    ti.transport_instance_info_connection.transport_instance_info_connection
+        .connection_state_choice = connection_state_r::connection_state_Offline_tstr_c;
+    ti.transport_instance_info_presence_present = false;
+    ti.transport_instance_info_bound_profile_present = false;
+    ti.transport_instance_info_enabled_present = true;
+    ti.transport_instance_info_enabled.transport_instance_info_enabled = false;
+    ti.transport_instance_info_label_present = true;
+    ti.transport_instance_info_label.transport_instance_info_label_choice =
+        transport_instance_info_label_r::transport_instance_info_label_tstr_c;
+    setZ(ti.transport_instance_info_label.transport_instance_info_label_tstr, label);
+    return encodeResponse(*resp);
+}
+
+// [acct-mgmt] wire v35: {"Credentials":[ {matrix:@bot:hs, present, "Personal"}, {irc:libera} ]} —
+// the first credential carries a label, the second omits it (proves both decode paths).
+QByteArray credentialsResponseLabeled() {
+    const QByteArray p0 = QByteArrayLiteral("matrix:@bot:hs");
+    const QByteArray h0 = QByteArrayLiteral("token …abcd");
+    const QByteArray l0 = QByteArrayLiteral("Personal");
+    const QByteArray p1 = QByteArrayLiteral("irc:libera");
+    const QByteArray h1 = QByteArrayLiteral("pass …9999");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_credentials_m_c;
+    response_credentials& rc = resp->api_response_response_credentials_m;
+    rc.response_credentials_Credentials_credential_info_m_count = 2;
+    credential_info& c0 = rc.response_credentials_Credentials_credential_info_m[0];
+    setZ(c0.credential_info_profile, p0);
+    c0.credential_info_present = true;
+    setZ(c0.credential_info_hint, h0);
+    c0.credential_info_label_present = true;
+    c0.credential_info_label.credential_info_label_choice =
+        credential_info_label_r::credential_info_label_tstr_c;
+    setZ(c0.credential_info_label.credential_info_label_tstr, l0);
+    credential_info& c1 = rc.response_credentials_Credentials_credential_info_m[1];
+    setZ(c1.credential_info_profile, p1);
+    c1.credential_info_present = true;
+    setZ(c1.credential_info_hint, h1);
+    c1.credential_info_label_present = false;
     return encodeResponse(*resp);
 }
 
@@ -679,6 +737,18 @@ private slots:
         QVERIFY(out.at(0).reason.isEmpty());
         QVERIFY(out.at(0).message.isEmpty());
         QVERIFY(!out.at(0).fatal);
+        // [acct-mgmt] wire v35: absent `enabled` defaults true; absent `label` is empty.
+        QVERIFY(out.at(0).enabled);
+        QVERIFY(out.at(0).label.isEmpty());
+    }
+
+    // [acct-mgmt] wire v35: an explicit `enabled=false` + `label` decode onto the instance row.
+    void instancesEnabledLabelRoundTrip() {
+        QList<DecodedTransportInstance> out;
+        QVERIFY(NodeApiCodec::decodeTransportInstances(instancesResponseDisabledLabeled(), &out));
+        QCOMPARE(out.size(), 1);
+        QVERIFY(!out.at(0).enabled);
+        QCOMPARE(out.at(0).label, QStringLiteral("Work bot"));
     }
 
     // [waveB:app-v30] D1: the disconnecting state + reason/message/fatal decode.
@@ -1003,6 +1073,49 @@ private slots:
         QVERIFY(!disc.isEmpty());
         QVERIFY(!rem.isEmpty());
         QVERIFY(disc != rem);
+    }
+
+    // [acct-mgmt] wire v35: connect / setEnabled / setLabel encode distinct intents; setEnabled
+    // toggles on the bool; setLabel's explicit-null clear differs from setting a value.
+    void connectEnabledLabelEncodeDistinctIntents() {
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        const QByteArray conn = NodeApiCodec::encodeTransportConnectRequest(t);
+        const QByteArray enOn = NodeApiCodec::encodeTransportSetEnabledRequest(t, true);
+        const QByteArray enOff = NodeApiCodec::encodeTransportSetEnabledRequest(t, false);
+        const QByteArray labSet = NodeApiCodec::encodeTransportSetLabelRequest(
+            t, /*hasLabel=*/true, QStringLiteral("Work bot"));
+        const QByteArray labClear =
+            NodeApiCodec::encodeTransportSetLabelRequest(t, /*hasLabel=*/false, QString());
+        QVERIFY(!conn.isEmpty());
+        QVERIFY(!enOn.isEmpty());
+        QVERIFY(!labSet.isEmpty());
+        QVERIFY(!labClear.isEmpty());
+        QVERIFY(enOn != enOff);      // the persisted bool distinguishes them
+        QVERIFY(labSet != labClear); // tstr vs explicit null
+        QVERIFY(conn != enOn);
+        QVERIFY(conn != labSet);
+    }
+
+    // [acct-mgmt] wire v35: CredentialSetLabel encodes distinct set vs explicit-null clear intents.
+    void credentialSetLabelEncodeDistinctIntents() {
+        const QString p = QStringLiteral("matrix:@bot:hs");
+        const QByteArray set = NodeApiCodec::encodeCredentialSetLabelRequest(
+            p, /*hasLabel=*/true, QStringLiteral("Personal"));
+        const QByteArray clear =
+            NodeApiCodec::encodeCredentialSetLabelRequest(p, /*hasLabel=*/false, QString());
+        QVERIFY(!set.isEmpty());
+        QVERIFY(!clear.isEmpty());
+        QVERIFY(set != clear);
+    }
+
+    // [acct-mgmt] wire v35: the credential-info `label` decodes (empty when absent, set otherwise).
+    void credentialsLabelRoundTrip() {
+        QList<DecodedCredentialInfo> out;
+        QVERIFY(NodeApiCodec::decodeCredentials(credentialsResponseLabeled(), &out));
+        QCOMPARE(out.size(), 2);
+        QCOMPARE(out.at(0).profile, QStringLiteral("matrix:@bot:hs"));
+        QCOMPARE(out.at(0).label, QStringLiteral("Personal"));
+        QVERIFY(out.at(1).label.isEmpty()); // second credential has no label
     }
 
     // [wave2:app-channels-liveness] B2: the first refresh establishes the baseline (no badges); a

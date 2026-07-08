@@ -34,6 +34,9 @@ struct DecodedCredentialInfo {
     QString profile;
     bool present = false;
     QString hint;
+    // [acct-mgmt] wire v35: node-persisted display label (empty = none; set via
+    // CredentialSetLabel).
+    QString label;
 };
 
 // A discoverable model (Models / ModelCurrent). Optional pricing/context carry a `has*` flag since
@@ -339,6 +342,11 @@ struct DecodedTransportInstance {
     QString reason;
     QString message;
     bool fatal = false;
+    // [acct-mgmt] wire v35: node-persisted desired state + display label. `enabled` defaults true
+    // when the wire field is absent; `label` (empty = none) overlays the display name wherever the
+    // account renders (set via TransportSetLabel).
+    bool enabled = true;
+    QString label;
 };
 
 // [acct-mgmt] One field of an AccountSettingsSchema ({key,label,required}). Shared by the
@@ -1299,6 +1307,11 @@ public:
     [[nodiscard]] static QByteArray encodeCredentialListRequest();
     // Remove the secret stored under `profile` (CredentialRemove -> Ok).
     [[nodiscard]] static QByteArray encodeCredentialRemoveRequest(const QString& profile);
+    // [acct-mgmt] wire v35: persist a credential display label (CredentialSetLabel -> Ok; the node
+    // emits no event, so the caller refetches after Ok). `hasLabel=false` emits an explicit null to
+    // clear it node-side.
+    [[nodiscard]] static QByteArray
+    encodeCredentialSetLabelRequest(const QString& profile, bool hasLabel, const QString& label);
     // Discover models (Models -> Models(model-page)). `after` (wire v25) resumes past the
     // previous page's `next` cursor (empty = first page).
     [[nodiscard]] static QByteArray encodeModelsRequest(const QString& after = QString());
@@ -1541,6 +1554,17 @@ public:
     // credential drop + config drop). One intent; the client renders the node's reported outcome.
     [[nodiscard]] static QByteArray encodeTransportDisconnectRequest(const QString& transport);
     [[nodiscard]] static QByteArray encodeTransportRemoveRequest(const QString& transport);
+    // [acct-mgmt] wire v35: reversible transport lifecycle + persisted metadata (ControlApi-level;
+    // available for every transport). Connect re-spawns the adapter family serve loop (idempotent).
+    // SetEnabled persists desired state (disable also disconnects; enable does NOT auto-connect —
+    // call Connect). SetLabel persists the display label; `hasLabel=false` emits an explicit null
+    // to clear it. One intent; the client re-reads the node's reported state
+    // (TransportChanged/refetch).
+    [[nodiscard]] static QByteArray encodeTransportConnectRequest(const QString& transport);
+    [[nodiscard]] static QByteArray encodeTransportSetEnabledRequest(const QString& transport,
+                                                                     bool enabled);
+    [[nodiscard]] static QByteArray
+    encodeTransportSetLabelRequest(const QString& transport, bool hasLabel, const QString& label);
     // `after` (wire v25) resumes past the previous page's `next` cursor (empty = first page).
     [[nodiscard]] static QByteArray encodeConvListRequest(const QString& transport,
                                                           const QString& after = QString());

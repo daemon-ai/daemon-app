@@ -257,6 +257,28 @@ QByteArray NodeApiCodec::encodeCredentialRemoveRequest(const QString& profile) {
         });
 }
 
+// [acct-mgmt] wire v35: persist a credential display label. A tstr sets it; an explicit null
+// (hasLabel=false) clears it node-side. No event follows — the caller refetches after Ok.
+QByteArray NodeApiCodec::encodeCredentialSetLabelRequest(const QString& profile, bool hasLabel,
+                                                         const QString& label) {
+    const QByteArray profileUtf8 = profile.toUtf8();
+    const QByteArray labelUtf8 = label.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_credential_set_label_m_c, [&](api_request_r& request) {
+            request_credential_set_label& s = request.api_request_request_credential_set_label_m;
+            setZcbor(s.CredentialSetLabel_profile, profileUtf8);
+            s.CredentialSetLabel_label_present = true;
+            if (hasLabel) {
+                s.CredentialSetLabel_label.CredentialSetLabel_label_choice =
+                    CredentialSetLabel_label_r::CredentialSetLabel_label_tstr_c;
+                setZcbor(s.CredentialSetLabel_label.CredentialSetLabel_label_tstr, labelUtf8);
+            } else {
+                s.CredentialSetLabel_label.CredentialSetLabel_label_choice =
+                    CredentialSetLabel_label_r::CredentialSetLabel_label_null_m_c;
+            }
+        });
+}
+
 QByteArray NodeApiCodec::encodeModelsRequest(const QString& after) {
     const QByteArray afterUtf8 = after.toUtf8();
     return encodeWithFill(
