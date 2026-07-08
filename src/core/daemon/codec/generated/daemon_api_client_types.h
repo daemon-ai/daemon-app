@@ -6195,6 +6195,80 @@ struct adapter_info_policies_r {
 	size_t adapter_info_policies_policy_entry_m_count;
 };
 
+struct conversation_ops {
+	bool conversation_ops_create;
+	bool conversation_ops_join_channel;
+	bool conversation_ops_leave;
+	bool conversation_ops_delete;
+	bool conversation_ops_send;
+	bool conversation_ops_set_topic;
+	bool conversation_ops_set_title;
+	bool conversation_ops_set_description;
+};
+
+struct adapter_info_conversation_ops_r {
+	union {
+		struct conversation_ops adapter_info_conversation_ops_conversation_ops_m;
+	};
+	enum {
+		adapter_info_conversation_ops_conversation_ops_m_c,
+		adapter_info_conversation_ops_null_m_c,
+	} adapter_info_conversation_ops_choice;
+};
+
+struct membership_ops {
+	bool membership_ops_invite;
+	bool membership_ops_remove;
+	bool membership_ops_ban;
+	bool membership_ops_set_role;
+};
+
+struct adapter_info_membership_ops_r {
+	union {
+		struct membership_ops adapter_info_membership_ops_membership_ops_m;
+	};
+	enum {
+		adapter_info_membership_ops_membership_ops_m_c,
+		adapter_info_membership_ops_null_m_c,
+	} adapter_info_membership_ops_choice;
+};
+
+struct contacts_ops {
+	bool contacts_ops_get_profile;
+	bool contacts_ops_action_menu;
+	bool contacts_ops_set_alias;
+};
+
+struct adapter_info_contacts_ops_r {
+	union {
+		struct contacts_ops adapter_info_contacts_ops_contacts_ops_m;
+	};
+	enum {
+		adapter_info_contacts_ops_contacts_ops_m_c,
+		adapter_info_contacts_ops_null_m_c,
+	} adapter_info_contacts_ops_choice;
+};
+
+struct roster_ops {
+	bool roster_ops_add;
+	bool roster_ops_update;
+	bool roster_ops_remove;
+};
+
+struct adapter_info_roster_ops_r {
+	union {
+		struct roster_ops adapter_info_roster_ops_roster_ops_m;
+	};
+	enum {
+		adapter_info_roster_ops_roster_ops_m_c,
+		adapter_info_roster_ops_null_m_c,
+	} adapter_info_roster_ops_choice;
+};
+
+struct adapter_info_directory {
+	bool adapter_info_directory;
+};
+
 struct adapter_info {
 	struct zcbor_string adapter_info_family;
 	struct zcbor_string adapter_info_display_name;
@@ -6203,6 +6277,16 @@ struct adapter_info {
 	bool adapter_info_account_schema_present;
 	struct adapter_info_policies_r adapter_info_policies;
 	bool adapter_info_policies_present;
+	struct adapter_info_conversation_ops_r adapter_info_conversation_ops;
+	bool adapter_info_conversation_ops_present;
+	struct adapter_info_membership_ops_r adapter_info_membership_ops;
+	bool adapter_info_membership_ops_present;
+	struct adapter_info_contacts_ops_r adapter_info_contacts_ops;
+	bool adapter_info_contacts_ops_present;
+	struct adapter_info_roster_ops_r adapter_info_roster_ops;
+	bool adapter_info_roster_ops_present;
+	struct adapter_info_directory adapter_info_directory;
+	bool adapter_info_directory_present;
 };
 
 struct response_adapters {

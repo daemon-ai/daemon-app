@@ -768,6 +768,15 @@ static bool encode_adapter_capabilities(zcbor_state_t *state, const struct adapt
 static bool encode_repeated_adapter_info_account_schema(zcbor_state_t *state, const struct adapter_info_account_schema *input);
 static bool encode_policy_entry(zcbor_state_t *state, const struct policy_entry *input);
 static bool encode_repeated_adapter_info_policies(zcbor_state_t *state, const struct adapter_info_policies_r *input);
+static bool encode_conversation_ops(zcbor_state_t *state, const struct conversation_ops *input);
+static bool encode_repeated_adapter_info_conversation_ops(zcbor_state_t *state, const struct adapter_info_conversation_ops_r *input);
+static bool encode_membership_ops(zcbor_state_t *state, const struct membership_ops *input);
+static bool encode_repeated_adapter_info_membership_ops(zcbor_state_t *state, const struct adapter_info_membership_ops_r *input);
+static bool encode_contacts_ops(zcbor_state_t *state, const struct contacts_ops *input);
+static bool encode_repeated_adapter_info_contacts_ops(zcbor_state_t *state, const struct adapter_info_contacts_ops_r *input);
+static bool encode_roster_ops(zcbor_state_t *state, const struct roster_ops *input);
+static bool encode_repeated_adapter_info_roster_ops(zcbor_state_t *state, const struct adapter_info_roster_ops_r *input);
+static bool encode_repeated_adapter_info_directory(zcbor_state_t *state, const struct adapter_info_directory *input);
 static bool encode_adapter_info(zcbor_state_t *state, const struct adapter_info *input);
 static bool encode_response_adapters(zcbor_state_t *state, const struct response_adapters *input);
 static bool encode_repeated_transport_instance_info_connection(zcbor_state_t *state, const struct transport_instance_info_connection *input);
@@ -12389,20 +12398,178 @@ static bool encode_repeated_adapter_info_policies(
 	return res;
 }
 
+static bool encode_conversation_ops(
+		zcbor_state_t *state, const struct conversation_ops *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 8) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"create", tmp_str.len = sizeof("create") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).conversation_ops_create))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"join_channel", tmp_str.len = sizeof("join_channel") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).conversation_ops_join_channel))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"leave", tmp_str.len = sizeof("leave") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).conversation_ops_leave))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"delete", tmp_str.len = sizeof("delete") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).conversation_ops_delete))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"send", tmp_str.len = sizeof("send") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).conversation_ops_send))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"set_topic", tmp_str.len = sizeof("set_topic") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).conversation_ops_set_topic))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"set_title", tmp_str.len = sizeof("set_title") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).conversation_ops_set_title))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"set_description", tmp_str.len = sizeof("set_description") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).conversation_ops_set_description))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 8))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_adapter_info_conversation_ops(
+		zcbor_state_t *state, const struct adapter_info_conversation_ops_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"conversation_ops", tmp_str.len = sizeof("conversation_ops") - 1, &tmp_str)))))
+	&& (((*input).adapter_info_conversation_ops_choice == adapter_info_conversation_ops_conversation_ops_m_c) ? ((encode_conversation_ops(state, (&(*input).adapter_info_conversation_ops_conversation_ops_m))))
+	: (((*input).adapter_info_conversation_ops_choice == adapter_info_conversation_ops_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_membership_ops(
+		zcbor_state_t *state, const struct membership_ops *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 4) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"invite", tmp_str.len = sizeof("invite") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).membership_ops_invite))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"remove", tmp_str.len = sizeof("remove") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).membership_ops_remove))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ban", tmp_str.len = sizeof("ban") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).membership_ops_ban))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"set_role", tmp_str.len = sizeof("set_role") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).membership_ops_set_role))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 4))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_adapter_info_membership_ops(
+		zcbor_state_t *state, const struct adapter_info_membership_ops_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"membership_ops", tmp_str.len = sizeof("membership_ops") - 1, &tmp_str)))))
+	&& (((*input).adapter_info_membership_ops_choice == adapter_info_membership_ops_membership_ops_m_c) ? ((encode_membership_ops(state, (&(*input).adapter_info_membership_ops_membership_ops_m))))
+	: (((*input).adapter_info_membership_ops_choice == adapter_info_membership_ops_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_contacts_ops(
+		zcbor_state_t *state, const struct contacts_ops *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"get_profile", tmp_str.len = sizeof("get_profile") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).contacts_ops_get_profile))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"action_menu", tmp_str.len = sizeof("action_menu") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).contacts_ops_action_menu))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"set_alias", tmp_str.len = sizeof("set_alias") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).contacts_ops_set_alias))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_adapter_info_contacts_ops(
+		zcbor_state_t *state, const struct adapter_info_contacts_ops_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"contacts_ops", tmp_str.len = sizeof("contacts_ops") - 1, &tmp_str)))))
+	&& (((*input).adapter_info_contacts_ops_choice == adapter_info_contacts_ops_contacts_ops_m_c) ? ((encode_contacts_ops(state, (&(*input).adapter_info_contacts_ops_contacts_ops_m))))
+	: (((*input).adapter_info_contacts_ops_choice == adapter_info_contacts_ops_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_roster_ops(
+		zcbor_state_t *state, const struct roster_ops *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"add", tmp_str.len = sizeof("add") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).roster_ops_add))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"update", tmp_str.len = sizeof("update") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).roster_ops_update))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"remove", tmp_str.len = sizeof("remove") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).roster_ops_remove))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_adapter_info_roster_ops(
+		zcbor_state_t *state, const struct adapter_info_roster_ops_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"roster_ops", tmp_str.len = sizeof("roster_ops") - 1, &tmp_str)))))
+	&& (((*input).adapter_info_roster_ops_choice == adapter_info_roster_ops_roster_ops_m_c) ? ((encode_roster_ops(state, (&(*input).adapter_info_roster_ops_roster_ops_m))))
+	: (((*input).adapter_info_roster_ops_choice == adapter_info_roster_ops_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_adapter_info_directory(
+		zcbor_state_t *state, const struct adapter_info_directory *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"directory", tmp_str.len = sizeof("directory") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).adapter_info_directory)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_adapter_info(
 		zcbor_state_t *state, const struct adapter_info *input)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_encode(state, 5) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"family", tmp_str.len = sizeof("family") - 1, &tmp_str)))))
+	bool res = (((zcbor_map_start_encode(state, 10) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"family", tmp_str.len = sizeof("family") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).adapter_info_family))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"display_name", tmp_str.len = sizeof("display_name") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).adapter_info_display_name))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"capabilities", tmp_str.len = sizeof("capabilities") - 1, &tmp_str)))))
 	&& (encode_adapter_capabilities(state, (&(*input).adapter_info_capabilities))))
 	&& (!(*input).adapter_info_account_schema_present || encode_repeated_adapter_info_account_schema(state, (&(*input).adapter_info_account_schema)))
-	&& (!(*input).adapter_info_policies_present || encode_repeated_adapter_info_policies(state, (&(*input).adapter_info_policies)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 5))));
+	&& (!(*input).adapter_info_policies_present || encode_repeated_adapter_info_policies(state, (&(*input).adapter_info_policies)))
+	&& (!(*input).adapter_info_conversation_ops_present || encode_repeated_adapter_info_conversation_ops(state, (&(*input).adapter_info_conversation_ops)))
+	&& (!(*input).adapter_info_membership_ops_present || encode_repeated_adapter_info_membership_ops(state, (&(*input).adapter_info_membership_ops)))
+	&& (!(*input).adapter_info_contacts_ops_present || encode_repeated_adapter_info_contacts_ops(state, (&(*input).adapter_info_contacts_ops)))
+	&& (!(*input).adapter_info_roster_ops_present || encode_repeated_adapter_info_roster_ops(state, (&(*input).adapter_info_roster_ops)))
+	&& (!(*input).adapter_info_directory_present || encode_repeated_adapter_info_directory(state, (&(*input).adapter_info_directory)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 10))));
 
 	log_result(state, res, __func__);
 	return res;
