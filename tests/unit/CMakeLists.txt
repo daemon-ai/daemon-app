@@ -239,6 +239,21 @@ target_link_libraries(tst_routing_repository
 add_test(NAME tst_routing_repository COMMAND tst_routing_repository)
 set_tests_properties(tst_routing_repository PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_gateway_repository: Phase F node OpenAI-compatible gateway - GatewayRepository GatewayGet/Set
+# round-trips (status decode, Unsupported => supported=false, set error => operationFailed) over the
+# WireMuxServer fixture, plus the DaemonConnectionService single health cache (retained
+# DecodedHealth + healthChanged + per-service accessor).
+qt_add_executable(tst_gateway_repository tst_gateway_repository.cpp)
+target_link_libraries(tst_gateway_repository
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+)
+add_test(NAME tst_gateway_repository COMMAND tst_gateway_repository)
+set_tests_properties(tst_gateway_repository PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_integration: guards the daemon thin-client scaffolding - Unix-socket
 # frame parsing, durable cache schema expectations, and first-slice ordering.
 qt_add_executable(tst_daemon_integration tst_daemon_integration.cpp)

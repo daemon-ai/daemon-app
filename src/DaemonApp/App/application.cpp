@@ -74,6 +74,8 @@
 #include <QString>
 #include <QTimer>
 #include <QUuid>
+#include <QVariantList>
+#include <QVariantMap>
 #include <string>
 
 namespace {
@@ -153,6 +155,37 @@ Application::Application(QObject* parent)
     // gateway indicator (the single surface for connection state).
     connect(m_services.connection, &connection::IConnectionService::stateChanged, this,
             [this] { m_status->setGatewayState(m_services.connection->state()); });
+
+    // Phase F: mirror the node's OpenAI-gateway status (GatewayRepository) and the retained node
+    // service health (DaemonConnectionService) into the shared footer model — DISTINCT from the
+    // connection-liveness gatewayState above. Daemon mode only (gatewayRepository is null in mock).
+    if (m_services.gatewayRepository != nullptr) {
+        auto* gw = m_services.gatewayRepository;
+        auto syncGateway = [this, gw] {
+            m_status->setOpenAiGatewayStatus(gw->supported(), gw->enabled(), gw->listening(),
+                                             gw->lastError());
+        };
+        connect(gw, &daemonapp::daemon::GatewayRepository::statusChanged, m_status, syncGateway);
+        syncGateway();
+    }
+    if (auto* daemonConn =
+            qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection)) {
+        auto syncHealth = [this, daemonConn] {
+            QVariantList services;
+            for (const auto& svc : daemonConn->healthServices()) {
+                services.append(QVariantMap{
+                    {QStringLiteral("name"), svc.name},
+                    {QStringLiteral("ok"), svc.ok},
+                    {QStringLiteral("restarts"), svc.restarts},
+                    {QStringLiteral("detail"), svc.detail},
+                });
+            }
+            m_status->setHealthServices(services);
+        };
+        connect(daemonConn, &daemonapp::daemon::DaemonConnectionService::healthChanged, m_status,
+                syncHealth);
+        syncHealth();
+    }
 
     // Turn engine: a real Submit + Subscribe engine when the connection is daemon-backed, else the
     // mock simulator. Exposed to QML as `TurnEngines`; each TranscriptPage assigns it onto its
@@ -340,6 +373,10 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // [wave2:app-delegation] F7/DEL-7: read-only delegation guardrail ceilings (null in mock mode;
     // the Settings section binds defensively on `Caps && Caps.loaded`).
     engine.rootContext()->setContextProperty(QStringLiteral("Caps"), m_services.capsRepository);
+    // Phase F: the node OpenAI-gateway control seam (GatewayGet/GatewaySet). Null in mock mode; the
+    // GatewaySection binds defensively on `Gateway && Gateway.supported`.
+    engine.rootContext()->setContextProperty(QStringLiteral("Gateway"),
+                                             m_services.gatewayRepository);
 
     // Release-feed / auto-update surface: the shell binds this for the update
     // banner + settings toggle. Inert (no feed, no UI) unless the package job

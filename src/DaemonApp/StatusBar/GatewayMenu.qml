@@ -81,6 +81,35 @@ QQC.Popup {
             wrapMode: Text.WordWrap
         }
 
+        // ----- OpenAI-compatible gateway ---------------------------------
+        // Phase F: the node's resident OpenAI-gateway status (distinct from the connection line
+        // above), fed from GatewayRepository via the shared StatusBarModel.
+        RowLayout {
+            visible: root.statusModel ? root.statusModel.openAiGatewaySupported : false
+            Layout.fillWidth: true
+            Layout.leftMargin: 12
+            Layout.rightMargin: 12
+            Layout.bottomMargin: 6
+            spacing: 8
+
+            Rectangle {
+                width: 7; height: 7; radius: 3.5
+                Layout.alignment: Qt.AlignVCenter
+                color: !root.statusModel || !root.statusModel.openAiGatewayEnabled ? Theme.textMuted
+                     : root.statusModel.openAiGatewayListening ? Theme.statusOk
+                     : Theme.warning
+            }
+            QQC.Label {
+                Layout.fillWidth: true
+                text: qsTr("OpenAI gateway: %1")
+                    .arg(root.statusModel ? root.statusModel.openAiGatewayStatusText : "")
+                font.family: FontIcons.display
+                font.pixelSize: 12
+                color: Theme.textMuted
+                elide: Text.ElideRight
+            }
+        }
+
         // ----- Log lines -------------------------------------------------
         ColumnLayout {
             Layout.fillWidth: true
@@ -109,16 +138,22 @@ QQC.Popup {
             onClicked: { root.viewAllLogsRequested(); root.close(); }
         }
 
-        Rectangle { Layout.fillWidth: true; Layout.topMargin: 6; height: 1; color: Theme.border }
+        Rectangle {
+            visible: root.statusModel ? root.statusModel.healthServices.length > 0 : false
+            Layout.fillWidth: true; Layout.topMargin: 6; height: 1; color: Theme.border
+        }
 
-        // ----- Messaging platforms ---------------------------------------
+        // ----- Node service health ---------------------------------------
+        // Phase F: the node's per-service health (gateway, local-inference, ...), fed from the
+        // single DaemonConnectionService health cache via the shared StatusBarModel.
         ColumnLayout {
+            visible: root.statusModel ? root.statusModel.healthServices.length > 0 : false
             Layout.fillWidth: true
             Layout.margins: 12
             spacing: 6
 
             Repeater {
-                model: root.statusModel ? root.statusModel.gatewayPlatforms : []
+                model: root.statusModel ? root.statusModel.healthServices : []
                 delegate: RowLayout {
                     required property var modelData
                     Layout.fillWidth: true
@@ -127,7 +162,7 @@ QQC.Popup {
                     Rectangle {
                         width: 7; height: 7; radius: 3.5
                         Layout.alignment: Qt.AlignVCenter
-                        color: modelData.online ? Theme.statusOk : Theme.danger
+                        color: modelData.ok ? Theme.statusOk : Theme.danger
                     }
                     QQC.Label {
                         text: modelData.name
@@ -137,7 +172,7 @@ QQC.Popup {
                         Layout.fillWidth: true
                     }
                     QQC.Label {
-                        text: modelData.online ? qsTr("connected") : qsTr("offline")
+                        text: modelData.ok ? qsTr("ok") : qsTr("down")
                         font.family: FontIcons.display
                         font.pixelSize: 11
                         color: Theme.textMuted

@@ -230,6 +230,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
         // [wave2:app-delegation] F7/DEL-7: read-only delegation guardrail ceilings (node policy).
         graph.capsRepository = new CapsRepository(graph.nodeApi, owner);
+        // Phase F: the node OpenAI-gateway control seam (GatewayGet/GatewaySet). Ops-only; it never
+        // polls Health (that is the connection service's single cache). Adjacent to capsRepository,
+        // both being read/light node-policy seams built with the daemon connection.
+        graph.gatewayRepository = new GatewayRepository(graph.nodeApi, owner);
         delete graph.fleetTree;
         // [wave2:app-delegation] F3: fleet rows carry engine/lifetime decoded straight off the wire
         // UnitNode (v29) — no client-side profile-join (the node peer is v29, so the wire answers
@@ -338,8 +342,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
              transports = graph.transportRepository, routing = graph.routingRepository,
              agents = graph.agents, authRepo = graph.authRepository,
-             toolRepo = graph.toolRepository, // [wave2:app-approvals-safety] D2
-             feedback = daemonFeedback,       // wire v32: seed telemetry consent
+             toolRepo = graph.toolRepository,   // [wave2:app-approvals-safety] D2
+             gateway = graph.gatewayRepository, // Phase F: node OpenAI-gateway status
+             feedback = daemonFeedback,         // wire v32: seed telemetry consent
              wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
@@ -370,6 +375,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     agents->refreshCatalog();
                     // Interactive-auth family discovery (the AuthFlowSheet's provider list).
                     authRepo->refreshProviders();
+                    // Phase F: read the node OpenAI-gateway status once per connect (there is no
+                    // gateway node-event; the settings/status surfaces re-fetch on focus/toggle).
+                    gateway->refresh();
                     // Seed the node-owned telemetry consent (wire v32) so the settings toggle
                     // reflects the node's stored state.
                     feedback->refreshConsent();
@@ -419,6 +427,20 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.agentSetup = new setup::AgentSetupModel(graph.profiles, graph.accounts,
                                                   graph.providerCatalog, graph.modelCatalog, owner);
     graph.agentSetup->setEngineIdentity(graph.engineIdentity);
+    // Phase F: drive the setup form's NodeProvider gateway affordance from real gateway state. A
+    // NodeProvider foreign setup reports gatewayRequired=true until the gateway is enabled AND
+    // listening; mirror GatewayRepository::statusChanged into AgentSetupModel::setGatewayEnabled so
+    // the inline "Gateway is disabled — [Enable]" warning clears once the node's gateway is live.
+    // Daemon mode only (the repo is null in mock).
+    if (graph.gatewayRepository != nullptr) {
+        const auto pushGatewayEnabled = [agentSetup = graph.agentSetup,
+                                         gateway = graph.gatewayRepository] {
+            agentSetup->setGatewayEnabled(gateway->enabled() && gateway->listening());
+        };
+        QObject::connect(graph.gatewayRepository, &GatewayRepository::statusChanged,
+                         graph.agentSetup, pushGatewayEnabled);
+        pushGatewayEnabled(); // seed from whatever status is already known
+    }
     // Feed the foreign-agent catalog rows into the setup model's engineChoices, refreshing on every
     // catalog reflection. `verification` is the node-derived verdict, rendered verbatim.
     const auto pushForeignAgents = [agentSetup = graph.agentSetup, agents = graph.agents] {

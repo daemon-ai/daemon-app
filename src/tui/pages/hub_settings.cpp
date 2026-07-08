@@ -146,6 +146,16 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
                         m_deps.settings->managedDaemonShutdownOnExit());
     }
 
+    // Gateway - GatewaySection.qml's node OpenAI-compatible gateway (Phase F). The enable toggle
+    // writes through GatewayRepository::setEnabled (the "gateway" seam); the live listening / last-
+    // error status is a read-only context line (see buildSettingsMarkdown). Distinct region from
+    // the delegation-caps block below so it merges cleanly beside the provenance sibling's rows.
+    if (m_deps.gateway != nullptr && m_deps.gateway->supported()) {
+        rows << makeRow(QStringLiteral("gateway"), tr("Gateway"), QStringLiteral("gateway/enabled"),
+                        tr("Enable gateway"), QStringLiteral("toggle"), QStringLiteral("gateway"),
+                        m_deps.gateway->enabled());
+    }
+
     // Updates - the auto-check toggle (mirrors the GUI SettingsMenu "Updates"
     // section). Persists the same update/autoCheck key UpdateManager reads. Shown
     // only on a build that actually has a feed (an inert None build has none).
@@ -327,6 +337,13 @@ bool TuiPageHub::applySettingsValue(const QVariantMap& row, const QVariant& valu
         m_deps.tools->setEnabled(key, value.toBool());
         return true;
     }
+    // [wave2:app-gateway] Phase F: the gateway enable toggle -> GatewayRepository::setEnabled (the
+    // node replies GatewayStatus; the status line re-reads on the next refresh). Addr stays at the
+    // node's own bind here (the GUI section owns the addr field).
+    if (seam == QLatin1String("gateway") && m_deps.gateway != nullptr) {
+        m_deps.gateway->setEnabled(value.toBool());
+        return true;
+    }
     // "language" persists like any app pref (the shared ui/language key); the
     // live locale re-apply is the editor's job. "theme"/"zen" have no seam write
     // here at all: RootWidget's applyTheme / setDistractionFree own persistence.
@@ -374,6 +391,23 @@ QString TuiPageHub::buildSettingsMarkdown(int sel) const {
                 md += tr("- Active default: `%1` — _change or install in the Models page "
                          "(`/models`)_\n")
                           .arg(current.isEmpty() ? QStringLiteral("-") : current);
+            } else if (section == QLatin1String("gateway") && m_deps.gateway != nullptr) {
+                // [wave2:app-gateway] Phase F: the live gateway status line (parity with the GUI
+                // GatewaySection status readout). Never shows tokens/credentials.
+                QString state;
+                if (!m_deps.gateway->enabled()) {
+                    state = tr("disabled");
+                } else if (m_deps.gateway->listening()) {
+                    const QString addr = m_deps.gateway->addr();
+                    state = addr.isEmpty() ? tr("listening") : tr("listening on %1").arg(addr);
+                } else if (!m_deps.gateway->lastError().isEmpty()) {
+                    state = tr("error: %1").arg(m_deps.gateway->lastError());
+                } else {
+                    state = tr("starting");
+                }
+                md += tr("- Status: **%1** — _routes foreign agents through the node; keys stay on "
+                         "the node_\n")
+                          .arg(state);
             } else if (section == QLatin1String("safety")) {
                 md += tr("- Approval policy is set per session (composer session settings) — "
                          "_enforced by the node there_\n");

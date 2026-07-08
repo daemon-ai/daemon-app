@@ -21,6 +21,8 @@ Item {
         { id: "appearance",   label: qsTr("Appearance"),     icon: FontIcons.fa_sliders },
         { id: "notifications", label: qsTr("Notifications"),  icon: FontIcons.fa_bell },
         { id: "connection",   label: qsTr("Connection"),     icon: FontIcons.fa_link },
+        // [wave2:app-gateway] Phase F: node OpenAI-compatible gateway settings + health.
+        { id: "gateway",      label: qsTr("Gateway"),        icon: FontIcons.fa_signal },
         { id: "model",        label: qsTr("Model"),          icon: FontIcons.fa_brain },
         // [wave2:app-engines] foreign-agent management (C1)
         { id: "agents",       label: qsTr("Agents"),         icon: FontIcons.fa_robot },
@@ -78,6 +80,7 @@ Item {
                     case "appearance": return appearanceComp;
                     case "notifications": return notificationsComp;
                     case "connection": return connectionComp;
+                    case "gateway": return gatewayComp;
                     case "model": return modelComp;
                     case "agents": return agentsComp;
                     case "chat": return chatComp;
@@ -111,6 +114,7 @@ Item {
     Component { id: appearanceComp;    Padded { AppearanceSection { width: parent.width } } }
     Component { id: notificationsComp; Padded { NotificationsSection { width: parent.width } } }
     Component { id: connectionComp;    Padded { ConnectionSection { width: parent.width } } }
+    Component { id: gatewayComp;       Padded { GatewaySection { width: parent.width } } }
     Component { id: modelComp;         Padded { ModelSettingsSection { width: parent.width } } }
     Component { id: agentsComp;        Padded { AgentsSettingsSection { width: parent.width } } }
     Component { id: chatComp;          Padded { ChatSettingsSection { width: parent.width } } }

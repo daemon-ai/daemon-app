@@ -59,6 +59,7 @@
 #include <QStandardPaths>
 #include <QTimer>
 #include <QUuid>
+#include <QVariantList>
 #include <QVariantMap>
 #include <Tui/ZButton.h>
 #include <Tui/ZCommon.h>
@@ -247,12 +248,44 @@ RootWidget::RootWidget()
         .contacts = m_services.contacts,
         .update = m_services.update,
         .caps = m_services.capsRepository,           // [wave2:app-delegation] F7/DEL-7
+        .gateway = m_services.gatewayRepository,     // [wave2:app-gateway] Phase F
         .engineIdentity = m_services.engineIdentity, // [wave2:integration] C5
     });
     // [wave2:app-delegation] F7/DEL-7: fetch the read-only delegation ceilings once so Settings ->
     // Safety renders the live numbers (node-wide policy; re-fetched, never cached).
     if (m_services.capsRepository != nullptr) {
         m_services.capsRepository->refresh();
+    }
+    // [wave2:app-gateway] Phase F: read the node OpenAI-gateway status once so Settings -> Gateway
+    // renders live (no gateway node-event; re-fetched on toggle). Also mirror the status + node
+    // service health into the shared StatusBarModel so the footer indicator matches the GUI.
+    if (m_services.gatewayRepository != nullptr) {
+        auto* gw = m_services.gatewayRepository;
+        auto syncGateway = [this, gw] {
+            m_status->setOpenAiGatewayStatus(gw->supported(), gw->enabled(), gw->listening(),
+                                             gw->lastError());
+            refreshActivePage();
+        };
+        connect(gw, &daemonapp::daemon::GatewayRepository::statusChanged, m_status, syncGateway);
+        gw->refresh();
+    }
+    if (auto* daemonConn =
+            qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection)) {
+        auto syncHealth = [this, daemonConn] {
+            QVariantList services;
+            for (const auto& svc : daemonConn->healthServices()) {
+                services.append(QVariantMap{
+                    {QStringLiteral("name"), svc.name},
+                    {QStringLiteral("ok"), svc.ok},
+                    {QStringLiteral("restarts"), svc.restarts},
+                    {QStringLiteral("detail"), svc.detail},
+                });
+            }
+            m_status->setHealthServices(services);
+        };
+        connect(daemonConn, &daemonapp::daemon::DaemonConnectionService::healthChanged, m_status,
+                syncHealth);
+        syncHealth();
     }
 
     // Settings-page dialog edits (theme/language pickers, text prompts, zen):

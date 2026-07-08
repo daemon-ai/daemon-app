@@ -9,6 +9,9 @@
 
 #include <QRect>
 #include <QSize>
+#include <QVariant>
+#include <QVariantList>
+#include <QVariantMap>
 #include <Tui/ZColor.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZPainter.h>
@@ -49,6 +52,9 @@ void StatusBarView::setModel(StatusBarModel* model) {
     if (m_model != nullptr) {
         const auto repaint = [this] { update(); };
         connect(m_model, &StatusBarModel::gatewayStateChanged, this, repaint);
+        // Phase F: the node OpenAI-gateway status + service health footer segment.
+        connect(m_model, &StatusBarModel::openAiGatewayChanged, this, repaint);
+        connect(m_model, &StatusBarModel::healthServicesChanged, this, repaint);
         connect(m_model, &StatusBarModel::agentsDetailChanged, this, repaint);
         connect(m_model, &StatusBarModel::contextChanged, this, repaint);
         connect(m_model, &StatusBarModel::usageChanged, this, repaint);
@@ -100,6 +106,31 @@ QVector<Span> StatusBarView::buildLeft() const {
           << mkSpan(DisplayPresenter::enumLabelFor(QStringLiteral("connection"),
                                                    m_model->gatewayState()),
                     gw);
+
+    // Phase F: the node OpenAI-gateway status + node service-health, a segment DISTINCT from the
+    // connection "Gateway" one above (which stays connection liveness). Shown only when the node
+    // provides the gateway; the health tail warns when any service is down.
+    if (m_model->openAiGatewaySupported()) {
+        spans << mkSpan(separator(), tpal::muted());
+        const bool enabled = m_model->openAiGatewayEnabled();
+        const bool listening = m_model->openAiGatewayListening();
+        const Tui::ZColor gwFg =
+            !enabled ? tpal::faint() : (listening ? tpal::accent() : tpal::warn());
+        const QString gwWord = !enabled ? tr("off") : (listening ? tr("on") : tr("…"));
+        spans << mkSpan(tr("OpenAI GW ") + gwWord, gwFg);
+
+        int down = 0;
+        const QVariantList services = m_model->healthServices();
+        for (const QVariant& s : services) {
+            if (!s.toMap().value(QStringLiteral("ok")).toBool()) {
+                ++down;
+            }
+        }
+        if (down > 0) {
+            spans << mkSpan(QStringLiteral(" ") + tr("%n service(s) down", nullptr, down),
+                            tpal::statusError());
+        }
+    }
 
     spans << mkSpan(separator(), tpal::muted());
 
