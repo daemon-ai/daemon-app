@@ -28,6 +28,7 @@ qt_add_qml_module(da_pages
         AgentsSettingsSection.qml
         RegisterAgentDialog.qml
         ConnectionSection.qml
+        GatewaySection.qml  # [wave2:app-gateway] Phase F: node OpenAI-gateway settings + health
         NotificationsSection.qml
         ModelSettingsSection.qml
         ChatSettingsSection.qml

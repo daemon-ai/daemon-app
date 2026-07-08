@@ -297,6 +297,43 @@ void StatusBarModel::setGatewayPlatforms(const QVariantList& platforms) {
     emit gatewayInfoChanged();
 }
 
+QString StatusBarModel::openAiGatewayStatusText() const {
+    if (!m_openAiGatewaySupported) {
+        return tr("Not available");
+    }
+    if (!m_openAiGatewayEnabled) {
+        return tr("Disabled");
+    }
+    if (m_openAiGatewayListening) {
+        return tr("Listening");
+    }
+    if (!m_openAiGatewayLastError.isEmpty()) {
+        return tr("Error: %1").arg(m_openAiGatewayLastError);
+    }
+    return tr("Starting…");
+}
+
+void StatusBarModel::setOpenAiGatewayStatus(bool supported, bool enabled, bool listening,
+                                            const QString& lastError) {
+    if (m_openAiGatewaySupported == supported && m_openAiGatewayEnabled == enabled &&
+        m_openAiGatewayListening == listening && m_openAiGatewayLastError == lastError) {
+        return;
+    }
+    m_openAiGatewaySupported = supported;
+    m_openAiGatewayEnabled = enabled;
+    m_openAiGatewayListening = listening;
+    m_openAiGatewayLastError = lastError;
+    emit openAiGatewayChanged();
+}
+
+void StatusBarModel::setHealthServices(const QVariantList& services) {
+    if (m_healthServices == services) {
+        return;
+    }
+    m_healthServices = services;
+    emit healthServicesChanged();
+}
+
 QString StatusBarModel::formatElapsed(double startMs) const {
     if (startMs == 0) {
         return QStringLiteral("0:00");

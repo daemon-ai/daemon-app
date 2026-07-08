@@ -7,8 +7,10 @@
 #include "daemon/daemon_transport.h"
 #include "daemon/local_daemon_launcher.h"
 #include "daemon/node_api_client.h"
+#include "daemon/node_api_codec.h" // DecodedHealth retained as the single health cache
 
 #include <memory>
+#include <QList>
 #include <QTimer>
 #include <QUrl>
 
@@ -50,6 +52,15 @@ public:
     [[nodiscard]] DaemonTransport* transport() const { return m_transport.get(); }
     [[nodiscard]] NodeApiClient* client() const { return m_client.get(); }
 
+    // The single retained health cache (Phase F): the last decoded Health report, kept so the
+    // gateway/health surfaces read the per-service entries (`gateway`, `local-inference`, ...)
+    // without a second health poll. Populated on every Health response (healthy or degraded);
+    // healthChanged() fires when the report changes.
+    [[nodiscard]] const DecodedHealth& lastHealth() const { return m_lastHealth; }
+    [[nodiscard]] QList<DecodedServiceHealth> healthServices() const {
+        return m_lastHealth.services;
+    }
+
     // Terminate a daemon this service spawned, honoring the shutdown-on-exit preference. Called
     // from the front ends' teardown. No-op when nothing was spawned or the user keeps it
     // persistent.
@@ -61,6 +72,11 @@ signals:
     // SCRAM challenge), false for a fresh interactive login. Drives the reload-survival auth
     // sentinel (DAEMON_APP_AUTH resumed|scram); not shown in the UI.
     void authOutcome(bool resumed);
+
+    // The retained Health report changed (Phase F): a new Health response decoded, so lastHealth()
+    // / healthServices() are fresh. Distinct from stateChanged() (connection liveness) — this fires
+    // for the per-service detail even when liveness is unchanged.
+    void healthChanged();
 
 private:
     static constexpr auto kHealthCorrelation = "connection/health";
@@ -101,6 +117,9 @@ private:
 
     std::unique_ptr<DaemonTransport> m_transport;
     std::unique_ptr<NodeApiClient> m_client;
+    // The single health cache (Phase F): the last decoded Health report, retained across probes so
+    // the gateway/health surfaces project the per-service entries without polling Health twice.
+    DecodedHealth m_lastHealth;
     settings::ISettingsStore* m_settings = nullptr;
     LocalDaemonLauncher* m_launcher = nullptr;
     QTimer m_heartbeat;         // periodic Health while ready

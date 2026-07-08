@@ -3356,4 +3356,74 @@ void FingerprintRepository::handleFailure(const QString& correlationId, const QS
     }
 }
 
+// --- Node OpenAI-compatible gateway (Phase F; wire v32) --------------------------------------
+GatewayRepository::GatewayRepository(NodeApiClient* client, QObject* parent)
+    : RepositoryBase(client, nullptr, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &GatewayRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &GatewayRepository::handleFailure);
+    }
+}
+
+void GatewayRepository::refresh() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeGatewayGetRequest(), QLatin1String(kGetCorrelation));
+}
+
+void GatewayRepository::setEnabled(bool enabled, const QString& addr) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeGatewaySetRequest(enabled, addr),
+                          QLatin1String(kSetCorrelation));
+}
+
+void GatewayRepository::applyStatusReply(const QByteArray& responseCbor, bool isGet) {
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+        DecodedApiError err;
+        NodeApiCodec::decodeError(responseCbor, &err);
+        // An Unsupported GatewayGet means the peer predates the gateway: mark it so the surfaces
+        // hide/disable, rather than surfacing a spurious failure. A GatewaySet error (or any
+        // non-Unsupported GatewayGet error) is a real operation failure.
+        if (isGet && err.kind == QStringLiteral("Unsupported")) {
+            if (m_supported || !m_loaded) {
+                m_supported = false;
+                m_loaded = true;
+                emit statusChanged();
+            }
+            return;
+        }
+        emit operationFailed(err.message.isEmpty() ? tr("Gateway operation failed") : err.message);
+        return;
+    }
+    if (!NodeApiCodec::decodeGatewayStatus(responseCbor, &m_status)) {
+        emit operationFailed(tr("Failed to decode gateway status"));
+        return;
+    }
+    m_supported = true;
+    m_loaded = true;
+    emit statusChanged();
+}
+
+void GatewayRepository::handleResponse(const QString& correlationId,
+                                       const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kGetCorrelation)) {
+        applyStatusReply(responseCbor, /*isGet=*/true);
+    } else if (correlationId == QLatin1String(kSetCorrelation)) {
+        applyStatusReply(responseCbor, /*isGet=*/false);
+    }
+}
+
+void GatewayRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kGetCorrelation) ||
+        correlationId == QLatin1String(kSetCorrelation)) {
+        emit operationFailed(message);
+    }
+}
+
 } // namespace daemonapp::daemon

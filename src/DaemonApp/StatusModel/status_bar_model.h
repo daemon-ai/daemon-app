@@ -64,6 +64,21 @@ class StatusBarModel : public QObject {
     Q_PROPERTY(QStringList gatewayLog READ gatewayLog WRITE setGatewayLog NOTIFY gatewayInfoChanged)
     Q_PROPERTY(QVariantList gatewayPlatforms READ gatewayPlatforms WRITE setGatewayPlatforms NOTIFY
                    gatewayInfoChanged)
+
+    // Phase F: the node's resident OpenAI-compatible gateway (GatewayStatus), DISTINCT from
+    // gatewayState above (which stays connection liveness). Fed from GatewayRepository. `supported`
+    // is false when the node predates the gateway (the surfaces hide it then). `statusText` is the
+    // one-line display string the GatewayMenu / GatewaySection render.
+    Q_PROPERTY(bool openAiGatewaySupported READ openAiGatewaySupported NOTIFY openAiGatewayChanged)
+    Q_PROPERTY(bool openAiGatewayEnabled READ openAiGatewayEnabled NOTIFY openAiGatewayChanged)
+    Q_PROPERTY(bool openAiGatewayListening READ openAiGatewayListening NOTIFY openAiGatewayChanged)
+    Q_PROPERTY(
+        QString openAiGatewayLastError READ openAiGatewayLastError NOTIFY openAiGatewayChanged)
+    Q_PROPERTY(
+        QString openAiGatewayStatusText READ openAiGatewayStatusText NOTIFY openAiGatewayChanged)
+    // Node service health (Health.services: gateway, local-inference, ...), fed from the single
+    // DaemonConnectionService health cache. Each entry is { name, ok, restarts, detail }.
+    Q_PROPERTY(QVariantList healthServices READ healthServices NOTIFY healthServicesChanged)
     Q_PROPERTY(QString agentsDetail READ agentsDetail NOTIFY agentsDetailChanged)
     Q_PROPERTY(int contextPercent READ contextPercent NOTIFY contextChanged)
     Q_PROPERTY(QString contextBar READ contextBar NOTIFY contextChanged)
@@ -98,6 +113,12 @@ public:
     [[nodiscard]] QString gatewayConnectionText() const { return m_gatewayConnectionText; }
     [[nodiscard]] QStringList gatewayLog() const { return m_gatewayLog; }
     [[nodiscard]] QVariantList gatewayPlatforms() const { return m_gatewayPlatforms; }
+    [[nodiscard]] bool openAiGatewaySupported() const { return m_openAiGatewaySupported; }
+    [[nodiscard]] bool openAiGatewayEnabled() const { return m_openAiGatewayEnabled; }
+    [[nodiscard]] bool openAiGatewayListening() const { return m_openAiGatewayListening; }
+    [[nodiscard]] QString openAiGatewayLastError() const { return m_openAiGatewayLastError; }
+    [[nodiscard]] QString openAiGatewayStatusText() const;
+    [[nodiscard]] QVariantList healthServices() const { return m_healthServices; }
     [[nodiscard]] QString agentsDetail() const;
     [[nodiscard]] int contextPercent() const;
     [[nodiscard]] QString contextBar() const;
@@ -125,6 +146,11 @@ public:
     void setGatewayConnectionText(const QString& text);
     void setGatewayLog(const QStringList& log);
     void setGatewayPlatforms(const QVariantList& platforms);
+    // Phase F: push the node's OpenAI-gateway status (from GatewayRepository) and the node service
+    // health list (from the DaemonConnectionService health cache) into the shared footer model.
+    void setOpenAiGatewayStatus(bool supported, bool enabled, bool listening,
+                                const QString& lastError);
+    void setHealthServices(const QVariantList& services);
 
     Q_INVOKABLE QString formatElapsed(double startMs) const;
     Q_INVOKABLE QString abbrev(int n) const;
@@ -137,6 +163,8 @@ public:
 signals:
     void gatewayStateChanged();
     void gatewayInfoChanged();
+    void openAiGatewayChanged();
+    void healthServicesChanged();
     void agentsRunningChanged();
     void agentsFailedChanged();
     void busyChanged();
@@ -176,6 +204,15 @@ private:
     QString m_gatewayConnectionText;
     QStringList m_gatewayLog;
     QVariantList m_gatewayPlatforms;
+
+    // Phase F: OpenAI-gateway status + node service health (distinct from the connection-liveness
+    // gatewayState above). Defaults: supported=true (assumed until the node reports otherwise),
+    // disabled/not-listening until the first GatewayStatus lands.
+    bool m_openAiGatewaySupported = true;
+    bool m_openAiGatewayEnabled = false;
+    bool m_openAiGatewayListening = false;
+    QString m_openAiGatewayLastError;
+    QVariantList m_healthServices;
 
     // Re-read once per second so the elapsed-time labels stay live.
     double m_nowMs = 0;

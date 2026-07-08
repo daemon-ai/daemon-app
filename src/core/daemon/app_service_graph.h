@@ -86,6 +86,7 @@ class ApprovalRepository;
 class AuthRepository;
 class CapsRepository;
 class FleetRepository;
+class GatewayRepository; // Phase F: node OpenAI-compatible gateway (GatewayGet/Set)
 class TransportRepository;
 class RoutingRepository;
 class CheckpointRepository;
@@ -175,6 +176,11 @@ struct AppServiceGraph {
     FleetRepository* fleetRepository = nullptr; // PRO-9/10; non-null only in Daemon mode
     // [wave2:app-delegation] F7/DEL-7: delegation guardrail ceilings (read-only). Daemon mode only.
     CapsRepository* capsRepository = nullptr;
+    // Phase F: the node's resident OpenAI-compatible gateway (GatewayGet/GatewaySet ->
+    // GatewayStatus) control seam. Read + toggle only; it never polls Health. Daemon mode only
+    // (null in mock). Its statusChanged drives AgentSetupModel::setGatewayEnabled so the setup
+    // form's NodeProvider gateway affordance reflects real gateway state.
+    GatewayRepository* gatewayRepository = nullptr;
     TransportRepository* transportRepository = nullptr; // Channels (EIO-1/3/8/9); Daemon mode only
     // [acct-mgmt] Transport contacts / roster (RosterList/Add/Update/Remove + contact ops, wire
     // v34); Daemon mode only (the DaemonContactsService projects it).

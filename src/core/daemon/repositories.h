@@ -1209,4 +1209,65 @@ private:
     QString m_session; // the session scope of the last list, re-used after a revoke
 };
 
+// --- Node OpenAI-compatible gateway (Phase F; wire v32) --------------------------------------
+// The resident OpenAI-compatible gateway the node runs as a ManagedResource (GatewayGet/GatewaySet
+// -> GatewayStatus). Ops-ONLY, following the read-only CapsRepository pattern (no cache): refresh()
+// reads the live status (GatewayGet) and setEnabled() toggles it (GatewaySet{enabled, ? addr});
+// both replies decode a GatewayStatus, cached here and surfaced through statusChanged. There is NO
+// gateway node-event, so health/listening freshness is driven by polling Health (owned by
+// DaemonConnectionService) + this GatewayGet — this repository NEVER polls Health itself. When the
+// node reports the op Unsupported (an older peer without the gateway), `supported` flips false so
+// the surfaces hide/disable gracefully. Never surfaces gateway tokens/credentials (the wire carries
+// none). Kept in its own region so it merges cleanly beside the provenance sibling's CapsRepository
+// edits.
+class GatewayRepository : public RepositoryBase {
+    Q_OBJECT
+    Q_PROPERTY(bool loaded READ loaded NOTIFY statusChanged)
+    Q_PROPERTY(bool supported READ supported NOTIFY statusChanged)
+    Q_PROPERTY(bool enabled READ enabled NOTIFY statusChanged)
+    Q_PROPERTY(bool listening READ listening NOTIFY statusChanged)
+    Q_PROPERTY(QString addr READ addr NOTIFY statusChanged)
+    Q_PROPERTY(QString lastError READ lastError NOTIFY statusChanged)
+
+public:
+    explicit GatewayRepository(NodeApiClient* client, QObject* parent = nullptr);
+
+    [[nodiscard]] bool loaded() const { return m_loaded; }
+    [[nodiscard]] bool supported() const { return m_supported; }
+    [[nodiscard]] bool enabled() const { return m_status.enabled; }
+    [[nodiscard]] bool listening() const { return m_status.listening; }
+    [[nodiscard]] QString addr() const { return m_status.hasAddr ? m_status.addr : QString(); }
+    [[nodiscard]] QString lastError() const {
+        return m_status.hasLastError ? m_status.lastError : QString();
+    }
+    [[nodiscard]] const DecodedGatewayStatus& status() const { return m_status; }
+
+    // Read the gateway's live status (GatewayGet -> GatewayStatus). On success statusChanged()
+    // fires; an Unsupported error flips supported() false (also via statusChanged).
+    Q_INVOKABLE void refresh();
+    // Toggle the gateway on/off (GatewaySet{enabled, ? addr}). An empty `addr` keeps the node's
+    // own bind; a non-empty one sets it. The reply is a GatewayStatus (statusChanged); an error
+    // surfaces operationFailed (never a silent no-op).
+    Q_INVOKABLE void setEnabled(bool enabled, const QString& addr = QString());
+
+signals:
+    void statusChanged();
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+    // Shared reply decode for GatewayGet/GatewaySet: an Unsupported error on a GatewayGet marks the
+    // gateway unsupported (statusChanged, no failure); any other error emits operationFailed; a
+    // GatewayStatus updates the cache + emits statusChanged.
+    void applyStatusReply(const QByteArray& responseCbor, bool isGet);
+
+    static constexpr auto kGetCorrelation = "repo/gateway-get";
+    static constexpr auto kSetCorrelation = "repo/gateway-set";
+
+    DecodedGatewayStatus m_status;
+    bool m_loaded = false;
+    bool m_supported = true;
+};
+
 } // namespace daemonapp::daemon

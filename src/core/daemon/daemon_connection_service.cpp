@@ -36,7 +36,16 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
                 DecodedHealth health;
                 // Liveness requires a decodable Health that reports all services OK; a degraded or
                 // undecodable response is treated as not-ready rather than silently "connected".
-                const bool ok = NodeApiCodec::decodeHealth(responseCbor, &health) && health.allOk;
+                const bool decoded = NodeApiCodec::decodeHealth(responseCbor, &health);
+                // Retain the decoded report as the single health cache (Phase F): the
+                // gateway/health surfaces read the per-service entries from here — no second health
+                // poll. Emit even for a degraded report (offline below), so a "gateway service
+                // down" detail still reaches the UI.
+                if (decoded) {
+                    m_lastHealth = health;
+                    emit healthChanged();
+                }
+                const bool ok = decoded && health.allOk;
                 if (ok) {
                     markReady();
                 } else {
