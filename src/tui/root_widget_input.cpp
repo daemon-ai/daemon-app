@@ -477,31 +477,66 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
-    // [wave2:app-channels-liveness] B1: Channels 'c' connects an account via the same shared
-    // interactive-auth launcher (family pick -> params -> begin), the GUI "Connect" button analog.
-    // On success the shared service graph refetches instances + rooms, so the account appears with
-    // its live status.
-    if (kind == TabModel::Channels && event->modifiers() == Qt::NoModifier &&
-        event->text() == QStringLiteral("c")) {
-        openAuthFlow();
-        event->accept();
-        return true;
-    }
-    // [waveB:app-v30] D1: Channels 'x' removes the selected account (TransportRemove) —
-    // destructive, so it opens a RootWidget-level confirm (TuiPageHub cannot host dialogs). 'd'
-    // (disconnect, non-destructive) stays in the hub key handler.
-    if (kind == TabModel::Channels && event->modifiers() == Qt::NoModifier &&
-        event->text() == QStringLiteral("x")) {
+    // [acct-mgmt] Channels row-contextual keys. Every key here opens a dialog / palette (TuiPageHub
+    // cannot host dialogs); 'd' (disconnect, non-destructive) stays in the hub key handler. The
+    // acted-on verb depends on the selected row's kind (account vs room).
+    if (kind == TabModel::Channels && event->modifiers() == Qt::NoModifier) {
+        const QString text = event->text();
+        const bool enter = event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return;
         const QList<QVariantMap> rows = pageActionRows(kind);
-        if (!rows.isEmpty()) {
-            const int sel =
-                qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
-            const QVariantMap& row = rows.at(sel);
-            openChannelRemoveConfirm(row.value(QStringLiteral("transport")).toString(),
-                                     row.value(QStringLiteral("displayName")).toString());
+        if (rows.isEmpty()) {
+            return false;
         }
-        event->accept();
-        return true;
+        const int sel =
+            qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
+        const QVariantMap& row = rows.at(sel);
+        const bool isAccount =
+            row.value(QStringLiteral("rowKind")).toString() == QLatin1String("account");
+        const QString transport = row.value(QStringLiteral("transport")).toString();
+        bool handled = false;
+        if (isAccount) {
+            // [wave2:app-channels-liveness] B1: 'c' connects via the shared interactive-auth
+            // launcher; 'x' removes the account (confirmed); 'g'/'n' open the room flows.
+            if (text == QStringLiteral("c")) {
+                openAuthFlow();
+                handled = true;
+            } else if (text == QStringLiteral("x")) {
+                openChannelRemoveConfirm(transport,
+                                         row.value(QStringLiteral("displayName")).toString());
+                handled = true;
+            } else if (text == QStringLiteral("g")) {
+                openRoomJoinFlow(transport);
+                handled = true;
+            } else if (text == QStringLiteral("n")) {
+                openRoomCreateFlow(transport);
+                handled = true;
+            }
+        } else {
+            // Room row: Enter members palette; 'i' invite; 'l' leave (confirm); 'x' delete
+            // (confirm); 'p' pin to agent (session picker → bindChat).
+            const QString conv = row.value(QStringLiteral("convId")).toString();
+            const QString label = row.value(QStringLiteral("roomLabel")).toString();
+            if (enter) {
+                openRoomMembers(transport, conv);
+                handled = true;
+            } else if (text == QStringLiteral("i")) {
+                openRoomInvite(transport, conv);
+                handled = true;
+            } else if (text == QStringLiteral("l")) {
+                openRoomLeaveConfirm(transport, conv, label);
+                handled = true;
+            } else if (text == QStringLiteral("x")) {
+                openRoomDeleteConfirm(transport, conv, label);
+                handled = true;
+            } else if (text == QStringLiteral("p")) {
+                openRoomPin(transport, conv, row.value(QStringLiteral("kind")).toString());
+                handled = true;
+            }
+        }
+        if (handled) {
+            event->accept();
+            return true;
+        }
     }
     // Fleet: 't' opens the steer prompt for the selected delegated child (F4/DEL-4) — a
     // RootWidget-level overlay because TuiPageHub cannot host dialogs.

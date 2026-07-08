@@ -88,6 +88,7 @@ class MemoryGraphModel;
 } // namespace memoryui
 
 class AddAccountFlow;
+class RoomFlow; // [acct-mgmt] Channels room lifecycle + member flows
 class AuthFlowLauncher;
 class SidebarModel;
 class SessionsListModel;
@@ -372,6 +373,18 @@ private:
     // [waveB:app-v30] D1: Channels 'x' — a destructive confirm before TransportRemove (the node
     // sequences the full account teardown). On accept: ITransportRegistry::remove(transport).
     void openChannelRemoveConfirm(const QString& transport, const QString& label);
+    // [acct-mgmt] Channels room-lifecycle key handlers. Join/create/invite/members go through the
+    // shared RoomFlow (chained dialogs); leave/delete are RootWidget confirms (the account-remove
+    // pattern); pin opens a session picker then IDaemonNet::bindChat with the canonical originKey.
+    void openRoomJoinFlow(const QString& transport);
+    void openRoomCreateFlow(const QString& transport);
+    void openRoomMembers(const QString& transport, const QString& conversation);
+    void openRoomInvite(const QString& transport, const QString& conversation);
+    void openRoomLeaveConfirm(const QString& transport, const QString& conversation,
+                              const QString& label);
+    void openRoomDeleteConfirm(const QString& transport, const QString& conversation,
+                               const QString& label);
+    void openRoomPin(const QString& transport, const QString& conversation, const QString& kind);
     // [wave2:app-approvals-safety] D3: inline transcript "Deny with reason" — open a prompt and
     // resolve the parked gate with the operator reason (Respond{Approved{reason}}, wire v29).
     void openInlineDenyReasonPrompt(const QString& callId);
@@ -466,6 +479,9 @@ private:
     std::unique_ptr<TuiOverlayHost> m_overlays;
     // Accounts add-wizard flow (lazily created; parented to this widget).
     AddAccountFlow* m_addAccounts = nullptr;
+    // [acct-mgmt] Channels room lifecycle + member flows (join/create/invite/members; lazily
+    // created, parented to this widget).
+    RoomFlow* m_roomFlow = nullptr;
     // Interactive sign-in flow driver (lazily created; parented to this widget).
     AuthFlowLauncher* m_authFlow = nullptr;
     CommandRegistry* m_commands = nullptr;

@@ -10,9 +10,12 @@
 #include "dialogs/add_account_flow.h"
 #include "dialogs/auth_flow_dialog.h"
 #include "dialogs/profile_editor_dialog.h"
+#include "dialogs/room_flow.h" // [acct-mgmt] Channels room lifecycle + member flows
 #include "display_role_adapter.h"
+#include "domain/origin.h"          // [acct-mgmt] bindChat origin for the room pin
 #include "feedback/ifeedback.h"     // app-feedback flow submit
 #include "fleet/iapprovals_inbox.h" // [wave2:app-approvals-safety] D3: deny-with-reason prompt
+#include "fleet/isession_roster.h"  // [acct-mgmt] session picker for the room pin
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
 #include "memory/imemory_service.h"
@@ -20,6 +23,7 @@
 #include "memory_list_model.h"
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
+#include "palette_dialog.h" // [acct-mgmt] session picker for the room pin
 #include "participants_model.h"
 #include "participants_view.h"
 #include "persistence/isession_store.h"
@@ -613,6 +617,123 @@ void RootWidget::openChannelRemoveConfirm(const QString& transport, const QStrin
     connect(cancelBtn, &Tui::ZButton::clicked, confirm, &Tui::ZDialog::close);
     confirm->setGeometry(QRect(0, 0, 62, 8));
     removeBtn->setFocus();
+}
+
+// [acct-mgmt] Lazily build the shared room flow (join/create/invite/members chained dialogs) the
+// way openAddAccount builds AddAccountFlow: refresh the page on a seam mutation, restore page focus
+// when the dialogs close.
+void RootWidget::openRoomJoinFlow(const QString& transport) {
+    if (m_services.transportRegistry == nullptr || transport.isEmpty()) {
+        return;
+    }
+    if (m_roomFlow == nullptr) {
+        m_roomFlow = new RoomFlow(m_services.transportRegistry, this);
+        connect(m_roomFlow, &RoomFlow::changed, this, [this] { refreshActivePage(); });
+        connect(m_roomFlow, &RoomFlow::finished, this, [this] {
+            if (m_transcript != nullptr && activePageKind() >= 0) {
+                m_transcript->setFocus();
+            }
+        });
+    }
+    m_roomFlow->startJoin(transport);
+}
+
+void RootWidget::openRoomCreateFlow(const QString& transport) {
+    if (m_services.transportRegistry == nullptr || transport.isEmpty()) {
+        return;
+    }
+    openRoomJoinFlow(transport); // ensure m_roomFlow exists + is wired
+    m_roomFlow->startCreate(transport);
+}
+
+void RootWidget::openRoomInvite(const QString& transport, const QString& conversation) {
+    if (m_services.transportRegistry == nullptr || transport.isEmpty() || conversation.isEmpty()) {
+        return;
+    }
+    openRoomJoinFlow(transport); // ensure m_roomFlow exists + is wired (does not start a join here)
+    m_roomFlow->startInvite(transport, conversation);
+}
+
+void RootWidget::openRoomMembers(const QString& transport, const QString& conversation) {
+    if (m_services.transportRegistry == nullptr || transport.isEmpty() || conversation.isEmpty()) {
+        return;
+    }
+    openRoomJoinFlow(transport); // ensure m_roomFlow exists + is wired
+    m_roomFlow->openMembers(transport, conversation);
+}
+
+void RootWidget::openRoomLeaveConfirm(const QString& transport, const QString& conversation,
+                                      const QString& label) {
+    if (m_services.transportRegistry == nullptr || transport.isEmpty() || conversation.isEmpty()) {
+        return;
+    }
+    auto* confirm = new ConfirmDialog(tr("Leave room"),
+                                      tr("Leave “%1”? You can re-join later if the room allows it.")
+                                          .arg(label.isEmpty() ? conversation : label),
+                                      this);
+    connect(confirm, &ConfirmDialog::confirmed, this, [this, transport, conversation] {
+        m_services.transportRegistry->leaveRoom(transport, conversation);
+    });
+}
+
+void RootWidget::openRoomDeleteConfirm(const QString& transport, const QString& conversation,
+                                       const QString& label) {
+    if (m_services.transportRegistry == nullptr || transport.isEmpty() || conversation.isEmpty()) {
+        return;
+    }
+    auto* confirm = new ConfirmDialog(tr("Delete room"),
+                                      tr("Delete “%1” on the node? This cannot be undone.")
+                                          .arg(label.isEmpty() ? conversation : label),
+                                      this);
+    connect(confirm, &ConfirmDialog::confirmed, this, [this, transport, conversation] {
+        m_services.transportRegistry->deleteRoom(transport, conversation);
+    });
+}
+
+// [acct-mgmt] Pin a room to a session: a PaletteDialog session picker, then IDaemonNet::bindChat
+// on the canonical origin (Group{chat} for a room, Dm{user} for a dm — honoring the
+// pinnedDmSessionFor precedent). Reuses the routing seam directly (no RoutingManagerController).
+void RootWidget::openRoomPin(const QString& transport, const QString& conversation,
+                             const QString& kind) {
+    if (m_services.daemonNet == nullptr || m_services.roster == nullptr || transport.isEmpty() ||
+        conversation.isEmpty()) {
+        return;
+    }
+    auto* picker = new PaletteDialog(tr("Pin room to session"), this);
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_services.roster->sessions());
+    QVector<PaletteDialog::Item> items;
+    if (model != nullptr) {
+        for (const QVariantMap& s : model->rows()) {
+            const QString id = s.value(QStringLiteral("id")).toString();
+            if (id.isEmpty()) {
+                continue;
+            }
+            items.push_back({id, s.value(QStringLiteral("title")).toString(), id});
+        }
+    }
+    picker->setItems(items);
+    const bool isDm = kind == QLatin1String("dm");
+    connect(picker, &PaletteDialog::activated, this,
+            [this, transport, conversation, isDm](const QString& sessionId) {
+                domain::Origin origin;
+                origin.transport = domain::TransportId(transport);
+                if (isDm) {
+                    origin.scope.kind = domain::OriginScopeKind::Dm;
+                    origin.scope.user = conversation;
+                } else {
+                    origin.scope.kind = domain::OriginScopeKind::Group;
+                    origin.scope.chat = conversation;
+                }
+                m_services.daemonNet->bindChat(origin, domain::SessionId(sessionId),
+                                               domain::ProfileRef());
+                refreshActivePage();
+            });
+    connect(picker, &PaletteDialog::canceled, this, [this] {
+        if (m_transcript != nullptr && activePageKind() >= 0) {
+            m_transcript->setFocus();
+        }
+    });
+    picker->openCentered();
 }
 
 void RootWidget::openFleetSteerPrompt(const QVariantMap& row) {

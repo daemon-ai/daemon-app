@@ -149,9 +149,9 @@ QList<QVariantMap> TuiPageHub::pageActionRows(int kind) const {
         return routingPinRows();
     case TabModel::Cron:
         return rowsOfModel(m_deps.cron->jobs());
-    // [waveB:app-v30] D1: the Channels account rows back the disconnect/remove keys.
+    // [acct-mgmt] the Channels flattened row list (accounts + rooms) backs the row-contextual keys.
     case TabModel::Channels:
-        return channelAccountRows();
+        return channelRows();
     default:
         return {};
     }
@@ -342,11 +342,12 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
             acted = true;
         }
         break;
-    // [waveB:app-v30] D1: 'd' disconnects the selected account (non-destructive; handled here).
-    // 'x' (remove) is destructive → intercepted at RootWidget level for a confirm prompt, so it is
-    // NOT handled in this hub key path.
+    // [acct-mgmt] 'd' disconnects the selected ACCOUNT row (non-destructive; handled here). Every
+    // other Channels key (account: c/x/g/n; room: Enter/i/l/x/p) opens a dialog / palette and is
+    // therefore intercepted at RootWidget level (TuiPageHub cannot host dialogs).
     case TabModel::Channels:
-        if (text == QStringLiteral("d") && m_deps.transportRegistry != nullptr) {
+        if (text == QStringLiteral("d") && m_deps.transportRegistry != nullptr &&
+            row.value(QStringLiteral("rowKind")).toString() == QLatin1String("account")) {
             const QString conn = row.value(QStringLiteral("connection")).toString();
             if (conn != QLatin1String("offline") && conn != QLatin1String("disconnecting")) {
                 m_deps.transportRegistry->disconnect(id);

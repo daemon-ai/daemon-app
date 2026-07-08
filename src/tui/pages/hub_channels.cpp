@@ -42,7 +42,12 @@ static QString channelReasonLabel(const QString& token) {
     return {};
 }
 
-QList<QVariantMap> TuiPageHub::channelAccountRows() const {
+QList<QVariantMap> TuiPageHub::channelRows() const {
+    // [acct-mgmt] A typed flattened row list: each account row is immediately followed by its
+    // room rows (rowKind "account" | "room"), so j/k walks accounts AND their rooms and the
+    // row-contextual keys act on the selected row's kind (GUI parity: the account card + its
+    // expandable room rows). `id` is the transport for an account and the conversation id for a
+    // room; both carry `transport` so a room key knows its account.
     QList<QVariantMap> rows;
     if (m_deps.transportRegistry == nullptr) {
         return rows;
@@ -50,12 +55,26 @@ QList<QVariantMap> TuiPageHub::channelAccountRows() const {
     for (const QVariant& v : m_deps.transportRegistry->instances()) {
         QVariantMap a = v.toMap();
         const QString transport = a.value(QStringLiteral("transport")).toString();
-        // `id` drives the disconnect/remove keys; `connection` is the live state (presence seam).
+        a[QStringLiteral("rowKind")] = QStringLiteral("account");
         a[QStringLiteral("id")] = transport;
         a[QStringLiteral("connection")] = m_deps.presence != nullptr
                                               ? m_deps.presence->connectionState(transport)
                                               : QStringLiteral("offline");
         rows.append(a);
+        for (const QVariant& rv : m_deps.transportRegistry->conversations(transport)) {
+            const QVariantMap r = rv.toMap();
+            const QString convId = r.value(QStringLiteral("id")).toString();
+            const QString title = r.value(QStringLiteral("title")).toString();
+            QVariantMap row;
+            row[QStringLiteral("rowKind")] = QStringLiteral("room");
+            row[QStringLiteral("id")] = convId;
+            row[QStringLiteral("transport")] = transport;
+            row[QStringLiteral("convId")] = convId;
+            row[QStringLiteral("family")] = a.value(QStringLiteral("family")).toString();
+            row[QStringLiteral("roomLabel")] = title.isEmpty() ? convId : title;
+            row[QStringLiteral("kind")] = r.value(QStringLiteral("kind")).toString();
+            rows.append(row);
+        }
     }
     return rows;
 }
@@ -72,10 +91,13 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
         return md;
     }
 
-    // [waveB:app-v30] D1: connect ('c'), disconnect ('d'), remove ('x', confirmed) are all live.
-    // B2: room membership is the node's; newly-joined rooms surface here on refresh and are badged.
-    md += tr("Events-IO transport accounts and their live rooms, shared with "
-             "the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. "
+    // [acct-mgmt] j/k walks accounts AND their rooms; keys are row-contextual (account vs room).
+    md += tr("Events-IO transport accounts, their rooms and members, shared with the GUI. "
+             "**j/k** move.\n\n"
+             "Account row: **c** connect · **d** disconnect · **x** remove account · "
+             "**g** join room · **n** new room.\n"
+             "Room row: **Enter** members · **i** invite · **l** leave · **x** delete · "
+             "**p** pin to agent.\n\n"
              "Room invites are handled by the node; newly-joined rooms appear here "
              "automatically.\n\n");
 
@@ -99,69 +121,74 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
     };
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
-    // --- Connected accounts (EIO-3 list + EIO-9 status dots) ----------------
+    // --- Connected accounts + their rooms (EIO-3/8/9; [acct-mgmt] selectable rooms) ----------
     md += tr("## Accounts\n\n");
-    const QList<QVariantMap> accounts = channelAccountRows();
-    if (accounts.isEmpty()) {
+    const QList<QVariantMap> rows = channelRows();
+    // Count account rows for the empty-state note (a flattened list can hold rooms only after an
+    // account, so an empty list means no accounts).
+    if (rows.isEmpty()) {
         md += tr("_No channels connected._\n");
     }
-    for (int i = 0; i < accounts.size(); ++i) {
-        const QVariantMap& a = accounts.at(i);
-        const QString transport = a.value(QStringLiteral("transport")).toString();
-        const QString displayName = a.value(QStringLiteral("displayName")).toString();
-        const QString family = a.value(QStringLiteral("family")).toString();
-        const QString boundProfile = a.value(QStringLiteral("boundProfile")).toString();
-        const QString conn = a.value(QStringLiteral("connection")).toString();
-        const QString sub =
-            boundProfile.isEmpty() ? family : tr("%1 · %2").arg(family, boundProfile);
-        md += tr("- %1%2 **%3** — %4 · %5\n")
-                  .arg(mark(i), dotFor(conn), displayName.isEmpty() ? transport : displayName, sub,
-                       conn);
-        // [waveB:app-v30] D1: node-reported disconnect provenance. The node's verbatim `message`
-        // wins; otherwise the coarse reason token's friendly label. `fatal` adds a re-auth hint.
-        const QString message = a.value(QStringLiteral("connectionMessage")).toString();
-        const QString reasonText =
-            message.isEmpty()
-                ? channelReasonLabel(a.value(QStringLiteral("connectionReason")).toString())
-                : message;
-        if (!reasonText.isEmpty()) {
-            md += tr("  - %1\n").arg(reasonText);
-        }
-        if (a.value(QStringLiteral("fatal")).toBool()) {
-            md += tr("  - _Re-authentication required — reconnect with 'c'._\n");
-        }
-
-        // --- This account's rooms (EIO-8: last-known ConvList) --------------
-        const QVariantList rooms = m_deps.transportRegistry->conversations(transport);
-        if (rooms.isEmpty()) {
+    QString lastAccount; // to render a "no rooms" note for an account with no following room rows
+    bool lastAccountHadRoom = false;
+    const auto flushNoRooms = [&] {
+        if (!lastAccount.isEmpty() && !lastAccountHadRoom) {
             md += tr("  - _No rooms._\n");
         }
-        for (const QVariant& rv : rooms) {
-            const QVariantMap r = rv.toMap();
-            const QString convId = r.value(QStringLiteral("id")).toString();
-            const QString title = r.value(QStringLiteral("title")).toString();
-            const QString label = title.isEmpty() ? convId : title;
-            const QString kind = r.value(QStringLiteral("kind")).toString();
-            // Route-pin token (B6/EIO-12): GUI parity with the room-row "⇄ session" chip.
-            const QString pinned =
-                m_deps.daemonNet != nullptr
-                    ? (kind == QLatin1String("dm")
-                           ? m_deps.daemonNet->pinnedDmSessionFor(transport, convId)
-                           : m_deps.daemonNet->pinnedSessionFor(transport, convId))
-                    : QString();
-            QString line =
-                kind.isEmpty() ? tr("  - %1").arg(label) : tr("  - %1 · %2").arg(label, kind);
-            if (!pinned.isEmpty()) {
-                line += tr(" · ⇄ `%1`").arg(pinned);
+    };
+    for (int i = 0; i < rows.size(); ++i) {
+        const QVariantMap& row = rows.at(i);
+        const QString rowKind = row.value(QStringLiteral("rowKind")).toString();
+        if (rowKind == QLatin1String("account")) {
+            flushNoRooms();
+            const QString transport = row.value(QStringLiteral("transport")).toString();
+            const QString displayName = row.value(QStringLiteral("displayName")).toString();
+            const QString family = row.value(QStringLiteral("family")).toString();
+            const QString boundProfile = row.value(QStringLiteral("boundProfile")).toString();
+            const QString conn = row.value(QStringLiteral("connection")).toString();
+            const QString sub =
+                boundProfile.isEmpty() ? family : tr("%1 · %2").arg(family, boundProfile);
+            md += tr("- %1%2 **%3** — %4 · %5\n")
+                      .arg(mark(i), dotFor(conn), displayName.isEmpty() ? transport : displayName,
+                           sub, conn);
+            // [waveB:app-v30] D1: node-reported disconnect provenance (verbatim message wins).
+            const QString message = row.value(QStringLiteral("connectionMessage")).toString();
+            const QString reasonText =
+                message.isEmpty()
+                    ? channelReasonLabel(row.value(QStringLiteral("connectionReason")).toString())
+                    : message;
+            if (!reasonText.isEmpty()) {
+                md += tr("  - %1\n").arg(reasonText);
             }
-            // [wave2:app-channels-liveness] B2: badge a room the node surfaced after the baseline
-            // (e.g. an auto-accepted invite) — GUI parity with the room-row "new" chip.
-            if (m_deps.transportRegistry->isNewConversation(transport, convId)) {
-                line += tr(" · ✦ new");
+            if (row.value(QStringLiteral("fatal")).toBool()) {
+                md += tr("  - _Re-authentication required — reconnect with 'c'._\n");
             }
-            md += line + QLatin1Char('\n');
+            lastAccount = transport;
+            lastAccountHadRoom = false;
+            continue;
         }
+        // Room row (EIO-8): rendered as a selectable, indented sub-row.
+        lastAccountHadRoom = true;
+        const QString transport = row.value(QStringLiteral("transport")).toString();
+        const QString convId = row.value(QStringLiteral("convId")).toString();
+        const QString label = row.value(QStringLiteral("roomLabel")).toString();
+        const QString kind = row.value(QStringLiteral("kind")).toString();
+        const QString pinned = m_deps.daemonNet != nullptr
+                                   ? (kind == QLatin1String("dm")
+                                          ? m_deps.daemonNet->pinnedDmSessionFor(transport, convId)
+                                          : m_deps.daemonNet->pinnedSessionFor(transport, convId))
+                                   : QString();
+        QString line = kind.isEmpty() ? tr("  - %1# %2").arg(mark(i), label)
+                                      : tr("  - %1# %2 · %3").arg(mark(i), label, kind);
+        if (!pinned.isEmpty()) {
+            line += tr(" · ⇄ `%1`").arg(pinned);
+        }
+        if (m_deps.transportRegistry->isNewConversation(transport, convId)) {
+            line += tr(" · ✦ new");
+        }
+        md += line + QLatin1Char('\n');
     }
+    flushNoRooms();
     md += QLatin1Char('\n');
 
     // --- Add channel (EIO-1 adapter picker; connect deferred) ---------------
