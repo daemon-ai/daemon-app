@@ -321,6 +321,9 @@ public:
     void setCredential(const QString& profile, const QString& secret);
     // Remove the secret under `profile` (CredentialRemove); on Ok the list is re-fetched.
     void removeCredential(const QString& profile);
+    // [acct-mgmt] wire v35: persist the credential's display label (CredentialSetLabel;
+    // hasLabel=false clears it to null). The node emits no event, so on Ok the list is re-fetched.
+    void setCredentialLabel(const QString& profile, bool hasLabel, const QString& label);
 
 signals:
     void listRefreshed();
@@ -335,6 +338,8 @@ private:
     static constexpr auto kListCorrelation = "repo/credential-list";
     static constexpr auto kSetCorrelation = "repo/credential-set";
     static constexpr auto kRemoveCorrelation = "repo/credential-remove";
+    // [acct-mgmt] wire v35: set-label intent; on Ok the list is re-fetched (no node event).
+    static constexpr auto kSetLabelCorrelation = "repo/credential-set-label";
 
     QList<DecodedCredentialInfo> m_credentials;
 };
@@ -726,6 +731,17 @@ public:
     void disconnect(const QString& transport);
     void remove(const QString& transport);
 
+    // [acct-mgmt] wire v35: reversible lifecycle + persisted metadata (ControlApi-level; available
+    // for every transport). connectTransport re-spawns the adapter family serve loop
+    // (TransportConnect; idempotent). setEnabled persists the desired state (TransportSetEnabled;
+    // disable also disconnects, enable does NOT auto-connect — the caller connects separately).
+    // setTransportLabel persists the display label (TransportSetLabel; hasLabel=false clears it to
+    // null). Each sends ONE intent and, on Ok, re-lists so the client renders the node's reported
+    // state (the node also emits TransportChanged) — never an optimistic local mutation.
+    void connectTransport(const QString& transport);
+    void setEnabled(const QString& transport, bool enabled);
+    void setTransportLabel(const QString& transport, bool hasLabel, const QString& label);
+
     // [wave2:app-channels-liveness] B5: apply a live TransportChanged node-event in place. Patches
     // the cached row's connection/presence (preserving family/displayName/boundProfile) and emits
     // instancesRefreshed() so the DaemonPresenceService re-projects and the status dots re-read -
@@ -824,6 +840,10 @@ private:
     // [waveB:app-v30] D1: disconnect/remove intents; on Ok both re-list the instances.
     static constexpr auto kDisconnectCorrelation = "repo/transport-disconnect";
     static constexpr auto kRemoveCorrelation = "repo/transport-remove";
+    // [acct-mgmt] wire v35: connect/set-enabled/set-label intents; on Ok all re-list the instances.
+    static constexpr auto kConnectCorrelation = "repo/transport-connect";
+    static constexpr auto kSetEnabledCorrelation = "repo/transport-set-enabled";
+    static constexpr auto kSetLabelCorrelation = "repo/transport-set-label";
 
     // [acct-mgmt] Room lifecycle + member ops. The transport (and conv for two-key ops) ride the
     // correlation tail; a unit-separator (\x1f, never in an id) splits transport from conv so the

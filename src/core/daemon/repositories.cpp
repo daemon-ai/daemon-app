@@ -547,6 +547,18 @@ void CredentialRepository::removeCredential(const QString& profile) {
                           QLatin1String(kRemoveCorrelation));
 }
 
+// [acct-mgmt] wire v35: persist the credential label. One request; on Ok re-fetch the redacted list
+// (the node emits no event for a label set) so the new label renders — never optimistic.
+void CredentialRepository::setCredentialLabel(const QString& profile, bool hasLabel,
+                                              const QString& label) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeCredentialSetLabelRequest(profile, hasLabel, label),
+                          QLatin1String(kSetLabelCorrelation));
+}
+
 void CredentialRepository::handleResponse(const QString& correlationId,
                                           const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kListCorrelation)) {
@@ -557,8 +569,10 @@ void CredentialRepository::handleResponse(const QString& correlationId,
         emit listRefreshed();
         return;
     }
+    // [acct-mgmt] wire v35: set-label joins the set/remove re-fetch-on-Ok path.
     if (correlationId == QLatin1String(kSetCorrelation) ||
-        correlationId == QLatin1String(kRemoveCorrelation)) {
+        correlationId == QLatin1String(kRemoveCorrelation) ||
+        correlationId == QLatin1String(kSetLabelCorrelation)) {
         const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
         if (kind == ApiResponseKind::Ok) {
             refreshList(); // reflect the mutation in the redacted view
@@ -575,7 +589,8 @@ void CredentialRepository::handleResponse(const QString& correlationId,
 }
 
 bool CredentialRepository::isOwnCorrelation(const QString& correlationId) {
-    const std::array keys = {kListCorrelation, kSetCorrelation, kRemoveCorrelation};
+    const std::array keys = {kListCorrelation, kSetCorrelation, kRemoveCorrelation,
+                             kSetLabelCorrelation};
     return std::ranges::any_of(
         keys, [&](const char* key) { return correlationId == QLatin1String(key); });
 }
@@ -1955,6 +1970,37 @@ void TransportRepository::remove(const QString& transport) {
                           QLatin1String(kRemoveCorrelation));
 }
 
+// [acct-mgmt] wire v35: reversible lifecycle + persisted metadata. One request; on Ok re-list so
+// the client renders the node's reported state (the node also emits TransportChanged) — never
+// optimistic.
+void TransportRepository::connectTransport(const QString& transport) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTransportConnectRequest(transport),
+                          QLatin1String(kConnectCorrelation));
+}
+
+void TransportRepository::setEnabled(const QString& transport, bool enabled) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTransportSetEnabledRequest(transport, enabled),
+                          QLatin1String(kSetEnabledCorrelation));
+}
+
+void TransportRepository::setTransportLabel(const QString& transport, bool hasLabel,
+                                            const QString& label) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTransportSetLabelRequest(transport, hasLabel, label),
+                          QLatin1String(kSetLabelCorrelation));
+}
+
 void TransportRepository::handleResponse(const QString& correlationId,
                                          const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kAdaptersCorrelation)) {
@@ -1966,8 +2012,12 @@ void TransportRepository::handleResponse(const QString& correlationId,
         return;
     }
     // [waveB:app-v30] D1: disconnect/remove both re-list on Ok; surface the node's error otherwise.
+    // [acct-mgmt] wire v35: connect/set-enabled/set-label join the same re-list-on-Ok path.
     if (correlationId == QLatin1String(kDisconnectCorrelation) ||
-        correlationId == QLatin1String(kRemoveCorrelation)) {
+        correlationId == QLatin1String(kRemoveCorrelation) ||
+        correlationId == QLatin1String(kConnectCorrelation) ||
+        correlationId == QLatin1String(kSetEnabledCorrelation) ||
+        correlationId == QLatin1String(kSetLabelCorrelation)) {
         const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
         if (kind == ApiResponseKind::Ok) {
             refreshInstances();
@@ -1976,10 +2026,16 @@ void TransportRepository::handleResponse(const QString& correlationId,
         DecodedApiError err;
         if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
             emit operationFailed(err.message);
+        } else if (correlationId == QLatin1String(kRemoveCorrelation)) {
+            emit operationFailed(tr("Failed to remove the account"));
+        } else if (correlationId == QLatin1String(kConnectCorrelation)) {
+            emit operationFailed(tr("Failed to connect the account"));
+        } else if (correlationId == QLatin1String(kSetEnabledCorrelation)) {
+            emit operationFailed(tr("Failed to change the account's enabled state"));
+        } else if (correlationId == QLatin1String(kSetLabelCorrelation)) {
+            emit operationFailed(tr("Failed to rename the account"));
         } else {
-            emit operationFailed(correlationId == QLatin1String(kRemoveCorrelation)
-                                     ? tr("Failed to remove the account")
-                                     : tr("Failed to disconnect the account"));
+            emit operationFailed(tr("Failed to disconnect the account"));
         }
         return;
     }
@@ -2058,6 +2114,9 @@ void TransportRepository::syncTransportInstances(const QList<DecodedTransportIns
         row.connectionReason = i.reason;
         row.connectionMessage = i.message;
         row.fatal = i.fatal;
+        // [acct-mgmt] wire v35: node-persisted desired state + display-label override.
+        row.enabled = i.enabled;
+        row.label = i.label;
         row.updatedAtMs = now;
         cache()->upsertTransportInstance(row);
         keep.insert(i.transport);
@@ -2705,8 +2764,10 @@ void TransportRepository::handleMemberOpResponse(const QString& transport, const
 
 bool TransportRepository::isOwnCorrelation(const QString& correlationId) {
     // [waveB:app-v30] D1: +disconnect/remove correlations.
+    // [acct-mgmt] wire v35: +connect/set-enabled/set-label correlations.
     const std::array keys = {kAdaptersCorrelation, kInstancesCorrelation, kDisconnectCorrelation,
-                             kRemoveCorrelation};
+                             kRemoveCorrelation,   kConnectCorrelation,   kSetEnabledCorrelation,
+                             kSetLabelCorrelation};
     if (std::ranges::any_of(keys,
                             [&](const char* key) { return correlationId == QLatin1String(key); })) {
         return true;

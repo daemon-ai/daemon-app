@@ -30,7 +30,10 @@ namespace daemonapp::daemon::cache {
 // became live (offline-first read).
 // v2 (L3): added daemon_transcript_blocks (render-from-cache transcript) + per-session resync
 // cursors.
-inline constexpr int kSchemaVersion = 8;
+// v9 ([acct-mgmt] wire v35): adds enabled + label to daemon_transport_instances (node-persisted
+// desired state + display-label override; render offline-first). The cache is non-authoritative, so
+// the bump just drops + rebuilds (the daemon re-baselines it).
+inline constexpr int kSchemaVersion = 9;
 
 inline constexpr const char* kCreateMetaSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_cache_meta (
@@ -128,6 +131,11 @@ CREATE TABLE IF NOT EXISTS daemon_transport_instances (
   connection_reason TEXT,
   connection_message TEXT,
   fatal INTEGER NOT NULL DEFAULT 0,
+  -- [acct-mgmt] v9 (wire v35): node-persisted desired state (enabled, default true) + display-label
+  -- override (label; NULL/empty when the node reported none / an explicit null — nullable like the
+  -- connection_reason/message columns, so a cleared QString binds cleanly).
+  enabled INTEGER NOT NULL DEFAULT 1,
+  label TEXT,
   updated_at_ms INTEGER NOT NULL
 );
 )sql";

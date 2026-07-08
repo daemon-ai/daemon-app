@@ -141,14 +141,18 @@ void MockAccountsService::beginOAuth(const QString& provider) {
 
 void MockAccountsService::rename(const QString& accountId, const QString& label) {
     const int row = m_accounts->indexOfId(accountId);
-    if (row < 0 || label.isEmpty()) {
+    if (row < 0) {
         return;
     }
     QVariantMap acc = m_accounts->at(row);
-    if (acc.value(QStringLiteral("label")).toString() == label) {
+    // [acct-mgmt] wire v35 parity: an empty label clears it back to the provider-name fallback
+    // (offline this mock plays the node's persisted-label role).
+    const QString next =
+        label.isEmpty() ? providerName(acc.value(QStringLiteral("provider")).toString()) : label;
+    if (acc.value(QStringLiteral("label")).toString() == next) {
         return;
     }
-    acc[QStringLiteral("label")] = label;
+    acc[QStringLiteral("label")] = next;
     m_accounts->upsert(acc);
     save();
 }

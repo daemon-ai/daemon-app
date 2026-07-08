@@ -52,8 +52,9 @@ public:
 
 private:
     // Rebuild the account rows from the repository's redacted credential list, enriched with the
-    // provider/label the user chose when adding the key (the wire only returns
-    // profile/present/hint).
+    // provider the user chose when adding the key (the wire returns profile/present/hint/label but
+    // no provider). [acct-mgmt] wire v35: the label now comes from the wire
+    // (credential-info.label), no longer from the client-local map.
     void rebuildAccounts();
     // The profile a new credential is stored under: the node's active default (ProfileList), or a
     // sensible fallback when the list is unknown.
@@ -63,11 +64,9 @@ private:
     daemonapp::daemon::ProfileRepository* m_profiles = nullptr;
     uimodels::VariantListModel* m_accounts = nullptr;
 
-    struct Meta {
-        QString provider;
-        QString label;
-    };
-    QHash<QString, Meta> m_meta; // profile -> chosen provider/label, for display enrichment
+    // [acct-mgmt] wire v35: the label moved to the wire (credential-info.label); this map now only
+    // carries the client-chosen provider (the redacted CredentialList reports no provider).
+    QHash<QString, QString> m_providerFor; // profile -> chosen provider, for display enrichment
 };
 
 } // namespace accounts

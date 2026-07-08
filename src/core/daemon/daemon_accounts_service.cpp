@@ -70,10 +70,15 @@ void DaemonAccountsService::addApiKey(const QString& provider, const QString& la
         return;
     }
     const QString profile = credentialProfile();
-    // Remember the provider/label for display: the redacted CredentialList only returns the
-    // profile + a masked hint, not which provider the key is for.
-    m_meta.insert(profile, Meta{provider, label.isEmpty() ? provider : label});
+    // Remember the provider for display: the redacted CredentialList only returns the profile + a
+    // masked hint, not which provider the key is for.
+    m_providerFor.insert(profile, provider);
     m_credentials->setCredential(profile, key);
+    // [acct-mgmt] wire v35: persist the user's chosen label node-side (the node owns it now); the
+    // account row then renders credential-info.label after the refetch.
+    if (!label.isEmpty()) {
+        m_credentials->setCredentialLabel(profile, /*hasLabel=*/true, label);
+    }
 }
 
 void DaemonAccountsService::addApiKeyForProfile(const QString& profileId, const QString& provider,
@@ -86,8 +91,12 @@ void DaemonAccountsService::addApiKeyForProfile(const QString& profileId, const 
     // Store the credential under the edited profile (not the active one), so an inactive agent's
     // key is set where inference will look it up. Leaving the profile's credential_ref empty means
     // the node defaults it to the profile id.
-    m_meta.insert(profileId, Meta{provider, label.isEmpty() ? provider : label});
+    m_providerFor.insert(profileId, provider);
     m_credentials->setCredential(profileId, key);
+    // [acct-mgmt] wire v35: persist the chosen label node-side.
+    if (!label.isEmpty()) {
+        m_credentials->setCredentialLabel(profileId, /*hasLabel=*/true, label);
+    }
 }
 
 QVariantMap DaemonAccountsService::credentialFor(const QString& profileId) const {
@@ -113,16 +122,13 @@ void DaemonAccountsService::beginOAuth(const QString& provider) {
 }
 
 void DaemonAccountsService::rename(const QString& accountId, const QString& label) {
-    if (label.isEmpty()) {
+    if (m_credentials == nullptr) {
         return;
     }
-    auto it = m_meta.find(accountId);
-    if (it != m_meta.end()) {
-        it->label = label;
-    } else {
-        m_meta.insert(accountId, Meta{accountId, label});
-    }
-    rebuildAccounts();
+    // [acct-mgmt] wire v35: the node owns the label. Persist it over the wire (CredentialSetLabel;
+    // an empty label clears it to null); on Ok the repo re-fetches and rebuildAccounts renders the
+    // wire label. No client-local mutation — never optimistic.
+    m_credentials->setCredentialLabel(accountId, /*hasLabel=*/!label.isEmpty(), label);
 }
 
 void DaemonAccountsService::reauth(const QString& accountId) {
@@ -137,7 +143,7 @@ void DaemonAccountsService::remove(const QString& accountId) {
     if (m_credentials != nullptr) {
         m_credentials->removeCredential(accountId); // accountId is the credential profile
     }
-    m_meta.remove(accountId);
+    m_providerFor.remove(accountId);
 }
 
 void DaemonAccountsService::rebuildAccounts() {
@@ -146,8 +152,12 @@ void DaemonAccountsService::rebuildAccounts() {
     }
     QList<QVariantMap> rows;
     for (const daemonapp::daemon::DecodedCredentialInfo& ci : m_credentials->credentials()) {
-        const Meta meta = m_meta.value(ci.profile, Meta{ci.profile, ci.profile});
-        rows.append(mkAccount(ci.profile, meta.provider, meta.label,
+        // Provider is the client-chosen enrichment (default to the profile id when unknown, e.g. a
+        // credential set by another client). [acct-mgmt] wire v35: the label is the node-persisted
+        // credential-info.label; fall back to the provider for display when the node reported none.
+        const QString provider = m_providerFor.value(ci.profile, ci.profile);
+        const QString label = ci.label.isEmpty() ? provider : ci.label;
+        rows.append(mkAccount(ci.profile, provider, label,
                               ci.present ? QStringLiteral("connected") : QStringLiteral("error"),
                               ci.hint));
     }

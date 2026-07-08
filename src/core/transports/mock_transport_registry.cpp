@@ -143,12 +143,40 @@ QVariantList MockTransportRegistry::instances() const {
     QVariantMap row;
     row.insert(QStringLiteral("transport"), QLatin1String(kMockTransport));
     row.insert(QStringLiteral("family"), QStringLiteral("matrix"));
-    row.insert(QStringLiteral("displayName"), QStringLiteral("@you:matrix.org"));
+    // [acct-mgmt] wire v35: the label overlays the display name; the raw label + enabled ride
+    // along.
+    const QString displayName = QStringLiteral("@you:matrix.org");
+    row.insert(QStringLiteral("displayName"), m_label.isEmpty() ? displayName : m_label);
+    row.insert(QStringLiteral("label"), m_label);
+    row.insert(QStringLiteral("enabled"), m_enabled);
     row.insert(QStringLiteral("boundProfile"), QString());
     row.insert(QStringLiteral("connectionReason"), QString());
     row.insert(QStringLiteral("connectionMessage"), QString());
     row.insert(QStringLiteral("fatal"), false);
     return QVariantList{row};
+}
+
+// [acct-mgmt] wire v35: mutate the canned account + re-emit so the UI re-reads (the node's role is
+// played by this in-memory state offline). connect is a no-op re-emit; enable/label persist
+// locally.
+void MockTransportRegistry::connectAccount(const QString& transport) {
+    if (transport == QLatin1String(kMockTransport)) {
+        emit instancesChanged();
+    }
+}
+
+void MockTransportRegistry::setEnabled(const QString& transport, bool enabled) {
+    if (transport == QLatin1String(kMockTransport)) {
+        m_enabled = enabled;
+        emit instancesChanged();
+    }
+}
+
+void MockTransportRegistry::setLabel(const QString& transport, const QString& label) {
+    if (transport == QLatin1String(kMockTransport)) {
+        m_label = label;
+        emit instancesChanged();
+    }
 }
 
 QVariantList MockTransportRegistry::conversations(const QString& transport) const {

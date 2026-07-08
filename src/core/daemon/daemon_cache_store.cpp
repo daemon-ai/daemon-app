@@ -540,15 +540,17 @@ bool DaemonCacheStore::deleteFleetUnit(const QString& unitId) {
 bool DaemonCacheStore::upsertTransportInstance(const CachedTransportInstanceRow& row) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     // [waveB:app-v30] v8 (D1): +connection_reason,connection_message,fatal.
+    // [acct-mgmt] v9 (wire v35): +enabled,label.
     q.prepare(QStringLiteral(
         "INSERT INTO daemon_transport_instances(transport,family,display_name,connection,presence,"
-        "bound_profile,connection_reason,connection_message,fatal,updated_at_ms) "
-        "VALUES(?,?,?,?,?,?,?,?,?,?) "
+        "bound_profile,connection_reason,connection_message,fatal,enabled,label,updated_at_ms) "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?) "
         "ON CONFLICT(transport) DO UPDATE SET family=excluded.family,"
         "display_name=excluded.display_name,connection=excluded.connection,"
         "presence=excluded.presence,bound_profile=excluded.bound_profile,"
         "connection_reason=excluded.connection_reason,"
         "connection_message=excluded.connection_message,fatal=excluded.fatal,"
+        "enabled=excluded.enabled,label=excluded.label,"
         "updated_at_ms=excluded.updated_at_ms"));
     q.addBindValue(row.transport);
     q.addBindValue(row.family);
@@ -559,6 +561,8 @@ bool DaemonCacheStore::upsertTransportInstance(const CachedTransportInstanceRow&
     q.addBindValue(row.connectionReason);
     q.addBindValue(row.connectionMessage);
     q.addBindValue(row.fatal ? 1 : 0);
+    q.addBindValue(row.enabled ? 1 : 0);
+    q.addBindValue(row.label);
     q.addBindValue(row.updatedAtMs);
     return execWrite(q);
 }
@@ -567,9 +571,10 @@ QList<CachedTransportInstanceRow> DaemonCacheStore::transportInstances() const {
     QList<CachedTransportInstanceRow> rows;
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     // [waveB:app-v30] v8 (D1): +connection_reason,connection_message,fatal.
+    // [acct-mgmt] v9 (wire v35): +enabled,label.
     if (!q.exec(QStringLiteral(
             "SELECT transport,family,display_name,connection,presence,bound_profile,"
-            "connection_reason,connection_message,fatal,updated_at_ms "
+            "connection_reason,connection_message,fatal,enabled,label,updated_at_ms "
             "FROM daemon_transport_instances ORDER BY family ASC, display_name ASC"))) {
         setLastError(q.lastError().text());
         return rows;
@@ -585,7 +590,9 @@ QList<CachedTransportInstanceRow> DaemonCacheStore::transportInstances() const {
         row.connectionReason = q.value(6).toString();
         row.connectionMessage = q.value(7).toString();
         row.fatal = q.value(8).toInt() != 0;
-        row.updatedAtMs = q.value(9).toLongLong();
+        row.enabled = q.value(9).toInt() != 0;
+        row.label = q.value(10).toString();
+        row.updatedAtMs = q.value(11).toLongLong();
         rows.append(row);
     }
     return rows;

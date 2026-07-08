@@ -27,6 +27,12 @@ public:
     [[nodiscard]] QVariantList conversations(const QString& transport) const override;
     void refreshConversations(const QString& transport) override;
 
+    // [acct-mgmt] wire v35: reversible lifecycle + persisted metadata over the canned account, so
+    // the connect / enable-toggle / rename paths are exercisable offline (UI-first).
+    void connectAccount(const QString& transport) override;
+    void setEnabled(const QString& transport, bool enabled) override;
+    void setLabel(const QString& transport, const QString& label) override;
+
     // [acct-mgmt] Room lifecycle + member management over the canned state.
     void conversationJoinDetails(const QString& transport) override;
     void joinRoom(const QString& transport, const QVariantMap& form) override;
@@ -52,6 +58,9 @@ private:
     QHash<QString, QVariantList> m_rooms;         // transport -> room maps
     QHash<QString, QList<QVariantMap>> m_members; // conversation id -> member rows
     QHash<QString, QSet<QString>> m_banned;       // conversation id -> banned ids
+    // [acct-mgmt] wire v35: mutable enabled/label for the single canned account.
+    bool m_enabled = true;
+    QString m_label;
 };
 
 } // namespace transports

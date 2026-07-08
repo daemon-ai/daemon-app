@@ -82,7 +82,12 @@ QVariantList DaemonTransportRegistry::instances() const {
         QVariantMap row;
         row[QStringLiteral("transport")] = i.transport;
         row[QStringLiteral("family")] = i.family;
-        row[QStringLiteral("displayName")] = i.displayName;
+        // [acct-mgmt] wire v35: the node-persisted label overlays the display name wherever the
+        // account renders (account card/row, sidebar); the raw label is exposed for rename
+        // pre-fill.
+        row[QStringLiteral("displayName")] = i.label.isEmpty() ? i.displayName : i.label;
+        row[QStringLiteral("label")] = i.label;
+        row[QStringLiteral("enabled")] = i.enabled;
         row[QStringLiteral("boundProfile")] = i.boundProfile;
         // [waveB:app-v30] D1: node-reported disconnect provenance (offline-first).
         row[QStringLiteral("connectionReason")] = i.connectionReason;
@@ -128,6 +133,26 @@ void DaemonTransportRegistry::disconnect(const QString& transport) {
 void DaemonTransportRegistry::remove(const QString& transport) {
     if (m_repo != nullptr) {
         m_repo->remove(transport);
+    }
+}
+
+// [acct-mgmt] wire v35: forward the reversible-lifecycle + label intents to the repository. An
+// empty `label` maps to an explicit-null clear (hasLabel=false).
+void DaemonTransportRegistry::connectAccount(const QString& transport) {
+    if (m_repo != nullptr) {
+        m_repo->connectTransport(transport);
+    }
+}
+
+void DaemonTransportRegistry::setEnabled(const QString& transport, bool enabled) {
+    if (m_repo != nullptr) {
+        m_repo->setEnabled(transport, enabled);
+    }
+}
+
+void DaemonTransportRegistry::setLabel(const QString& transport, const QString& label) {
+    if (m_repo != nullptr) {
+        m_repo->setTransportLabel(transport, !label.isEmpty(), label);
     }
 }
 

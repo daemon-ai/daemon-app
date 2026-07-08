@@ -93,6 +93,10 @@ struct CachedTransportInstanceRow {
     QString connectionReason;
     QString connectionMessage;
     bool fatal = false;
+    // [acct-mgmt] v9 (wire v35): node-persisted desired state + display-label override. `enabled`
+    // defaults true; `label` (empty = none) overlays displayName wherever the account renders.
+    bool enabled = true;
+    QString label;
     qint64 updatedAtMs = 0;
 };
 

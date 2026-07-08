@@ -43,6 +43,9 @@ public:
     //   transport (QString), family (QString), displayName (QString), boundProfile (QString).
     // [waveB:app-v30] D1: rows also carry connectionReason (coarse token), connectionMessage (the
     // node's verbatim human string), and fatal (bool: gates the re-auth affordance).
+    // [acct-mgmt] wire v35: rows also carry enabled (bool) and label (QString; the node-persisted
+    // display-label override). displayName is already overlaid with label when set, so consumers
+    // render displayName directly; label is exposed raw so a rename dialog can pre-fill it.
     [[nodiscard]] Q_INVOKABLE virtual QVariantList instances() const = 0;
 
     // [waveB:app-v30] D1: per-instance teardown. `disconnect` tears down the live session;
@@ -50,6 +53,24 @@ public:
     // the mock + non-daemon seams need not implement them.
     Q_INVOKABLE virtual void disconnect(const QString& transport) { Q_UNUSED(transport) }
     Q_INVOKABLE virtual void remove(const QString& transport) { Q_UNUSED(transport) }
+
+    // [acct-mgmt] wire v35: reversible lifecycle + persisted metadata (ControlApi-level; available
+    // for every transport, unlike the per-verb messaging ops). connectAccount re-spawns the adapter
+    // family serve loop (idempotent); setEnabled persists the desired state (disable also
+    // disconnects; enable does NOT auto-connect — call connectAccount); setLabel persists the
+    // display label (an empty `label` clears it to null). The node reports the outcome via
+    // instancesChanged (TransportChanged / refetch); no optimistic local state. Default no-ops so
+    // the mock + non-daemon seams need not implement them. Named `connectAccount` (not `connect`)
+    // to avoid shadowing QObject::connect in the QObject-derived implementations.
+    Q_INVOKABLE virtual void connectAccount(const QString& transport) { Q_UNUSED(transport) }
+    Q_INVOKABLE virtual void setEnabled(const QString& transport, bool enabled) {
+        Q_UNUSED(transport)
+        Q_UNUSED(enabled)
+    }
+    Q_INVOKABLE virtual void setLabel(const QString& transport, const QString& label) {
+        Q_UNUSED(transport)
+        Q_UNUSED(label)
+    }
 
     // Live conversations/rooms for a transport (EIO-8). Each entry is a map:
     //   transport, id, kind, title, topic. `conversations()` returns the last-known (cached) set;

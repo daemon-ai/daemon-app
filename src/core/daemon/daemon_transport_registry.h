@@ -35,6 +35,10 @@ public:
     // [waveB:app-v30] D1: per-instance teardown intents, delegated to the repository.
     void disconnect(const QString& transport) override;
     void remove(const QString& transport) override;
+    // [acct-mgmt] wire v35: reversible lifecycle + persisted metadata, delegated to the repository.
+    void connectAccount(const QString& transport) override;
+    void setEnabled(const QString& transport, bool enabled) override;
+    void setLabel(const QString& transport, const QString& label) override;
     // [wave2:app-channels-liveness] B2: "new room" affordance, delegated to the repository.
     [[nodiscard]] bool isNewConversation(const QString& transport,
                                          const QString& conversation) const override;

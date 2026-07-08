@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
+#include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_contacts_service.h"
 #include "daemon/daemon_presence_service.h"
@@ -13,6 +14,7 @@
 #include "daemon_api_client_types.h"
 #include "transports/mock_contacts_service.h"
 #include "transports/mock_transport_registry.h"
+#include "uimodels/variant_list_model.h"
 #include "wire_mux_fixture.h"
 
 #include <memory>
@@ -22,6 +24,7 @@
 
 using daemonapp::daemon::CachedTransportInstanceRow;
 using daemonapp::daemon::ContactsRepository;
+using daemonapp::daemon::CredentialRepository;
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
 using daemonapp::daemon::DecodedAdapterInfo;
@@ -929,6 +932,170 @@ private slots:
         QCOMPARE(presence.presence(QStringLiteral("matrix/@bot:hs")), QStringLiteral("available"));
         // An unknown transport degrades to offline/unknown.
         QCOMPARE(presence.connectionState(QStringLiteral("nope")), QStringLiteral("offline"));
+    }
+
+    // [acct-mgmt] wire v35: a cached disabled+labeled account overlays displayName with the label
+    // and exposes enabled + the raw label (for the rename pre-fill) on the projected row.
+    void registryOverlaysLabelEnabled() {
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("ch-lbl.db")));
+        QVERIFY(cache.isOpen());
+        CachedTransportInstanceRow row;
+        row.transport = QStringLiteral("matrix/@bot:hs");
+        row.family = QStringLiteral("matrix");
+        row.displayName = QStringLiteral("@bot:hs");
+        row.enabled = false;
+        row.label = QStringLiteral("Work bot");
+        row.updatedAtMs = 1;
+        QVERIFY(cache.upsertTransportInstance(row));
+
+        DaemonTransport transport; // unconnected
+        NodeApiClient client(&transport);
+        TransportRepository repo(&client, &cache);
+        DaemonTransportRegistry registry(&repo);
+
+        const QVariantMap acc = registry.instances().at(0).toMap();
+        // The label overlays the display name; the raw label + enabled ride along.
+        QCOMPARE(acc.value(QStringLiteral("displayName")).toString(), QStringLiteral("Work bot"));
+        QCOMPARE(acc.value(QStringLiteral("label")).toString(), QStringLiteral("Work bot"));
+        QVERIFY(!acc.value(QStringLiteral("enabled")).toBool());
+
+        // With no label the display name is the raw display name.
+        CachedTransportInstanceRow bare = row;
+        bare.transport = QStringLiteral("matrix/@other:hs");
+        bare.label.clear();
+        bare.enabled = true;
+        QVERIFY(cache.upsertTransportInstance(bare));
+        for (const QVariant& v : registry.instances()) {
+            const QVariantMap m = v.toMap();
+            if (m.value(QStringLiteral("transport")).toString() ==
+                QStringLiteral("matrix/@other:hs")) {
+                QCOMPARE(m.value(QStringLiteral("displayName")).toString(),
+                         QStringLiteral("@bot:hs"));
+                QVERIFY(m.value(QStringLiteral("label")).toString().isEmpty());
+                QVERIFY(m.value(QStringLiteral("enabled")).toBool());
+            }
+        }
+    }
+
+    // [acct-mgmt] wire v35: connectAccount sends TransportConnect + re-lists on Ok (the seam path).
+    void registryConnectOverMux() {
+        const QString sock = m_tmp.filePath(QStringLiteral("connect.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplySequence({okResponse(), instancesResponse()});
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("connect.db")));
+        TransportRepository repo(&tx.client, &cache);
+        DaemonTransportRegistry registry(&repo);
+
+        QSignalSpy changed(&registry, &transports::ITransportRegistry::instancesChanged);
+        registry.connectAccount(t);
+        QTRY_COMPARE_WITH_TIMEOUT(changed.count(), 1, 3000);
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 2); // TransportConnect, TransportInstances
+        QCOMPARE(calls.at(0), NodeApiCodec::encodeTransportConnectRequest(t));
+    }
+
+    // [acct-mgmt] wire v35: setEnabled sends TransportSetEnabled(enabled) + re-lists on Ok.
+    void registrySetEnabledOverMux() {
+        const QString sock = m_tmp.filePath(QStringLiteral("enable.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplySequence({okResponse(), instancesResponse()});
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("enable.db")));
+        TransportRepository repo(&tx.client, &cache);
+        DaemonTransportRegistry registry(&repo);
+
+        QSignalSpy changed(&registry, &transports::ITransportRegistry::instancesChanged);
+        registry.setEnabled(t, false);
+        QTRY_COMPARE_WITH_TIMEOUT(changed.count(), 1, 3000);
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 2);
+        QCOMPARE(calls.at(0), NodeApiCodec::encodeTransportSetEnabledRequest(t, false));
+    }
+
+    // [acct-mgmt] wire v35: setLabel("value") sets a tstr; setLabel("") maps to the explicit-null
+    // clear (hasLabel=false) — both through the registry seam, re-listing on Ok.
+    void registrySetLabelValueAndClearOverMux() {
+        const QString sock = m_tmp.filePath(QStringLiteral("label.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplySequence({okResponse(), instancesResponse()});
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("label.db")));
+        TransportRepository repo(&tx.client, &cache);
+        DaemonTransportRegistry registry(&repo);
+
+        QSignalSpy changed(&registry, &transports::ITransportRegistry::instancesChanged);
+        registry.setLabel(t, QStringLiteral("Work bot"));
+        QTRY_COMPARE_WITH_TIMEOUT(changed.count(), 1, 3000);
+        QCOMPARE(fake.callPayloads().at(0), NodeApiCodec::encodeTransportSetLabelRequest(
+                                                t, /*hasLabel=*/true, QStringLiteral("Work bot")));
+
+        fake.setReplySequence({okResponse(), instancesResponse()});
+        registry.setLabel(t, QString()); // empty clears
+        QTRY_COMPARE_WITH_TIMEOUT(changed.count(), 2, 3000);
+        QCOMPARE(fake.callPayloads().at(2),
+                 NodeApiCodec::encodeTransportSetLabelRequest(t, /*hasLabel=*/false, QString()));
+    }
+
+    // [acct-mgmt] wire v35: the mock registry mutates its canned account so the enable/rename paths
+    // are exercisable offline: setEnabled toggles enabled, setLabel overlays displayName.
+    void mockRegistryEnableLabelPaths() {
+        transports::MockTransportRegistry mock;
+        const QString t =
+            mock.instances().at(0).toMap().value(QStringLiteral("transport")).toString();
+        QVERIFY(mock.instances().at(0).toMap().value(QStringLiteral("enabled")).toBool());
+
+        QSignalSpy changed(&mock, &transports::ITransportRegistry::instancesChanged);
+        mock.setEnabled(t, false);
+        QCOMPARE(changed.count(), 1);
+        QVERIFY(!mock.instances().at(0).toMap().value(QStringLiteral("enabled")).toBool());
+
+        mock.setLabel(t, QStringLiteral("Work bot"));
+        QCOMPARE(changed.count(), 2);
+        const QVariantMap row = mock.instances().at(0).toMap();
+        QCOMPARE(row.value(QStringLiteral("displayName")).toString(), QStringLiteral("Work bot"));
+        QCOMPARE(row.value(QStringLiteral("label")).toString(), QStringLiteral("Work bot"));
+
+        mock.setLabel(t, QString()); // clear → back to the raw display name
+        QCOMPARE(mock.instances().at(0).toMap().value(QStringLiteral("displayName")).toString(),
+                 QStringLiteral("@you:matrix.org"));
+    }
+
+    // [acct-mgmt] wire v35: DaemonAccountsService.rename persists the label over the wire
+    // (CredentialSetLabel) and rebuilds the account rows from the refetched credential-info.label —
+    // no client-local label mutation (the m_meta rename path is gone).
+    void accountsRenameUsesWireLabel() {
+        const QString sock = m_tmp.filePath(QStringLiteral("acct.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        // rename → CredentialSetLabel Ok → refresh CredentialList (reports the new label).
+        fake.setReplySequence({okResponse(), credentialsResponseLabeled()});
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("acct.db")));
+        CredentialRepository creds(&tx.client, &cache);
+        accounts::DaemonAccountsService svc(&creds, /*profiles=*/nullptr);
+
+        QSignalSpy changed(&svc, &accounts::IAccountsService::credentialsChanged);
+        svc.rename(QStringLiteral("matrix:@bot:hs"), QStringLiteral("Personal"));
+        QTRY_COMPARE_WITH_TIMEOUT(changed.count(), 1, 3000);
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 2); // CredentialSetLabel, CredentialList
+        QCOMPARE(calls.at(0), NodeApiCodec::encodeCredentialSetLabelRequest(
+                                  QStringLiteral("matrix:@bot:hs"),
+                                  /*hasLabel=*/true, QStringLiteral("Personal")));
+        // The rebuilt row carries the wire label.
+        auto* model = qobject_cast<uimodels::VariantListModel*>(svc.accounts());
+        QVERIFY(model != nullptr);
+        const int row = model->indexOfId(QStringLiteral("matrix:@bot:hs"));
+        QVERIFY(row >= 0);
+        QCOMPARE(model->at(row).value(QStringLiteral("label")).toString(),
+                 QStringLiteral("Personal"));
     }
 
     // Instances + conversations populate the cache + registry end-to-end over the mux.
