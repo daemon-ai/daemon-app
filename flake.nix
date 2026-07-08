@@ -303,6 +303,20 @@
           tuiSources = { inherit tuiwidgets posixsignalmanager qmltermwidget; };
         };
 
+        # --- macOS desktop (static Qt, darwin-only) ----------------------------
+        # Static-Qt macOS build mirroring the Linux portable stack: self-contained
+        # .app with Qt compiled in (no macdeployqt), packaged as .dmg. Uses the
+        # same qt-from-source.nix builder, flavor "macos-static". Pure (apple-sdk
+        # from nixpkgs; no Xcode). Only evaluates on darwin.
+        macosStack = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin (
+          import ./nix/macos.nix {
+            inherit pkgs versionStr baseVersion;
+            appSrc = ./.;
+            depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+            tuiSources = { inherit tuiwidgets posixsignalmanager qmltermwidget; };
+          }
+        );
+
         # --- Windows desktop (MinGW cross, static Qt) -------------------------
         # The x86_64-w64-mingw32 cross stack (pkgsCross.mingwW64 from the
         # logos-co fork) + the statically-linked daemon-app.exe, its portable
@@ -834,7 +848,11 @@
         # lib.optionalAttrs merging would force, and what the sibling
         # packaging branches also append to).
         packages.${if pkgs.stdenv.hostPlatform.isDarwin then "macos-dmg" else null} =
-          darwinArtifacts;
+          macosStack.dmg;
+        packages.${if pkgs.stdenv.hostPlatform.isDarwin then "qt-macos-static" else null} =
+          macosStack.qtStatic;
+        packages.${if pkgs.stdenv.hostPlatform.isDarwin then "app-static-darwin" else null} =
+          macosStack.app;
         # Exposed for debugging the packaging toolchain in isolation.
         packages.appimagetool = appimageTooling.appimagetool;
         packages.cmake-appimage = cmake42;
@@ -866,6 +884,12 @@
         # The raw static GUI+TUI app (nix-store loader; runs on NixOS) - what the
         # superproject bundle consumes, distinct from the patchelf'd `portable`.
         packages.app-static = portableStack.app;
+        # The static TUI binary alone (from the same build): a thin view for the
+        # superproject's `bundledTui` to point at without pulling the GUI.
+        packages.tui-static = pkgs.runCommand "daemon-tui-static-${baseVersion}" { } ''
+          mkdir -p "$out/bin"
+          ln -s ${portableStack.app}/bin/daemon-tui "$out/bin/daemon-tui"
+        '';
         # Static desktop deps exposed for isolated debugging / cache seeding.
         packages.qtkeychain-static = portableStack.qtkeychain;
         packages.tuiwidgets-static = portableStack.tuiwidgets;
@@ -919,6 +943,10 @@
         # boot (needs user namespaces, so it cannot run in the build sandbox)
         # is apps.portable-smoke below.
         checks.portable-boot-smoke = portableStack.bootSmoke;
+
+        # macOS static boot smoke (darwin only): otool check + offscreen boot.
+        checks.${if pkgs.stdenv.hostPlatform.isDarwin then "macos-boot-smoke" else null} =
+          macosStack.bootSmoke;
 
         # Packaging artifact gate: DEB/RPM metadata + payload assertions,
         # desktop/metainfo validation, AppImage payload extract + offscreen
