@@ -30,6 +30,7 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "transports/itransport_registry.h" // [acct-mgmt] Channels room-key capability gating
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
 #include "tui_page_hub.h"
@@ -493,10 +494,29 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         const bool isAccount =
             row.value(QStringLiteral("rowKind")).toString() == QLatin1String("account");
         const QString transport = row.value(QStringLiteral("transport")).toString();
+        // [acct-mgmt] gating seam: per-verb ops (wire v33) land here. Gate the room affordances on
+        // the family's coarse `rooms` capability today (parity with the GUI canManageRooms), keyed
+        // off availableAdapters(); swap to the per-verb conversation_ops when they arrive.
+        const auto familyManagesRooms = [this](const QString& family) {
+            if (m_services.transportRegistry == nullptr) {
+                return false;
+            }
+            for (const QVariant& v : m_services.transportRegistry->availableAdapters()) {
+                const QVariantMap a = v.toMap();
+                if (a.value(QStringLiteral("family")).toString() == family) {
+                    return a.value(QStringLiteral("capabilities"))
+                        .toMap()
+                        .value(QStringLiteral("rooms"))
+                        .toBool();
+                }
+            }
+            return false;
+        };
         bool handled = false;
         if (isAccount) {
             // [wave2:app-channels-liveness] B1: 'c' connects via the shared interactive-auth
-            // launcher; 'x' removes the account (confirmed); 'g'/'n' open the room flows.
+            // launcher; 'x' removes the account (confirmed); 'g'/'n' open the room flows (gated).
+            const bool manages = familyManagesRooms(row.value(QStringLiteral("family")).toString());
             if (text == QStringLiteral("c")) {
                 openAuthFlow();
                 handled = true;
@@ -504,10 +524,10 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
                 openChannelRemoveConfirm(transport,
                                          row.value(QStringLiteral("displayName")).toString());
                 handled = true;
-            } else if (text == QStringLiteral("g")) {
+            } else if (text == QStringLiteral("g") && manages) {
                 openRoomJoinFlow(transport);
                 handled = true;
-            } else if (text == QStringLiteral("n")) {
+            } else if (text == QStringLiteral("n") && manages) {
                 openRoomCreateFlow(transport);
                 handled = true;
             }
