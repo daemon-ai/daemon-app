@@ -349,6 +349,20 @@ struct DecodedSettingsField {
     bool required = false;
 };
 
+// [acct-mgmt] One transport contact (contact-info: RosterList/DirectorySearch page items,
+// RosterAdd/Update/Remove + ContactGetProfile/SetAlias targets). The bare identity shape the wire's
+// `contact-info` carries — `id` plus the node's optional display name / presence / permission,
+// projected to display strings. A conversation member EMBEDS one of these (decodeMemberStruct
+// reuses decodeContactInfoStruct); the roster surface uses it standalone. The node owns every
+// field — the app renders, never derives.
+struct DecodedContact {
+    QString id;
+    QString displayName; // empty = use id
+    QString
+        presence; // offline|available|idle|invisible|away|dnd|streaming|out_of_office (empty=none)
+    QString permission; // unset|allow|deny (empty = absent)
+};
+
 // [acct-mgmt] One member of a conversation (ConversationInfo.members; ConvGet). Contact identity +
 // membership facets, projected to display strings. `presence`/`permission`/`typing`/`role` are the
 // wire enum names lowercased where the family uses them; `session` is the pinned session id (empty
@@ -821,6 +835,11 @@ struct DecodedNodeEvent {
         // removal); it derives no membership facts locally.
         ConversationsChanged,
         MembershipChanged,
+        // [acct-mgmt] A transport's contact roster changed (wire v34): RosterAdd/Update/Remove or a
+        // node-side roster sync. Invalidation pointer only (carries just `transport`) — the client
+        // refetches that transport's RosterList; it derives no contact facts locally. NOT the
+        // GUI-sessions `RosterChanged` (that is the session inbox revision).
+        ContactsChanged,
         // Profile roster mutation (wire v31): a create/update/delete/select bumped the profile
         // revision. Invalidation pointer only — the client refetches ProfileList (codec-only here;
         // SubscriptionManager routing lands in a later phase).
@@ -1573,6 +1592,38 @@ public:
                                         DecodedCreateConversationDetails* out);
     static bool decodeConversation(const QByteArray& responseCbor, DecodedConversation* out,
                                    bool* found);
+
+    // --- [acct-mgmt] Transport contacts / roster (wire v34) -----------------------------------
+    // The roster read is paged: RosterList carries the transport + an optional `after` cursor
+    // (empty = first page); decodeContactPage returns one page + the resume cursor (cleared on the
+    // last page), so the caller loops `next` up to kWirePageMax like every other page loop. The
+    // mutations (RosterAdd/Update/Remove) carry a full contact-info and return Ok; add/remove need
+    // only the id, update carries the editable fields. ContactGetProfile returns a node-rendered
+    // profile string; ContactSetAlias sets/clears the local alias (empty = clear); DirectorySearch
+    // returns an unpaged contact list for the people-picker (the node bounds it).
+    [[nodiscard]] static QByteArray encodeRosterListRequest(const QString& transport,
+                                                            const QString& after = QString());
+    [[nodiscard]] static QByteArray encodeRosterAddRequest(const QString& transport,
+                                                           const DecodedContact& contact);
+    [[nodiscard]] static QByteArray encodeRosterUpdateRequest(const QString& transport,
+                                                              const DecodedContact& contact);
+    [[nodiscard]] static QByteArray encodeRosterRemoveRequest(const QString& transport,
+                                                              const DecodedContact& contact);
+    [[nodiscard]] static QByteArray encodeContactGetProfileRequest(const QString& transport,
+                                                                   const QString& contactId);
+    // `hasAlias` false clears the alias (the optional is absent); true sets it to `alias`.
+    [[nodiscard]] static QByteArray encodeContactSetAliasRequest(const QString& transport,
+                                                                 const QString& contactId,
+                                                                 bool hasAlias,
+                                                                 const QString& alias);
+    [[nodiscard]] static QByteArray encodeDirectorySearchRequest(const QString& transport,
+                                                                 const QString& query = QString());
+    // Decode a ContactPage (`*next` gets the resume cursor, cleared on the last page), the unpaged
+    // DirectorySearch Contacts list, and the ContactProfile string.
+    static bool decodeContactPage(const QByteArray& responseCbor, QList<DecodedContact>* out,
+                                  QString* next = nullptr);
+    static bool decodeContacts(const QByteArray& responseCbor, QList<DecodedContact>* out);
+    static bool decodeContactProfile(const QByteArray& responseCbor, QString* out);
 
     // --- Multiplexed socket envelope (wire L0; daemon-sync-protocol-spec.md §2) ---
     // The envelope is hand-coded (not zcbor-generated): it wraps the already-encoded request bytes

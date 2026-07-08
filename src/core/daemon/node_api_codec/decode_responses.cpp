@@ -561,6 +561,14 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
             decoded.isSelf = m.MembershipChanged_is_self;
             break;
         }
+        // [acct-mgmt] A transport's contact roster changed (wire v34). Invalidation pointer only —
+        // the SubscriptionManager refetches that transport's RosterList; no contact fact is derived
+        // here. `transport` is the only payload (distinct from the session-inbox RosterChanged).
+        case node_event_r::node_event_contacts_changed_m_c:
+            decoded.kind = DecodedNodeEvent::Kind::ContactsChanged;
+            decoded.transport =
+                fromZcbor(ev.node_event_contacts_changed_m.ContactsChanged_transport);
+            break;
         default:
             decoded.kind = DecodedNodeEvent::Kind::Unknown;
             break;

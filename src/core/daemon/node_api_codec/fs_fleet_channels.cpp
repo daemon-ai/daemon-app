@@ -690,6 +690,65 @@ QString contactPermissionName(const contact_permission_r& p) {
     }
 }
 
+// [acct-mgmt] Reverse mappers for the (optional) contact-info presence/permission fields a
+// RosterUpdate carries. The lowercase tokens are the exact ones contactPresenceName /
+// contactPermissionName emit, so a decode->edit->encode round-trip is symmetric.
+int contactPresenceChoice(const QString& p) {
+    if (p == QLatin1String("available")) {
+        return presence_primitive_t_r::presence_primitive_t_Available_tstr_c;
+    }
+    if (p == QLatin1String("idle")) {
+        return presence_primitive_t_r::presence_primitive_t_Idle_tstr_c;
+    }
+    if (p == QLatin1String("invisible")) {
+        return presence_primitive_t_r::presence_primitive_t_Invisible_tstr_c;
+    }
+    if (p == QLatin1String("away")) {
+        return presence_primitive_t_r::presence_primitive_t_Away_tstr_c;
+    }
+    if (p == QLatin1String("dnd")) {
+        return presence_primitive_t_r::presence_primitive_t_DoNotDisturb_tstr_c;
+    }
+    if (p == QLatin1String("streaming")) {
+        return presence_primitive_t_r::presence_primitive_t_Streaming_tstr_c;
+    }
+    if (p == QLatin1String("out_of_office")) {
+        return presence_primitive_t_r::presence_primitive_t_OutOfOffice_tstr_c;
+    }
+    return presence_primitive_t_r::presence_primitive_t_Offline_tstr_c;
+}
+
+int contactPermissionChoice(const QString& p) {
+    if (p == QLatin1String("allow")) {
+        return contact_permission_r::contact_permission_Allow_tstr_c;
+    }
+    if (p == QLatin1String("deny")) {
+        return contact_permission_r::contact_permission_Deny_tstr_c;
+    }
+    return contact_permission_r::contact_permission_Unset_tstr_c;
+}
+
+// [acct-mgmt] Project one wire contact-info into DecodedContact (id + optional display name /
+// presence / permission). Shared by decodeMemberStruct (the contact portion of a conversation
+// member) and the roster/directory decoders — one projection, no duplication.
+DecodedContact decodeContactInfoStruct(const contact_info& c) {
+    DecodedContact d;
+    d.id = fromZcbor(c.contact_info_id);
+    if (c.contact_info_display_name_present &&
+        c.contact_info_display_name.contact_info_display_name_choice ==
+            contact_info_display_name_r::contact_info_display_name_tstr_c) {
+        d.displayName = fromZcbor(c.contact_info_display_name.contact_info_display_name_tstr);
+    }
+    if (c.contact_info_presence_present) {
+        d.presence =
+            contactPresenceName(c.contact_info_presence.contact_info_presence.presence_primitive);
+    }
+    if (c.contact_info_permission_present) {
+        d.permission = contactPermissionName(c.contact_info_permission.contact_info_permission);
+    }
+    return d;
+}
+
 QString typingStateName(const typing_state_r& t) {
     switch (t.typing_state_choice) {
     case typing_state_r::typing_state_Typing_tstr_c:
@@ -723,20 +782,12 @@ QList<DecodedSettingsField> decodeSettingsSchema(const account_settings_schema& 
 // [acct-mgmt] Project one ConversationMember into the display struct.
 DecodedConversationMember decodeMemberStruct(const conversation_member& m) {
     DecodedConversationMember d;
-    const contact_info& c = m.conversation_member_contact;
-    d.contactId = fromZcbor(c.contact_info_id);
-    if (c.contact_info_display_name_present &&
-        c.contact_info_display_name.contact_info_display_name_choice ==
-            contact_info_display_name_r::contact_info_display_name_tstr_c) {
-        d.displayName = fromZcbor(c.contact_info_display_name.contact_info_display_name_tstr);
-    }
-    if (c.contact_info_presence_present) {
-        d.presence =
-            contactPresenceName(c.contact_info_presence.contact_info_presence.presence_primitive);
-    }
-    if (c.contact_info_permission_present) {
-        d.permission = contactPermissionName(c.contact_info_permission.contact_info_permission);
-    }
+    // [acct-mgmt] The contact portion is the shared contact-info projection.
+    const DecodedContact c = decodeContactInfoStruct(m.conversation_member_contact);
+    d.contactId = c.id;
+    d.displayName = c.displayName;
+    d.presence = c.presence;
+    d.permission = c.permission;
     if (m.conversation_member_alias_present &&
         m.conversation_member_alias.conversation_member_alias_choice ==
             conversation_member_alias_r::conversation_member_alias_tstr_c) {
@@ -805,6 +856,36 @@ void fillContactParticipant(participant_r& who, const QByteArray& idScratch) {
     c.contact_info_display_name_present = false;
     c.contact_info_presence_present = false;
     c.contact_info_permission_present = false;
+}
+
+// [acct-mgmt] Fill a generated contact-info from a DecodedContact (roster add/update/remove +
+// contact ops). `scratch` outlives the encode (zcbor borrows the id/display_name bytes). Add/remove
+// pass id only; update may carry display_name/presence/permission — each is emitted only when the
+// DecodedContact populated it, so a bare-id contact encodes as `{ "id": ... }`.
+void fillContactInfo(contact_info& c, const DecodedContact& contact, QList<QByteArray>& scratch) {
+    scratch.append(contact.id.toUtf8());
+    setZcbor(c.contact_info_id, scratch.last());
+    c.contact_info_display_name_present = !contact.displayName.isEmpty();
+    if (!contact.displayName.isEmpty()) {
+        c.contact_info_display_name.contact_info_display_name_choice =
+            contact_info_display_name_r::contact_info_display_name_tstr_c;
+        scratch.append(contact.displayName.toUtf8());
+        setZcbor(c.contact_info_display_name.contact_info_display_name_tstr, scratch.last());
+    }
+    c.contact_info_presence_present = !contact.presence.isEmpty();
+    if (!contact.presence.isEmpty()) {
+        c.contact_info_presence.contact_info_presence.presence_primitive
+            .presence_primitive_t_choice =
+            static_cast<decltype(c.contact_info_presence.contact_info_presence.presence_primitive
+                                     .presence_primitive_t_choice)>(
+                contactPresenceChoice(contact.presence));
+    }
+    c.contact_info_permission_present = !contact.permission.isEmpty();
+    if (!contact.permission.isEmpty()) {
+        c.contact_info_permission.contact_info_permission.contact_permission_choice = static_cast<
+            decltype(c.contact_info_permission.contact_info_permission.contact_permission_choice)>(
+            contactPermissionChoice(contact.permission));
+    }
 }
 
 // [acct-mgmt] Fill a generated account_settings_values from a key->value map. The zcbor_strings
@@ -1654,6 +1735,171 @@ bool NodeApiCodec::decodeRooms(const QByteArray& responseCbor, QList<DecodedRoom
             page.room_page_next.room_page_next_choice == room_page_next_r::room_page_next_tstr_c;
         *next = hasNext ? fromZcbor(page.room_page_next.room_page_next_tstr) : QString();
     }
+    return true;
+}
+
+// --- [acct-mgmt] Transport contacts / roster (wire v34) ------------------------------------------
+
+QByteArray NodeApiCodec::encodeRosterListRequest(const QString& transport, const QString& after) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray afterUtf8 = after.toUtf8();
+    return encodeWithFill(api_request_r::api_request_request_roster_list_m_c,
+                          [&](api_request_r& request) {
+                              request_roster_list& l = request.api_request_request_roster_list_m;
+                              setZcbor(l.RosterList_transport, t);
+                              l.RosterList_after_present = !after.isEmpty();
+                              if (!after.isEmpty()) {
+                                  l.RosterList_after.RosterList_after_choice =
+                                      RosterList_after_r::RosterList_after_tstr_c;
+                                  setZcbor(l.RosterList_after.RosterList_after_tstr, afterUtf8);
+                              }
+                          });
+}
+
+QByteArray NodeApiCodec::encodeRosterAddRequest(const QString& transport,
+                                                const DecodedContact& contact) {
+    const QByteArray t = transport.toUtf8();
+    QList<QByteArray> scratch;
+    return encodeWithFill(api_request_r::api_request_request_roster_add_m_c,
+                          [&](api_request_r& request) {
+                              request_roster_add& a = request.api_request_request_roster_add_m;
+                              setZcbor(a.RosterAdd_transport, t);
+                              fillContactInfo(a.RosterAdd_contact, contact, scratch);
+                          });
+}
+
+QByteArray NodeApiCodec::encodeRosterUpdateRequest(const QString& transport,
+                                                   const DecodedContact& contact) {
+    const QByteArray t = transport.toUtf8();
+    QList<QByteArray> scratch;
+    return encodeWithFill(
+        api_request_r::api_request_request_roster_update_m_c, [&](api_request_r& request) {
+            request_roster_update& u = request.api_request_request_roster_update_m;
+            setZcbor(u.RosterUpdate_transport, t);
+            fillContactInfo(u.RosterUpdate_contact, contact, scratch);
+        });
+}
+
+QByteArray NodeApiCodec::encodeRosterRemoveRequest(const QString& transport,
+                                                   const DecodedContact& contact) {
+    const QByteArray t = transport.toUtf8();
+    QList<QByteArray> scratch;
+    return encodeWithFill(
+        api_request_r::api_request_request_roster_remove_m_c, [&](api_request_r& request) {
+            request_roster_remove& r = request.api_request_request_roster_remove_m;
+            setZcbor(r.RosterRemove_transport, t);
+            fillContactInfo(r.RosterRemove_contact, contact, scratch);
+        });
+}
+
+QByteArray NodeApiCodec::encodeContactGetProfileRequest(const QString& transport,
+                                                        const QString& contactId) {
+    const QByteArray t = transport.toUtf8();
+    DecodedContact contact;
+    contact.id = contactId;
+    QList<QByteArray> scratch;
+    return encodeWithFill(
+        api_request_r::api_request_request_contact_get_profile_m_c, [&](api_request_r& request) {
+            request_contact_get_profile& g = request.api_request_request_contact_get_profile_m;
+            setZcbor(g.ContactGetProfile_transport, t);
+            fillContactInfo(g.ContactGetProfile_contact, contact, scratch);
+        });
+}
+
+QByteArray NodeApiCodec::encodeContactSetAliasRequest(const QString& transport,
+                                                      const QString& contactId, bool hasAlias,
+                                                      const QString& alias) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray aliasU = alias.toUtf8();
+    DecodedContact contact;
+    contact.id = contactId;
+    QList<QByteArray> scratch;
+    return encodeWithFill(
+        api_request_r::api_request_request_contact_set_alias_m_c, [&](api_request_r& request) {
+            request_contact_set_alias& s = request.api_request_request_contact_set_alias_m;
+            setZcbor(s.ContactSetAlias_transport, t);
+            fillContactInfo(s.ContactSetAlias_contact, contact, scratch);
+            // The alias optional: present + tstr sets it; absent clears it node-side.
+            s.ContactSetAlias_alias_present = hasAlias;
+            if (hasAlias) {
+                s.ContactSetAlias_alias.ContactSetAlias_alias_choice =
+                    ContactSetAlias_alias_r::ContactSetAlias_alias_tstr_c;
+                setZcbor(s.ContactSetAlias_alias.ContactSetAlias_alias_tstr, aliasU);
+            }
+        });
+}
+
+QByteArray NodeApiCodec::encodeDirectorySearchRequest(const QString& transport,
+                                                      const QString& query) {
+    const QByteArray t = transport.toUtf8();
+    const QByteArray queryU = query.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_directory_search_m_c, [&](api_request_r& request) {
+            request_directory_search& d = request.api_request_request_directory_search_m;
+            setZcbor(d.DirectorySearch_transport, t);
+            d.DirectorySearch_query_present = !query.isEmpty();
+            if (!query.isEmpty()) {
+                d.DirectorySearch_query.DirectorySearch_query_choice =
+                    DirectorySearch_query_r::DirectorySearch_query_tstr_c;
+                setZcbor(d.DirectorySearch_query.DirectorySearch_query_tstr, queryU);
+            }
+        });
+}
+
+bool NodeApiCodec::decodeContactPage(const QByteArray& responseCbor, QList<DecodedContact>* out,
+                                     QString* next) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_contact_page_m_c);
+    if (!response) {
+        return false;
+    }
+    const contact_page& page =
+        response->api_response_response_contact_page_m.response_contact_page_ContactPage;
+    out->clear();
+    for (size_t i = 0; i < page.contact_page_items_contact_info_m_count; ++i) {
+        out->append(decodeContactInfoStruct(page.contact_page_items_contact_info_m[i]));
+    }
+    if (next != nullptr) {
+        // The resume cursor: present + non-null => more pages remain; empty => last page.
+        const bool hasNext =
+            page.contact_page_next_present && page.contact_page_next.contact_page_next_choice ==
+                                                  contact_page_next_r::contact_page_next_tstr_c;
+        *next = hasNext ? fromZcbor(page.contact_page_next.contact_page_next_tstr) : QString();
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeContacts(const QByteArray& responseCbor, QList<DecodedContact>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_contacts_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_contacts& c = response->api_response_response_contacts_m;
+    out->clear();
+    for (size_t i = 0; i < c.response_contacts_Contacts_contact_info_m_count; ++i) {
+        out->append(decodeContactInfoStruct(c.response_contacts_Contacts_contact_info_m[i]));
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeContactProfile(const QByteArray& responseCbor, QString* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_contact_profile_m_c);
+    if (!response) {
+        return false;
+    }
+    *out = fromZcbor(
+        response->api_response_response_contact_profile_m.response_contact_profile_ContactProfile);
     return true;
 }
 

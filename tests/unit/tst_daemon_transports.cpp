@@ -22,7 +22,10 @@ using daemonapp::daemon::CachedTransportInstanceRow;
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
 using daemonapp::daemon::DecodedAdapterInfo;
+using daemonapp::daemon::DecodedContact;
 using daemonapp::daemon::DecodedConversation;
+using daemonapp::daemon::DecodedEventsPage;
+using daemonapp::daemon::DecodedNodeEvent;
 using daemonapp::daemon::DecodedTransportInstance;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::NodeApiCodec;
@@ -132,6 +135,7 @@ QByteArray adaptersResponseWithOps() {
     a.adapter_info_roster_ops.adapter_info_roster_ops_choice =
         adapter_info_roster_ops_r::adapter_info_roster_ops_roster_ops_m_c;
     roster_ops& ro = a.adapter_info_roster_ops.adapter_info_roster_ops_roster_ops_m;
+    ro.roster_ops_list = true; // wire v34: gates the Contacts section
     ro.roster_ops_add = true;
     ro.roster_ops_update = false;
     ro.roster_ops_remove = true;
@@ -345,6 +349,72 @@ QByteArray convGetResponse() {
     return encodeResponse(*resp);
 }
 
+// [acct-mgmt] Fill a contact-info: id + optional display name; presence Available, permission
+// Allow (so the decode proves every optional field decodes).
+void putContact(contact_info& c, const QByteArray& id, const QByteArray& displayName) {
+    setZ(c.contact_info_id, id);
+    c.contact_info_display_name_present = !displayName.isEmpty();
+    if (!displayName.isEmpty()) {
+        c.contact_info_display_name.contact_info_display_name_choice =
+            contact_info_display_name_r::contact_info_display_name_tstr_c;
+        setZ(c.contact_info_display_name.contact_info_display_name_tstr, displayName);
+    }
+    c.contact_info_presence_present = true;
+    auto& pp = c.contact_info_presence.contact_info_presence;
+    pp.presence_primitive.presence_primitive_t_choice =
+        presence_primitive_t_r::presence_primitive_t_Available_tstr_c;
+    pp.presence_message_present = false;
+    pp.presence_emoji_present = false;
+    pp.presence_mobile_present = false;
+    pp.presence_idle_since_present = false;
+    c.contact_info_permission_present = true;
+    c.contact_info_permission.contact_info_permission.contact_permission_choice =
+        contact_permission_r::contact_permission_Allow_tstr_c;
+}
+
+// [acct-mgmt] {"ContactPage": contact-page{ items:[alice, bob], next }}. `next` empty = last page.
+QByteArray contactPageResponse(const QByteArray& next) {
+    static const QByteArray alice = QByteArrayLiteral("@alice:matrix.org");
+    static const QByteArray aliceName = QByteArrayLiteral("Alice");
+    static const QByteArray bob = QByteArrayLiteral("@bob:matrix.org");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_contact_page_m_c;
+    contact_page& page =
+        resp->api_response_response_contact_page_m.response_contact_page_ContactPage;
+    page.contact_page_items_contact_info_m_count = 2;
+    putContact(page.contact_page_items_contact_info_m[0], alice, aliceName);
+    putContact(page.contact_page_items_contact_info_m[1], bob, QByteArray()); // no display name
+    page.contact_page_next_present = !next.isEmpty();
+    if (!next.isEmpty()) {
+        page.contact_page_next.contact_page_next_choice =
+            contact_page_next_r::contact_page_next_tstr_c;
+        setZ(page.contact_page_next.contact_page_next_tstr, next);
+    }
+    return encodeResponse(*resp);
+}
+
+// [acct-mgmt] {"Contacts":[dave]} — a DirectorySearch result.
+QByteArray directoryResponse() {
+    static const QByteArray dave = QByteArrayLiteral("@dave:matrix.org");
+    static const QByteArray daveName = QByteArrayLiteral("Dave");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_contacts_m_c;
+    response_contacts& c = resp->api_response_response_contacts_m;
+    c.response_contacts_Contacts_contact_info_m_count = 1;
+    putContact(c.response_contacts_Contacts_contact_info_m[0], dave, daveName);
+    return encodeResponse(*resp);
+}
+
+// [acct-mgmt] {"ContactProfile": "..."} — the node-rendered profile string.
+QByteArray contactProfileResponse() {
+    static const QByteArray profile = QByteArrayLiteral("Alice\n@alice:matrix.org");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_contact_profile_m_c;
+    setZ(resp->api_response_response_contact_profile_m.response_contact_profile_ContactProfile,
+         profile);
+    return encodeResponse(*resp);
+}
+
 // [acct-mgmt] {"ConvJoinDetails": ChannelJoinDetails{ nickname+password supported, one extra }}.
 QByteArray joinDetailsResponse() {
     static const QByteArray fkey = QByteArrayLiteral("floor_policy");
@@ -472,6 +542,8 @@ private slots:
         QVERIFY(!a.contactsOps.value(QStringLiteral("actionMenu")).toBool());
         QVERIFY(a.contactsOps.value(QStringLiteral("setAlias")).toBool());
         QVERIFY(a.hasRosterOps);
+        // [acct-mgmt] wire v34: `list` gates the Contacts section, sibling to add/update/remove.
+        QVERIFY(a.rosterOps.value(QStringLiteral("list")).toBool());
         QVERIFY(a.rosterOps.value(QStringLiteral("add")).toBool());
         QVERIFY(!a.rosterOps.value(QStringLiteral("update")).toBool());
         QVERIFY(a.rosterOps.value(QStringLiteral("remove")).toBool());
@@ -980,6 +1052,62 @@ private slots:
         QCOMPARE(calls.size(), 2);
         QCOMPARE(calls.at(0), NodeApiCodec::encodeConvListRequest(t));
         QCOMPARE(calls.at(1), NodeApiCodec::encodeConvListRequest(t, QStringLiteral("!a:hs")));
+    }
+
+    // --- [acct-mgmt] Transport contacts / roster (wire v34) --------------------------------------
+
+    // ContactPage decodes its items (id + display name / presence / permission) and clears the
+    // resume cursor on the last page.
+    void contactPageRoundTrip() {
+        QList<DecodedContact> out;
+        QString next;
+        QVERIFY(NodeApiCodec::decodeContactPage(contactPageResponse(QByteArray()), &out, &next));
+        QCOMPARE(out.size(), 2);
+        QCOMPARE(out.at(0).id, QStringLiteral("@alice:matrix.org"));
+        QCOMPARE(out.at(0).displayName, QStringLiteral("Alice"));
+        QCOMPARE(out.at(0).presence, QStringLiteral("available"));
+        QCOMPARE(out.at(0).permission, QStringLiteral("allow"));
+        // The second contact carries no display name (the UI falls back to the id).
+        QCOMPARE(out.at(1).id, QStringLiteral("@bob:matrix.org"));
+        QVERIFY(out.at(1).displayName.isEmpty());
+        QVERIFY(next.isEmpty()); // last page
+    }
+
+    // A non-empty ContactPage.next surfaces as the resume cursor (more pages remain).
+    void contactPageNextCursor() {
+        QList<DecodedContact> out;
+        QString next;
+        QVERIFY(NodeApiCodec::decodeContactPage(contactPageResponse(QByteArrayLiteral("@bob:hs")),
+                                                &out, &next));
+        QCOMPARE(next, QStringLiteral("@bob:hs"));
+    }
+
+    // DirectorySearch (Contacts) decodes into the unpaged people list.
+    void directoryRoundTrip() {
+        QList<DecodedContact> out;
+        QVERIFY(NodeApiCodec::decodeContacts(directoryResponse(), &out));
+        QCOMPARE(out.size(), 1);
+        QCOMPARE(out.at(0).id, QStringLiteral("@dave:matrix.org"));
+        QCOMPARE(out.at(0).displayName, QStringLiteral("Dave"));
+    }
+
+    // ContactProfile decodes the node-rendered string verbatim.
+    void contactProfileRoundTrip() {
+        QString profile;
+        QVERIFY(NodeApiCodec::decodeContactProfile(contactProfileResponse(), &profile));
+        QCOMPARE(profile, QStringLiteral("Alice\n@alice:matrix.org"));
+    }
+
+    // The ContactsChanged node event decodes off the feed (transport-only payload; distinct from
+    // the session-inbox RosterChanged).
+    void contactsChangedEventDecodes() {
+        const QByteArray page = daemonapp::test::buildEventsPage(
+            {daemonapp::test::neContactsChanged("matrix/@bot:hs")}, 7, 7);
+        DecodedEventsPage out;
+        QVERIFY(NodeApiCodec::decodeEventsPage(page, &out));
+        QCOMPARE(out.events.size(), 1);
+        QCOMPARE(out.events.at(0).kind, DecodedNodeEvent::Kind::ContactsChanged);
+        QCOMPARE(out.events.at(0).transport, QStringLiteral("matrix/@bot:hs"));
     }
 };
 

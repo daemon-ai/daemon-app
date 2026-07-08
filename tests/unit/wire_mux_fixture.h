@@ -532,6 +532,18 @@ inline QByteArray neMembershipChanged(const char* transport, const char* conv, c
     return b;
 }
 
+// [acct-mgmt] {"ContactsChanged":{"transport"}} (wire v34) — the transport-roster invalidation
+// pointer (distinct from the session-inbox RosterChanged).
+inline QByteArray neContactsChanged(const char* transport) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "ContactsChanged");
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "transport");
+    cborText(b, transport);
+    return b;
+}
+
 // {"EventsPage":{"events":[...],"next_cursor":N,"head_cursor":M}} (events count assumed < 24).
 inline QByteArray buildEventsPage(const QList<QByteArray>& events, quint64 nextCursor,
                                   quint64 headCursor) {
