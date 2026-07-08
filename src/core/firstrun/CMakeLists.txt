@@ -20,5 +20,6 @@ target_link_libraries(da_firstrun
         daemon-app::models
         daemon-app::profiles
         daemon-app::accounts
+        daemon-app::setup
         daemon-app::warnings
 )

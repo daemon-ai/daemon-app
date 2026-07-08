@@ -52,6 +52,34 @@ QString EngineIdentity::labelFor(const QString& engine, const QString& agent,
     return name; // protocol unknown (catalog not loaded yet): the agent name alone
 }
 
+QString EngineIdentity::summaryFor(const QString& engine, const QString& agent,
+                                   const QString& protocol, const QString& backendMode,
+                                   const QString& provider, const QString& model) const {
+    // The inference identifier ("provider/model", or one side when the other is empty). Pure
+    // node-provided identifiers - no translatable words.
+    const auto inference = [&]() -> QString {
+        if (!provider.isEmpty() && !model.isEmpty()) {
+            return QStringLiteral("%1/%2").arg(provider, model);
+        }
+        return provider.isEmpty() ? model : provider;
+    };
+    if (engine != QStringLiteral("Foreign")) {
+        return inference(); // Core: just the inference target (empty when unconfigured)
+    }
+    // Foreign: reuse labelFor so the engine/protocol wording stays in one place.
+    QString out = labelFor(engine, agent, protocol);
+    if (backendMode == QStringLiteral("NodeProvider")) {
+        const QString target = inference();
+        if (!target.isEmpty()) {
+            out += QStringLiteral(" · %1").arg(target);
+        }
+    } else if (!model.isEmpty()) {
+        // AgentNative: `model` is the optional steer hint.
+        out += QStringLiteral(" · %1").arg(model);
+    }
+    return out;
+}
+
 QVariantMap EngineIdentity::engineForProfile(const QString& profileId) const {
     QVariantMap out;
     out[QStringLiteral("engine")] = QStringLiteral("Core");

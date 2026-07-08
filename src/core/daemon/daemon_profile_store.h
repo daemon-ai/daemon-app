@@ -46,7 +46,10 @@ public:
     // follow-up ProfileUpdate can race the create on the node's concurrent per-Call dispatch.
     QString createProfileWithSpec(const QString& name, const QVariantMap& fields) override;
     QString createForeignProfile(const QString& name,
-                                 const QString& agent) override;                // engine=Foreign
+                                 const QString& agent) override; // engine=Foreign
+    // engine=Foreign + an explicit ProfileSpec.foreign_backend (wire v30).
+    QString createForeignProfileWithBackend(const QString& name, const QString& agent,
+                                            const QVariantMap& backend) override;
     QString cloneProfile(const QString& source, const QString& newId) override; // ProfileClone
     void updateProfile(const QString& id, const QVariantMap& fields) override;  // ProfileUpdate
     void remove(const QString& id) override;     // ProfileDelete (PRO-4)

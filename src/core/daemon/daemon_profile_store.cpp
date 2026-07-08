@@ -56,6 +56,49 @@ void applySpecFields(daemonapp::daemon::DecodedProfileSpec& spec, const QVariant
         spec.hasToolAllowlist = true; // an explicit (possibly empty) allowlist
         spec.toolAllowlist = tools;
     }
+    // Foreign-engine model backend (wire v30). `foreignBackend` is the AgentSetupModel projection:
+    // {mode, provider (NodeProvider wire selector), model (NodeProvider model / AgentNative hint),
+    // credentialRef}. Only meaningful for a Foreign engine; the node defaults an absent backend to
+    // AgentNative{model:null}, so a missing key leaves the spec's backend untouched.
+    if (fields.contains(QStringLiteral("foreignBackend"))) {
+        const QVariantMap fb = fields.value(QStringLiteral("foreignBackend")).toMap();
+        spec.hasForeignBackend = true;
+        daemonapp::daemon::DecodedForeignBackend& backend = spec.foreignBackend;
+        if (fb.value(QStringLiteral("mode")).toString() == QStringLiteral("NodeProvider")) {
+            backend.kind = QStringLiteral("NodeProvider");
+            backend.nodeProvider = fb.value(QStringLiteral("provider")).toString();
+            backend.nodeModel = fb.value(QStringLiteral("model")).toString();
+            const QString cred = fb.value(QStringLiteral("credentialRef")).toString();
+            backend.hasNodeCredentialRef = !cred.isEmpty();
+            backend.nodeCredentialRef = cred;
+        } else {
+            backend.kind = QStringLiteral("AgentNative");
+            const QString hint = fb.value(QStringLiteral("model")).toString();
+            backend.hasAgentNativeModel = !hint.isEmpty();
+            backend.agentNativeModel = hint;
+        }
+    }
+}
+
+// Project a decoded foreign-backend (wire v30) into the compact row map the AgentSetupModel editor
+// + setup surfaces consume: {mode, provider, model, credentialRef}. NodeProvider carries the node
+// provider selector + model (+ optional credential ref); AgentNative carries only the optional
+// steer hint under `model`.
+QVariantMap foreignBackendRow(const daemonapp::daemon::DecodedForeignBackend& backend) {
+    QVariantMap row;
+    row[QStringLiteral("mode")] = backend.kind;
+    if (backend.kind == QStringLiteral("NodeProvider")) {
+        row[QStringLiteral("provider")] = backend.nodeProvider;
+        row[QStringLiteral("model")] = backend.nodeModel;
+        row[QStringLiteral("credentialRef")] =
+            backend.hasNodeCredentialRef ? backend.nodeCredentialRef : QString();
+    } else {
+        row[QStringLiteral("provider")] = QString();
+        row[QStringLiteral("model")] =
+            backend.hasAgentNativeModel ? backend.agentNativeModel : QString();
+        row[QStringLiteral("credentialRef")] = QString();
+    }
+    return row;
 }
 
 } // namespace
@@ -243,8 +286,35 @@ QString DaemonProfileStore::createForeignProfile(const QString& name, const QStr
     spec.provider = QStringLiteral("mock");
     spec.engineKind = QStringLiteral("Foreign");
     spec.engineForeignAgent = agent;
+    // Set an explicit AgentNative backend (wire v30): the agent uses its own login/config and the
+    // node steers only its model (no hint here). Equivalent to the node's default for an absent
+    // backend, but stated so a foreign profile always carries a concrete foreign_backend.
+    spec.hasForeignBackend = true;
+    spec.foreignBackend.kind = QStringLiteral("AgentNative");
     m_repo->createProfile(spec);
     return id; // the row appears after the repo re-lists (same flow as createProfile)
+}
+
+QString DaemonProfileStore::createForeignProfileWithBackend(const QString& name,
+                                                            const QString& agent,
+                                                            const QVariantMap& backend) {
+    if (m_repo == nullptr || agent.isEmpty()) {
+        return {};
+    }
+    const QString id = slugId(name);
+    daemonapp::daemon::DecodedProfileSpec spec;
+    spec.id = id;
+    // A foreign engine references the catalog entry BY NAME ONLY; provider stays the inert default
+    // (the node bypasses the inference path for foreign engines). The foreign_backend is applied
+    // from `backend` via applySpecFields.
+    spec.provider = QStringLiteral("mock");
+    spec.engineKind = QStringLiteral("Foreign");
+    spec.engineForeignAgent = agent;
+    QVariantMap fields;
+    fields[QStringLiteral("foreignBackend")] = backend;
+    applySpecFields(spec, fields);
+    m_repo->createProfile(spec);
+    return id; // the row appears after the repo re-lists (same flow as createForeignProfile)
 }
 
 QString DaemonProfileStore::cloneProfile(const QString& source, const QString& newId) {
@@ -361,6 +431,15 @@ void DaemonProfileStore::rebuild() {
         row[QStringLiteral("model")] = p.model;
         row[QStringLiteral("provider")] = p.provider;
         row[QStringLiteral("isDefault")] = p.isActive;
+        // Provenance (wire v31), projected from the ProfileList entry so the list can badge +
+        // subtree-filter WITHOUT waiting for a per-profile ProfileGet. `createdBy` is the wire
+        // author ("operator" or an agent id); `createdByIsAgent` disambiguates an agent literally
+        // named "operator"; `owner` is the owning agent session id. Absent -> operator-authored.
+        // Consumed verbatim by the provenance surface (phase H) - never re-derived client-side.
+        row[QStringLiteral("createdBy")] =
+            p.hasCreatedBy ? p.createdBy : QStringLiteral("operator");
+        row[QStringLiteral("createdByIsAgent")] = p.hasCreatedBy && p.createdByIsAgent;
+        row[QStringLiteral("owner")] = p.hasOwner ? p.owner : QString();
         // Enrich with the full spec when a ProfileGet has loaded it (the editable fields).
         daemonapp::daemon::DecodedProfileSpec spec;
         if (m_repo->cachedSpec(p.id, &spec)) {
@@ -380,11 +459,18 @@ void DaemonProfileStore::rebuild() {
             // stream must not touch. Only the engine VALUE moves "Acp" -> "Foreign".
             row[QStringLiteral("engine")] = spec.engineKind;
             row[QStringLiteral("acpAgent")] = spec.engineForeignAgent;
+            // Foreign model backend (wire v30), projected as a compact map the AgentSetupModel
+            // editor + surfaces consume: {mode, provider (NodeProvider wire selector), model
+            // (NodeProvider model / AgentNative hint), credentialRef}. Empty for a Core profile or
+            // a pre-v30 encoding that omitted it (the node defaults absent -> AgentNative).
+            row[QStringLiteral("foreignBackend")] =
+                spec.hasForeignBackend ? foreignBackendRow(spec.foreignBackend) : QVariantMap{};
         } else {
             row[QStringLiteral("systemPrompt")] = QString();
             row[QStringLiteral("tools")] = QStringList{};
             row[QStringLiteral("engine")] = QStringLiteral("Core");
             row[QStringLiteral("acpAgent")] = QString();
+            row[QStringLiteral("foreignBackend")] = QVariantMap{};
         }
         // No ProfileSpec home: presentation-only / curator-managed.
         row[QStringLiteral("description")] = QString();

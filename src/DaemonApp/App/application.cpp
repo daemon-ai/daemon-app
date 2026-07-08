@@ -40,6 +40,7 @@
 #include "session/icheckpoint_timeline.h"
 #include "session/isession_settings.h"
 #include "settings/isettings_store.h"
+#include "setup/agent_setup_model.h"
 #include "status_bar_model.h"
 #include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2
 #include "transcript_exporter.h"
@@ -291,6 +292,10 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // ComposerControls' engine chip and the approval EngineOriginChip (C5).
     engine.rootContext()->setContextProperty(QStringLiteral("EngineIdentity"),
                                              m_services.engineIdentity);
+
+    // Shared agent/profile setup view-model (Phase C): the one engine+backend+inference pipeline
+    // the setup surfaces (New-agent dialog, Profiles +New, editor, first-run) bind to.
+    engine.rootContext()->setContextProperty(QStringLiteral("AgentSetup"), m_services.agentSetup);
 
     // Accounts/auth facade (mock) backing the Accounts manager + wizard.
     engine.rootContext()->setContextProperty(QStringLiteral("Accounts"), m_services.accounts);

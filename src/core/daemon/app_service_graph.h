@@ -59,6 +59,9 @@ namespace session {
 class ICheckpointTimeline;
 class ISessionSettings;
 } // namespace session
+namespace setup {
+class AgentSetupModel;
+}
 namespace settings {
 class ISettingsStore;
 }
@@ -125,6 +128,12 @@ struct AppServiceGraph {
     memory::IMemoryService* memory = nullptr;
     nav::NavController* nav = nullptr;
     firstrun::FirstRunModel* firstRun = nullptr;
+    // Shared write-side setup view-model (Phase C): the one "engine + backend + inference" pipeline
+    // the GUI AgentSetupForm + TUI AgentSetupView bind and FirstRunModel delegates to. Built in
+    // both modes; exposed to QML as the `AgentSetup` context property and reachable by the TUI via
+    // this field. Its foreign-agent catalog + EngineIdentity summariser are injected from the
+    // graph.
+    setup::AgentSetupModel* agentSetup = nullptr;
     models::IModelCatalog* modelCatalog = nullptr;
     models::IProviderCatalog* providerCatalog = nullptr;
     accounts::IAccountsService* accounts = nullptr;

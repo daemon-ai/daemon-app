@@ -579,6 +579,22 @@ target_link_libraries(tst_first_run_model
 add_test(NAME tst_first_run_model COMMAND tst_first_run_model)
 set_tests_properties(tst_first_run_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_agent_setup_model (Phase C): the shared engine+backend+inference setup pipeline - the derived
+# predicates (needsInference/needsBackendChoice/needsKey/gatewayRequired/commitReady across Core,
+# Foreign+AgentNative, Foreign+NodeProvider), the engineChoices projection with node-derived
+# verification badges, and the commit payload projection (a NodeProvider commit persists the right
+# foreign_backend).
+qt_add_executable(tst_agent_setup_model tst_agent_setup_model.cpp)
+target_link_libraries(tst_agent_setup_model
+    PRIVATE
+        Qt6::Test
+        daemon-app::setup
+        daemon-app::models
+        daemon-app::profiles
+)
+add_test(NAME tst_agent_setup_model COMMAND tst_agent_setup_model)
+set_tests_properties(tst_agent_setup_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_provider_catalog: the node-driven provider/model discovery seams - the codec facade
 # round-trips ProviderCatalog / ProviderModels (id-string provider dimension + wire_selector +
 # default_base_url + model display_name), the shared local-compose helper + MockProviderCatalog

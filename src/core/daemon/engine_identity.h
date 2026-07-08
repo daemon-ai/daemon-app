@@ -45,6 +45,19 @@ public:
     // unknown).
     [[nodiscard]] Q_INVOKABLE QString labelFor(const QString& engine, const QString& agent,
                                                const QString& protocol) const;
+    // A one-line setup summary composed from the SAME label rules as labelFor (the single source of
+    // truth for how an engine reads), extended with the backend + inference dimensions so the
+    // AgentSetupModel and the setup surfaces render one consistent descriptor. `backendMode` is
+    // "AgentNative" | "NodeProvider" (Foreign only); `provider`/`model` are the inference selection
+    // (Core, or the NodeProvider gateway target; for AgentNative `model` is the optional steer
+    // hint). Composition is punctuation-only over labelFor + node-provided identifiers, so it adds
+    // no new translatable phrasing here — the human-facing wording ("via node", "brings own model")
+    // is layered on at the render surfaces (phase D/G) where it is translated.
+    [[nodiscard]] Q_INVOKABLE QString summaryFor(const QString& engine, const QString& agent,
+                                                 const QString& protocol,
+                                                 const QString& backendMode,
+                                                 const QString& provider,
+                                                 const QString& model) const;
 
 signals:
     // Re-emitted when any input (profiles, session settings, catalog) changes, so QML bindings that

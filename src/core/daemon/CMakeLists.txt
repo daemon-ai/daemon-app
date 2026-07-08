@@ -151,6 +151,7 @@ target_link_libraries(da_daemon_client
         daemon-app::daemonnet
         daemon-app::nav
         daemon-app::firstrun
+        daemon-app::setup
         daemon-app::update
     PRIVATE
         # The WebSocket mux carrier (daemon_transport.cpp); private because no public header

@@ -3,11 +3,8 @@
 
 #pragma once
 
-#include <functional>
 #include <QObject>
 #include <QString>
-
-class QTimer;
 
 namespace settings {
 class ISettingsStore;
@@ -24,6 +21,9 @@ class IProfileStore;
 }
 namespace accounts {
 class IAccountsService;
+}
+namespace setup {
+class AgentSetupModel;
 }
 
 namespace firstrun {
@@ -70,19 +70,26 @@ public:
     // make default); null leaves applyInferenceChoice a no-op that just finishes. `providerCatalog`
     // additionally drives the shared key-validation gate (FIX 4, keyGatePassed); null keeps that
     // gate permissive too.
+    // `agentSetup` (optional) is the shared write-side setup view-model this gate delegates the
+    // inference/key-gate/commit sequencing to. Null (the standalone/test path) makes FirstRunModel
+    // construct+own its own AgentSetupModel from the same seams, so behavior is identical whether
+    // or not the service graph injects a shared instance.
     FirstRunModel(settings::ISettingsStore* settings, connection::IConnectionService* connection,
                   models::IModelCatalog* modelCatalog = nullptr,
                   profiles::IProfileStore* profileStore = nullptr,
                   accounts::IAccountsService* accounts = nullptr,
-                  models::IProviderCatalog* providerCatalog = nullptr, QObject* parent = nullptr);
+                  models::IProviderCatalog* providerCatalog = nullptr,
+                  setup::AgentSetupModel* agentSetup = nullptr, QObject* parent = nullptr);
 
     [[nodiscard]] QString phase() const { return m_phase; }
     [[nodiscard]] bool active() const { return m_phase != QStringLiteral("done"); }
     [[nodiscard]] QString error() const { return m_error; }
     [[nodiscard]] bool inferenceReady() const { return m_inferenceReady; }
     void setInferenceReady(bool ready);
+    // The hoisted key gate now lives in AgentSetupModel; these delegate to it (the QML/TUI wizard
+    // still binds FirstRun.keyGatePassed / .keyGateMessage).
     [[nodiscard]] bool keyGatePassed() const;
-    [[nodiscard]] QString keyGateMessage() const { return m_keyGateMessage; }
+    [[nodiscard]] QString keyGateMessage() const;
 
     // Compute the initial phase from persisted setupComplete. Call once at boot.
     Q_INVOKABLE void begin();
@@ -176,42 +183,14 @@ private:
     // NODE, not the client `setupComplete` hint — run it iff the node's active profile is NOT
     // configured (empty model). Re-evaluated as the reflected ProfileList / ModelCurrent land.
     void evaluateWizardGate();
-    // The apply body, run on a fresh ProfileList reflection (see applyInferenceChoice).
-    void applyReflectedInferenceChoice(const QString& providerId, const QString& model,
-                                       const QString& key, const QString& name,
-                                       const QString& customBaseUrl);
-    // The foreign apply body, run on a fresh ProfileList reflection (see applyForeignChoice).
-    void applyReflectedForeignChoice(const QString& name, const QString& foreignAgent);
-    // A7 finish-gate honesty (CON-7/CON-15): before setSetupComplete, prove the committed
-    // provider actually serves models — ONE real ProviderModels-class listing through the
-    // configured credential (`credentialRef` = the committed profile id; local engines count
-    // only real "model" rows, never the synthetic Discover row). Success -> finish(); an empty
-    // listing / timeout keeps the wizard open with an actionable error. No catalog wired stays
-    // permissive (mock/standalone).
-    void probeThenFinish(const QString& providerId, const QString& credentialRef);
-    // Whether the wizard is inside a committable step (the continuation-abandon guard: Skip /
-    // restart leaves these phases, so a stale apply must not fire post-done).
-    [[nodiscard]] bool inCommitPhase() const {
-        return m_phase == QStringLiteral("inference") || m_phase == QStringLiteral("agenttype");
-    }
-    // ModelActivate a LOCALLY INSTALLED `model` for the explicit `profileId` (no-op for cloud
-    // models / no catalog): the profile spec alone does not make the local provider load it.
-    void activateLocalModel(const QString& model, const QString& profileId);
-    // Run `then` on the NEXT profile-store changed() (single-shot) — the refetch continuation.
-    void runOnNextProfilesChanged(const std::function<void()>& then);
-    // Run `then` as soon as `reflected` holds over the profile store: immediately when it already
-    // does (synchronous stores), else on each changed() until it does (the daemon re-lists after
-    // every mutation). Both helpers abandon the continuation if the wizard leaves the inference
-    // phase first (Skip/restart), so a stale apply can never fire post-done.
-    void whenProfilesReflect(const std::function<bool()>& reflected,
-                             const std::function<void()>& then);
     // Whether the node's active default profile already has a model configured (reflected from the
     // profile store). False when nothing is reflected yet or no active default exists.
     [[nodiscard]] bool activeModelConfigured() const;
-    // A provider LIST resolved (offeredModelsChanged): for the selected key-requiring provider
-    // with an entered key the listing is authenticated, so its outcome proves or blocks the key
-    // gate (FIX 4) and is logged through logKeyValidation.
-    void resolveKeyGate(const QString& providerId);
+    // AgentSetupModel commit outcomes (the moved inference/foreign apply + finish-probe resolve
+    // here): a success sets inference readiness and finishes; a failure keeps the wizard open with
+    // the actionable reason.
+    void onSetupCommitted(const QString& profileId);
+    void onSetupFailed(const QString& message);
 
     settings::ISettingsStore* m_settings = nullptr;
     connection::IConnectionService* m_connection = nullptr;
@@ -219,29 +198,17 @@ private:
     profiles::IProfileStore* m_profiles = nullptr;
     accounts::IAccountsService* m_accounts = nullptr;
     models::IProviderCatalog* m_providerCatalog = nullptr;
+    // The shared setup view-model this gate delegates inference/key-gate/commit to (injected by the
+    // service graph, or owned when constructed standalone).
+    setup::AgentSetupModel* m_agentSetup = nullptr;
     QString m_phase = QStringLiteral("connect");
     QString m_error;
     bool m_inferenceReady = false;
     // True while the connect-ready node gate is still deciding (waiting for the ProfileList /
     // ModelCurrent reflection). Cleared once we commit to `done` (configured) or the user finishes.
     bool m_gating = false;
-    // True while an applyInferenceChoice continuation is in flight, so a double-committed Finish
-    // cannot start a second apply chain. Cleared by finish().
-    bool m_applying = false;
-    // The key gate's reported selection (FIX 4). The key lives here transiently, like the QML
-    // key field it mirrors: consumed for the authenticated LIST only, never persisted or logged.
-    QString m_gateProviderId;
-    QString m_gateKey;
-    // Whether the reported key has been proven by a non-empty authenticated listing since the
-    // last re-arm; the blocking reason after a failed validation.
-    bool m_keyProven = false;
-    QString m_keyGateMessage;
     // CON-16: whether the node offered foreign ACP agents (drives the agenttype step).
     bool m_agentTypeOffered = false;
-    // A7: the finish probe in flight (provider id being proven; empty = none) + its timeout.
-    QString m_probeProviderId;
-    QTimer* m_probeTimeout = nullptr;
-    QMetaObject::Connection m_probeConnection;
 };
 
 } // namespace firstrun

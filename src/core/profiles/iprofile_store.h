@@ -96,6 +96,19 @@ public:
         Q_UNUSED(agent)
         return {};
     }
+    // Foreign-engine create carrying an explicit foreign-backend (wire v30). `backend` is the
+    // AgentSetupModel projection: {mode: "AgentNative"|"NodeProvider", provider (NodeProvider wire
+    // selector), model (NodeProvider model, or the AgentNative steer hint), credentialRef
+    // (NodeProvider, optional)}. Default: ignore the backend and fall back to createForeignProfile
+    // (a store without foreign-backend support persists the plain foreign reference — the node
+    // defaults an absent backend to AgentNative{model:null}); the daemon store overrides it to set
+    // ProfileSpec.foreign_backend. Returns the new profile id, or "" when unsupported.
+    Q_INVOKABLE virtual QString createForeignProfileWithBackend(const QString& name,
+                                                                const QString& agent,
+                                                                const QVariantMap& backend) {
+        Q_UNUSED(backend)
+        return createForeignProfile(name, agent);
+    }
     // Clone an existing profile under a new id (a copy, not a live link); returns the new id.
     Q_INVOKABLE virtual QString cloneProfile(const QString& source, const QString& newId) = 0;
     // Patch a profile with the given fields (only present keys are updated).

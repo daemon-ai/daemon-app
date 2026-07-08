@@ -54,6 +54,7 @@
 #include "session/mock_checkpoint_timeline.h"
 #include "session/mock_session_settings.h"
 #include "settings/qt_settings_store.h"
+#include "setup/agent_setup_model.h"
 #include "tools/mock_tool_inventory.h" // [wave2:app-approvals-safety] D2
 #include "transports/mock_contacts_service.h"
 #include "transports/mock_presence_service.h"
@@ -411,6 +412,42 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // (null-tolerant: in mock mode the catalog is inert, so the label degrades to the agent name).
     graph.engineIdentity =
         new EngineIdentity(graph.profiles, graph.sessionSettings, graph.agents, owner);
+    // Shared write-side setup view-model (Phase C): the one engine+backend+inference pipeline the
+    // GUI/TUI setup surfaces bind and FirstRunModel delegates to. Built from the interface seams;
+    // the foreign-agent catalog + EngineIdentity summariser are INJECTED here so the setup lib
+    // stays free of the daemon layer.
+    graph.agentSetup = new setup::AgentSetupModel(graph.profiles, graph.accounts,
+                                                  graph.providerCatalog, graph.modelCatalog, owner);
+    graph.agentSetup->setEngineIdentity(graph.engineIdentity);
+    // Feed the foreign-agent catalog rows into the setup model's engineChoices, refreshing on every
+    // catalog reflection. `verification` is the node-derived verdict, rendered verbatim.
+    const auto pushForeignAgents = [agentSetup = graph.agentSetup, agents = graph.agents] {
+        QVariantList rows;
+        for (const DecodedAgentEntry& e : agents->entries()) {
+            QVariantMap row;
+            row[QStringLiteral("name")] = e.name;
+            row[QStringLiteral("protocol")] = e.protocol;
+            row[QStringLiteral("installed")] = e.installed;
+            QString verification = QStringLiteral("NotInstalled");
+            switch (e.verification) {
+            case AgentVerification::Verified:
+                verification = QStringLiteral("Verified");
+                break;
+            case AgentVerification::Unverified:
+                verification = QStringLiteral("Unverified");
+                break;
+            case AgentVerification::NotInstalled:
+                verification = QStringLiteral("NotInstalled");
+                break;
+            }
+            row[QStringLiteral("verification")] = verification;
+            rows.append(row);
+        }
+        agentSetup->setForeignAgents(rows);
+    };
+    QObject::connect(graph.agents, &AgentRepository::catalogRefreshed, graph.agentSetup,
+                     pushForeignAgents);
+    pushForeignAgents(); // seed from whatever the catalog already holds (offline-first / cached)
     // The shared interactive-auth flow view-model over the per-mode seam (GUI + TUI bind it).
     graph.authFlowController = new auth::AuthFlowController(graph.authFlow, owner);
     // [wave2:app-channels-liveness] B1: land a freshly-connected account in the Channels surface
@@ -432,9 +469,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     }
     // Built last so it binds the resolved modelCatalog (daemon-backed or mock) for the inference
     // readiness gate (CON-7).
-    graph.firstRun =
-        new firstrun::FirstRunModel(graph.settings, graph.connection, graph.modelCatalog,
-                                    graph.profiles, graph.accounts, graph.providerCatalog, owner);
+    graph.firstRun = new firstrun::FirstRunModel(graph.settings, graph.connection,
+                                                 graph.modelCatalog, graph.profiles, graph.accounts,
+                                                 graph.providerCatalog, graph.agentSetup, owner);
     // CON-16: the wizard's agent-type step is offered iff the node's foreign-agent catalog
     // reflected any foreign agent. Wired here (not inside FirstRunModel) because firstrun must stay
     // free of the daemon layer; the connect-ready storm above refreshes the catalog, so the offer
