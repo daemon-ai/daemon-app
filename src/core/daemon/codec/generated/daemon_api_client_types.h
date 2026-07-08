@@ -784,6 +784,77 @@ struct profile_spec_engine {
 	struct engine_selector_r profile_spec_engine;
 };
 
+struct foreign_backend_agent_native {
+	union {
+		struct zcbor_string AgentNative_model_tstr;
+	};
+	enum {
+		AgentNative_model_tstr_c,
+		AgentNative_model_null_m_c,
+	} AgentNative_model_choice;
+};
+
+struct foreign_backend_node_provider {
+	struct provider_selector_r NodeProvider_provider;
+	struct zcbor_string NodeProvider_model;
+	union {
+		struct zcbor_string NodeProvider_credential_ref_tstr;
+	};
+	enum {
+		NodeProvider_credential_ref_tstr_c,
+		NodeProvider_credential_ref_null_m_c,
+	} NodeProvider_credential_ref_choice;
+};
+
+struct foreign_backend_r {
+	union {
+		struct foreign_backend_agent_native foreign_backend_agent_native_m;
+		struct foreign_backend_node_provider foreign_backend_node_provider_m;
+	};
+	enum {
+		foreign_backend_agent_native_m_c,
+		foreign_backend_node_provider_m_c,
+	} foreign_backend_choice;
+};
+
+struct profile_spec_foreign_backend {
+	struct foreign_backend_r profile_spec_foreign_backend;
+};
+
+struct author_agent {
+	struct zcbor_string author_agent_agent;
+};
+
+struct author_r {
+	union {
+		struct author_agent author_agent_m;
+	};
+	enum {
+		author_operator_tstr_c,
+		author_agent_m_c,
+	} author_choice;
+};
+
+struct profile_spec_created_by_r {
+	union {
+		struct author_r profile_spec_created_by_author_m;
+	};
+	enum {
+		profile_spec_created_by_author_m_c,
+		profile_spec_created_by_null_m_c,
+	} profile_spec_created_by_choice;
+};
+
+struct profile_spec_owner_r {
+	union {
+		struct zcbor_string profile_spec_owner_tstr;
+	};
+	enum {
+		profile_spec_owner_tstr_c,
+		profile_spec_owner_null_m_c,
+	} profile_spec_owner_choice;
+};
+
 struct profile_spec {
 	struct zcbor_string profile_spec_id;
 	struct provider_selector_r profile_spec_provider;
@@ -828,6 +899,12 @@ struct profile_spec {
 	size_t profile_spec_bound_accounts_bound_account_m_count;
 	struct profile_spec_engine profile_spec_engine;
 	bool profile_spec_engine_present;
+	struct profile_spec_foreign_backend profile_spec_foreign_backend;
+	bool profile_spec_foreign_backend_present;
+	struct profile_spec_created_by_r profile_spec_created_by;
+	bool profile_spec_created_by_present;
+	struct profile_spec_owner_r profile_spec_owner;
+	bool profile_spec_owner_present;
 };
 
 struct request_profile_create {
@@ -1665,6 +1742,18 @@ struct agent_entry_capabilities_r {
 	size_t agent_entry_capabilities_kv_pair_m_count;
 };
 
+struct agent_verification_r {
+	enum {
+		agent_verification_Verified_tstr_c,
+		agent_verification_Unverified_tstr_c,
+		agent_verification_NotInstalled_tstr_c,
+	} agent_verification_choice;
+};
+
+struct agent_entry_verification {
+	struct agent_verification_r agent_entry_verification;
+};
+
 struct agent_entry {
 	struct zcbor_string agent_entry_name;
 	struct agent_recipe agent_entry_recipe;
@@ -1677,6 +1766,8 @@ struct agent_entry {
 	bool agent_entry_version_present;
 	struct agent_entry_capabilities_r agent_entry_capabilities;
 	bool agent_entry_capabilities_present;
+	struct agent_entry_verification agent_entry_verification;
+	bool agent_entry_verification_present;
 };
 
 struct request_agent_register {
@@ -1789,6 +1880,22 @@ struct node_config_view {
 
 struct request_config_set {
 	struct node_config_view ConfigSet_config;
+};
+
+struct GatewaySet_addr_r {
+	union {
+		struct zcbor_string GatewaySet_addr_tstr;
+	};
+	enum {
+		GatewaySet_addr_tstr_c,
+		GatewaySet_addr_null_m_c,
+	} GatewaySet_addr_choice;
+};
+
+struct request_gateway_set {
+	bool GatewaySet_enabled;
+	struct GatewaySet_addr_r GatewaySet_addr;
+	bool GatewaySet_addr_present;
 };
 
 struct cron_spec_target_r {
@@ -3103,6 +3210,7 @@ struct api_request_r {
 		struct request_tool_set_enabled api_request_request_tool_set_enabled_m;
 		struct request_command_invoke api_request_request_command_invoke_m;
 		struct request_config_set api_request_request_config_set_m;
+		struct request_gateway_set api_request_request_gateway_set_m;
 		struct request_cron_create api_request_request_cron_create_m;
 		struct request_cron_update api_request_request_cron_update_m;
 		struct request_cron_delete api_request_request_cron_delete_m;
@@ -3268,6 +3376,8 @@ struct api_request_r {
 		api_request_request_caps_m_c,
 		api_request_request_config_get_m_c,
 		api_request_request_config_set_m_c,
+		api_request_request_gateway_get_m_c,
+		api_request_request_gateway_set_m_c,
 		api_request_request_cron_list_m_c,
 		api_request_request_cron_create_m_c,
 		api_request_request_cron_update_m_c,
@@ -4461,6 +4571,10 @@ struct node_event_fleet_changed {
 	uint64_t FleetChanged_rev;
 };
 
+struct node_event_profiles_changed {
+	uint64_t ProfilesChanged_rev;
+};
+
 struct node_event_approval_pending {
 	struct zcbor_string ApprovalPending_session;
 	struct zcbor_string ApprovalPending_request_id;
@@ -4613,6 +4727,7 @@ struct node_event_r {
 		struct node_event_session_meta_changed node_event_session_meta_changed_m;
 		struct node_event_roster_changed node_event_roster_changed_m;
 		struct node_event_fleet_changed node_event_fleet_changed_m;
+		struct node_event_profiles_changed node_event_profiles_changed_m;
 		struct node_event_approval_pending node_event_approval_pending_m;
 		struct node_event_download_progress node_event_download_progress_m;
 		struct node_event_transport_changed node_event_transport_changed_m;
@@ -4625,6 +4740,7 @@ struct node_event_r {
 		node_event_session_meta_changed_m_c,
 		node_event_roster_changed_m_c,
 		node_event_fleet_changed_m_c,
+		node_event_profiles_changed_m_c,
 		node_event_approval_pending_m_c,
 		node_event_download_progress_m_c,
 		node_event_catalog_changed_m_c,
@@ -5036,6 +5152,26 @@ struct response_model_inspect {
 	struct gguf_info response_model_inspect_ModelInspect;
 };
 
+struct profile_info_created_by_r {
+	union {
+		struct author_r profile_info_created_by_author_m;
+	};
+	enum {
+		profile_info_created_by_author_m_c,
+		profile_info_created_by_null_m_c,
+	} profile_info_created_by_choice;
+};
+
+struct profile_info_owner_r {
+	union {
+		struct zcbor_string profile_info_owner_tstr;
+	};
+	enum {
+		profile_info_owner_tstr_c,
+		profile_info_owner_null_m_c,
+	} profile_info_owner_choice;
+};
+
 struct profile_info {
 	struct zcbor_string profile_info_id;
 	struct provider_selector_r profile_info_provider;
@@ -5043,6 +5179,10 @@ struct profile_info {
 	bool profile_info_is_active;
 	struct bound_account profile_info_bound_accounts_bound_account_m[64];
 	size_t profile_info_bound_accounts_bound_account_m_count;
+	struct profile_info_created_by_r profile_info_created_by;
+	bool profile_info_created_by_present;
+	struct profile_info_owner_r profile_info_owner;
+	bool profile_info_owner_present;
 };
 
 struct response_profiles {
@@ -5197,20 +5337,6 @@ struct response_distribution {
 
 struct response_profile_id {
 	struct zcbor_string response_profile_id_ProfileId;
-};
-
-struct author_agent {
-	struct zcbor_string author_agent_agent;
-};
-
-struct author_r {
-	union {
-		struct author_agent author_agent_m;
-	};
-	enum {
-		author_operator_tstr_c,
-		author_agent_m_c,
-	} author_choice;
 };
 
 struct revision {
@@ -5559,6 +5685,36 @@ struct session_detail_checkpoints {
 	uint32_t session_detail_checkpoints;
 };
 
+struct session_detail_engine {
+	struct engine_selector_r session_detail_engine;
+};
+
+struct session_detail_foreign_backend {
+	struct foreign_backend_r session_detail_foreign_backend;
+};
+
+struct model_choice {
+	struct zcbor_string model_choice_id;
+	struct zcbor_string model_choice_label;
+};
+
+struct model_selector {
+	struct zcbor_string model_selector_option_id;
+	struct zcbor_string model_selector_current;
+	struct model_choice model_selector_choices_model_choice_m[64];
+	size_t model_selector_choices_model_choice_m_count;
+};
+
+struct session_detail_model_selector_r {
+	union {
+		struct model_selector session_detail_model_selector_model_selector_m;
+	};
+	enum {
+		session_detail_model_selector_model_selector_m_c,
+		session_detail_model_selector_null_m_c,
+	} session_detail_model_selector_choice;
+};
+
 struct session_detail {
 	struct session_info session_detail_info;
 	struct session_detail_overlay_r session_detail_overlay;
@@ -5571,6 +5727,12 @@ struct session_detail {
 	bool session_detail_children_present;
 	struct session_detail_checkpoints session_detail_checkpoints;
 	bool session_detail_checkpoints_present;
+	struct session_detail_engine session_detail_engine;
+	bool session_detail_engine_present;
+	struct session_detail_foreign_backend session_detail_foreign_backend;
+	bool session_detail_foreign_backend_present;
+	struct session_detail_model_selector_r session_detail_model_selector;
+	bool session_detail_model_selector_present;
 };
 
 struct response_session_detail {
@@ -5713,9 +5875,44 @@ struct response_config {
 	struct node_config_view response_config_Config;
 };
 
+struct gateway_status {
+	bool gateway_status_enabled;
+	union {
+		struct zcbor_string gateway_status_addr_tstr;
+	};
+	enum {
+		gateway_status_addr_tstr_c,
+		gateway_status_addr_null_m_c,
+	} gateway_status_addr_choice;
+	bool gateway_status_listening;
+	union {
+		struct zcbor_string gateway_status_last_error_tstr;
+	};
+	enum {
+		gateway_status_last_error_tstr_c,
+		gateway_status_last_error_null_m_c,
+	} gateway_status_last_error_choice;
+};
+
+struct response_gateway_status {
+	struct gateway_status response_gateway_status_GatewayStatus;
+};
+
+struct caps_report_max_composed_profiles {
+	uint32_t caps_report_max_composed_profiles;
+};
+
+struct caps_report_max_ephemeral_per_session {
+	uint32_t caps_report_max_ephemeral_per_session;
+};
+
 struct caps_report {
 	uint32_t caps_report_orchestrate_max_depth;
 	uint32_t caps_report_orchestrate_max_fanout;
+	struct caps_report_max_composed_profiles caps_report_max_composed_profiles;
+	bool caps_report_max_composed_profiles_present;
+	struct caps_report_max_ephemeral_per_session caps_report_max_ephemeral_per_session;
+	bool caps_report_max_ephemeral_per_session_present;
 };
 
 struct response_caps {
@@ -6598,6 +6795,7 @@ struct api_response_r {
 		struct response_commands api_response_response_commands_m;
 		struct response_command_output api_response_response_command_output_m;
 		struct response_config api_response_response_config_m;
+		struct response_gateway_status api_response_response_gateway_status_m;
 		struct response_caps api_response_response_caps_m;
 		struct response_cron_jobs api_response_response_cron_jobs_m;
 		struct response_cron_id api_response_response_cron_id_m;
@@ -6691,6 +6889,7 @@ struct api_response_r {
 		api_response_response_commands_m_c,
 		api_response_response_command_output_m_c,
 		api_response_response_config_m_c,
+		api_response_response_gateway_status_m_c,
 		api_response_response_caps_m_c,
 		api_response_response_cron_jobs_m_c,
 		api_response_response_cron_id_m_c,
