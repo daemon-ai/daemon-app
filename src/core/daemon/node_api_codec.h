@@ -318,7 +318,7 @@ struct DecodedAdapterInfo {
     bool hasContactsOps = false;
     QVariantMap contactsOps; // getProfile/actionMenu/setAlias -> bool
     bool hasRosterOps = false;
-    QVariantMap rosterOps; // add/update/remove -> bool
+    QVariantMap rosterOps; // list/add/update/remove -> bool (list, wire v34, gates the Contacts UI)
     bool hasDirectory = false;
     bool directory = false; // the adapter offers a people directory (DirectorySearch)
 };
@@ -1589,7 +1589,7 @@ public:
     // contract version moves. The server advertises its own version as the "api/<N>" Hello
     // feature; the connection service compares the two at connect and replaces (app-managed) or
     // refuses (attach) a mismatched daemon instead of silently serving stale wire shapes.
-    static constexpr quint32 kDaemonApiVersion = 33;
+    static constexpr quint32 kDaemonApiVersion = 34;
     // The wire page bound (daemon-api WIRE_PAGE_MAX): a paged response carries at most this many
     // array elements per page — the generated codec decodes into fixed 64-element buffers — so
     // clients loop on the page cursors instead of ever asking for more per response.

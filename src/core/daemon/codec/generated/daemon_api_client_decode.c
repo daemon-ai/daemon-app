@@ -392,6 +392,11 @@ static bool decode_request_contact_set_alias(zcbor_state_t *state, struct reques
 static bool decode_request_contact_action_menu(zcbor_state_t *state, struct request_contact_action_menu *result);
 static bool decode_repeated_DirectorySearch_query(zcbor_state_t *state, struct DirectorySearch_query_r *result);
 static bool decode_request_directory_search(zcbor_state_t *state, struct request_directory_search *result);
+static bool decode_repeated_RosterList_after(zcbor_state_t *state, struct RosterList_after_r *result);
+static bool decode_request_roster_list(zcbor_state_t *state, struct request_roster_list *result);
+static bool decode_request_roster_add(zcbor_state_t *state, struct request_roster_add *result);
+static bool decode_request_roster_update(zcbor_state_t *state, struct request_roster_update *result);
+static bool decode_request_roster_remove(zcbor_state_t *state, struct request_roster_remove *result);
 static bool decode_fs_root_id_host(zcbor_state_t *state, struct fs_root_id_host *result);
 static bool decode_fs_root_id_session(zcbor_state_t *state, struct fs_root_id_session *result);
 static bool decode_fs_root_id_t(zcbor_state_t *state, struct fs_root_id_t_r *result);
@@ -603,6 +608,7 @@ static bool decode_membership_change(zcbor_state_t *state, struct membership_cha
 static bool decode_repeated_MembershipChanged_actor(zcbor_state_t *state, struct MembershipChanged_actor_r *result);
 static bool decode_repeated_MembershipChanged_reason(zcbor_state_t *state, struct MembershipChanged_reason_r *result);
 static bool decode_node_event_membership_changed(zcbor_state_t *state, struct node_event_membership_changed *result);
+static bool decode_node_event_contacts_changed(zcbor_state_t *state, struct node_event_contacts_changed *result);
 static bool decode_node_event_resync_needed(zcbor_state_t *state, struct node_event_resync_needed *result);
 static bool decode_node_event(zcbor_state_t *state, struct node_event_r *result);
 static bool decode_events_page(zcbor_state_t *state, struct events_page *result);
@@ -808,6 +814,9 @@ static bool decode_response_conv_create_details(zcbor_state_t *state, struct res
 static bool decode_response_conv_join_details(zcbor_state_t *state, struct response_conv_join_details *result);
 static bool decode_response_contact_profile(zcbor_state_t *state, struct response_contact_profile *result);
 static bool decode_response_contacts(zcbor_state_t *state, struct response_contacts *result);
+static bool decode_repeated_contact_page_next(zcbor_state_t *state, struct contact_page_next_r *result);
+static bool decode_contact_page(zcbor_state_t *state, struct contact_page *result);
+static bool decode_response_contact_page(zcbor_state_t *state, struct response_contact_page *result);
 static bool decode_repeated_action_menu_items(zcbor_state_t *state, struct action_menu_items_r *result);
 static bool decode_action_menu(zcbor_state_t *state, struct action_menu *result);
 static bool decode_response_action_menu(zcbor_state_t *state, struct response_action_menu *result);
@@ -6974,6 +6983,91 @@ static bool decode_request_directory_search(
 	return res;
 }
 
+static bool decode_repeated_RosterList_after(
+		zcbor_state_t *state, struct RosterList_after_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"after", tmp_str.len = sizeof("after") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).RosterList_after_tstr)))) && (((*result).RosterList_after_choice = RosterList_after_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).RosterList_after_choice = RosterList_after_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_roster_list(
+		zcbor_state_t *state, struct request_roster_list *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"RosterList", tmp_str.len = sizeof("RosterList") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).RosterList_transport))))
+	&& zcbor_present_decode(&((*result).RosterList_after_present), (zcbor_decoder_t *)decode_repeated_RosterList_after, state, (&(*result).RosterList_after))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_RosterList_after(state, (&(*result).RosterList_after));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_roster_add(
+		zcbor_state_t *state, struct request_roster_add *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"RosterAdd", tmp_str.len = sizeof("RosterAdd") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).RosterAdd_transport))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"contact", tmp_str.len = sizeof("contact") - 1, &tmp_str)))))
+	&& (decode_contact_info(state, (&(*result).RosterAdd_contact))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_roster_update(
+		zcbor_state_t *state, struct request_roster_update *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"RosterUpdate", tmp_str.len = sizeof("RosterUpdate") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).RosterUpdate_transport))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"contact", tmp_str.len = sizeof("contact") - 1, &tmp_str)))))
+	&& (decode_contact_info(state, (&(*result).RosterUpdate_contact))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_roster_remove(
+		zcbor_state_t *state, struct request_roster_remove *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"RosterRemove", tmp_str.len = sizeof("RosterRemove") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).RosterRemove_transport))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"contact", tmp_str.len = sizeof("contact") - 1, &tmp_str)))))
+	&& (decode_contact_info(state, (&(*result).RosterRemove_contact))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_fs_root_id_host(
 		zcbor_state_t *state, struct fs_root_id_host *result)
 {
@@ -10597,6 +10691,20 @@ static bool decode_node_event_membership_changed(
 	return res;
 }
 
+static bool decode_node_event_contacts_changed(
+		zcbor_state_t *state, struct node_event_contacts_changed *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ContactsChanged", tmp_str.len = sizeof("ContactsChanged") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).ContactsChanged_transport))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_node_event_resync_needed(
 		zcbor_state_t *state, struct node_event_resync_needed *result)
 {
@@ -10629,6 +10737,7 @@ static bool decode_node_event(
 	|| (((decode_node_event_transport_changed(state, (&(*result).node_event_transport_changed_m)))) && (((*result).node_event_choice = node_event_transport_changed_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((decode_node_event_conversations_changed(state, (&(*result).node_event_conversations_changed_m)))) && (((*result).node_event_choice = node_event_conversations_changed_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_node_event_membership_changed(state, (&(*result).node_event_membership_changed_m)))) && (((*result).node_event_choice = node_event_membership_changed_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_node_event_contacts_changed(state, (&(*result).node_event_contacts_changed_m)))) && (((*result).node_event_choice = node_event_contacts_changed_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_node_event_resync_needed(state, (&(*result).node_event_resync_needed_m)))) && (((*result).node_event_choice = node_event_resync_needed_m_c), true)))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
@@ -13750,7 +13859,9 @@ static bool decode_roster_ops(
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"add", tmp_str.len = sizeof("add") - 1, &tmp_str)))))
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"list", tmp_str.len = sizeof("list") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).roster_ops_list))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"add", tmp_str.len = sizeof("add") - 1, &tmp_str)))))
 	&& (zcbor_bool_decode(state, (&(*result).roster_ops_add))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"update", tmp_str.len = sizeof("update") - 1, &tmp_str)))))
 	&& (zcbor_bool_decode(state, (&(*result).roster_ops_update))))
@@ -14332,6 +14443,56 @@ static bool decode_response_contacts(
 		 */
 		decode_contact_info(state, (*&(*result).response_contacts_Contacts_contact_info_m));
 	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_contact_page_next(
+		zcbor_state_t *state, struct contact_page_next_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"next", tmp_str.len = sizeof("next") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).contact_page_next_tstr)))) && (((*result).contact_page_next_choice = contact_page_next_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).contact_page_next_choice = contact_page_next_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_contact_page(
+		zcbor_state_t *state, struct contact_page *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"items", tmp_str.len = sizeof("items") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).contact_page_items_contact_info_m_count, (zcbor_decoder_t *)decode_contact_info, state, (*&(*result).contact_page_items_contact_info_m), sizeof(struct contact_info))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))
+	&& zcbor_present_decode(&((*result).contact_page_next_present), (zcbor_decoder_t *)decode_repeated_contact_page_next, state, (&(*result).contact_page_next))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_contact_info(state, (*&(*result).contact_page_items_contact_info_m));
+		decode_repeated_contact_page_next(state, (&(*result).contact_page_next));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_contact_page(
+		zcbor_state_t *state, struct response_contact_page *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ContactPage", tmp_str.len = sizeof("ContactPage") - 1, &tmp_str)))))
+	&& (decode_contact_page(state, (&(*result).response_contact_page_ContactPage))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -15228,6 +15389,7 @@ static bool decode_api_response(
 	|| (zcbor_union_elem_code(state) && (((decode_response_conv_join_details(state, (&(*result).api_response_response_conv_join_details_m)))) && (((*result).api_response_choice = api_response_response_conv_join_details_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_contact_profile(state, (&(*result).api_response_response_contact_profile_m)))) && (((*result).api_response_choice = api_response_response_contact_profile_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_contacts(state, (&(*result).api_response_response_contacts_m)))) && (((*result).api_response_choice = api_response_response_contacts_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_contact_page(state, (&(*result).api_response_response_contact_page_m)))) && (((*result).api_response_choice = api_response_response_contact_page_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_action_menu(state, (&(*result).api_response_response_action_menu_m)))) && (((*result).api_response_choice = api_response_response_action_menu_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_error(state, (&(*result).api_response_response_error_m)))) && (((*result).api_response_choice = api_response_response_error_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_fs_roots(state, (&(*result).api_response_response_fs_roots_m)))) && (((*result).api_response_choice = api_response_response_fs_roots_m_c), true)))
@@ -15407,6 +15569,10 @@ static bool decode_api_request(
 	|| (zcbor_union_elem_code(state) && (((decode_request_contact_set_alias(state, (&(*result).api_request_request_contact_set_alias_m)))) && (((*result).api_request_choice = api_request_request_contact_set_alias_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_contact_action_menu(state, (&(*result).api_request_request_contact_action_menu_m)))) && (((*result).api_request_choice = api_request_request_contact_action_menu_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_directory_search(state, (&(*result).api_request_request_directory_search_m)))) && (((*result).api_request_choice = api_request_request_directory_search_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_roster_list(state, (&(*result).api_request_request_roster_list_m)))) && (((*result).api_request_choice = api_request_request_roster_list_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_roster_add(state, (&(*result).api_request_request_roster_add_m)))) && (((*result).api_request_choice = api_request_request_roster_add_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_roster_update(state, (&(*result).api_request_request_roster_update_m)))) && (((*result).api_request_choice = api_request_request_roster_update_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_roster_remove(state, (&(*result).api_request_request_roster_remove_m)))) && (((*result).api_request_choice = api_request_request_roster_remove_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"FsRoots", tmp_str.len = sizeof("FsRoots") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_fs_roots_m_c), true)))
 	|| (((decode_request_fs_list(state, (&(*result).api_request_request_fs_list_m)))) && (((*result).api_request_choice = api_request_request_fs_list_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((decode_request_fs_stat(state, (&(*result).api_request_request_fs_stat_m)))) && (((*result).api_request_choice = api_request_request_fs_stat_m_c), true)))

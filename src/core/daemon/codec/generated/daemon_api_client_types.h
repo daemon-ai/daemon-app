@@ -2760,6 +2760,37 @@ struct request_directory_search {
 	bool DirectorySearch_query_present;
 };
 
+struct RosterList_after_r {
+	union {
+		struct zcbor_string RosterList_after_tstr;
+	};
+	enum {
+		RosterList_after_tstr_c,
+		RosterList_after_null_m_c,
+	} RosterList_after_choice;
+};
+
+struct request_roster_list {
+	struct zcbor_string RosterList_transport;
+	struct RosterList_after_r RosterList_after;
+	bool RosterList_after_present;
+};
+
+struct request_roster_add {
+	struct zcbor_string RosterAdd_transport;
+	struct contact_info RosterAdd_contact;
+};
+
+struct request_roster_update {
+	struct zcbor_string RosterUpdate_transport;
+	struct contact_info RosterUpdate_contact;
+};
+
+struct request_roster_remove {
+	struct zcbor_string RosterRemove_transport;
+	struct contact_info RosterRemove_contact;
+};
+
 struct fs_root_id_host {
 	struct zcbor_string fs_root_id_host_host;
 };
@@ -3248,6 +3279,10 @@ struct api_request_r {
 		struct request_contact_set_alias api_request_request_contact_set_alias_m;
 		struct request_contact_action_menu api_request_request_contact_action_menu_m;
 		struct request_directory_search api_request_request_directory_search_m;
+		struct request_roster_list api_request_request_roster_list_m;
+		struct request_roster_add api_request_request_roster_add_m;
+		struct request_roster_update api_request_request_roster_update_m;
+		struct request_roster_remove api_request_request_roster_remove_m;
 		struct request_fs_list api_request_request_fs_list_m;
 		struct request_fs_stat api_request_request_fs_stat_m;
 		struct request_fs_read api_request_request_fs_read_m;
@@ -3419,6 +3454,10 @@ struct api_request_r {
 		api_request_request_contact_set_alias_m_c,
 		api_request_request_contact_action_menu_m_c,
 		api_request_request_directory_search_m_c,
+		api_request_request_roster_list_m_c,
+		api_request_request_roster_add_m_c,
+		api_request_request_roster_update_m_c,
+		api_request_request_roster_remove_m_c,
 		api_request_request_fs_roots_m_c,
 		api_request_request_fs_list_m_c,
 		api_request_request_fs_stat_m_c,
@@ -4717,6 +4756,10 @@ struct node_event_membership_changed {
 	bool MembershipChanged_is_self;
 };
 
+struct node_event_contacts_changed {
+	struct zcbor_string ContactsChanged_transport;
+};
+
 struct node_event_resync_needed {
 	struct zcbor_string ResyncNeeded_scope;
 };
@@ -4733,6 +4776,7 @@ struct node_event_r {
 		struct node_event_transport_changed node_event_transport_changed_m;
 		struct node_event_conversations_changed node_event_conversations_changed_m;
 		struct node_event_membership_changed node_event_membership_changed_m;
+		struct node_event_contacts_changed node_event_contacts_changed_m;
 		struct node_event_resync_needed node_event_resync_needed_m;
 	};
 	enum {
@@ -4747,6 +4791,7 @@ struct node_event_r {
 		node_event_transport_changed_m_c,
 		node_event_conversations_changed_m_c,
 		node_event_membership_changed_m_c,
+		node_event_contacts_changed_m_c,
 		node_event_resync_needed_m_c,
 	} node_event_choice;
 };
@@ -6250,6 +6295,7 @@ struct adapter_info_contacts_ops_r {
 };
 
 struct roster_ops {
+	bool roster_ops_list;
 	bool roster_ops_add;
 	bool roster_ops_update;
 	bool roster_ops_remove;
@@ -6524,6 +6570,27 @@ struct response_contact_profile {
 struct response_contacts {
 	struct contact_info response_contacts_Contacts_contact_info_m[64];
 	size_t response_contacts_Contacts_contact_info_m_count;
+};
+
+struct contact_page_next_r {
+	union {
+		struct zcbor_string contact_page_next_tstr;
+	};
+	enum {
+		contact_page_next_tstr_c,
+		contact_page_next_null_m_c,
+	} contact_page_next_choice;
+};
+
+struct contact_page {
+	struct contact_info contact_page_items_contact_info_m[64];
+	size_t contact_page_items_contact_info_m_count;
+	struct contact_page_next_r contact_page_next;
+	bool contact_page_next_present;
+};
+
+struct response_contact_page {
+	struct contact_page response_contact_page_ContactPage;
 };
 
 struct action_menu_items_r {
@@ -6896,6 +6963,7 @@ struct api_response_r {
 		struct response_conv_join_details api_response_response_conv_join_details_m;
 		struct response_contact_profile api_response_response_contact_profile_m;
 		struct response_contacts api_response_response_contacts_m;
+		struct response_contact_page api_response_response_contact_page_m;
 		struct response_action_menu api_response_response_action_menu_m;
 		struct response_error api_response_response_error_m;
 		struct response_fs_roots api_response_response_fs_roots_m;
@@ -6990,6 +7058,7 @@ struct api_response_r {
 		api_response_response_conv_join_details_m_c,
 		api_response_response_contact_profile_m_c,
 		api_response_response_contacts_m_c,
+		api_response_response_contact_page_m_c,
 		api_response_response_action_menu_m_c,
 		api_response_response_error_m_c,
 		api_response_response_fs_roots_m_c,

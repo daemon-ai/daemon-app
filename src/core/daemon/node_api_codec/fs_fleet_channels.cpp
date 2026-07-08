@@ -958,6 +958,9 @@ bool NodeApiCodec::decodeAdapters(const QByteArray& responseCbor, QList<DecodedA
                 adapter_info_roster_ops_r::adapter_info_roster_ops_roster_ops_m_c) {
             const roster_ops& ops = a.adapter_info_roster_ops.adapter_info_roster_ops_roster_ops_m;
             d.hasRosterOps = true;
+            // [acct-mgmt] Contacts (wire v34) adds `list` to roster-ops: it gates the whole
+            // per-account Contacts section (RosterList enumeration), sibling to add/update/remove.
+            d.rosterOps[QStringLiteral("list")] = ops.roster_ops_list;
             d.rosterOps[QStringLiteral("add")] = ops.roster_ops_add;
             d.rosterOps[QStringLiteral("update")] = ops.roster_ops_update;
             d.rosterOps[QStringLiteral("remove")] = ops.roster_ops_remove;
