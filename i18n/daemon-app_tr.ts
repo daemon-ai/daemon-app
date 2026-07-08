@@ -363,7 +363,108 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>AgentSetupForm</name>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">Ad</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation type="unfinished">aracı adı</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation type="unfinished">Motor</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation type="unfinished">Yabancı</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation type="unfinished">Yerel</translation>
+    </message>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Persona (optional)</source>
+        <translation type="unfinished">Persona (isteğe bağlı)</translation>
+    </message>
+    <message>
+        <source>system prompt</source>
+        <translation type="unfinished">sistem istemi</translation>
+    </message>
+</context>
+<context>
+    <name>AgentSetupModel</name>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation type="unfinished">Bu API anahtarı %1 ile doğrulanamadı — denetleyip yeniden deneyin.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation type="unfinished">Modelinize ulaşılamadı — sağlayıcıyı denetleyip yeniden deneyin.</translation>
+    </message>
+</context>
+<context>
+    <name>AgentSetupView</name>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The node&apos;s provider gateway is disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model hint (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished">Sağlayıcı</translation>
+    </message>
+    <message>
+        <source>List models</source>
+        <translation type="unfinished">Modelleri listele</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished">Model</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation type="unfinished">Temel URL (ör. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation type="unfinished">Model kimliği</translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation type="unfinished">Özel uç nokta…</translation>
+    </message>
+    <message>
+        <source>Agent&apos;s own backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node provider (gateway)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AgentTypePicker</name>
+    <message>
+        <source>Native</source>
+        <translation type="unfinished">Yerel</translation>
+    </message>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core (yerel)</translation>
@@ -373,16 +474,8 @@ You&apos;ll return to first-run setup.</source>
         <translation>  ·  stream-json</translation>
     </message>
     <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>yüklü</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>yüklü değil</translation>
+        <source>  ·  ACP</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2383,6 +2476,22 @@ kadar başlatılamaz.</translation>
         <source>Max background children</source>
         <translation>Maks. arka plan alt görevi</translation>
     </message>
+    <message>
+        <source>Max composed profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profiles an agent may author. Enforced by the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max ephemeral children per session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Concurrent ephemeral children a session may run. Enforced by the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Dialog</name>
@@ -2916,24 +3025,8 @@ kadar başlatılamaz.</translation>
         <translation>Aracı adı</translation>
     </message>
     <message>
-        <source>Provider</source>
-        <translation>Sağlayıcı</translation>
-    </message>
-    <message>
-        <source>List models</source>
-        <translation>Modelleri listele</translation>
-    </message>
-    <message>
-        <source>Model</source>
-        <translation>Model</translation>
-    </message>
-    <message>
-        <source>Base URL (e.g. https://…)</source>
-        <translation>Temel URL (ör. https://…)</translation>
-    </message>
-    <message>
-        <source>Model id</source>
-        <translation>Model kimliği</translation>
+        <source>Choose the kind of agent: native picks a model next; a foreign agent uses its own backend or the node&apos;s gateway.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Test</source>
@@ -2960,14 +3053,6 @@ kadar başlatılamaz.</translation>
         <translation>Başarısız — </translation>
     </message>
     <message>
-        <source>Custom endpoint…</source>
-        <translation>Özel uç nokta…</translation>
-    </message>
-    <message>
-        <source>custom</source>
-        <translation>özel</translation>
-    </message>
-    <message>
         <source>Local: App-managed (press to Attach instead)</source>
         <translation>Yerel: Uygulama tarafından yönetilen (bunun yerine İliştir için basın)</translation>
     </message>
@@ -2991,10 +3076,6 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Sign in</source>
         <translation>Oturum aç</translation>
-    </message>
-    <message>
-        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
-        <translation>Aracı türünü seçin: yerel sonra bir model seçer; yabancı bir ACP aracısı kendi modelini getirir.</translation>
     </message>
     <message>
         <source>Continue</source>
@@ -3060,8 +3141,16 @@ kadar başlatılamaz.</translation>
         <translation>Daemon içinde çalışır — sonra bir sağlayıcı ve model seçin.</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
-        <translation>Bu aracı yabancı bir ACP motoru çalıştırır — kendi modelini getirir, bu nedenle sağlayıcı, model veya anahtar gerekmez.</translation>
+        <source>Routed through the node&apos;s provider gateway — pick a provider and model next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine using its own backend — it brings its own model, so no provider or key is needed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Agent name</source>
@@ -3089,14 +3178,6 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>Düğüme ulaşılamadı. Hedefi denetleyin ve yeniden deneyin.</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation>Modelinize ulaşılamadı — sağlayıcıyı denetleyip yeniden deneyin.</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation>Bu API anahtarı %1 ile doğrulanamadı — denetleyip yeniden deneyin.</translation>
     </message>
 </context>
 <context>
@@ -3132,6 +3213,18 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Native</source>
         <translation>Yerel</translation>
+    </message>
+    <message>
+        <source>Managed child</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subagent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Primary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Ephemeral</source>
@@ -3198,6 +3291,41 @@ kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
+    <name>ForeignBackendPicker</name>
+    <message>
+        <source>Agent&apos;s own backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses the agent&apos;s own login and config; the node only steers its model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node provider (gateway)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Routed through the node&apos;s provider gateway; keys stay on the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The node&apos;s provider gateway is disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model hint (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>model id the agent should prefer</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>GatewayMenu</name>
     <message>
         <source>Gateway</source>
@@ -3208,16 +3336,106 @@ kadar başlatılamaz.</translation>
         <translation>Sistemi aç</translation>
     </message>
     <message>
+        <source>OpenAI gateway: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>View all logs</source>
         <translation>Tüm günlükleri görüntüle</translation>
     </message>
     <message>
-        <source>connected</source>
-        <translation>bağlı</translation>
+        <source>ok</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>offline</source>
-        <translation>çevrimdışı</translation>
+        <source>down</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GatewayRepository</name>
+    <message>
+        <source>Gateway operation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode gateway status</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GatewaySection</name>
+    <message>
+        <source>OpenAI-compatible gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The node runs a resident OpenAI-compatible gateway so foreign agents (codex, opencode) can be routed through the node — keys stay on the node and never reach the agent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect to a daemon to manage the gateway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This node does not provide the OpenAI-compatible gateway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Serve /v1/chat/completions and /v1/models from the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bind address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional. Leave blank to let the node choose (e.g. a loopback port).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>127.0.0.1:0</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished">bilinmiyor</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Service health</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ok</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>down</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4064,30 +4282,6 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>Oluştur</translation>
     </message>
     <message>
-        <source>Name</source>
-        <translation>Ad</translation>
-    </message>
-    <message>
-        <source>agent name</source>
-        <translation>aracı adı</translation>
-    </message>
-    <message>
-        <source>Engine</source>
-        <translation>Motor</translation>
-    </message>
-    <message>
-        <source>Persona (optional)</source>
-        <translation>Persona (isteğe bağlı)</translation>
-    </message>
-    <message>
-        <source>system prompt</source>
-        <translation>sistem istemi</translation>
-    </message>
-    <message>
-        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
-        <translation>Bu aracı yabancı bir motor çalıştırır. Başlatma tarifi daemon&apos;un aracı kataloğu tarafından yönetilir — yapılandırılacak sağlayıcı, model veya anahtar yok.</translation>
-    </message>
-    <message>
         <source>Name:</source>
         <translation>Ad:</translation>
     </message>
@@ -4243,8 +4437,8 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>Yabancı motor (oluşturmada ayarlanır)</translation>
     </message>
     <message>
-        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
-        <translation>Bu aracı yabancı bir motor çalıştırır — başlatma tarifi ve modeli daemon&apos;un aracı kataloğu tarafından yönetilir; bu nedenle burada yapılandırılacak sağlayıcı, model veya temel URL yoktur.</translation>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4358,6 +4552,10 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>İptal</translation>
     </message>
     <message>
+        <source>Model hint (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name</source>
         <translation>Ad</translation>
     </message>
@@ -4368,6 +4566,26 @@ Keşfet sekmesinden bir tane başlatın.</translation>
     <message>
         <source>Engine: daemon-core (native)</source>
         <translation>Motor: daemon-core (yerel)</translation>
+    </message>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node provider (gateway)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent&apos;s own backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model hint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(optional)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4499,6 +4717,18 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>+ Yeni profil</translation>
     </message>
     <message>
+        <source>All profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent-authored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Foreign</source>
         <translation>Yabancı</translation>
     </message>
@@ -4507,12 +4737,44 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>Yerel</translation>
     </message>
     <message>
+        <source>agent-authored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Owner: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Authored by an agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke this agent-authored profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>Yeni profil</translation>
     </message>
     <message>
-        <source>Profile id (e.g. work)</source>
-        <translation>Profil kimliği (ör. work)</translation>
+        <source>Create</source>
+        <translation type="unfinished">Oluştur</translation>
+    </message>
+    <message>
+        <source>Or clone from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation type="unfinished">İptal et</translation>
+    </message>
+    <message>
+        <source>Revoke the agent-authored profile “%1”? This deletes it from the node.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Empty profile</source>
@@ -5483,6 +5745,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <source>Subagents:  </source>
         <translation>Alt aracılar:  </translation>
     </message>
+    <message>
+        <source>Revoke profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke this agent-authored profile? This deletes it from the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RouteDialog</name>
@@ -6194,6 +6464,10 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <translation>Bağlantı</translation>
     </message>
     <message>
+        <source>Gateway</source>
+        <translation type="unfinished">Ağ geçidi</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>Model</translation>
     </message>
@@ -6504,12 +6778,54 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <source> tok</source>
         <translation> tok</translation>
     </message>
+    <message>
+        <source>Not available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>StatusBarView</name>
     <message>
         <source> Gateway </source>
         <translation> Ağ geçidi </translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation type="unfinished">kapalı</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation type="unfinished">açık</translation>
+    </message>
+    <message>
+        <source>…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenAI GW </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n service(s) down</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source> Agents </source>
@@ -7187,6 +7503,14 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Uygulamayı kapattığımda yönetilen daemon&apos;ı durdur</translation>
     </message>
     <message>
+        <source>Gateway</source>
+        <translation type="unfinished">Ağ geçidi</translation>
+    </message>
+    <message>
+        <source>Enable gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Updates</source>
         <translation>Güncellemeler</translation>
     </message>
@@ -7251,8 +7575,41 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Maks. arka plan alt görevi</translation>
     </message>
     <message>
+        <source>Max composed profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max ephemeral children per session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tools</source>
         <translation>Araçlar</translation>
+    </message>
+    <message>
+        <source>disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>listening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>starting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- Status: **%1** — _routes foreign agents through the node; keys stay on the node_
+</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
@@ -7571,6 +7928,16 @@ Teşekkürler — şununla devam ediliyor: %1
 </source>
         <translation>- Motor: %1
 </translation>
+    </message>
+    <message>
+        <source>- Provenance: agent-authored
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- Provenance: agent-authored (owner `%1`)
+</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -7963,6 +8330,18 @@ _Hiçbir aracı seçilmedi._
     <message>
         <source>ephemeral</source>
         <translation>geçici</translation>
+    </message>
+    <message>
+        <source>managed child</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>subagent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>primary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
@@ -8650,6 +9029,17 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::GatewayRepository</name>
+    <message>
+        <source>Gateway operation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode gateway status</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::LocalDaemonLauncher</name>
     <message>
         <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
@@ -8862,14 +9252,6 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>Düğüme ulaşılamadı. Hedefi denetleyin ve yeniden deneyin.</translation>
     </message>
-    <message>
-        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation>Modelinize ulaşılamadı — sağlayıcıyı denetleyip yeniden deneyin.</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation>Bu API anahtarı %1 ile doğrulanamadı — denetleyip yeniden deneyin.</translation>
-    </message>
 </context>
 <context>
     <name>fs::LocalDiskFsService</name>
@@ -8902,6 +9284,17 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>Participants</source>
         <translation>Katılımcılar</translation>
+    </message>
+</context>
+<context>
+    <name>setup::AgentSetupModel</name>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation type="unfinished">Bu API anahtarı %1 ile doğrulanamadı — denetleyip yeniden deneyin.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation type="unfinished">Modelinize ulaşılamadı — sağlayıcıyı denetleyip yeniden deneyin.</translation>
     </message>
 </context>
 <context>

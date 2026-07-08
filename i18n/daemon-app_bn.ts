@@ -363,7 +363,108 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>AgentSetupForm</name>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">নাম</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation type="unfinished">এজেন্টের নাম</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation type="unfinished">ইঞ্জিন</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation type="unfinished">নেটিভ</translation>
+    </message>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Persona (optional)</source>
+        <translation type="unfinished">পারসোনা (ঐচ্ছিক)</translation>
+    </message>
+    <message>
+        <source>system prompt</source>
+        <translation type="unfinished">সিস্টেম প্রম্পট</translation>
+    </message>
+</context>
+<context>
+    <name>AgentSetupModel</name>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation type="unfinished">%1 দিয়ে এই API কী যাচাই করা যায়নি — এটি পরীক্ষা করে আবার চেষ্টা করুন।</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation type="unfinished">আপনার মডেলে পৌঁছানো যায়নি — প্রদানকারী পরীক্ষা করে আবার চেষ্টা করুন।</translation>
+    </message>
+</context>
+<context>
+    <name>AgentSetupView</name>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The node&apos;s provider gateway is disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model hint (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished">প্রদানকারী</translation>
+    </message>
+    <message>
+        <source>List models</source>
+        <translation type="unfinished">মডেল তালিকাভুক্ত করুন</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished">মডেল</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation type="unfinished">বেস URL (যেমন https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation type="unfinished">মডেল আইডি</translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation type="unfinished">কাস্টম এন্ডপয়েন্ট…</translation>
+    </message>
+    <message>
+        <source>Agent&apos;s own backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node provider (gateway)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AgentTypePicker</name>
+    <message>
+        <source>Native</source>
+        <translation type="unfinished">নেটিভ</translation>
+    </message>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core (নেটিভ)</translation>
@@ -373,16 +474,8 @@ You&apos;ll return to first-run setup.</source>
         <translation>  ·  stream-json</translation>
     </message>
     <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>ইনস্টল করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>ইনস্টল করা নেই</translation>
+        <source>  ·  ACP</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2383,6 +2476,22 @@ until it is re-registered.</source>
         <source>Max background children</source>
         <translation>সর্বোচ্চ ব্যাকগ্রাউন্ড চাইল্ড</translation>
     </message>
+    <message>
+        <source>Max composed profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profiles an agent may author. Enforced by the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max ephemeral children per session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Concurrent ephemeral children a session may run. Enforced by the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Dialog</name>
@@ -2918,24 +3027,8 @@ until it is re-registered.</source>
         <translation>এজেন্টের নাম</translation>
     </message>
     <message>
-        <source>Provider</source>
-        <translation>প্রদানকারী</translation>
-    </message>
-    <message>
-        <source>List models</source>
-        <translation>মডেল তালিকাভুক্ত করুন</translation>
-    </message>
-    <message>
-        <source>Model</source>
-        <translation>মডেল</translation>
-    </message>
-    <message>
-        <source>Base URL (e.g. https://…)</source>
-        <translation>বেস URL (যেমন https://…)</translation>
-    </message>
-    <message>
-        <source>Model id</source>
-        <translation>মডেল আইডি</translation>
+        <source>Choose the kind of agent: native picks a model next; a foreign agent uses its own backend or the node&apos;s gateway.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Test</source>
@@ -2962,14 +3055,6 @@ until it is re-registered.</source>
         <translation>ব্যর্থ — </translation>
     </message>
     <message>
-        <source>Custom endpoint…</source>
-        <translation>কাস্টম এন্ডপয়েন্ট…</translation>
-    </message>
-    <message>
-        <source>custom</source>
-        <translation>কাস্টম</translation>
-    </message>
-    <message>
         <source>Local: App-managed (press to Attach instead)</source>
         <translation>স্থানীয়: অ্যাপ-পরিচালিত (পরিবর্তে সংযুক্ত করতে চাপুন)</translation>
     </message>
@@ -2993,10 +3078,6 @@ until it is re-registered.</source>
     <message>
         <source>Sign in</source>
         <translation>সাইন ইন</translation>
-    </message>
-    <message>
-        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
-        <translation>এজেন্টের ধরন বেছে নিন: নেটিভ পরবর্তীতে একটি মডেল বেছে নেয়; একটি ফরেন ACP এজেন্ট নিজের মডেল নিয়ে আসে।</translation>
     </message>
     <message>
         <source>Continue</source>
@@ -3062,8 +3143,16 @@ until it is re-registered.</source>
         <translation>ডিমনে চলে — পরবর্তীতে একটি প্রদানকারী ও মডেল বেছে নিন।</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
-        <translation>এই এজেন্ট একটি ফরেন ACP ইঞ্জিন চালায় — এটি নিজের মডেল নিয়ে আসে, তাই কোনো প্রদানকারী, মডেল বা কী প্রয়োজন নেই।</translation>
+        <source>Routed through the node&apos;s provider gateway — pick a provider and model next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine using its own backend — it brings its own model, so no provider or key is needed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Agent name</source>
@@ -3091,14 +3180,6 @@ until it is re-registered.</source>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>নোডে পৌঁছানো যায়নি। লক্ষ্য পরীক্ষা করে আবার চেষ্টা করুন।</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation>আপনার মডেলে পৌঁছানো যায়নি — প্রদানকারী পরীক্ষা করে আবার চেষ্টা করুন।</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation>%1 দিয়ে এই API কী যাচাই করা যায়নি — এটি পরীক্ষা করে আবার চেষ্টা করুন।</translation>
     </message>
 </context>
 <context>
@@ -3134,6 +3215,18 @@ until it is re-registered.</source>
     <message>
         <source>Native</source>
         <translation>নেটিভ</translation>
+    </message>
+    <message>
+        <source>Managed child</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subagent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Primary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Ephemeral</source>
@@ -3200,6 +3293,41 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ForeignBackendPicker</name>
+    <message>
+        <source>Agent&apos;s own backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses the agent&apos;s own login and config; the node only steers its model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node provider (gateway)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Routed through the node&apos;s provider gateway; keys stay on the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The node&apos;s provider gateway is disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model hint (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>model id the agent should prefer</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>GatewayMenu</name>
     <message>
         <source>Gateway</source>
@@ -3210,16 +3338,106 @@ until it is re-registered.</source>
         <translation>সিস্টেম খুলুন</translation>
     </message>
     <message>
+        <source>OpenAI gateway: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>View all logs</source>
         <translation>সব লগ দেখুন</translation>
     </message>
     <message>
-        <source>connected</source>
-        <translation>সংযুক্ত</translation>
+        <source>ok</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>offline</source>
-        <translation>অফলাইন</translation>
+        <source>down</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GatewayRepository</name>
+    <message>
+        <source>Gateway operation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode gateway status</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GatewaySection</name>
+    <message>
+        <source>OpenAI-compatible gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The node runs a resident OpenAI-compatible gateway so foreign agents (codex, opencode) can be routed through the node — keys stay on the node and never reach the agent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect to a daemon to manage the gateway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This node does not provide the OpenAI-compatible gateway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Serve /v1/chat/completions and /v1/models from the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bind address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional. Leave blank to let the node choose (e.g. a loopback port).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>127.0.0.1:0</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished">অজানা</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Service health</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ok</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>down</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4068,30 +4286,6 @@ Start one from the Discover tab.</source>
         <translation>তৈরি করুন</translation>
     </message>
     <message>
-        <source>Name</source>
-        <translation>নাম</translation>
-    </message>
-    <message>
-        <source>agent name</source>
-        <translation>এজেন্টের নাম</translation>
-    </message>
-    <message>
-        <source>Engine</source>
-        <translation>ইঞ্জিন</translation>
-    </message>
-    <message>
-        <source>Persona (optional)</source>
-        <translation>পারসোনা (ঐচ্ছিক)</translation>
-    </message>
-    <message>
-        <source>system prompt</source>
-        <translation>সিস্টেম প্রম্পট</translation>
-    </message>
-    <message>
-        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
-        <translation>এই এজেন্ট একটি বাহ্যিক ইঞ্জিন চালায়। এর লঞ্চ রেসিপি ডেমনের এজেন্ট ক্যাটালগ পরিচালনা করে — কনফিগার করার মতো কোনো প্রোভাইডার, মডেল বা কী নেই।</translation>
-    </message>
-    <message>
         <source>Name:</source>
         <translation>নাম:</translation>
     </message>
@@ -4247,8 +4441,8 @@ Start one from the Discover tab.</source>
         <translation>বাহ্যিক ইঞ্জিন (তৈরির সময় সেট)</translation>
     </message>
     <message>
-        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
-        <translation>এই এজেন্ট একটি বাহ্যিক ইঞ্জিন চালায় — এর লঞ্চ রেসিপি ও মডেল ডেমনের এজেন্ট ক্যাটালগ পরিচালনা করে, তাই এখানে কনফিগার করার মতো কোনো প্রোভাইডার, মডেল বা বেস URL নেই।</translation>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4362,6 +4556,10 @@ Start one from the Discover tab.</source>
         <translation>বাতিল করুন</translation>
     </message>
     <message>
+        <source>Model hint (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name</source>
         <translation>নাম</translation>
     </message>
@@ -4372,6 +4570,26 @@ Start one from the Discover tab.</source>
     <message>
         <source>Engine: daemon-core (native)</source>
         <translation>ইঞ্জিন: daemon-core (নেটিভ)</translation>
+    </message>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node provider (gateway)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent&apos;s own backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model hint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(optional)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4503,6 +4721,18 @@ Start one from the Discover tab.</source>
         <translation>+ নতুন প্রোফাইল</translation>
     </message>
     <message>
+        <source>All profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent-authored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Foreign</source>
         <translation>ফরেন</translation>
     </message>
@@ -4511,12 +4741,44 @@ Start one from the Discover tab.</source>
         <translation>নেটিভ</translation>
     </message>
     <message>
+        <source>agent-authored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Owner: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Authored by an agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke this agent-authored profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>নতুন প্রোফাইল</translation>
     </message>
     <message>
-        <source>Profile id (e.g. work)</source>
-        <translation>প্রোফাইল আইডি (যেমন work)</translation>
+        <source>Create</source>
+        <translation type="unfinished">তৈরি করুন</translation>
+    </message>
+    <message>
+        <source>Or clone from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation type="unfinished">প্রত্যাহার</translation>
+    </message>
+    <message>
+        <source>Revoke the agent-authored profile “%1”? This deletes it from the node.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Empty profile</source>
@@ -5487,6 +5749,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <source>Subagents:  </source>
         <translation>সাবএজেন্ট:  </translation>
     </message>
+    <message>
+        <source>Revoke profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke this agent-authored profile? This deletes it from the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RouteDialog</name>
@@ -6199,6 +6469,10 @@ This only affects the app appearance, not your data.</source>
         <translation>সংযোগ</translation>
     </message>
     <message>
+        <source>Gateway</source>
+        <translation type="unfinished">গেটওয়ে</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>মডেল</translation>
     </message>
@@ -6511,12 +6785,55 @@ This only affects the app appearance, not your data.</source>
         <source> tok</source>
         <translation> টোক</translation>
     </message>
+    <message>
+        <source>Not available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>StatusBarView</name>
     <message>
         <source> Gateway </source>
         <translation> গেটওয়ে </translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation type="unfinished">বন্ধ</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation type="unfinished">চালু</translation>
+    </message>
+    <message>
+        <source>…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenAI GW </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n service(s) down</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source> Agents </source>
@@ -7194,6 +7511,14 @@ Thanks — proceeding with: %1
         <translation>আমি অ্যাপ বন্ধ করলে পরিচালিত daemon থামান</translation>
     </message>
     <message>
+        <source>Gateway</source>
+        <translation type="unfinished">গেটওয়ে</translation>
+    </message>
+    <message>
+        <source>Enable gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Updates</source>
         <translation>আপডেট</translation>
     </message>
@@ -7258,8 +7583,41 @@ Thanks — proceeding with: %1
         <translation>সর্বোচ্চ ব্যাকগ্রাউন্ড চাইল্ড</translation>
     </message>
     <message>
+        <source>Max composed profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max ephemeral children per session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tools</source>
         <translation>টুল</translation>
+    </message>
+    <message>
+        <source>disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>listening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>starting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- Status: **%1** — _routes foreign agents through the node; keys stay on the node_
+</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
@@ -7578,6 +7936,16 @@ Thanks — proceeding with: %1
 </source>
         <translation>- ইঞ্জিন: %1
 </translation>
+    </message>
+    <message>
+        <source>- Provenance: agent-authored
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- Provenance: agent-authored (owner `%1`)
+</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -7970,6 +8338,18 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
     <message>
         <source>ephemeral</source>
         <translation>ক্ষণস্থায়ী</translation>
+    </message>
+    <message>
+        <source>managed child</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>subagent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>primary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
@@ -8657,6 +9037,17 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::GatewayRepository</name>
+    <message>
+        <source>Gateway operation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode gateway status</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::LocalDaemonLauncher</name>
     <message>
         <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
@@ -8869,14 +9260,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>নোডে পৌঁছানো যায়নি। লক্ষ্য পরীক্ষা করে আবার চেষ্টা করুন।</translation>
     </message>
-    <message>
-        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation>আপনার মডেলে পৌঁছানো যায়নি — প্রদানকারী পরীক্ষা করে আবার চেষ্টা করুন।</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation>%1 দিয়ে এই API কী যাচাই করা যায়নি — এটি পরীক্ষা করে আবার চেষ্টা করুন।</translation>
-    </message>
 </context>
 <context>
     <name>fs::LocalDiskFsService</name>
@@ -8909,6 +9292,17 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Participants</source>
         <translation>অংশগ্রহণকারী</translation>
+    </message>
+</context>
+<context>
+    <name>setup::AgentSetupModel</name>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation type="unfinished">%1 দিয়ে এই API কী যাচাই করা যায়নি — এটি পরীক্ষা করে আবার চেষ্টা করুন।</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation type="unfinished">আপনার মডেলে পৌঁছানো যায়নি — প্রদানকারী পরীক্ষা করে আবার চেষ্টা করুন।</translation>
     </message>
 </context>
 <context>

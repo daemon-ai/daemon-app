@@ -363,7 +363,108 @@ Anda akan kembali ke penyiapan pertama.</translation>
     </message>
 </context>
 <context>
+    <name>AgentSetupForm</name>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">Nama</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation type="unfinished">nama agen</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation type="unfinished">Mesin</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation type="unfinished">Asli</translation>
+    </message>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Persona (optional)</source>
+        <translation type="unfinished">Persona (opsional)</translation>
+    </message>
+    <message>
+        <source>system prompt</source>
+        <translation type="unfinished">prompt sistem</translation>
+    </message>
+</context>
+<context>
+    <name>AgentSetupModel</name>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation type="unfinished">Tidak dapat memverifikasi kunci API ini dengan %1 — periksa dan coba lagi.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation type="unfinished">Tidak dapat menjangkau model Anda — periksa penyedia dan coba lagi.</translation>
+    </message>
+</context>
+<context>
+    <name>AgentSetupView</name>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The node&apos;s provider gateway is disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model hint (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished">Penyedia</translation>
+    </message>
+    <message>
+        <source>List models</source>
+        <translation type="unfinished">Daftar model</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished">Model</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation type="unfinished">Base URL (mis. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation type="unfinished">ID model</translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation type="unfinished">Endpoint khusus…</translation>
+    </message>
+    <message>
+        <source>Agent&apos;s own backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node provider (gateway)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AgentTypePicker</name>
+    <message>
+        <source>Native</source>
+        <translation type="unfinished">Asli</translation>
+    </message>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core (native)</translation>
@@ -373,16 +474,8 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>  ·  stream-json</translation>
     </message>
     <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>terpasang</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>tidak terpasang</translation>
+        <source>  ·  ACP</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2383,6 +2476,22 @@ sampai didaftarkan ulang.</translation>
         <source>Max background children</source>
         <translation>Anak latar belakang maks</translation>
     </message>
+    <message>
+        <source>Max composed profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profiles an agent may author. Enforced by the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max ephemeral children per session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Concurrent ephemeral children a session may run. Enforced by the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Dialog</name>
@@ -2916,24 +3025,8 @@ sampai didaftarkan ulang.</translation>
         <translation>Nama agen</translation>
     </message>
     <message>
-        <source>Provider</source>
-        <translation>Penyedia</translation>
-    </message>
-    <message>
-        <source>List models</source>
-        <translation>Daftar model</translation>
-    </message>
-    <message>
-        <source>Model</source>
-        <translation>Model</translation>
-    </message>
-    <message>
-        <source>Base URL (e.g. https://…)</source>
-        <translation>Base URL (mis. https://…)</translation>
-    </message>
-    <message>
-        <source>Model id</source>
-        <translation>ID model</translation>
+        <source>Choose the kind of agent: native picks a model next; a foreign agent uses its own backend or the node&apos;s gateway.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Test</source>
@@ -2960,14 +3053,6 @@ sampai didaftarkan ulang.</translation>
         <translation>Gagal — </translation>
     </message>
     <message>
-        <source>Custom endpoint…</source>
-        <translation>Endpoint khusus…</translation>
-    </message>
-    <message>
-        <source>custom</source>
-        <translation>khusus</translation>
-    </message>
-    <message>
         <source>Local: App-managed (press to Attach instead)</source>
         <translation>Lokal: Dikelola aplikasi (tekan untuk Lampirkan sebagai gantinya)</translation>
     </message>
@@ -2991,10 +3076,6 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Sign in</source>
         <translation>Masuk</translation>
-    </message>
-    <message>
-        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
-        <translation>Pilih jenis agen: native memilih model berikutnya; agen ACP asing membawa modelnya sendiri.</translation>
     </message>
     <message>
         <source>Continue</source>
@@ -3060,8 +3141,16 @@ sampai didaftarkan ulang.</translation>
         <translation>Berjalan di daemon — pilih penyedia dan model berikutnya.</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
-        <translation>Agen ini menjalankan mesin ACP asing — ia membawa modelnya sendiri, jadi tidak perlu penyedia, model, atau kunci.</translation>
+        <source>Routed through the node&apos;s provider gateway — pick a provider and model next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine using its own backend — it brings its own model, so no provider or key is needed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Agent name</source>
@@ -3089,14 +3178,6 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>Tidak dapat menjangkau node. Periksa target dan coba lagi.</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation>Tidak dapat menjangkau model Anda — periksa penyedia dan coba lagi.</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation>Tidak dapat memverifikasi kunci API ini dengan %1 — periksa dan coba lagi.</translation>
     </message>
 </context>
 <context>
@@ -3132,6 +3213,18 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Native</source>
         <translation>Asli</translation>
+    </message>
+    <message>
+        <source>Managed child</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subagent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Primary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Ephemeral</source>
@@ -3198,6 +3291,41 @@ sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
+    <name>ForeignBackendPicker</name>
+    <message>
+        <source>Agent&apos;s own backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses the agent&apos;s own login and config; the node only steers its model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node provider (gateway)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Routed through the node&apos;s provider gateway; keys stay on the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The node&apos;s provider gateway is disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model hint (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>model id the agent should prefer</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>GatewayMenu</name>
     <message>
         <source>Gateway</source>
@@ -3208,16 +3336,106 @@ sampai didaftarkan ulang.</translation>
         <translation>Buka sistem</translation>
     </message>
     <message>
+        <source>OpenAI gateway: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>View all logs</source>
         <translation>Lihat semua log</translation>
     </message>
     <message>
-        <source>connected</source>
-        <translation>tersambung</translation>
+        <source>ok</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>offline</source>
-        <translation>luring</translation>
+        <source>down</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GatewayRepository</name>
+    <message>
+        <source>Gateway operation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode gateway status</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GatewaySection</name>
+    <message>
+        <source>OpenAI-compatible gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The node runs a resident OpenAI-compatible gateway so foreign agents (codex, opencode) can be routed through the node — keys stay on the node and never reach the agent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect to a daemon to manage the gateway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This node does not provide the OpenAI-compatible gateway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Serve /v1/chat/completions and /v1/models from the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bind address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional. Leave blank to let the node choose (e.g. a loopback port).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>127.0.0.1:0</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished">tidak diketahui</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Service health</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ok</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>down</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4064,30 +4282,6 @@ Mulai dari tab Temukan.</translation>
         <translation>Buat</translation>
     </message>
     <message>
-        <source>Name</source>
-        <translation>Nama</translation>
-    </message>
-    <message>
-        <source>agent name</source>
-        <translation>nama agen</translation>
-    </message>
-    <message>
-        <source>Engine</source>
-        <translation>Mesin</translation>
-    </message>
-    <message>
-        <source>Persona (optional)</source>
-        <translation>Persona (opsional)</translation>
-    </message>
-    <message>
-        <source>system prompt</source>
-        <translation>prompt sistem</translation>
-    </message>
-    <message>
-        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
-        <translation>Agen ini menjalankan mesin eksternal. Resep peluncurannya dikelola oleh katalog agen daemon — tidak ada penyedia, model, atau kunci untuk dikonfigurasi.</translation>
-    </message>
-    <message>
         <source>Name:</source>
         <translation>Nama:</translation>
     </message>
@@ -4243,8 +4437,8 @@ Mulai dari tab Temukan.</translation>
         <translation>Mesin eksternal (diatur saat pembuatan)</translation>
     </message>
     <message>
-        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
-        <translation>Agen ini menjalankan mesin eksternal — resep peluncuran dan modelnya dikelola oleh katalog agen daemon, jadi tidak ada penyedia, model, atau URL dasar untuk dikonfigurasi di sini.</translation>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4358,6 +4552,10 @@ Mulai dari tab Temukan.</translation>
         <translation>Batal</translation>
     </message>
     <message>
+        <source>Model hint (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name</source>
         <translation>Nama</translation>
     </message>
@@ -4368,6 +4566,26 @@ Mulai dari tab Temukan.</translation>
     <message>
         <source>Engine: daemon-core (native)</source>
         <translation>Mesin: daemon-core (native)</translation>
+    </message>
+    <message>
+        <source>Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node provider (gateway)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent&apos;s own backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model hint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(optional)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4499,6 +4717,18 @@ Mulai dari tab Temukan.</translation>
         <translation>+ Profil baru</translation>
     </message>
     <message>
+        <source>All profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent-authored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Foreign</source>
         <translation>Asing</translation>
     </message>
@@ -4507,12 +4737,44 @@ Mulai dari tab Temukan.</translation>
         <translation>Asli</translation>
     </message>
     <message>
+        <source>agent-authored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Owner: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Authored by an agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke this agent-authored profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>Profil baru</translation>
     </message>
     <message>
-        <source>Profile id (e.g. work)</source>
-        <translation>ID profil (mis. work)</translation>
+        <source>Create</source>
+        <translation type="unfinished">Buat</translation>
+    </message>
+    <message>
+        <source>Or clone from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation type="unfinished">Cabut</translation>
+    </message>
+    <message>
+        <source>Revoke the agent-authored profile “%1”? This deletes it from the node.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Empty profile</source>
@@ -5483,6 +5745,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <source>Subagents:  </source>
         <translation>Subagen:  </translation>
     </message>
+    <message>
+        <source>Revoke profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke this agent-authored profile? This deletes it from the node.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RouteDialog</name>
@@ -6194,6 +6464,10 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
         <translation>Koneksi</translation>
     </message>
     <message>
+        <source>Gateway</source>
+        <translation type="unfinished">Gateway</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>Model</translation>
     </message>
@@ -6504,12 +6778,54 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
         <source> tok</source>
         <translation> tok</translation>
     </message>
+    <message>
+        <source>Not available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>StatusBarView</name>
     <message>
         <source> Gateway </source>
         <translation> Gateway </translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation type="unfinished">mati</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation type="unfinished">nyala</translation>
+    </message>
+    <message>
+        <source>…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenAI GW </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n service(s) down</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source> Agents </source>
@@ -7187,6 +7503,14 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Hentikan daemon terkelola saat saya menutup aplikasi</translation>
     </message>
     <message>
+        <source>Gateway</source>
+        <translation type="unfinished">Gateway</translation>
+    </message>
+    <message>
+        <source>Enable gateway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Updates</source>
         <translation>Pembaruan</translation>
     </message>
@@ -7251,8 +7575,41 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Anak latar belakang maks</translation>
     </message>
     <message>
+        <source>Max composed profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max ephemeral children per session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tools</source>
         <translation>Alat</translation>
+    </message>
+    <message>
+        <source>disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>listening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>starting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- Status: **%1** — _routes foreign agents through the node; keys stay on the node_
+</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
@@ -7571,6 +7928,16 @@ Terima kasih — melanjutkan dengan: %1
 </source>
         <translation>- Mesin: %1
 </translation>
+    </message>
+    <message>
+        <source>- Provenance: agent-authored
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- Provenance: agent-authored (owner `%1`)
+</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -7963,6 +8330,18 @@ _Tidak ada agen yang dipilih._
     <message>
         <source>ephemeral</source>
         <translation>sementara</translation>
+    </message>
+    <message>
+        <source>managed child</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>subagent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>primary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
@@ -8650,6 +9029,17 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::GatewayRepository</name>
+    <message>
+        <source>Gateway operation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode gateway status</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::LocalDaemonLauncher</name>
     <message>
         <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
@@ -8862,14 +9252,6 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>Tidak dapat menjangkau node. Periksa target dan coba lagi.</translation>
     </message>
-    <message>
-        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation>Tidak dapat menjangkau model Anda — periksa penyedia dan coba lagi.</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation>Tidak dapat memverifikasi kunci API ini dengan %1 — periksa dan coba lagi.</translation>
-    </message>
 </context>
 <context>
     <name>fs::LocalDiskFsService</name>
@@ -8902,6 +9284,17 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     <message>
         <source>Participants</source>
         <translation>Peserta</translation>
+    </message>
+</context>
+<context>
+    <name>setup::AgentSetupModel</name>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation type="unfinished">Tidak dapat memverifikasi kunci API ini dengan %1 — periksa dan coba lagi.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation type="unfinished">Tidak dapat menjangkau model Anda — periksa penyedia dan coba lagi.</translation>
     </message>
 </context>
 <context>
