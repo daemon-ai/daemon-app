@@ -82,6 +82,15 @@ CachedSessionRow sessionRowFromInfo(const session_info& info);
 void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out);
 void fillProviderDescriptor(const provider_descriptor& p, DecodedProviderDescriptor* out);
 DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps);
+// Project a generated author into the wire string ("operator" or the agent id); *isAgent (when
+// non-null) is set true for the author-agent arm (an agent id) so callers can disambiguate an agent
+// literally named "operator". Shared by the profile-spec + profile-info provenance decoders.
+QString authorToString(const author_r& a, bool* isAgent);
+// Project a generated foreign_backend into DecodedForeignBackend (wire v30). Shared so any surface
+// carrying a foreign-backend decodes it identically.
+DecodedForeignBackend decodeForeignBackend(const foreign_backend_r& fb);
+// Map an agent-verification choice to the typed enum (defaulting to NotInstalled on any unknown).
+AgentVerification agentVerificationFromChoice(int choice);
 DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev);
 void fillModelRef(const model_ref& m, QString* repo, QString* file, QString* engine);
 void decodeHostRequest(const host_request& req, DecodedLogEntry* out);
@@ -117,6 +126,11 @@ QByteArray encodeWithFill(decltype(api_request_r::api_request_choice) choice,
 struct ProfileSpecScratch {
     QByteArray id, model, prompt, baseUrl, credRef, fbCredRef, engineAgent;
     QList<QByteArray> toolBufs, boundTransports, boundCredRefs;
+    // foreign-backend arms (wire v30): the AgentNative model hint, or the NodeProvider model +
+    // credential ref. zcbor borrows into these across the encode.
+    QByteArray fbAgentModel, fbNodeModel, fbNodeCredRef;
+    // provenance (wire v31): the created_by agent id (author-agent arm) + the owner session id.
+    QByteArray createdByAgent, owner;
 };
 // Populate a generated profile_spec from a DecodedProfileSpec (shared by ProfileCreate/Update and
 // by ProfileImport's embedded Distribution.profile).

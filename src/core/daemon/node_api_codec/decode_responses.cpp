@@ -93,6 +93,8 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         {api_response_r::api_response_response_feedback_ack_m_c, ApiResponseKind::FeedbackAck},
         {api_response_r::api_response_response_telemetry_consent_m_c,
          ApiResponseKind::TelemetryConsent},
+        // node gateway status (wire v32).
+        {api_response_r::api_response_response_gateway_status_m_c, ApiResponseKind::GatewayStatus},
     });
     for (const auto& entry : kKindMap) {
         if (response->api_response_choice == entry.choice) {
@@ -252,6 +254,22 @@ bool NodeApiCodec::decodeSessionDetail(const QByteArray& responseCbor, DecodedSe
     if (detail.session_detail_checkpoints_present) {
         out->hasCheckpointCount = true;
         out->checkpointCount = detail.session_detail_checkpoints.session_detail_checkpoints;
+    }
+    // The foreign agent's advertised Model selector (wire v30, optional-null): only a resident
+    // foreign session whose agent advertises a Model config option carries one.
+    if (detail.session_detail_model_selector_present &&
+        detail.session_detail_model_selector.session_detail_model_selector_choice ==
+            session_detail_model_selector_r::session_detail_model_selector_model_selector_m_c) {
+        const model_selector& sel =
+            detail.session_detail_model_selector.session_detail_model_selector_model_selector_m;
+        out->hasModelSelector = true;
+        out->modelSelector.optionId = fromZcbor(sel.model_selector_option_id);
+        out->modelSelector.current = fromZcbor(sel.model_selector_current);
+        for (size_t i = 0; i < sel.model_selector_choices_model_choice_m_count; ++i) {
+            const model_choice& c = sel.model_selector_choices_model_choice_m[i];
+            out->modelSelector.choices.append(
+                DecodedModelChoice{fromZcbor(c.model_choice_id), fromZcbor(c.model_choice_label)});
+        }
     }
     return true;
 }
@@ -452,6 +470,13 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
         case node_event_r::node_event_fleet_changed_m_c:
             decoded.kind = DecodedNodeEvent::Kind::FleetChanged;
             decoded.rev = ev.node_event_fleet_changed_m.FleetChanged_rev;
+            break;
+        // Profile roster mutation (wire v31, rev only): a create/update/delete/select bumped the
+        // profile revision. Codec-only here — the SubscriptionManager routing lands in a later
+        // phase.
+        case node_event_r::node_event_profiles_changed_m_c:
+            decoded.kind = DecodedNodeEvent::Kind::ProfilesChanged;
+            decoded.rev = ev.node_event_profiles_changed_m.ProfilesChanged_rev;
             break;
         // [wave2:app-channels-liveness] B5: live per-account transport presence. Map the generated
         // connection/presence enums to the same lowercase names the TransportInstances decode uses.
@@ -798,6 +823,21 @@ bool NodeApiCodec::decodeProfiles(const QByteArray& responseCbor, QList<DecodedP
         entry.provider = providerName(info.profile_info_provider.provider_selector_choice);
         entry.model = fromZcbor(info.profile_info_model);
         entry.isActive = info.profile_info_is_active;
+        // Provenance (wire v31, optional-null): created_by (author) + owner (session id).
+        if (info.profile_info_created_by_present &&
+            info.profile_info_created_by.profile_info_created_by_choice ==
+                profile_info_created_by_r::profile_info_created_by_author_m_c) {
+            entry.hasCreatedBy = true;
+            entry.createdBy =
+                authorToString(info.profile_info_created_by.profile_info_created_by_author_m,
+                               &entry.createdByIsAgent);
+        }
+        if (info.profile_info_owner_present &&
+            info.profile_info_owner.profile_info_owner_choice ==
+                profile_info_owner_r::profile_info_owner_tstr_c) {
+            entry.hasOwner = true;
+            entry.owner = fromZcbor(info.profile_info_owner.profile_info_owner_tstr);
+        }
         out->append(entry);
     }
     return true;
@@ -1380,6 +1420,12 @@ bool NodeApiCodec::decodeAgentCatalog(const QByteArray& responseCbor,
                 agent_entry_version_r::agent_entry_version_tstr_c) {
             entry.version = fromZcbor(row.agent_entry_version.agent_entry_version_tstr);
         }
+        // The node-derived trust verdict (wire v32): absent => NotInstalled (the serde default), so
+        // a pre-v32 row decodes as NotInstalled without a client re-derive.
+        if (row.agent_entry_verification_present) {
+            entry.verification = agentVerificationFromChoice(
+                row.agent_entry_verification.agent_entry_verification.agent_verification_choice);
+        }
         // The launch recipe is deliberately NOT decoded: recipes are node-side, operator-managed
         // state; no client surface renders or re-sends them (profiles bind BY NAME only).
         out->append(entry);
@@ -1715,6 +1761,32 @@ bool NodeApiCodec::decodeTelemetryConsent(const QByteArray& responseCbor, bool* 
     }
     if (enabled != nullptr) {
         *enabled = response->api_response_response_telemetry_consent_m.TelemetryConsent_enabled;
+    }
+    return true;
+}
+
+// --- Node gateway (wire v32) --------------------------------------------------------------------
+bool NodeApiCodec::decodeGatewayStatus(const QByteArray& responseCbor, DecodedGatewayStatus* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_gateway_status_m_c);
+    if (!response) {
+        return false;
+    }
+    const gateway_status& s =
+        response->api_response_response_gateway_status_m.response_gateway_status_GatewayStatus;
+    *out = DecodedGatewayStatus{};
+    out->enabled = s.gateway_status_enabled;
+    out->listening = s.gateway_status_listening;
+    if (s.gateway_status_addr_choice == gateway_status::gateway_status_addr_tstr_c) {
+        out->hasAddr = true;
+        out->addr = fromZcbor(s.gateway_status_addr_tstr);
+    }
+    if (s.gateway_status_last_error_choice == gateway_status::gateway_status_last_error_tstr_c) {
+        out->hasLastError = true;
+        out->lastError = fromZcbor(s.gateway_status_last_error_tstr);
     }
     return true;
 }

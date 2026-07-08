@@ -555,6 +555,49 @@ QString memoryProviderName(int choice) {
     }
 }
 
+QString authorToString(const author_r& a, bool* isAgent) {
+    const bool agent = a.author_choice == author_r::author_agent_m_c;
+    if (isAgent != nullptr) {
+        *isAgent = agent;
+    }
+    return agent ? fromZcbor(a.author_agent_m.author_agent_agent) : QStringLiteral("operator");
+}
+
+AgentVerification agentVerificationFromChoice(int choice) {
+    switch (choice) {
+    case agent_verification_r::agent_verification_Verified_tstr_c:
+        return AgentVerification::Verified;
+    case agent_verification_r::agent_verification_Unverified_tstr_c:
+        return AgentVerification::Unverified;
+    default:
+        return AgentVerification::NotInstalled;
+    }
+}
+
+// Decode a foreign-backend union (wire v30): externally tagged AgentNative vs NodeProvider.
+DecodedForeignBackend decodeForeignBackend(const foreign_backend_r& fb) {
+    DecodedForeignBackend out;
+    if (fb.foreign_backend_choice == foreign_backend_r::foreign_backend_node_provider_m_c) {
+        const foreign_backend_node_provider& np = fb.foreign_backend_node_provider_m;
+        out.kind = QStringLiteral("NodeProvider");
+        out.nodeProvider = providerName(np.NodeProvider_provider.provider_selector_choice);
+        out.nodeModel = fromZcbor(np.NodeProvider_model);
+        if (np.NodeProvider_credential_ref_choice ==
+            foreign_backend_node_provider::NodeProvider_credential_ref_tstr_c) {
+            out.hasNodeCredentialRef = true;
+            out.nodeCredentialRef = fromZcbor(np.NodeProvider_credential_ref_tstr);
+        }
+    } else {
+        const foreign_backend_agent_native& an = fb.foreign_backend_agent_native_m;
+        out.kind = QStringLiteral("AgentNative");
+        if (an.AgentNative_model_choice == foreign_backend_agent_native::AgentNative_model_tstr_c) {
+            out.hasAgentNativeModel = true;
+            out.agentNativeModel = fromZcbor(an.AgentNative_model_tstr);
+        }
+    }
+    return out;
+}
+
 // Decode the concrete generated profile_spec into the typed mirror (so a ProfileGet -> edit ->
 // ProfileUpdate round-trip preserves untouched fields).
 DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps) {
@@ -632,6 +675,26 @@ DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps) {
                 fromZcbor(engine.engine_selector_engine_foreign_m.engine_foreign_Foreign
                               .engine_foreign_agent_agent);
         }
+    }
+    // The Foreign-engine model backend (wire v30): only meaningful for a Foreign engine; absent on
+    // a pre-v30 encoding (the node defaults it to AgentNative{model:null}).
+    if (ps.profile_spec_foreign_backend_present) {
+        out.hasForeignBackend = true;
+        out.foreignBackend =
+            decodeForeignBackend(ps.profile_spec_foreign_backend.profile_spec_foreign_backend);
+    }
+    // Provenance (wire v31): created_by (author / null) + owner (tstr / null).
+    if (ps.profile_spec_created_by_present &&
+        ps.profile_spec_created_by.profile_spec_created_by_choice ==
+            profile_spec_created_by_r::profile_spec_created_by_author_m_c) {
+        out.hasCreatedBy = true;
+        out.createdBy = authorToString(ps.profile_spec_created_by.profile_spec_created_by_author_m,
+                                       &out.createdByIsAgent);
+    }
+    if (ps.profile_spec_owner_present && ps.profile_spec_owner.profile_spec_owner_choice ==
+                                             profile_spec_owner_r::profile_spec_owner_tstr_c) {
+        out.hasOwner = true;
+        out.owner = fromZcbor(ps.profile_spec_owner.profile_spec_owner_tstr);
     }
     return out;
 }
@@ -1156,6 +1219,65 @@ void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecS
              sc.engineAgent);
     } else {
         engine.engine_selector_choice = engine_selector_r::engine_selector_Core_tstr_c;
+    }
+    // The Foreign-engine model backend (wire v30, optional): emitted only when the spec carries one
+    // (a Core profile or a pre-v30 edit leaves it absent, matching the node's serde skip).
+    ps.profile_spec_foreign_backend_present = s.hasForeignBackend;
+    if (s.hasForeignBackend) {
+        sc.fbAgentModel = s.foreignBackend.agentNativeModel.toUtf8();
+        sc.fbNodeModel = s.foreignBackend.nodeModel.toUtf8();
+        sc.fbNodeCredRef = s.foreignBackend.nodeCredentialRef.toUtf8();
+        foreign_backend_r& fb = ps.profile_spec_foreign_backend.profile_spec_foreign_backend;
+        if (s.foreignBackend.kind == QStringLiteral("NodeProvider")) {
+            fb.foreign_backend_choice = foreign_backend_r::foreign_backend_node_provider_m_c;
+            foreign_backend_node_provider& np = fb.foreign_backend_node_provider_m;
+            np.NodeProvider_provider.provider_selector_choice =
+                static_cast<decltype(np.NodeProvider_provider.provider_selector_choice)>(
+                    providerChoice(s.foreignBackend.nodeProvider));
+            setZ(np.NodeProvider_model, sc.fbNodeModel);
+            if (s.foreignBackend.hasNodeCredentialRef) {
+                np.NodeProvider_credential_ref_choice =
+                    foreign_backend_node_provider::NodeProvider_credential_ref_tstr_c;
+                setZ(np.NodeProvider_credential_ref_tstr, sc.fbNodeCredRef);
+            } else {
+                np.NodeProvider_credential_ref_choice =
+                    foreign_backend_node_provider::NodeProvider_credential_ref_null_m_c;
+            }
+        } else {
+            fb.foreign_backend_choice = foreign_backend_r::foreign_backend_agent_native_m_c;
+            foreign_backend_agent_native& an = fb.foreign_backend_agent_native_m;
+            if (s.foreignBackend.hasAgentNativeModel) {
+                an.AgentNative_model_choice =
+                    foreign_backend_agent_native::AgentNative_model_tstr_c;
+                setZ(an.AgentNative_model_tstr, sc.fbAgentModel);
+            } else {
+                an.AgentNative_model_choice =
+                    foreign_backend_agent_native::AgentNative_model_null_m_c;
+            }
+        }
+    }
+    // Provenance (wire v31, optional): created_by (author / null) + owner (tstr / null). Emitted
+    // only when the spec carries them, so an operator-authored round-trip stays byte-identical.
+    ps.profile_spec_created_by_present = s.hasCreatedBy;
+    if (s.hasCreatedBy) {
+        profile_spec_created_by_r& cb = ps.profile_spec_created_by;
+        cb.profile_spec_created_by_choice =
+            profile_spec_created_by_r::profile_spec_created_by_author_m_c;
+        author_r& author = cb.profile_spec_created_by_author_m;
+        if (s.createdByIsAgent) {
+            sc.createdByAgent = s.createdBy.toUtf8();
+            author.author_choice = author_r::author_agent_m_c;
+            setZ(author.author_agent_m.author_agent_agent, sc.createdByAgent);
+        } else {
+            author.author_choice = author_r::author_operator_tstr_c;
+        }
+    }
+    ps.profile_spec_owner_present = s.hasOwner;
+    if (s.hasOwner) {
+        sc.owner = s.owner.toUtf8();
+        ps.profile_spec_owner.profile_spec_owner_choice =
+            profile_spec_owner_r::profile_spec_owner_tstr_c;
+        setZ(ps.profile_spec_owner.profile_spec_owner_tstr, sc.owner);
     }
 }
 

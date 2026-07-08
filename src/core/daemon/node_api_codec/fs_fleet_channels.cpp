@@ -520,6 +520,16 @@ bool NodeApiCodec::decodeCaps(const QByteArray& responseCbor, DecodedCapsReport*
     const caps_report& c = response->api_response_response_caps_m.response_caps_Caps;
     out->orchestrateMaxDepth = c.caps_report_orchestrate_max_depth;
     out->orchestrateMaxFanout = c.caps_report_orchestrate_max_fanout;
+    // The agent-created-agents guardrail ceilings (wire v31, optional): absent on a pre-v31
+    // encoding, decoding as 0.
+    if (c.caps_report_max_composed_profiles_present) {
+        out->maxComposedProfiles =
+            c.caps_report_max_composed_profiles.caps_report_max_composed_profiles;
+    }
+    if (c.caps_report_max_ephemeral_per_session_present) {
+        out->maxEphemeralPerSession =
+            c.caps_report_max_ephemeral_per_session.caps_report_max_ephemeral_per_session;
+    }
     return true;
 }
 

@@ -331,6 +331,20 @@ target_link_libraries(tst_agent_registry
 add_test(NAME tst_agent_registry COMMAND tst_agent_registry)
 set_tests_properties(tst_agent_registry PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# [integration:foreign-agents] tst_foreign_agents_codec (Phase B): the regenerated wire shapes the
+# foreign-agent surfacing gates on — ProfileSpec.foreign_backend (encode + decode), AgentEntry
+# .verification, SessionDetail.model_selector, gateway ops (GatewayGet/Set + GatewayStatus),
+# ProfileInfo provenance (created_by/owner), CapsReport ceilings, and the ProfilesChanged event.
+qt_add_executable(tst_foreign_agents_codec tst_foreign_agents_codec.cpp)
+target_link_libraries(tst_foreign_agents_codec
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+)
+add_test(NAME tst_foreign_agents_codec COMMAND tst_foreign_agents_codec)
+set_tests_properties(tst_foreign_agents_codec PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # [wave2:app-engines] tst_engine_identity (C3/C4/C5): the shared EngineIdentity facade —
 # session/profile -> engine {engine, agent, protocol, label}; labelFor presentation mapping.
 qt_add_executable(tst_engine_identity tst_engine_identity.cpp)

@@ -1352,4 +1352,28 @@ QByteArray NodeApiCodec::encodeTelemetryConsentSetRequest(bool enabled) {
         });
 }
 
+// --- Node gateway (wire v32) -----------------------------------------------------------------
+
+QByteArray NodeApiCodec::encodeGatewayGetRequest() {
+    return encodeSimple(api_request_r::api_request_request_gateway_get_m_c);
+}
+
+QByteArray NodeApiCodec::encodeGatewaySetRequest(bool enabled, const QString& addr) {
+    // The UTF-8 buffer must outlive the encode: zcbor borrows into its bytes across encodeWithFill.
+    const QByteArray addrUtf8 = addr.toUtf8();
+    return encodeWithFill(api_request_r::api_request_request_gateway_set_m_c,
+                          [&](api_request_r& request) {
+                              request_gateway_set& set = request.api_request_request_gateway_set_m;
+                              set.GatewaySet_enabled = enabled;
+                              // addr is optional (? "addr"): an empty string omits it (the node
+                              // keeps/derives its own); a non-empty string sets the tstr arm.
+                              set.GatewaySet_addr_present = !addr.isEmpty();
+                              if (!addr.isEmpty()) {
+                                  set.GatewaySet_addr.GatewaySet_addr_choice =
+                                      GatewaySet_addr_r::GatewaySet_addr_tstr_c;
+                                  setZcbor(set.GatewaySet_addr.GatewaySet_addr_tstr, addrUtf8);
+                              }
+                          });
+}
+
 } // namespace daemonapp::daemon

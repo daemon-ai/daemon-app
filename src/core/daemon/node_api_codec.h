@@ -91,12 +91,50 @@ struct DecodedProfileInfo {
     QString provider;
     QString model;
     bool isActive = false;
+    // Provenance (wire v31): mirrors profile-spec's created_by/owner so a client can badge +
+    // subtree-filter the profile list. `createdBy` is the wire `author` ("operator" or an agent id,
+    // disambiguated by `createdByIsAgent`); `owner` is the owning agent session id. Both
+    // optional-null (a pre-provenance encoding omits both -> operator-authored).
+    bool hasCreatedBy = false;
+    bool createdByIsAgent = false;
+    QString createdBy;
+    bool hasOwner = false;
+    QString owner;
 };
 
 // A transport-instance account bound to a profile (names only, never secrets).
 struct DecodedBoundAccount {
     QString transportInstance;
     QString credentialRef;
+};
+
+// How a Foreign-engine profile sources its model backend (wire v30 foreign-backend; externally
+// tagged union). "AgentNative" steers only the agent's own model over ACP (optional model hint);
+// "NodeProvider" routes the agent through the node gateway to a node provider+model (the credential
+// stays node-side, referenced by name). Optional on the profile-spec/session-detail: a pre-v30
+// encoding omits it and the node treats it as AgentNative{model:null}.
+struct DecodedForeignBackend {
+    QString kind = QStringLiteral("AgentNative"); // "AgentNative" | "NodeProvider"
+    // AgentNative arm: an optional model hint (Option::None on the wire).
+    bool hasAgentNativeModel = false;
+    QString agentNativeModel;
+    // NodeProvider arm: the node provider selector + model, plus an optional credential ref.
+    QString nodeProvider =
+        QStringLiteral("genai"); // ProviderSelector wire string: "mock"|"genai"|...
+    QString nodeModel;
+    bool hasNodeCredentialRef = false;
+    QString nodeCredentialRef;
+};
+
+// The node-derived trust status of a foreign-agent catalog entry (wire v32 agent-verification):
+// "Verified" = installed ACP agent that reported a version at initialize; "Unverified" = installed
+// but unconfirmed; "NotInstalled" = no candidate found (the serde default — a pre-v32 entry
+// omitting the field decodes as NotInstalled until the node re-derives). Node-computed so every
+// client renders the same verdict.
+enum class AgentVerification {
+    Verified,
+    Unverified,
+    NotInstalled,
 };
 
 // The full ProfileSpec (concrete wire profile-spec). Carries every field so a ProfileGet ->
@@ -136,6 +174,21 @@ struct DecodedProfileSpec {
     bool hasFallbackCredentialRef = false;
     QString fallbackCredentialRef;
     QList<DecodedBoundAccount> boundAccounts;
+    // The Foreign-engine model backend (wire v30 foreign-backend). Only meaningful when
+    // engineKind == "Foreign"; absent on a pre-v30 encoding (hasForeignBackend == false, the node
+    // defaults it to AgentNative{model:null}).
+    bool hasForeignBackend = false;
+    DecodedForeignBackend foreignBackend;
+    // Provenance (wire v31): who authored the profile + the owning agent session id. `createdBy` is
+    // the wire `author`: "operator" (or absent -> operator-authored) or an agent id —
+    // `createdByIsAgent` disambiguates an agent named literally "operator". `owner` is the owning
+    // agent session id (set only for an agent-authored `agent/{session}/{name}` profile). Both
+    // optional-null on the wire.
+    bool hasCreatedBy = false;
+    bool createdByIsAgent = false;
+    QString createdBy;
+    bool hasOwner = false;
+    QString owner;
 };
 
 // --- Foreign-agent catalog (foreign engines; wire v29 dialog + settings surface)
@@ -150,6 +203,9 @@ struct DecodedAgentEntry {
     QString protocol = QStringLiteral("Acp");   // "Acp" | "StreamJson" (agent's wire protocol)
     bool installed = false;
     QString version; // ACP protocol version reported at initialize; empty = unprobed / stream-json
+    // The node-derived trust verdict (wire v32 agent-verification). Optional on the wire; a pre-v32
+    // entry omitting it decodes as NotInstalled (the serde default) — never re-derived client-side.
+    AgentVerification verification = AgentVerification::NotInstalled;
 };
 
 // Register input (AgentRegister): the operator-supplied launch recipe for a manual foreign agent.
@@ -673,16 +729,20 @@ struct DecodedNodeEvent {
         // pointers only — the client refetches the transport's ConvList (+ routing on a self
         // removal); it derives no membership facts locally.
         ConversationsChanged,
-        MembershipChanged
+        MembershipChanged,
+        // Profile roster mutation (wire v31): a create/update/delete/select bumped the profile
+        // revision. Invalidation pointer only — the client refetches ProfileList (codec-only here;
+        // SubscriptionManager routing lands in a later phase).
+        ProfilesChanged
     } kind = Kind::Unknown;
-    QString session;             // SessionAdvanced / SessionMetaChanged / ApprovalPending
-    quint64 epoch = 0;           // SessionAdvanced
-    quint64 headSeq = 0;         // SessionAdvanced
-    quint64 rev = 0;             // SessionMetaChanged / RosterChanged / FleetChanged
-    QString requestId;           // ApprovalPending
-    quint64 downloadId = 0;      // DownloadProgress
-    quint32 pct = 0;             // DownloadProgress
-    QString state;               // DownloadProgress
+    QString session;        // SessionAdvanced / SessionMetaChanged / ApprovalPending
+    quint64 epoch = 0;      // SessionAdvanced
+    quint64 headSeq = 0;    // SessionAdvanced
+    quint64 rev = 0;        // SessionMetaChanged / RosterChanged / FleetChanged / ProfilesChanged
+    QString requestId;      // ApprovalPending
+    quint64 downloadId = 0; // DownloadProgress
+    quint32 pct = 0;        // DownloadProgress
+    QString state;          // DownloadProgress
     quint64 downloadedBytes = 0; // DownloadProgress (wire v26: real byte counters)
     quint64 totalBytes = 0;      // DownloadProgress (0 = unknown total)
     QString scope;               // ResyncNeeded
@@ -785,6 +845,24 @@ struct DecodedManageEvent {
 struct DecodedCapsReport {
     quint32 orchestrateMaxDepth = 0;
     quint32 orchestrateMaxFanout = 0;
+    // The agent-created-agents guardrail ceilings (wire v31): profiles a session may author, and
+    // concurrent inline/ephemeral children per session. Optional on the wire (a pre-v31 encoding
+    // omits them and they decode as 0).
+    quint32 maxComposedProfiles = 0;
+    quint32 maxEphemeralPerSession = 0;
+};
+
+// The node gateway's live status (wire v32 gateway-status; GatewayGet/GatewaySet -> GatewayStatus).
+// `enabled` is the operator toggle; `listening` is whether the listener is actually bound; `addr`
+// is the bind address (optional-null); `lastError` carries the most recent bind/serve failure
+// (optional-null). Read-only status the node owns — the client renders it and sends intents.
+struct DecodedGatewayStatus {
+    bool enabled = false;
+    bool hasAddr = false;
+    QString addr;
+    bool listening = false;
+    bool hasLastError = false;
+    QString lastError;
 };
 
 // --- Interactive auth (AuthProviders / AuthBegin / AuthComplete; app-wizard-auth stream) --------
@@ -898,6 +976,21 @@ struct DecodedDeliveryTarget {
     QString kind = QStringLiteral("Primary"); // "Primary" | "Spectator"
 };
 
+// One offered Model choice inside a foreign session's advertised Model selector (model-choice).
+struct DecodedModelChoice {
+    QString id;
+    QString label;
+};
+
+// A resident foreign (ACP) session's advertised Model selector (wire v30 model-selector; surfaced
+// as live session state): the option id, the current value, and the offered choices (flattened
+// across groups). Only present for a foreign session whose agent advertises a Model config option.
+struct DecodedModelSelector {
+    QString optionId;
+    QString current;
+    QList<DecodedModelChoice> choices;
+};
+
 // The on-demand full detail for one session (SessionGet -> SessionDetail(opt)). CHA-9 follow-on:
 // the roster (SessionPage) carries only the SessionInfo row; this hydrates the extra per-session
 // facets the node owns - the live overlay's resolved model + approval mode, the outbound delivery
@@ -914,6 +1007,10 @@ struct DecodedSessionDetail {
     QStringList children; // child session ids (delegated children / subagents)
     bool hasCheckpointCount = false;
     quint32 checkpointCount = 0;
+    // The foreign agent's advertised Model selector (wire v30 model_selector, optional-null). Set
+    // only for a resident foreign session whose agent advertises a Model config option.
+    bool hasModelSelector = false;
+    DecodedModelSelector modelSelector;
 };
 
 enum class ApiResponseKind {
@@ -979,6 +1076,8 @@ enum class ApiResponseKind {
     // user feedback over OpenTelemetry (wire v32).
     FeedbackAck,
     TelemetryConsent,
+    // node gateway status (wire v32; GatewayGet/GatewaySet -> GatewayStatus).
+    GatewayStatus,
 };
 
 // Input for a FeedbackSubmit request (the app-side view-model builds this from the message anchor /
@@ -1609,6 +1708,16 @@ public:
     static bool decodeFeedbackAck(const QByteArray& responseCbor, bool* accepted, bool* queued);
     // Decode a TelemetryConsent response into the node's current consent state.
     static bool decodeTelemetryConsent(const QByteArray& responseCbor, bool* enabled);
+
+    // --- Node gateway (wire v32) --------------------------------------------------------------
+    // Read the gateway's live status (GatewayGet -> GatewayStatus). Zero-arg.
+    [[nodiscard]] static QByteArray encodeGatewayGetRequest();
+    // Toggle the gateway on/off (GatewaySet{enabled, ? addr} -> GatewayStatus). An empty `addr`
+    // omits the optional bind address (the node keeps/derives its own); a non-empty `addr` sets it.
+    [[nodiscard]] static QByteArray encodeGatewaySetRequest(bool enabled,
+                                                            const QString& addr = QString());
+    // Decode a GatewayStatus response into the live gateway state.
+    static bool decodeGatewayStatus(const QByteArray& responseCbor, DecodedGatewayStatus* out);
 };
 
 } // namespace daemonapp::daemon
