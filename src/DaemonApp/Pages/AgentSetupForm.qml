@@ -101,13 +101,14 @@ ColumnLayout {
     // Edit mode locks the engine (an existing profile's engine cannot change): render it as a
     // read-only identity chip instead of the picker.
     Kit.Chip {
+        readonly property bool engineIsForeign: AgentSetup.engineKind === "Foreign"
         visible: form._hasSetup && AgentSetup.engineLocked
-        text: AgentSetup.engineKind === "Foreign"
+        text: engineIsForeign
               ? (AgentSetup.foreignAgent.length > 0 ? AgentSetup.foreignAgent : qsTr("Foreign"))
               : qsTr("Native")
-        iconGlyph: AgentSetup.engineKind === "Foreign" ? FontIcons.fa_robot
-                                                       : FontIcons.fa_microchip
-        tone: AgentSetup.engineKind === "Foreign" ? "accent" : "muted"
+        iconGlyph: engineIsForeign ? FontIcons.fa_robot
+                                   : FontIcons.fa_microchip
+        tone: engineIsForeign ? "accent" : "muted"
     }
     AgentTypePicker {
         id: enginePicker
