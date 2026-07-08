@@ -23,6 +23,44 @@ QQC.Popup {
     // Live filter query (label/id/provider substring, case-insensitive).
     property string query: ""
 
+    // Phase E: the picker's choice set + selection path fork on the session's foreign backend.
+    //   - native (no foreignBackend): the node catalog; selection sets the default model
+    //     (session.selectModel by catalog index).
+    //   - AgentNative: the agent-advertised model_selector choices; selection sends
+    //     SetSessionModel{model: choice.id} over ACP (session.selectForeignModel).
+    //   - NodeProvider: the node catalog (routed through the gateway); selection sends
+    //     SetSessionModel{model} — NEVER a provider (session.selectForeignModel).
+    // Each entry: { provider, id, label, index, foreign, current }. `index` is the catalog index
+    // for the native/NodeProvider selectModel/highlight; `foreign` routes selection; `current`
+    // marks the checked row.
+    function pickerEntries() {
+        if (!root.session)
+            return [];
+        const backend = root.session.foreignBackend;
+        if (backend === "AgentNative") {
+            const sel = root.session.foreignModelSelector;
+            if (!sel || sel.hasSelector !== true)
+                return [];
+            const choices = sel.choices || [];
+            const out = [];
+            for (let i = 0; i < choices.length; ++i) {
+                out.push({ provider: "", id: choices[i].id, label: choices[i].label,
+                           index: -1, foreign: true, current: choices[i].id === sel.current });
+            }
+            return out;
+        }
+        const foreign = backend === "NodeProvider";
+        const cat = root.session.modelCatalog || [];
+        const res = [];
+        for (let j = 0; j < cat.length; ++j) {
+            const e = cat[j];
+            res.push({ provider: e.provider, id: e.id, label: e.label, index: j,
+                       foreign: foreign,
+                       current: !foreign && j === root.session.currentModelIndex });
+        }
+        return res;
+    }
+
     // Abbreviated, translatable labels for the reasoning-effort segments; the
     // stored value stays the canonical off/low/medium/high token.
     function effortSegLabel(v) {
@@ -88,35 +126,46 @@ QQC.Popup {
                     || entry.provider.toLowerCase().indexOf(q) >= 0;
             }
 
-            // Build a flat row model: provider headers + visible model rows,
-            // carrying each model's catalog index for selection.
+            // Build a flat row model: provider headers + visible model rows, carrying each entry's
+            // selection route (foreign vs native) + current flag. Sourced from pickerEntries() so
+            // the AgentNative selector / NodeProvider-and-native catalog forks stay in one place.
             property var rows: {
                 const out = [];
-                const cat = root.session ? root.session.modelCatalog : [];
+                const entries = root.pickerEntries();
                 let lastProvider = "";
-                for (let i = 0; i < cat.length; ++i) {
-                    const e = cat[i];
+                for (let i = 0; i < entries.length; ++i) {
+                    const e = entries[i];
                     if (!_matches(e))
                         continue;
+                    // Skip an empty provider header (AgentNative choices carry no provider group).
                     if (e.provider !== lastProvider) {
-                        out.push({ header: true, provider: e.provider, index: -1 });
+                        if (e.provider !== "")
+                            out.push({ header: true, provider: e.provider, index: -1 });
                         lastProvider = e.provider;
                     }
-                    out.push({ header: false, provider: e.provider, label: e.label,
-                               id: e.id, index: i });
+                    out.push({ header: false, provider: e.provider, label: e.label, id: e.id,
+                               index: e.index, foreign: e.foreign, current: e.current });
                 }
                 return out;
             }
             model: rows
 
+            // Route a picked row: foreign sessions send SetSessionModel by model id; a native
+            // session sets the default model by catalog index.
+            function pick(r) {
+                if (!r || r.header || !root.session)
+                    return;
+                if (r.foreign)
+                    root.session.selectForeignModel(r.id);
+                else
+                    root.session.selectModel(r.index);
+                root.close();
+            }
+
             function activateCurrent() {
                 if (currentIndex < 0 || currentIndex >= rows.length)
                     return;
-                const r = rows[currentIndex];
-                if (r && !r.header && root.session) {
-                    root.session.selectModel(r.index);
-                    root.close();
-                }
+                pick(rows[currentIndex]);
             }
 
             delegate: Item {
@@ -159,13 +208,12 @@ QQC.Popup {
                             text: modelData.label !== undefined ? modelData.label : ""
                             font.family: FontIcons.display
                             font.pixelSize: 12
-                            color: (root.session && modelData.index === root.session.currentModelIndex)
-                                ? Theme.accent : Theme.text
+                            color: modelData.current === true ? Theme.accent : Theme.text
                             elide: Text.ElideRight
                             verticalAlignment: Text.AlignVCenter
                         }
                         Text {
-                            visible: root.session && modelData.index === root.session.currentModelIndex
+                            visible: modelData.current === true
                             text: FontIcons.check
                             font.family: FontIcons.faSolid
                             font.pixelSize: 11
@@ -179,11 +227,7 @@ QQC.Popup {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onEntered: list.currentIndex = index
-                        onClicked: {
-                            if (root.session)
-                                root.session.selectModel(modelData.index);
-                            root.close();
-                        }
+                        onClicked: list.pick(modelData)
                     }
                 }
             }

@@ -255,6 +255,14 @@ bool NodeApiCodec::decodeSessionDetail(const QByteArray& responseCbor, DecodedSe
         out->hasCheckpointCount = true;
         out->checkpointCount = detail.session_detail_checkpoints.session_detail_checkpoints;
     }
+    // The Foreign-engine model backend (wire v30, optional-null): the AgentNative-vs-NodeProvider
+    // fork the composer reads to decide whether the model picker draws agent-advertised choices or
+    // the node catalog. Reuses the shared decodeForeignBackend helper.
+    if (detail.session_detail_foreign_backend_present) {
+        out->hasForeignBackend = true;
+        out->foreignBackend = decodeForeignBackend(
+            detail.session_detail_foreign_backend.session_detail_foreign_backend);
+    }
     // The foreign agent's advertised Model selector (wire v30, optional-null): only a resident
     // foreign session whose agent advertises a Model config option carries one.
     if (detail.session_detail_model_selector_present &&

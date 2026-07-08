@@ -1125,6 +1125,12 @@ struct DecodedSessionDetail {
     QStringList children; // child session ids (delegated children / subagents)
     bool hasCheckpointCount = false;
     quint32 checkpointCount = 0;
+    // The Foreign-engine model backend (wire v30 foreign-backend, optional-null). Only meaningful
+    // for a foreign session; carries the AgentNative-vs-NodeProvider fork that decides how the
+    // model picker behaves (there is deliberately no `source` on the selector). A pre-v30 encoding
+    // omits it (hasForeignBackend == false, the node treats it as AgentNative{model:null}).
+    bool hasForeignBackend = false;
+    DecodedForeignBackend foreignBackend;
     // The foreign agent's advertised Model selector (wire v30 model_selector, optional-null). Set
     // only for a resident foreign session whose agent advertises a Model config option.
     bool hasModelSelector = false;

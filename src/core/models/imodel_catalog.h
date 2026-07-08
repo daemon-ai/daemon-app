@@ -164,8 +164,45 @@ public:
         activate(modelId);
     }
 
+    // --- Foreign-session live model selection (Phase E; wire v30) ----------------------------
+    // A foreign session's model backend is orthogonal to the Models hub catalog above: it is read
+    // from the node's live SessionDetail (foreign_backend + model_selector) rather than the
+    // installed-model registry. These are the composer's single source for the foreign model
+    // picker fork, so the GUI overlay and the TUI picker render the identical shape. Default:
+    // unbacked (the mock / non-daemon build has no foreign sessions), so the composer treats every
+    // session as native.
+    //
+    // The AgentNative-vs-NodeProvider fork: "" (native / unknown), "AgentNative" (the agent's own
+    // model, steered over ACP — choices come from the selector below), or "NodeProvider" (routed
+    // through the node gateway — no advertised selector; choices come from the node catalog).
+    [[nodiscard]] Q_INVOKABLE virtual QString sessionBackend(const QString& sessionId) const {
+        Q_UNUSED(sessionId)
+        return {};
+    }
+    // The AgentNative session's advertised Model selector as a map
+    // { hasSelector: bool, current: <id>, choices: [ { id, label } ] }. Empty/hasSelector=false for
+    // a NodeProvider or native session (which has no agent-advertised selector).
+    [[nodiscard]] Q_INVOKABLE virtual QVariantMap
+    sessionModelSelector(const QString& sessionId) const {
+        Q_UNUSED(sessionId)
+        return {};
+    }
+    // Ensure the live SessionDetail for `sessionId` is hydrated (SessionGet) so the selector
+    // projection can read it; a no-op when already cached. Default: no-op (unbacked).
+    Q_INVOKABLE virtual void ensureSessionDetail(const QString& sessionId) { Q_UNUSED(sessionId) }
+    // Choose the model for a live FOREIGN session (SetSessionModel{session, model}); the node
+    // matches AgentNative choices over ACP and rebinds the NodeProvider gateway token. NEVER passes
+    // `provider` (the node rejects it for a foreign session). Default: no-op (unbacked).
+    Q_INVOKABLE virtual void setSessionModel(const QString& sessionId, const QString& model) {
+        Q_UNUSED(sessionId)
+        Q_UNUSED(model)
+    }
+
 signals:
     void currentChanged();
+    // A session's live SessionDetail (foreign_backend / model_selector) was (re)hydrated, so a
+    // consumer projecting sessionBackend()/sessionModelSelector() should re-read for `sessionId`.
+    void sessionModelSelectorChanged(const QString& sessionId);
     // A download job was accepted and is now running (jobId as shown in downloads()).
     void downloadStarted(const QString& jobId);
     // Emitted when a download finishes (modelId now installed).

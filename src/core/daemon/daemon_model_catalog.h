@@ -16,6 +16,7 @@ class CredentialRepository;
 class ModelRepository;
 class ProfileRepository;
 class ProviderRepository;
+class SessionRepository;
 } // namespace daemonapp::daemon
 
 namespace models {
@@ -40,6 +41,7 @@ public:
                                 daemonapp::daemon::ProviderRepository* providers = nullptr,
                                 daemonapp::daemon::CredentialRepository* credentials = nullptr,
                                 daemonapp::daemon::ProfileRepository* profiles = nullptr,
+                                daemonapp::daemon::SessionRepository* sessions = nullptr,
                                 QObject* parent = nullptr);
 
     [[nodiscard]] QObject* discover() const override;
@@ -84,6 +86,14 @@ public:
     // the repository's decoded installed set (not the projected rows).
     [[nodiscard]] bool isLocalInstalled(const QString& id) const override;
 
+    // --- Foreign-session live model selection (Phase E) --------------------------------------
+    // Projected from the SessionRepository's hydrated SessionDetail (foreign_backend +
+    // model_selector). Unbacked (native semantics) when no SessionRepository was injected.
+    [[nodiscard]] QString sessionBackend(const QString& sessionId) const override;
+    [[nodiscard]] QVariantMap sessionModelSelector(const QString& sessionId) const override;
+    void ensureSessionDetail(const QString& sessionId) override;
+    void setSessionModel(const QString& sessionId, const QString& model) override;
+
 private:
     void rebuildDiscover();
     void rebuildFiles();
@@ -97,6 +107,9 @@ private:
     daemonapp::daemon::ProviderRepository* m_providers = nullptr;
     daemonapp::daemon::CredentialRepository* m_credentials = nullptr;
     daemonapp::daemon::ProfileRepository* m_profiles = nullptr;
+    // Foreign-session live model selection (Phase E): the SessionDetail source + SetSessionModel
+    // target. Null in builds that surface no live foreign sessions.
+    daemonapp::daemon::SessionRepository* m_sessions = nullptr;
     uimodels::VariantListModel* m_discover = nullptr;
     uimodels::VariantListModel* m_files = nullptr;
     uimodels::VariantListModel* m_downloads = nullptr;

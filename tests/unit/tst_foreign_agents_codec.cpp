@@ -214,6 +214,14 @@ private slots:
             response_session_detail::response_session_detail_SessionDetail_session_detail_m_c;
         session_detail& d = rsd.response_session_detail_SessionDetail_session_detail_m;
         setZ(d.session_detail_info.session_info_session, sid);
+        // Phase E: the AgentNative-vs-NodeProvider fork rides SessionDetail.foreign_backend (there
+        // is no `source` on the selector); a resident AgentNative session carries it alongside the
+        // advertised Model selector.
+        d.session_detail_foreign_backend_present = true;
+        foreign_backend_r& fb = d.session_detail_foreign_backend.session_detail_foreign_backend;
+        fb.foreign_backend_choice = foreign_backend_r::foreign_backend_agent_native_m_c;
+        fb.foreign_backend_agent_native_m.AgentNative_model_choice =
+            foreign_backend_agent_native::AgentNative_model_null_m_c;
         d.session_detail_model_selector_present = true;
         d.session_detail_model_selector.session_detail_model_selector_choice =
             session_detail_model_selector_r::session_detail_model_selector_model_selector_m_c;
@@ -239,6 +247,45 @@ private slots:
         QCOMPARE(out.modelSelector.choices.size(), 2);
         QCOMPARE(out.modelSelector.choices[0].id, QStringLiteral("sonnet"));
         QCOMPARE(out.modelSelector.choices[1].label, QStringLiteral("Claude Opus"));
+        // The facade previously dropped SessionDetail.foreign_backend; Phase E decodes it (the
+        // AgentNative arm here) so the composer can fork the model picker on it.
+        QVERIFY(out.hasForeignBackend);
+        QCOMPARE(out.foreignBackend.kind, QStringLiteral("AgentNative"));
+    }
+
+    // A NodeProvider foreign session carries foreign_backend but NO advertised model_selector
+    // (its choices are the node catalog): the decoder surfaces the backend, selector absent.
+    void sessionDetailNodeProviderBackendDecodes() {
+        QByteArray sid = QByteArrayLiteral("s2");
+        QByteArray model = QByteArrayLiteral("gpt-5.3");
+        auto resp = std::make_unique<api_response_r>();
+        resp->api_response_choice = api_response_r::api_response_response_session_detail_m_c;
+        response_session_detail& rsd = resp->api_response_response_session_detail_m;
+        rsd.response_session_detail_SessionDetail_choice =
+            response_session_detail::response_session_detail_SessionDetail_session_detail_m_c;
+        session_detail& d = rsd.response_session_detail_SessionDetail_session_detail_m;
+        setZ(d.session_detail_info.session_info_session, sid);
+        d.session_detail_foreign_backend_present = true;
+        foreign_backend_r& fb = d.session_detail_foreign_backend.session_detail_foreign_backend;
+        fb.foreign_backend_choice = foreign_backend_r::foreign_backend_node_provider_m_c;
+        foreign_backend_node_provider& np = fb.foreign_backend_node_provider_m;
+        np.NodeProvider_provider.provider_selector_choice =
+            provider_selector_r::provider_selector_genai_tstr_c;
+        setZ(np.NodeProvider_model, model);
+        np.NodeProvider_credential_ref_choice =
+            foreign_backend_node_provider::NodeProvider_credential_ref_null_m_c;
+        d.session_detail_model_selector_present = false;
+
+        const QByteArray bytes = encodeResponse(*resp);
+        QVERIFY(!bytes.isEmpty());
+        DecodedSessionDetail out;
+        bool found = false;
+        QVERIFY(NodeApiCodec::decodeSessionDetail(bytes, &out, &found));
+        QVERIFY(found);
+        QVERIFY(out.hasForeignBackend);
+        QCOMPARE(out.foreignBackend.kind, QStringLiteral("NodeProvider"));
+        QCOMPARE(out.foreignBackend.nodeModel, QStringLiteral("gpt-5.3"));
+        QVERIFY(!out.hasModelSelector);
     }
 
     // --- 4. Gateway ops -------------------------------------------------------------------------

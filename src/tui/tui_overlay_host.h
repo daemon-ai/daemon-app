@@ -67,6 +67,10 @@ private:
     Tui::ZWidget* m_parent = nullptr;
     class QuitDialog* m_quitDialog = nullptr;
     PaletteDialog* m_modelPicker = nullptr;
+    // Phase E: the model picker is reused across opens; this flag tells its (one-time) activation
+    // handler whether the last open listed a FOREIGN session (route the pick to SetSessionModel by
+    // model id) or a native one (set the default model by catalog index).
+    bool m_modelPickerForeign = false;
     PaletteDialog* m_modelDiscover = nullptr;
     PaletteDialog* m_quantPicker = nullptr;
     PaletteDialog* m_requantSource = nullptr; // A5: installed-model pick

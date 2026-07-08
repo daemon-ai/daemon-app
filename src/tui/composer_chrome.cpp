@@ -60,6 +60,9 @@ void ComposerChrome::setSession(ComposerSessionController* session) {
                 [this] { update(); });
         connect(m_session, &ComposerSessionController::sessionIdChanged, this,
                 [this] { update(); });
+        // Phase E: repaint when the bound session's foreign model selector (re)projects.
+        connect(m_session, &ComposerSessionController::foreignModelSelectorChanged, this,
+                [this] { update(); });
     }
     update();
 }
@@ -136,9 +139,27 @@ QVector<Span> ComposerChrome::buildSpans() const {
     spans << mkSpan(tpal::sendGlyph() + tr(" Enter send"), tpal::muted());
     spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
     spans << mkSpan(tpal::steerGlyph() + tr(" Ctrl+Enter steer"), tpal::muted());
-    if (m_session != nullptr && !m_session->currentModel().isEmpty()) {
+    // Phase E: for an AgentNative foreign session the model is the agent-advertised selector's
+    // current value (resolved to its label), mirroring the GUI ModelPill; otherwise the shared
+    // controller's current model (native / NodeProvider node catalog).
+    QString modelLabel = m_session != nullptr ? m_session->currentModel() : QString();
+    if (m_session != nullptr && m_session->foreignBackend() == QStringLiteral("AgentNative")) {
+        const QVariantMap sel = m_session->foreignModelSelector();
+        if (sel.value(QStringLiteral("hasSelector")).toBool()) {
+            const QString cur = sel.value(QStringLiteral("current")).toString();
+            modelLabel = cur;
+            for (const QVariant& v : sel.value(QStringLiteral("choices")).toList()) {
+                const QVariantMap c = v.toMap();
+                if (c.value(QStringLiteral("id")).toString() == cur) {
+                    modelLabel = c.value(QStringLiteral("label")).toString();
+                    break;
+                }
+            }
+        }
+    }
+    if (m_session != nullptr && !modelLabel.isEmpty()) {
         spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
-        spans << mkSpan(m_session->currentModel(), tpal::muted());
+        spans << mkSpan(modelLabel, tpal::muted());
         // Compact mode badges: reasoning level (unless off) + Fast/Verbose flags.
         QStringList badges;
         const QString effort = m_session->reasoningEffort();
