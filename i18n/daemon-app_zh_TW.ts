@@ -366,104 +366,104 @@ You&apos;ll return to first-run setup.</source>
     <name>AgentSetupForm</name>
     <message>
         <source>Name</source>
-        <translation type="unfinished">名稱</translation>
+        <translation>名稱</translation>
     </message>
     <message>
         <source>agent name</source>
-        <translation type="unfinished">代理名稱</translation>
+        <translation>代理名稱</translation>
     </message>
     <message>
         <source>Engine</source>
-        <translation type="unfinished">引擎</translation>
+        <translation>引擎</translation>
     </message>
     <message>
         <source>Foreign</source>
-        <translation type="unfinished">外部</translation>
+        <translation>外部</translation>
     </message>
     <message>
         <source>Native</source>
-        <translation type="unfinished">原生</translation>
+        <translation>原生</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>後端</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
-        <translation type="unfinished">角色設定（選填）</translation>
+        <translation>角色設定（選填）</translation>
     </message>
     <message>
         <source>system prompt</source>
-        <translation type="unfinished">系統提示</translation>
+        <translation>系統提示</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">無法透過 %1 驗證此 API 金鑰 — 請檢查後再試一次。</translation>
+        <translation>無法透過 %1 驗證此 API 金鑰 — 請檢查後再試一次。</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">無法連上你的模型——請檢查供應商後重試。</translation>
+        <translation>無法連上你的模型——請檢查供應商後重試。</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupView</name>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>後端</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>節點的供應商閘道已停用。</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>啟用閘道</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>模型提示（選填）</translation>
     </message>
     <message>
         <source>Provider</source>
-        <translation type="unfinished">供應商</translation>
+        <translation>供應商</translation>
     </message>
     <message>
         <source>List models</source>
-        <translation type="unfinished">列出模型</translation>
+        <translation>列出模型</translation>
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished">模型</translation>
+        <translation>模型</translation>
     </message>
     <message>
         <source>Base URL (e.g. https://…)</source>
-        <translation type="unfinished">基礎網址（例如 https://…）</translation>
+        <translation>基礎網址（例如 https://…）</translation>
     </message>
     <message>
         <source>Model id</source>
-        <translation type="unfinished">模型 ID</translation>
+        <translation>模型 ID</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
-        <translation type="unfinished">自訂端點…</translation>
+        <translation>自訂端點…</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>代理自有後端</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>節點供應商（閘道）</translation>
     </message>
 </context>
 <context>
     <name>AgentTypePicker</name>
     <message>
         <source>Native</source>
-        <translation type="unfinished">原生</translation>
+        <translation>原生</translation>
     </message>
     <message>
         <source>daemon-core (native)</source>
@@ -475,7 +475,7 @@ You&apos;ll return to first-run setup.</source>
     </message>
     <message>
         <source>  ·  ACP</source>
-        <translation type="unfinished"></translation>
+        <translation>  ·  ACP</translation>
     </message>
 </context>
 <context>
@@ -2478,19 +2478,19 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>最大可編寫設定檔數</translation>
     </message>
     <message>
         <source>Profiles an agent may author. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>代理可編寫的設定檔。由節點強制執行。</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>每個工作階段的最大臨時子代理數</translation>
     </message>
     <message>
         <source>Concurrent ephemeral children a session may run. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>一個工作階段可並行執行的臨時子代理數。由節點強制執行。</translation>
     </message>
 </context>
 <context>
@@ -3026,7 +3026,7 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Choose the kind of agent: native picks a model next; a foreign agent uses its own backend or the node&apos;s gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>選擇代理類型：原生類型接下來會挑選一個模型；外部代理使用自有後端或節點的閘道。</translation>
     </message>
     <message>
         <source>Test</source>
@@ -3142,15 +3142,15 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway — pick a provider and model next.</source>
-        <translation type="unfinished"></translation>
+        <translation>透過節點的供應商閘道路由 — 接下來請挑選供應商與模型。</translation>
     </message>
     <message>
         <source>This agent runs a foreign engine using its own backend — it brings its own model, so no provider or key is needed.</source>
-        <translation type="unfinished"></translation>
+        <translation>此代理使用自有後端執行外部引擎——它自帶模型，因此不需要供應商或金鑰。</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>後端</translation>
     </message>
     <message>
         <source>Agent name</source>
@@ -3216,15 +3216,15 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>Managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>受管子代理</translation>
     </message>
     <message>
         <source>Subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>子代理</translation>
     </message>
     <message>
         <source>Primary</source>
-        <translation type="unfinished"></translation>
+        <translation>主要代理</translation>
     </message>
     <message>
         <source>Ephemeral</source>
@@ -3294,35 +3294,35 @@ until it is re-registered.</source>
     <name>ForeignBackendPicker</name>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>代理自有後端</translation>
     </message>
     <message>
         <source>Uses the agent&apos;s own login and config; the node only steers its model.</source>
-        <translation type="unfinished"></translation>
+        <translation>使用代理自有的登入資訊與設定；節點僅調控其模型。</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>節點供應商（閘道）</translation>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway; keys stay on the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>透過節點的供應商閘道路由；金鑰保留在節點上。</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>節點的供應商閘道已停用。</translation>
     </message>
     <message>
         <source>Enable</source>
-        <translation type="unfinished"></translation>
+        <translation>啟用</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>模型提示（選填）</translation>
     </message>
     <message>
         <source>model id the agent should prefer</source>
-        <translation type="unfinished"></translation>
+        <translation>代理應優先使用的模型 ID</translation>
     </message>
 </context>
 <context>
@@ -3337,7 +3337,7 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>OpenAI gateway: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI 閘道：%1</translation>
     </message>
     <message>
         <source>View all logs</source>
@@ -3345,97 +3345,97 @@ until it is re-registered.</source>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>正常</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>已停止</translation>
     </message>
 </context>
 <context>
     <name>GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>閘道操作失敗</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>無法解析閘道狀態</translation>
     </message>
 </context>
 <context>
     <name>GatewaySection</name>
     <message>
         <source>OpenAI-compatible gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI 相容閘道</translation>
     </message>
     <message>
         <source>The node runs a resident OpenAI-compatible gateway so foreign agents (codex, opencode) can be routed through the node — keys stay on the node and never reach the agent.</source>
-        <translation type="unfinished"></translation>
+        <translation>節點執行一個常駐的 OpenAI 相容閘道，讓外部代理（codex、opencode）可透過節點路由——金鑰保留在節點上，絕不會到達代理。</translation>
     </message>
     <message>
         <source>Connect to a daemon to manage the gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>連線到 daemon 以管理閘道。</translation>
     </message>
     <message>
         <source>This node does not provide the OpenAI-compatible gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>此節點不提供 OpenAI 相容閘道。</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>啟用閘道</translation>
     </message>
     <message>
         <source>Serve /v1/chat/completions and /v1/models from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>由節點提供 /v1/chat/completions 與 /v1/models。</translation>
     </message>
     <message>
         <source>Bind address</source>
-        <translation type="unfinished"></translation>
+        <translation>繫結位址</translation>
     </message>
     <message>
         <source>Optional. Leave blank to let the node choose (e.g. a loopback port).</source>
-        <translation type="unfinished"></translation>
+        <translation>選填。留空以讓節點自行選擇（例如一個回送埠）。</translation>
     </message>
     <message>
         <source>127.0.0.1:0</source>
-        <translation type="unfinished"></translation>
+        <translation>127.0.0.1:0</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation type="unfinished">未知</translation>
+        <translation>未知</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>已停用</translation>
     </message>
     <message>
         <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>正在監聽 %1</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>正在監聽</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>錯誤：%1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在啟動…</translation>
     </message>
     <message>
         <source>Service health</source>
-        <translation type="unfinished"></translation>
+        <translation>服務健康狀態</translation>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>正常</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>已停止</translation>
     </message>
 </context>
 <context>
@@ -4438,7 +4438,7 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>後端</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4553,7 +4553,7 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>模型提示（選填）</translation>
     </message>
     <message>
         <source>Name</source>
@@ -4569,23 +4569,23 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>後端</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>節點供應商（閘道）</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>代理自有後端</translation>
     </message>
     <message>
         <source>Model hint</source>
-        <translation type="unfinished"></translation>
+        <translation>模型提示</translation>
     </message>
     <message>
         <source>(optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>（選填）</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4718,15 +4718,15 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>All profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>所有設定檔</translation>
     </message>
     <message>
         <source>Operator</source>
-        <translation type="unfinished"></translation>
+        <translation>操作者</translation>
     </message>
     <message>
         <source>Agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>代理編寫</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -4738,19 +4738,19 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>代理編寫</translation>
     </message>
     <message>
         <source>Owner: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>擁有者：%1</translation>
     </message>
     <message>
         <source>Authored by an agent</source>
-        <translation type="unfinished"></translation>
+        <translation>由代理編寫</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile</source>
-        <translation type="unfinished"></translation>
+        <translation>撤銷此代理編寫的設定檔</translation>
     </message>
     <message>
         <source>New profile</source>
@@ -4758,23 +4758,23 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">建立</translation>
+        <translation>建立</translation>
     </message>
     <message>
         <source>Or clone from</source>
-        <translation type="unfinished"></translation>
+        <translation>或從以下複製</translation>
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>撤銷設定檔</translation>
     </message>
     <message>
         <source>Revoke</source>
-        <translation type="unfinished">撤銷</translation>
+        <translation>撤銷</translation>
     </message>
     <message>
         <source>Revoke the agent-authored profile “%1”? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>撤銷由代理編寫的設定檔“%1”？這會將其從節點刪除。</translation>
     </message>
     <message>
         <source>Empty profile</source>
@@ -5747,11 +5747,11 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>撤銷設定檔</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>撤銷此代理編寫的設定檔？這會將其從節點刪除。</translation>
     </message>
 </context>
 <context>
@@ -6465,7 +6465,7 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">閘道</translation>
+        <translation>閘道</translation>
     </message>
     <message>
         <source>Model</source>
@@ -6780,23 +6780,23 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Not available</source>
-        <translation type="unfinished"></translation>
+        <translation>無法使用</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>已停用</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>正在監聽</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>錯誤：%1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在啟動…</translation>
     </message>
 </context>
 <context>
@@ -6807,24 +6807,24 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>off</source>
-        <translation type="unfinished">關閉</translation>
+        <translation>關閉</translation>
     </message>
     <message>
         <source>on</source>
-        <translation type="unfinished">開啟</translation>
+        <translation>開啟</translation>
     </message>
     <message>
         <source>…</source>
-        <translation type="unfinished"></translation>
+        <translation>…</translation>
     </message>
     <message>
         <source>OpenAI GW </source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI 閘道 </translation>
     </message>
     <message numerus="yes">
         <source>%n service(s) down</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個服務已停止</numerusform>
         </translation>
     </message>
     <message>
@@ -7504,11 +7504,11 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">閘道</translation>
+        <translation>閘道</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>啟用閘道</translation>
     </message>
     <message>
         <source>Updates</source>
@@ -7576,11 +7576,11 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>最大可編寫設定檔數</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>每個工作階段的最大臨時子代理數</translation>
     </message>
     <message>
         <source>Tools</source>
@@ -7588,28 +7588,29 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>已停用</translation>
     </message>
     <message>
         <source>listening</source>
-        <translation type="unfinished"></translation>
+        <translation>正在監聽</translation>
     </message>
     <message>
         <source>listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>正在監聽 %1</translation>
     </message>
     <message>
         <source>error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>錯誤：%1</translation>
     </message>
     <message>
         <source>starting</source>
-        <translation type="unfinished"></translation>
+        <translation>正在啟動</translation>
     </message>
     <message>
         <source>- Status: **%1** — _routes foreign agents through the node; keys stay on the node_
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- 狀態：**%1** — _將外部代理透過節點路由；金鑰保留在節點上_
+</translation>
     </message>
     <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
@@ -7932,12 +7933,14 @@ Thanks — proceeding with: %1
     <message>
         <source>- Provenance: agent-authored
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- 來源：代理編寫
+</translation>
     </message>
     <message>
         <source>- Provenance: agent-authored (owner `%1`)
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- 來源：代理編寫（擁有者 `%1`）
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -8333,15 +8336,15 @@ _未選取代理。_
     </message>
     <message>
         <source>managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>受管子代理</translation>
     </message>
     <message>
         <source>subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>子代理</translation>
     </message>
     <message>
         <source>primary</source>
-        <translation type="unfinished"></translation>
+        <translation>主代理</translation>
     </message>
     <message>
         <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
@@ -9032,11 +9035,11 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <name>daemonapp::daemon::GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>閘道操作失敗</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>無法解析閘道狀態</translation>
     </message>
 </context>
 <context>
@@ -9290,11 +9293,11 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <name>setup::AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">無法透過 %1 驗證此 API 金鑰 — 請檢查後再試一次。</translation>
+        <translation>無法透過 %1 驗證此 API 金鑰 — 請檢查後再試一次。</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">無法連上你的模型——請檢查供應商後重試。</translation>
+        <translation>無法連上你的模型——請檢查供應商後重試。</translation>
     </message>
 </context>
 <context>
