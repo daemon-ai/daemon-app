@@ -366,104 +366,104 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <name>AgentSetupForm</name>
     <message>
         <source>Name</source>
-        <translation type="unfinished">Name</translation>
+        <translation>Name</translation>
     </message>
     <message>
         <source>agent name</source>
-        <translation type="unfinished">Agentenname</translation>
+        <translation>Agentenname</translation>
     </message>
     <message>
         <source>Engine</source>
-        <translation type="unfinished">Engine</translation>
+        <translation>Engine</translation>
     </message>
     <message>
         <source>Foreign</source>
-        <translation type="unfinished">Fremd</translation>
+        <translation>Fremd</translation>
     </message>
     <message>
         <source>Native</source>
-        <translation type="unfinished">Nativ</translation>
+        <translation>Nativ</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
-        <translation type="unfinished">Persona (optional)</translation>
+        <translation>Persona (optional)</translation>
     </message>
     <message>
         <source>system prompt</source>
-        <translation type="unfinished">System-Prompt</translation>
+        <translation>System-Prompt</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">Dieser API-Schlüssel konnte mit %1 nicht überprüft werden — prüfen Sie ihn und versuchen Sie es erneut.</translation>
+        <translation>Dieser API-Schlüssel konnte mit %1 nicht überprüft werden — prüfen Sie ihn und versuchen Sie es erneut.</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">Ihr Modell konnte nicht erreicht werden – prüfen Sie den Anbieter und versuchen Sie es erneut.</translation>
+        <translation>Ihr Modell konnte nicht erreicht werden — prüfen Sie den Anbieter und versuchen Sie es erneut.</translation>
     </message>
 </context>
 <context>
     <name>AgentSetupView</name>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Das Anbieter-Gateway des Knotens ist deaktiviert.</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>Gateway aktivieren</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>Modell-Hinweis (optional)</translation>
     </message>
     <message>
         <source>Provider</source>
-        <translation type="unfinished">Anbieter</translation>
+        <translation>Anbieter</translation>
     </message>
     <message>
         <source>List models</source>
-        <translation type="unfinished">Modelle auflisten</translation>
+        <translation>Modelle auflisten</translation>
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished">Modell</translation>
+        <translation>Modell</translation>
     </message>
     <message>
         <source>Base URL (e.g. https://…)</source>
-        <translation type="unfinished">Basis-URL (z. B. https://…)</translation>
+        <translation>Basis-URL (z. B. https://…)</translation>
     </message>
     <message>
         <source>Model id</source>
-        <translation type="unfinished">Modell-ID</translation>
+        <translation>Modell-ID</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
-        <translation type="unfinished">Benutzerdefinierter Endpunkt…</translation>
+        <translation>Benutzerdefinierter Endpunkt…</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Eigenes Backend des Agenten</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>Knoten-Anbieter (Gateway)</translation>
     </message>
 </context>
 <context>
     <name>AgentTypePicker</name>
     <message>
         <source>Native</source>
-        <translation type="unfinished">Nativ</translation>
+        <translation>Nativ</translation>
     </message>
     <message>
         <source>daemon-core (native)</source>
@@ -475,7 +475,7 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     </message>
     <message>
         <source>  ·  ACP</source>
-        <translation type="unfinished"></translation>
+        <translation>  ·  ACP</translation>
     </message>
 </context>
 <context>
@@ -2478,19 +2478,19 @@ bis er erneut registriert wird.</translation>
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Max. zusammengesetzte Profile</translation>
     </message>
     <message>
         <source>Profiles an agent may author. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Profile, die ein Agent erstellen darf. Vom Knoten erzwungen.</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>Max. flüchtige Kindprozesse pro Sitzung</translation>
     </message>
     <message>
         <source>Concurrent ephemeral children a session may run. Enforced by the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Gleichzeitige flüchtige Kindprozesse, die eine Sitzung ausführen darf. Vom Knoten erzwungen.</translation>
     </message>
 </context>
 <context>
@@ -3028,7 +3028,7 @@ bis er erneut registriert wird.</translation>
     </message>
     <message>
         <source>Choose the kind of agent: native picks a model next; a foreign agent uses its own backend or the node&apos;s gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wählen Sie die Art des Agenten: nativ wählt als Nächstes ein Modell; ein fremder Agent nutzt sein eigenes Backend oder das Gateway des Knotens.</translation>
     </message>
     <message>
         <source>Test</source>
@@ -3144,15 +3144,15 @@ bis er erneut registriert wird.</translation>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway — pick a provider and model next.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wird über das Anbieter-Gateway des Knotens geleitet — wählen Sie als Nächstes einen Anbieter und ein Modell.</translation>
     </message>
     <message>
         <source>This agent runs a foreign engine using its own backend — it brings its own model, so no provider or key is needed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dieser Agent führt eine fremde Engine mit eigenem Backend aus — er bringt sein eigenes Modell mit, daher sind kein Anbieter und kein Schlüssel erforderlich.</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>Agent name</source>
@@ -3218,15 +3218,15 @@ bis er erneut registriert wird.</translation>
     </message>
     <message>
         <source>Managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwalteter Kindprozess</translation>
     </message>
     <message>
         <source>Subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>Subagent</translation>
     </message>
     <message>
         <source>Primary</source>
-        <translation type="unfinished"></translation>
+        <translation>Primär</translation>
     </message>
     <message>
         <source>Ephemeral</source>
@@ -3296,35 +3296,35 @@ bis er erneut registriert wird.</translation>
     <name>ForeignBackendPicker</name>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Eigenes Backend des Agenten</translation>
     </message>
     <message>
         <source>Uses the agent&apos;s own login and config; the node only steers its model.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nutzt die eigene Anmeldung und Konfiguration des Agenten; der Knoten steuert nur dessen Modell.</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>Knoten-Anbieter (Gateway)</translation>
     </message>
     <message>
         <source>Routed through the node&apos;s provider gateway; keys stay on the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wird über das Anbieter-Gateway des Knotens geleitet; Schlüssel verbleiben auf dem Knoten.</translation>
     </message>
     <message>
         <source>The node&apos;s provider gateway is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Das Anbieter-Gateway des Knotens ist deaktiviert.</translation>
     </message>
     <message>
         <source>Enable</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktivieren</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>Modell-Hinweis (optional)</translation>
     </message>
     <message>
         <source>model id the agent should prefer</source>
-        <translation type="unfinished"></translation>
+        <translation>Modell-ID, die der Agent bevorzugen soll</translation>
     </message>
 </context>
 <context>
@@ -3339,7 +3339,7 @@ bis er erneut registriert wird.</translation>
     </message>
     <message>
         <source>OpenAI gateway: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI-Gateway: %1</translation>
     </message>
     <message>
         <source>View all logs</source>
@@ -3347,97 +3347,97 @@ bis er erneut registriert wird.</translation>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>ok</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>ausgefallen</translation>
     </message>
 </context>
 <context>
     <name>GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Gateway-Vorgang fehlgeschlagen</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>Gateway-Status konnte nicht dekodiert werden</translation>
     </message>
 </context>
 <context>
     <name>GatewaySection</name>
     <message>
         <source>OpenAI-compatible gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI-kompatibles Gateway</translation>
     </message>
     <message>
         <source>The node runs a resident OpenAI-compatible gateway so foreign agents (codex, opencode) can be routed through the node — keys stay on the node and never reach the agent.</source>
-        <translation type="unfinished"></translation>
+        <translation>Der Knoten betreibt ein residentes OpenAI-kompatibles Gateway, damit fremde Agenten (codex, opencode) über den Knoten geleitet werden können — Schlüssel verbleiben auf dem Knoten und erreichen den Agenten nie.</translation>
     </message>
     <message>
         <source>Connect to a daemon to manage the gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verbinden Sie sich mit einem Daemon, um das Gateway zu verwalten.</translation>
     </message>
     <message>
         <source>This node does not provide the OpenAI-compatible gateway.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dieser Knoten stellt das OpenAI-kompatible Gateway nicht bereit.</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>Gateway aktivieren</translation>
     </message>
     <message>
         <source>Serve /v1/chat/completions and /v1/models from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>/v1/chat/completions und /v1/models vom Knoten bereitstellen.</translation>
     </message>
     <message>
         <source>Bind address</source>
-        <translation type="unfinished"></translation>
+        <translation>Bind-Adresse</translation>
     </message>
     <message>
         <source>Optional. Leave blank to let the node choose (e.g. a loopback port).</source>
-        <translation type="unfinished"></translation>
+        <translation>Optional. Leer lassen, damit der Knoten wählt (z. B. einen Loopback-Port).</translation>
     </message>
     <message>
         <source>127.0.0.1:0</source>
-        <translation type="unfinished"></translation>
+        <translation>127.0.0.1:0</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation type="unfinished">unbekannt</translation>
+        <translation>unbekannt</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>Deaktiviert</translation>
     </message>
     <message>
         <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Lauscht auf %1</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>Lauscht</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Fehler: %1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wird gestartet…</translation>
     </message>
     <message>
         <source>Service health</source>
-        <translation type="unfinished"></translation>
+        <translation>Dienstzustand</translation>
     </message>
     <message>
         <source>ok</source>
-        <translation type="unfinished"></translation>
+        <translation>ok</translation>
     </message>
     <message>
         <source>down</source>
-        <translation type="unfinished"></translation>
+        <translation>ausgefallen</translation>
     </message>
 </context>
 <context>
@@ -4442,7 +4442,7 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4557,7 +4557,7 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     </message>
     <message>
         <source>Model hint (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>Modell-Hinweis (optional)</translation>
     </message>
     <message>
         <source>Name</source>
@@ -4573,23 +4573,23 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     </message>
     <message>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <source>Node provider (gateway)</source>
-        <translation type="unfinished"></translation>
+        <translation>Knoten-Anbieter (Gateway)</translation>
     </message>
     <message>
         <source>Agent&apos;s own backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Eigenes Backend des Agenten</translation>
     </message>
     <message>
         <source>Model hint</source>
-        <translation type="unfinished"></translation>
+        <translation>Modell-Hinweis</translation>
     </message>
     <message>
         <source>(optional)</source>
-        <translation type="unfinished"></translation>
+        <translation>(optional)</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -4722,15 +4722,15 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     </message>
     <message>
         <source>All profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Alle Profile</translation>
     </message>
     <message>
         <source>Operator</source>
-        <translation type="unfinished"></translation>
+        <translation>Operator</translation>
     </message>
     <message>
         <source>Agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>Von Agent erstellt</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -4742,19 +4742,19 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     </message>
     <message>
         <source>agent-authored</source>
-        <translation type="unfinished"></translation>
+        <translation>von Agent erstellt</translation>
     </message>
     <message>
         <source>Owner: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Eigentümer: %1</translation>
     </message>
     <message>
         <source>Authored by an agent</source>
-        <translation type="unfinished"></translation>
+        <translation>Von einem Agenten erstellt</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile</source>
-        <translation type="unfinished"></translation>
+        <translation>Dieses von einem Agenten erstellte Profil widerrufen</translation>
     </message>
     <message>
         <source>New profile</source>
@@ -4762,23 +4762,23 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">Erstellen</translation>
+        <translation>Erstellen</translation>
     </message>
     <message>
         <source>Or clone from</source>
-        <translation type="unfinished"></translation>
+        <translation>Oder klonen von</translation>
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>Profil widerrufen</translation>
     </message>
     <message>
         <source>Revoke</source>
-        <translation type="unfinished">Widerrufen</translation>
+        <translation>Widerrufen</translation>
     </message>
     <message>
         <source>Revoke the agent-authored profile “%1”? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Das von einem Agenten erstellte Profil “%1” widerrufen? Dadurch wird es vom Knoten gelöscht.</translation>
     </message>
     <message>
         <source>Empty profile</source>
@@ -5751,11 +5751,11 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     </message>
     <message>
         <source>Revoke profile</source>
-        <translation type="unfinished"></translation>
+        <translation>Profil widerrufen</translation>
     </message>
     <message>
         <source>Revoke this agent-authored profile? This deletes it from the node.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dieses von einem Agenten erstellte Profil widerrufen? Dadurch wird es vom Knoten gelöscht.</translation>
     </message>
 </context>
 <context>
@@ -6470,7 +6470,7 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">Gateway</translation>
+        <translation>Gateway</translation>
     </message>
     <message>
         <source>Model</source>
@@ -6787,23 +6787,23 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
     </message>
     <message>
         <source>Not available</source>
-        <translation type="unfinished"></translation>
+        <translation>Nicht verfügbar</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>Deaktiviert</translation>
     </message>
     <message>
         <source>Listening</source>
-        <translation type="unfinished"></translation>
+        <translation>Lauscht</translation>
     </message>
     <message>
         <source>Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Fehler: %1</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wird gestartet…</translation>
     </message>
 </context>
 <context>
@@ -6814,25 +6814,25 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
     </message>
     <message>
         <source>off</source>
-        <translation type="unfinished">aus</translation>
+        <translation>aus</translation>
     </message>
     <message>
         <source>on</source>
-        <translation type="unfinished">an</translation>
+        <translation>an</translation>
     </message>
     <message>
         <source>…</source>
-        <translation type="unfinished"></translation>
+        <translation>…</translation>
     </message>
     <message>
         <source>OpenAI GW </source>
-        <translation type="unfinished"></translation>
+        <translation>OpenAI-GW </translation>
     </message>
     <message numerus="yes">
         <source>%n service(s) down</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n Dienst ausgefallen</numerusform>
+            <numerusform>%n Dienste ausgefallen</numerusform>
         </translation>
     </message>
     <message>
@@ -7512,11 +7512,11 @@ Danke — es geht weiter mit: %1
     </message>
     <message>
         <source>Gateway</source>
-        <translation type="unfinished">Gateway</translation>
+        <translation>Gateway</translation>
     </message>
     <message>
         <source>Enable gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>Gateway aktivieren</translation>
     </message>
     <message>
         <source>Updates</source>
@@ -7584,11 +7584,11 @@ Danke — es geht weiter mit: %1
     </message>
     <message>
         <source>Max composed profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Max. zusammengesetzte Profile</translation>
     </message>
     <message>
         <source>Max ephemeral children per session</source>
-        <translation type="unfinished"></translation>
+        <translation>Max. flüchtige Kindprozesse pro Sitzung</translation>
     </message>
     <message>
         <source>Tools</source>
@@ -7596,28 +7596,29 @@ Danke — es geht weiter mit: %1
     </message>
     <message>
         <source>disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>deaktiviert</translation>
     </message>
     <message>
         <source>listening</source>
-        <translation type="unfinished"></translation>
+        <translation>lauscht</translation>
     </message>
     <message>
         <source>listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>lauscht auf %1</translation>
     </message>
     <message>
         <source>error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Fehler: %1</translation>
     </message>
     <message>
         <source>starting</source>
-        <translation type="unfinished"></translation>
+        <translation>wird gestartet</translation>
     </message>
     <message>
         <source>- Status: **%1** — _routes foreign agents through the node; keys stay on the node_
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- Status: **%1** — _leitet fremde Agenten über den Knoten; Schlüssel verbleiben auf dem Knoten_
+</translation>
     </message>
     <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
@@ -7940,12 +7941,14 @@ Danke — es geht weiter mit: %1
     <message>
         <source>- Provenance: agent-authored
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- Herkunft: von Agent erstellt
+</translation>
     </message>
     <message>
         <source>- Provenance: agent-authored (owner `%1`)
 </source>
-        <translation type="unfinished"></translation>
+        <translation>- Herkunft: von Agent erstellt (Eigentümer `%1`)
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -8341,15 +8344,15 @@ _Kein Agent ausgewählt._
     </message>
     <message>
         <source>managed child</source>
-        <translation type="unfinished"></translation>
+        <translation>verwalteter Kindprozess</translation>
     </message>
     <message>
         <source>subagent</source>
-        <translation type="unfinished"></translation>
+        <translation>Subagent</translation>
     </message>
     <message>
         <source>primary</source>
-        <translation type="unfinished"></translation>
+        <translation>primär</translation>
     </message>
     <message>
         <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
@@ -9040,11 +9043,11 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <name>daemonapp::daemon::GatewayRepository</name>
     <message>
         <source>Gateway operation failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Gateway-Vorgang fehlgeschlagen</translation>
     </message>
     <message>
         <source>Failed to decode gateway status</source>
-        <translation type="unfinished"></translation>
+        <translation>Gateway-Status konnte nicht dekodiert werden</translation>
     </message>
 </context>
 <context>
@@ -9298,11 +9301,11 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <name>setup::AgentSetupModel</name>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
-        <translation type="unfinished">Dieser API-Schlüssel konnte mit %1 nicht überprüft werden — prüfen Sie ihn und versuchen Sie es erneut.</translation>
+        <translation>Dieser API-Schlüssel konnte mit %1 nicht überprüft werden — prüfen Sie ihn und versuchen Sie es erneut.</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach your model — check the provider and try again.</source>
-        <translation type="unfinished">Ihr Modell konnte nicht erreicht werden – prüfen Sie den Anbieter und versuchen Sie es erneut.</translation>
+        <translation>Ihr Modell konnte nicht erreicht werden — prüfen Sie den Anbieter und versuchen Sie es erneut.</translation>
     </message>
 </context>
 <context>
