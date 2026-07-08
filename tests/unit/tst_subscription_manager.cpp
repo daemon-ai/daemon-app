@@ -24,6 +24,7 @@ using daemonapp::daemon::DaemonTransport;
 using daemonapp::daemon::FleetRepository; // [wave2:app-channels-liveness]
 using daemonapp::daemon::ModelRepository;
 using daemonapp::daemon::NodeApiClient;
+using daemonapp::daemon::ProfileRepository; // profile roster refetch (wire v31, phase H)
 using daemonapp::daemon::SessionRepository;
 using daemonapp::daemon::SubscriptionManager;
 using daemonapp::daemon::TransportRepository; // [wave2:app-channels-liveness]
@@ -407,6 +408,35 @@ private slots:
                                                   true)},
             1, 1));
         QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() >= callsBefore + 3, 3000);
+    }
+
+    // Phase H: a ProfilesChanged event refetches the profile roster (ProfileList) — the
+    // invalidation pointer the node fires on every profile create/edit/delete/select (operator or
+    // agent-authored via profile_manage), so the provenance/filter surfaces re-render without
+    // polling.
+    void profilesChangedRefetchesProfiles() {
+        const QString path = sock(QStringLiteral("profilesch.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(dbPath(QStringLiteral("profilesch.db")));
+        SessionRepository sessions(&client, &cache);
+        ApprovalRepository approvals(&client, &cache);
+        ModelRepository models(&client, &cache);
+        ProfileRepository profiles(&client, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache,
+                                /*fleet=*/nullptr, &profiles);
+
+        mgr.start();
+        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
+        const int callsBefore = fake.requestCount();
+
+        fake.pushItem(
+            daemonapp::test::buildEventsPage({daemonapp::test::neProfilesChanged(4)}, 1, 1));
+        // The routed refreshProfiles() issues a ProfileList one-shot Call.
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
     }
 
     // ResyncNeeded re-baselines (emits the resyncNeeded signal after kicking the refetch).

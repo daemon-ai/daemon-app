@@ -31,6 +31,7 @@
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
 #include "transports/itransport_registry.h" // [acct-mgmt] Channels room-key capability gating
+#include "tui_dialogs.h" // ConfirmDialog for the agent-authored profile revoke (phase H)
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
 #include "tui_page_hub.h"
@@ -728,6 +729,29 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
             dialog->setVisible(true);
             event->accept();
             return true;
+        }
+        // 'x' on an AGENT-AUTHORED profile is an operator Revoke (mirrors the GUI list-row Revoke):
+        // it goes through the existing ProfileDelete intent (IProfileStore::remove) behind a
+        // confirm dialog (TuiPageHub cannot host dialogs). Operator-authored profiles fall through
+        // to the hub key handler's plain delete.
+        if (event->text() == QStringLiteral("x") && m_services.profiles != nullptr) {
+            const QList<QVariantMap> rows = pageActionRows(kind);
+            if (!rows.isEmpty()) {
+                const int sel =
+                    qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
+                const QVariantMap& row = rows.at(sel);
+                if (row.value(QStringLiteral("createdByIsAgent")).toBool()) {
+                    const QString id = row.value(QStringLiteral("id")).toString();
+                    auto* confirm = new ConfirmDialog(
+                        tr("Revoke profile"),
+                        tr("Revoke this agent-authored profile? This deletes it from the node."),
+                        this);
+                    connect(confirm, &ConfirmDialog::confirmed, this,
+                            [this, id] { m_services.profiles->remove(id); });
+                    event->accept();
+                    return true;
+                }
+            }
         }
     }
     return false;

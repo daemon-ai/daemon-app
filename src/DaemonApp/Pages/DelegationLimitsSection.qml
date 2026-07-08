@@ -58,4 +58,34 @@ ColumnLayout {
             font.pixelSize: 13
         }
     }
+
+    // Agent-authored-profile ceilings (phase H): how many profiles a session may author and how
+    // many concurrent ephemeral/inline children it may run. Advisory display; the node enforces.
+    SettingRow {
+        Layout.fillWidth: true
+        enabled: false
+        label: qsTr("Max composed profiles")
+        description: qsTr("Profiles an agent may author. Enforced by the node.")
+
+        Text {
+            text: root._have ? String(Caps.maxComposedProfiles) : qsTr("—")
+            color: Theme.text
+            font.family: FontIcons.mono
+            font.pixelSize: 13
+        }
+    }
+
+    SettingRow {
+        Layout.fillWidth: true
+        enabled: false
+        label: qsTr("Max ephemeral children per session")
+        description: qsTr("Concurrent ephemeral children a session may run. Enforced by the node.")
+
+        Text {
+            text: root._have ? String(Caps.maxEphemeralPerSession) : qsTr("—")
+            color: Theme.text
+            font.family: FontIcons.mono
+            font.pixelSize: 13
+        }
+    }
 }

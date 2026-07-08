@@ -45,6 +45,14 @@ QString TuiPageHub::buildProfilesMarkdown(int sel) const {
             // Engine identity (C3/ENG-7): the same chip the GUI rows render — Native core vs the
             // foreign ACP agent name.
             md += tr("- Engine: %1\n").arg(engineToken(p));
+            // Provenance (phase H): mirror the GUI "agent-authored" badge + owner. Consumed
+            // verbatim from the node-stamped row keys (createdByIsAgent / owner); never re-derived.
+            if (p.value(QStringLiteral("createdByIsAgent")).toBool()) {
+                const QString owner = p.value(QStringLiteral("owner")).toString();
+                md += owner.isEmpty()
+                          ? tr("- Provenance: agent-authored\n")
+                          : tr("- Provenance: agent-authored (owner `%1`)\n").arg(owner);
+            }
             md += tr("- Model: `%1`\n").arg(p.value(QStringLiteral("model")).toString());
             const QString desc = p.value(QStringLiteral("description")).toString();
             if (!desc.isEmpty()) {

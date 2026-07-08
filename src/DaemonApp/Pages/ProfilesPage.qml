@@ -14,6 +14,10 @@ Item {
     property string selectedId: Profiles.defaultProfileId
     // Transient export/import/revert feedback (PRO-7 / PRO-8).
     property string notice: ""
+    // Provenance filter (phase H): "all" | "operator" | "agent". Filters the list rows by the
+    // node-stamped `createdByIsAgent` provenance (agent-authored via profile_manage vs operator).
+    // Presentation-only selection state; the node owns the profile set.
+    property string provenanceFilter: "all"
 
     // Surface profile export/import/revert results as a transient toast; jump to a freshly
     // imported profile.
@@ -66,6 +70,17 @@ Item {
                     onClicked: createDialog.open()
                 }
 
+                // Provenance filter (phase H): scope the list to All / Operator / Agent-authored.
+                // The three indices map to root.provenanceFilter values; the delegate collapses rows
+                // that don't match (no re-modeling — the node still owns Profiles.profiles).
+                Kit.Dropdown {
+                    id: provenanceBox
+                    Layout.fillWidth: true
+                    model: [qsTr("All profiles"), qsTr("Operator"), qsTr("Agent-authored")]
+                    onCurrentIndexChanged: root.provenanceFilter =
+                        currentIndex === 1 ? "operator" : currentIndex === 2 ? "agent" : "all"
+                }
+
                 ListView {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -75,9 +90,20 @@ Item {
                     boundsBehavior: Flickable.StopAtBounds
 
                     delegate: Rectangle {
+                        id: profileRow
                         required property var entry
+                        // Provenance (phase H), consumed verbatim from the node-stamped row keys.
+                        readonly property bool agentAuthored: entry.createdByIsAgent === true
+                        readonly property string ownerSession: entry.owner || ""
+                        // Filter-collapse: hide rows that don't match the provenance filter without
+                        // re-modeling the node-owned list.
+                        readonly property bool matchesFilter:
+                            root.provenanceFilter === "all"
+                            || (root.provenanceFilter === "agent" && agentAuthored)
+                            || (root.provenanceFilter === "operator" && !agentAuthored)
                         width: ListView.view.width
-                        height: 46
+                        height: matchesFilter ? 46 : 0
+                        visible: matchesFilter
                         radius: 6
                         color: entry.id === root.selectedId ? Theme.hover : "transparent"
 
@@ -105,11 +131,37 @@ Item {
                                     iconGlyph: foreign ? FontIcons.fa_robot : FontIcons.fa_microchip
                                     tone: foreign ? "accent" : "muted"
                                 }
+                                // Provenance badge (phase H): agent-authored profiles (created via
+                                // the profile_manage tool) carry the owning session id. Rendered
+                                // verbatim; tooltip surfaces the owner.
+                                Kit.Chip {
+                                    visible: profileRow.agentAuthored
+                                    text: qsTr("agent-authored")
+                                    iconGlyph: FontIcons.fa_robot
+                                    tone: "accent"
+                                    tooltipText: profileRow.ownerSession.length > 0
+                                        ? qsTr("Owner: %1").arg(profileRow.ownerSession)
+                                        : qsTr("Authored by an agent")
+                                }
                                 Text {
                                     visible: entry.isDefault === true
                                     text: FontIcons.fa_star
                                     font.family: FontIcons.faSolid; font.pixelSize: 10
                                     color: Theme.accent
+                                }
+                                // Operator revoke (phase H): agent-authored profiles only. Reuses the
+                                // existing ProfileDelete intent (Profiles.remove) behind a confirm.
+                                Kit.IconButton {
+                                    visible: profileRow.agentAuthored
+                                    icon: FontIcons.fa_trash
+                                    iconPointSize: 10
+                                    implicitWidth: 28; implicitHeight: 24
+                                    tooltipText: qsTr("Revoke this agent-authored profile")
+                                    onClicked: {
+                                        revokeDialog.targetId = entry.id;
+                                        revokeDialog.targetName = entry.name;
+                                        revokeDialog.open();
+                                    }
                                 }
                             }
                             Text {
@@ -122,6 +174,8 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
+                            // Keep the revoke button clickable: the row selects on the body only.
+                            z: -1
                             onClicked: root.selectedId = entry.id
                         }
                     }
@@ -190,6 +244,34 @@ Item {
                 id: cloneBox
                 Layout.fillWidth: true
                 model: [qsTr("Empty profile")].concat(Profiles.profileNames())
+            }
+        }
+    }
+
+    // Operator revoke confirm (phase H): agent-authored profiles are removed with the existing
+    // ProfileDelete intent (Profiles.remove). Kept separate from the sibling-owned create dialog.
+    Kit.Dialog {
+        id: revokeDialog
+        property string targetId: ""
+        property string targetName: ""
+        title: qsTr("Revoke profile")
+        acceptText: qsTr("Revoke")
+        destructive: true
+        onAccepted: {
+            if (revokeDialog.targetId.length > 0)
+                Profiles.remove(revokeDialog.targetId);
+        }
+
+        contentItem: ColumnLayout {
+            Text {
+                Layout.preferredWidth: 320
+                Layout.fillWidth: true
+                text: qsTr("Revoke the agent-authored profile \u201c%1\u201d? This deletes it from the node.")
+                        .arg(revokeDialog.targetName)
+                color: Theme.text
+                font.family: FontIcons.display
+                font.pixelSize: 13
+                wrapMode: Text.WordWrap
             }
         }
     }

@@ -198,6 +198,19 @@ Item {
                                                                   : FontIcons.fa_microchip
                             tone: entry.engine === "Foreign" ? "accent" : "muted"
                         }
+                        // Fleet role badge (phase H): the node-stamped orchestration role rendered
+                        // verbatim (Primary / ManagedChild / EphemeralSubagent). Never inverted from
+                        // lifetime locally — role and lifetime are independent wire fields.
+                        Kit.Chip {
+                            readonly property bool primary: entry.role === "Primary"
+                            visible: entry.role !== undefined && entry.role !== ""
+                            text: entry.role === "ManagedChild" ? qsTr("Managed child")
+                                : entry.role === "EphemeralSubagent" ? qsTr("Subagent")
+                                : primary ? qsTr("Primary")
+                                : entry.role
+                            iconGlyph: primary ? FontIcons.fa_sitemap : FontIcons.fa_circle_nodes
+                            tone: primary ? "muted" : "accent"
+                        }
                         // Delegation lifetime (F3): a persistent managed child stays in the tree;
                         // an ephemeral subagent is reaped after completion.
                         Kit.Chip {

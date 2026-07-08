@@ -473,6 +473,17 @@ inline QByteArray neFleetChanged(quint64 rev) {
     return b;
 }
 
+// Profile roster mutation (wire v31, phase H): {"ProfilesChanged":{"rev":R}} — rev only.
+inline QByteArray neProfilesChanged(quint64 rev) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "ProfilesChanged");
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "rev");
+    cborUint(b, rev);
+    return b;
+}
+
 // [wave2:app-channels-liveness] B5: live transport presence. `presence` empty omits the optional
 // presence field (map(2)); non-empty carries it (map(3)). connection/presence are the capitalized
 // wire enum names ("Connected"/"Available"/...).
