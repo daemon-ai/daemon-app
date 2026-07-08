@@ -430,21 +430,43 @@ let
     cp -a "${appStatic}/daemon-app.app" "$stage/daemon-app.app"
     chmod -R u+w "$stage/daemon-app.app"
 
-    # Scrub baked /nix/store references from every executable in the bundle.
-    # The static binary carries QLibraryInfo prefix strings (Qt) and the
-    # linker's install-name/rpath strings for the statically-linked deps; once
-    # the .app is dragged off the store those absolute paths dangle, so
-    # neutralize them. Covers appStatic's full static-link closure.
+    # Sanitize baked /nix/store references from every executable in the bundle
+    # so the .app runs once dragged off the nix store. Two distinct kinds:
+    #
+    #  (a) DYNAMIC deps (LC_LOAD_DYLIB): the static build still links a couple of
+    #      macOS *system* libraries from nixpkgs (libz, libresolv) by their
+    #      absolute /nix/store path, which dangles off-store. Repoint them at
+    #      their dyld-shared-cache home under /usr/lib (same backstop the
+    #      dynamic build applies to libiconv in cmake/Packaging.cmake). Any
+    #      OTHER residual store dylib has no system mapping and must not ship
+    #      silently -> hard-fail so it gets bundled or mapped deliberately.
+    #  (b) INERT string refs: the compiled-in Qt bakes QLibraryInfo prefix
+    #      strings pointing at the static Qt store paths. Neutralize them with
+    #      remove-references-to (Qt then resolves paths app-relative).
     for macho in "$stage/daemon-app.app/Contents/MacOS"/*; do
       [ -f "$macho" ] || continue
+      for ref in $(otool -L "$macho" | awk 'NR>1 {print $1}' \
+                     | grep '^/nix/store/.*\.dylib$' || true); do
+        base="$(basename "$ref")"
+        case "$base" in
+          libz.*|libresolv.*|libiconv.*|libcharset.*)
+            install_name_tool -change "$ref" "/usr/lib/$base" "$macho"
+            ;;
+          *)
+            echo "FATAL: $macho has an unmapped /nix/store dynamic dep: $ref" >&2
+            echo "       (no macOS system-lib mapping; it would dangle off-store)" >&2
+            exit 1
+            ;;
+        esac
+      done
       for ref in ${qtbaseStatic} ${qtshadertoolsStatic} ${qtdeclarativeStatic} \
                  ${qtsvgStatic} ${qtwebsocketsStatic} ${qt5compatStatic} \
                  ${tinyxml2Static} ${qtkeychainStatic} ${tuiWidgetsStatic} \
                  ${termpaintStatic} ${posixSignalManagerStatic} \
-                 ${qmltermwidgetStatic} ${sdk} ${pkgs.zlib}; do
+                 ${qmltermwidgetStatic} ${pkgs.zlib}; do
         remove-references-to -t "$ref" "$macho"
       done
-      # remove-references-to rewrites bytes, voiding the ad-hoc signature.
+      # install_name_tool + remove-references-to both void the ad-hoc signature.
       codesign --force --sign - "$macho"
     done
     # Re-seal the bundle now that its executables changed.
