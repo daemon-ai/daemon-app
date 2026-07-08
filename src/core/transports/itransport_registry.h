@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 
 namespace transports {
 
@@ -72,10 +73,77 @@ public:
         Q_UNUSED(conversation)
     }
 
+    // [acct-mgmt] Room lifecycle + member management (Phase B). Two-phase form ops:
+    // conversationJoinDetails / conversationCreateDetails fetch the node-described form and fire
+    // joinDetailsReady / createDetailsReady; joinRoom / createRoom send the filled form.
+    // Single-verb ops (leaveRoom / deleteRoom) name the conversation; conversationMembers issues
+    // ConvGet and fires membersChanged; the member verbs act and re-hydrate the member list.
+    // Refresh piggybacks the existing ConversationsChanged / MembershipChanged events — no polling.
+    // Default no-ops so the mock + non-daemon seams need not implement every verb.
+    Q_INVOKABLE virtual void conversationJoinDetails(const QString& transport) {
+        Q_UNUSED(transport)
+    }
+    Q_INVOKABLE virtual void joinRoom(const QString& transport, const QVariantMap& form) {
+        Q_UNUSED(transport)
+        Q_UNUSED(form)
+    }
+    Q_INVOKABLE virtual void conversationCreateDetails(const QString& transport) {
+        Q_UNUSED(transport)
+    }
+    Q_INVOKABLE virtual void createRoom(const QString& transport, const QVariantMap& form) {
+        Q_UNUSED(transport)
+        Q_UNUSED(form)
+    }
+    Q_INVOKABLE virtual void leaveRoom(const QString& transport, const QString& conversation) {
+        Q_UNUSED(transport)
+        Q_UNUSED(conversation)
+    }
+    Q_INVOKABLE virtual void deleteRoom(const QString& transport, const QString& conversation) {
+        Q_UNUSED(transport)
+        Q_UNUSED(conversation)
+    }
+    Q_INVOKABLE virtual void conversationMembers(const QString& transport,
+                                                 const QString& conversation) {
+        Q_UNUSED(transport)
+        Q_UNUSED(conversation)
+    }
+    Q_INVOKABLE virtual void memberInvite(const QString& transport, const QString& conversation,
+                                          const QString& contactId) {
+        Q_UNUSED(transport)
+        Q_UNUSED(conversation)
+        Q_UNUSED(contactId)
+    }
+    Q_INVOKABLE virtual void memberKick(const QString& transport, const QString& conversation,
+                                        const QString& contactId) {
+        Q_UNUSED(transport)
+        Q_UNUSED(conversation)
+        Q_UNUSED(contactId)
+    }
+    Q_INVOKABLE virtual void memberBan(const QString& transport, const QString& conversation,
+                                       const QString& contactId) {
+        Q_UNUSED(transport)
+        Q_UNUSED(conversation)
+        Q_UNUSED(contactId)
+    }
+    Q_INVOKABLE virtual void memberSetRole(const QString& transport, const QString& conversation,
+                                           const QString& contactId, const QString& role) {
+        Q_UNUSED(transport)
+        Q_UNUSED(conversation)
+        Q_UNUSED(contactId)
+        Q_UNUSED(role)
+    }
+
 signals:
     void adaptersChanged();
     void instancesChanged();
     void conversationsChanged(const QString& transport);
+    // [acct-mgmt] Two-phase form descriptors + the member list for the member palette + a
+    // room/member operation error (surfaced as a toast / TUI notice by both surfaces).
+    void joinDetailsReady(const QString& transport, const QVariantMap& form);
+    void createDetailsReady(const QString& transport, const QVariantMap& form);
+    void membersChanged(const QString& transport, const QString& conversation,
+                        const QVariantList& members);
+    void roomOperationFailed(const QString& message);
 };
 
 } // namespace transports

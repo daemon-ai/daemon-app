@@ -746,11 +746,42 @@ public:
     [[nodiscard]] bool isNewConversation(const QString& transport, const QString& conv) const;
     void markConversationSeen(const QString& transport, const QString& conv);
 
+    // --- [acct-mgmt] Room lifecycle + member management (Phase B, wire v32) --------------------
+    // Two-phase form ops: conversationJoinDetails / conversationCreateDetails fetch the node's form
+    // (ConvJoinDetails / ConvCreateDetails) and fire joinDetailsReady / createDetailsReady with a
+    // QVariantMap descriptor the dialogs render; joinRoom / createRoom send the filled form
+    // (ConvJoin / ConvCreate) and, on Ok, refresh that transport's ConvList. Single-verb ops
+    // (leaveRoom / deleteRoom) name the conversation and refresh on Ok. conversationMembers issues
+    // ConvGet and fires membersReady with the decoded member list; the member verbs
+    // (memberInvite/memberKick/memberBan/memberSetRole) act, and on Ok re-issue ConvGet so the
+    // member palette re-renders (the node's MembershipChanged event also refetches the ConvList).
+    void conversationJoinDetails(const QString& transport);
+    void joinRoom(const QString& transport, const QVariantMap& form);
+    void conversationCreateDetails(const QString& transport);
+    void createRoom(const QString& transport, const QVariantMap& form);
+    void leaveRoom(const QString& transport, const QString& conversation);
+    void deleteRoom(const QString& transport, const QString& conversation);
+    void conversationMembers(const QString& transport, const QString& conversation);
+    void memberInvite(const QString& transport, const QString& conversation,
+                      const QString& contactId);
+    void memberKick(const QString& transport, const QString& conversation,
+                    const QString& contactId);
+    void memberBan(const QString& transport, const QString& conversation, const QString& contactId);
+    void memberSetRole(const QString& transport, const QString& conversation,
+                       const QString& contactId, const QString& role);
+
 signals:
     void adaptersRefreshed();
     void instancesRefreshed();
     void conversationsRefreshed(const QString& transport);
     void operationFailed(const QString& message);
+    // [acct-mgmt] Two-phase form descriptors + the member list for the member palette. The forms
+    // are QVariantMaps the dialogs render (see the codec's DecodedChannelJoinDetails /
+    // DecodedCreateConversationDetails); `members` is a QVariantList of member maps.
+    void joinDetailsReady(const QString& transport, const QVariantMap& form);
+    void createDetailsReady(const QString& transport, const QVariantMap& form);
+    void membersReady(const QString& transport, const QString& conversation,
+                      const QVariantList& members);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
@@ -762,6 +793,17 @@ private:
     void syncTransportInstances(const QList<DecodedTransportInstance>& live);
     void syncConversations(const QString& transport, const QList<DecodedConversation>& live);
     [[nodiscard]] static bool isOwnCorrelation(const QString& correlationId);
+
+    // [acct-mgmt] Two-phase form + ConvGet + member-op reply handlers. Ok-only ops (join/create/
+    // leave/delete) refresh the transport's ConvList; member ops re-issue ConvGet for the conv.
+    void handleJoinDetailsResponse(const QString& transport, const QByteArray& responseCbor);
+    void handleCreateDetailsResponse(const QString& transport, const QByteArray& responseCbor);
+    void handleConversationGetResponse(const QString& transport, const QString& conv,
+                                       const QByteArray& responseCbor);
+    void handleRoomOkResponse(const QString& transport, const QByteArray& responseCbor,
+                              const QString& failMessage);
+    void handleMemberOpResponse(const QString& transport, const QString& conv,
+                                const QByteArray& responseCbor);
 
     QList<DecodedAdapterInfo> m_adapters; // in-memory (connect-only); not cached
     // Per-transport conversations page loop (wire v25): accumulate across `after` pages, then
@@ -782,6 +824,18 @@ private:
     // [waveB:app-v30] D1: disconnect/remove intents; on Ok both re-list the instances.
     static constexpr auto kDisconnectCorrelation = "repo/transport-disconnect";
     static constexpr auto kRemoveCorrelation = "repo/transport-remove";
+
+    // [acct-mgmt] Room lifecycle + member ops. The transport (and conv for two-key ops) ride the
+    // correlation tail; a unit-separator (\x1f, never in an id) splits transport from conv so the
+    // reply handler recovers both without a side map.
+    static constexpr auto kJoinDetailsPrefix = "repo/conv-join-details/";
+    static constexpr auto kCreateDetailsPrefix = "repo/conv-create-details/";
+    static constexpr auto kJoinPrefix = "repo/conv-join/";
+    static constexpr auto kCreatePrefix = "repo/conv-create/";
+    static constexpr auto kLeavePrefix = "repo/conv-leave/";
+    static constexpr auto kDeletePrefix = "repo/conv-delete/";
+    static constexpr auto kConvGetPrefix = "repo/conv-get/";
+    static constexpr auto kMemberOpPrefix = "repo/member-op/";
 };
 
 // Durable checkpoints (E4/TOOL-9): refresh(session) issues a CheckpointList (page loop) and

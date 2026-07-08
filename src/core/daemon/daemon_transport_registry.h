@@ -40,6 +40,25 @@ public:
                                          const QString& conversation) const override;
     void markConversationSeen(const QString& transport, const QString& conversation) override;
 
+    // [acct-mgmt] Room lifecycle + member management, delegated to the repository (whose refresh
+    // signals + the joinDetailsReady/createDetailsReady/membersChanged forwarders below drive both
+    // surfaces). Refresh piggybacks the node's ConversationsChanged / MembershipChanged events.
+    void conversationJoinDetails(const QString& transport) override;
+    void joinRoom(const QString& transport, const QVariantMap& form) override;
+    void conversationCreateDetails(const QString& transport) override;
+    void createRoom(const QString& transport, const QVariantMap& form) override;
+    void leaveRoom(const QString& transport, const QString& conversation) override;
+    void deleteRoom(const QString& transport, const QString& conversation) override;
+    void conversationMembers(const QString& transport, const QString& conversation) override;
+    void memberInvite(const QString& transport, const QString& conversation,
+                      const QString& contactId) override;
+    void memberKick(const QString& transport, const QString& conversation,
+                    const QString& contactId) override;
+    void memberBan(const QString& transport, const QString& conversation,
+                   const QString& contactId) override;
+    void memberSetRole(const QString& transport, const QString& conversation,
+                       const QString& contactId, const QString& role) override;
+
 private:
     daemonapp::daemon::TransportRepository* m_repo = nullptr;
 };

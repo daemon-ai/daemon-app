@@ -1985,6 +1985,40 @@ void TransportRepository::handleResponse(const QString& correlationId,
     }
     if (correlationId.startsWith(QLatin1String(kConvPrefix))) {
         handleConversationsResponse(correlationId.mid(int(qstrlen(kConvPrefix))), responseCbor);
+        return;
+    }
+    // [acct-mgmt] Room lifecycle + member ops. The transport (+ conv, split on \x1f) rides the
+    // tail.
+    const auto tailOf = [&](const char* prefix) { return correlationId.mid(int(qstrlen(prefix))); };
+    const auto splitTwo = [](const QString& tail, QString* conv) {
+        const qsizetype us = tail.indexOf(QChar(0x1f));
+        if (us < 0) {
+            *conv = QString();
+            return tail;
+        }
+        *conv = tail.mid(us + 1);
+        return tail.left(us);
+    };
+    if (correlationId.startsWith(QLatin1String(kJoinDetailsPrefix))) {
+        handleJoinDetailsResponse(tailOf(kJoinDetailsPrefix), responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kCreateDetailsPrefix))) {
+        handleCreateDetailsResponse(tailOf(kCreateDetailsPrefix), responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kJoinPrefix))) {
+        handleRoomOkResponse(tailOf(kJoinPrefix), responseCbor, tr("Failed to join the room"));
+    } else if (correlationId.startsWith(QLatin1String(kCreatePrefix))) {
+        handleRoomOkResponse(tailOf(kCreatePrefix), responseCbor, tr("Failed to create the room"));
+    } else if (correlationId.startsWith(QLatin1String(kLeavePrefix))) {
+        handleRoomOkResponse(tailOf(kLeavePrefix), responseCbor, tr("Failed to leave the room"));
+    } else if (correlationId.startsWith(QLatin1String(kDeletePrefix))) {
+        handleRoomOkResponse(tailOf(kDeletePrefix), responseCbor, tr("Failed to delete the room"));
+    } else if (correlationId.startsWith(QLatin1String(kConvGetPrefix))) {
+        QString conv;
+        const QString transport = splitTwo(tailOf(kConvGetPrefix), &conv);
+        handleConversationGetResponse(transport, conv, responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kMemberOpPrefix))) {
+        QString conv;
+        const QString transport = splitTwo(tailOf(kMemberOpPrefix), &conv);
+        handleMemberOpResponse(transport, conv, responseCbor);
     }
 }
 
@@ -2389,13 +2423,301 @@ void TransportRepository::markConversationSeen(const QString& transport, const Q
     }
 }
 
+// --- [acct-mgmt] Room lifecycle + member management -------------------------------------------
+
+namespace {
+
+// A key->value QMap<QString,QString> pulled from a QVariantMap "extras" child.
+QMap<QString, QString> extrasFromForm(const QVariantMap& form) {
+    QMap<QString, QString> out;
+    const QVariantMap extras = form.value(QStringLiteral("extras")).toMap();
+    for (auto it = extras.constBegin(); it != extras.constEnd(); ++it) {
+        out.insert(it.key(), it.value().toString());
+    }
+    return out;
+}
+
+// Fold a DecodedChannelJoinDetails into the QVariantMap descriptor the dialogs render.
+QVariantMap joinDetailsToVariant(const DecodedChannelJoinDetails& d) {
+    QVariantMap m;
+    m[QStringLiteral("nameMaxLength")] = d.hasNameMaxLength ? int(d.nameMaxLength) : 0;
+    m[QStringLiteral("nicknameSupported")] = d.nicknameSupported;
+    m[QStringLiteral("nicknameMaxLength")] = d.hasNicknameMaxLength ? int(d.nicknameMaxLength) : 0;
+    m[QStringLiteral("passwordSupported")] = d.passwordSupported;
+    m[QStringLiteral("passwordMaxLength")] = d.hasPasswordMaxLength ? int(d.passwordMaxLength) : 0;
+    QVariantList schema;
+    for (const DecodedSettingsField& f : d.extrasSchema) {
+        QVariantMap fm;
+        fm[QStringLiteral("key")] = f.key;
+        fm[QStringLiteral("label")] = f.label;
+        fm[QStringLiteral("required")] = f.required;
+        schema.append(fm);
+    }
+    m[QStringLiteral("extras")] = schema;
+    return m;
+}
+
+QVariantMap createDetailsToVariant(const DecodedCreateConversationDetails& d) {
+    QVariantMap m;
+    m[QStringLiteral("maxParticipants")] = d.hasMaxParticipants ? int(d.maxParticipants) : 0;
+    QVariantList schema;
+    for (const DecodedSettingsField& f : d.extrasSchema) {
+        QVariantMap fm;
+        fm[QStringLiteral("key")] = f.key;
+        fm[QStringLiteral("label")] = f.label;
+        fm[QStringLiteral("required")] = f.required;
+        schema.append(fm);
+    }
+    m[QStringLiteral("extras")] = schema;
+    return m;
+}
+
+QVariantList membersToVariant(const QList<DecodedConversationMember>& members) {
+    QVariantList out;
+    for (const DecodedConversationMember& m : members) {
+        QVariantMap row;
+        row[QStringLiteral("contactId")] = m.contactId;
+        row[QStringLiteral("displayName")] = m.displayName;
+        row[QStringLiteral("presence")] = m.presence;
+        row[QStringLiteral("permission")] = m.permission;
+        row[QStringLiteral("alias")] = m.alias;
+        row[QStringLiteral("nickname")] = m.nickname;
+        row[QStringLiteral("typing")] = m.typing;
+        row[QStringLiteral("role")] = m.role;
+        row[QStringLiteral("session")] = m.session;
+        out.append(row);
+    }
+    return out;
+}
+
+} // namespace
+
+void TransportRepository::conversationJoinDetails(const QString& transport) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeConvJoinDetailsRequest(transport),
+                          QLatin1String(kJoinDetailsPrefix) + transport);
+}
+
+void TransportRepository::conversationCreateDetails(const QString& transport) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeConvCreateDetailsRequest(transport),
+                          QLatin1String(kCreateDetailsPrefix) + transport);
+}
+
+void TransportRepository::joinRoom(const QString& transport, const QVariantMap& form) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    ConvJoinForm f;
+    f.name = form.value(QStringLiteral("name")).toString();
+    const QString nickname = form.value(QStringLiteral("nickname")).toString();
+    f.hasNickname = !nickname.isEmpty();
+    f.nickname = nickname;
+    const QString password = form.value(QStringLiteral("password")).toString();
+    f.hasPassword = !password.isEmpty();
+    f.password = password;
+    f.extras = extrasFromForm(form);
+    client()->sendRequest(NodeApiCodec::encodeConvJoinRequest(transport, f),
+                          QLatin1String(kJoinPrefix) + transport);
+}
+
+void TransportRepository::createRoom(const QString& transport, const QVariantMap& form) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    ConvCreateForm f;
+    if (form.contains(QStringLiteral("maxParticipants"))) {
+        const int mx = form.value(QStringLiteral("maxParticipants")).toInt();
+        // 0 = unlimited: still send it explicitly so the node's default is not assumed.
+        f.hasMaxParticipants = mx >= 0;
+        f.maxParticipants = static_cast<quint32>(qMax(0, mx));
+    }
+    for (const QVariant& p : form.value(QStringLiteral("participants")).toList()) {
+        const QString id = p.toString();
+        if (!id.isEmpty()) {
+            f.participants.append(id);
+        }
+    }
+    f.extras = extrasFromForm(form);
+    client()->sendRequest(NodeApiCodec::encodeConvCreateRequest(transport, f),
+                          QLatin1String(kCreatePrefix) + transport);
+}
+
+void TransportRepository::leaveRoom(const QString& transport, const QString& conversation) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeConvLeaveRequest(transport, conversation),
+                          QLatin1String(kLeavePrefix) + transport);
+}
+
+void TransportRepository::deleteRoom(const QString& transport, const QString& conversation) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeConvDeleteRequest(transport, conversation),
+                          QLatin1String(kDeletePrefix) + transport);
+}
+
+void TransportRepository::conversationMembers(const QString& transport,
+                                              const QString& conversation) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeConvGetRequest(transport, conversation),
+                          QLatin1String(kConvGetPrefix) + transport + QChar(0x1f) + conversation);
+}
+
+void TransportRepository::memberInvite(const QString& transport, const QString& conversation,
+                                       const QString& contactId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(
+        NodeApiCodec::encodeMemberInviteRequest(transport, conversation, contactId),
+        QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
+}
+
+void TransportRepository::memberKick(const QString& transport, const QString& conversation,
+                                     const QString& contactId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(
+        NodeApiCodec::encodeMemberRemoveRequest(transport, conversation, contactId),
+        QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
+}
+
+void TransportRepository::memberBan(const QString& transport, const QString& conversation,
+                                    const QString& contactId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeMemberBanRequest(transport, conversation, contactId),
+                          QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
+}
+
+void TransportRepository::memberSetRole(const QString& transport, const QString& conversation,
+                                        const QString& contactId, const QString& role) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(
+        NodeApiCodec::encodeMemberSetRoleRequest(transport, conversation, contactId, role),
+        QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
+}
+
+void TransportRepository::handleJoinDetailsResponse(const QString& transport,
+                                                    const QByteArray& responseCbor) {
+    DecodedChannelJoinDetails d;
+    if (!NodeApiCodec::decodeConvJoinDetails(responseCbor, &d)) {
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(tr("Failed to load the join form"));
+        }
+        return;
+    }
+    emit joinDetailsReady(transport, joinDetailsToVariant(d));
+}
+
+void TransportRepository::handleCreateDetailsResponse(const QString& transport,
+                                                      const QByteArray& responseCbor) {
+    DecodedCreateConversationDetails d;
+    if (!NodeApiCodec::decodeConvCreateDetails(responseCbor, &d)) {
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(tr("Failed to load the new-room form"));
+        }
+        return;
+    }
+    emit createDetailsReady(transport, createDetailsToVariant(d));
+}
+
+void TransportRepository::handleRoomOkResponse(const QString& transport,
+                                               const QByteArray& responseCbor,
+                                               const QString& failMessage) {
+    const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+    if (kind == ApiResponseKind::Ok) {
+        // The node's ConversationsChanged event also refetches, but refresh now so the room
+        // list reflects the mutation without waiting for the feed.
+        refreshConversations(transport);
+        return;
+    }
+    DecodedApiError err;
+    if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+        emit operationFailed(err.message);
+    } else {
+        emit operationFailed(failMessage);
+    }
+}
+
+void TransportRepository::handleConversationGetResponse(const QString& transport,
+                                                        const QString& conv,
+                                                        const QByteArray& responseCbor) {
+    DecodedConversation d;
+    bool found = false;
+    if (!NodeApiCodec::decodeConversation(responseCbor, &d, &found)) {
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(tr("Failed to load the room members"));
+        }
+        return;
+    }
+    emit membersReady(transport, conv, found ? membersToVariant(d.members) : QVariantList{});
+}
+
+void TransportRepository::handleMemberOpResponse(const QString& transport, const QString& conv,
+                                                 const QByteArray& responseCbor) {
+    const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+    if (kind == ApiResponseKind::Ok) {
+        // Re-hydrate the member palette (the MembershipChanged event refetches the ConvList).
+        conversationMembers(transport, conv);
+        return;
+    }
+    DecodedApiError err;
+    if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+        emit operationFailed(err.message);
+    } else {
+        emit operationFailed(tr("The membership action was rejected"));
+    }
+}
+
 bool TransportRepository::isOwnCorrelation(const QString& correlationId) {
     // [waveB:app-v30] D1: +disconnect/remove correlations.
     const std::array keys = {kAdaptersCorrelation, kInstancesCorrelation, kDisconnectCorrelation,
                              kRemoveCorrelation};
-    return std::ranges::any_of(
-               keys, [&](const char* key) { return correlationId == QLatin1String(key); }) ||
-           correlationId.startsWith(QLatin1String(kConvPrefix));
+    if (std::ranges::any_of(keys,
+                            [&](const char* key) { return correlationId == QLatin1String(key); })) {
+        return true;
+    }
+    // [acct-mgmt] room lifecycle + member-op correlations are all prefix-routed.
+    const std::array prefixes = {kConvPrefix,   kJoinDetailsPrefix, kCreateDetailsPrefix,
+                                 kJoinPrefix,   kCreatePrefix,      kLeavePrefix,
+                                 kDeletePrefix, kConvGetPrefix,     kMemberOpPrefix};
+    return std::ranges::any_of(prefixes, [&](const char* prefix) {
+        return correlationId.startsWith(QLatin1String(prefix));
+    });
 }
 
 void TransportRepository::handleFailure(const QString& correlationId, const QString& message) {

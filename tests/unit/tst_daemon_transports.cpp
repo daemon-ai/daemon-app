@@ -10,6 +10,7 @@
 #include "daemon/repositories.h"
 #include "daemon_api_client_encode.h"
 #include "daemon_api_client_types.h"
+#include "transports/mock_transport_registry.h"
 #include "wire_mux_fixture.h"
 
 #include <memory>
@@ -193,6 +194,128 @@ QByteArray conversationsPageResponse(const QByteArray& id, const QByteArray& nex
     return encodeResponse(*resp);
 }
 
+// [acct-mgmt] ApiResponse::Ok — the externally-tagged unit variant serializes as the bare text
+// "Ok" (matching the node), reused for the member-op Ok replies.
+QByteArray okResponse() {
+    QByteArray b;
+    daemonapp::test::cborText(b, "Ok");
+    return b;
+}
+
+// [acct-mgmt] {"Conversation": Some(ConversationInfo{ channel "!room:hs" + one member Bob@Op })}.
+QByteArray convGetResponse() {
+    static const QByteArray t = QByteArrayLiteral("matrix/@bot:hs");
+    static const QByteArray id = QByteArrayLiteral("!room:hs");
+    static const QByteArray title = QByteArrayLiteral("General");
+    static const QByteArray bob = QByteArrayLiteral("@bob:matrix.org");
+    static const QByteArray bobName = QByteArrayLiteral("Bob");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_conversation_m_c;
+    response_conversation& rc = resp->api_response_response_conversation_m;
+    rc.response_conversation_Conversation_choice =
+        response_conversation::response_conversation_Conversation_conversation_info_m_c;
+    conversation_info& cv = rc.response_conversation_Conversation_conversation_info_m;
+    setZ(cv.conversation_info_transport, t);
+    setZ(cv.conversation_info_id, id);
+    cv.conversation_info_kind.conversation_type_choice =
+        conversation_type_r::conversation_type_Channel_tstr_c;
+    cv.conversation_info_title_present = true;
+    cv.conversation_info_title.conversation_info_title_choice =
+        conversation_info_title_r::conversation_info_title_tstr_c;
+    setZ(cv.conversation_info_title.conversation_info_title_tstr, title);
+    cv.conversation_info_topic_present = false;
+    cv.conversation_info_description_present = false;
+    cv.conversation_info_members_present = true;
+    cv.conversation_info_members.conversation_info_members_conversation_member_m_count = 1;
+    conversation_member& m =
+        cv.conversation_info_members.conversation_info_members_conversation_member_m[0];
+    setZ(m.conversation_member_contact.contact_info_id, bob);
+    m.conversation_member_contact.contact_info_display_name_present = true;
+    m.conversation_member_contact.contact_info_display_name.contact_info_display_name_choice =
+        contact_info_display_name_r::contact_info_display_name_tstr_c;
+    setZ(m.conversation_member_contact.contact_info_display_name.contact_info_display_name_tstr,
+         bobName);
+    m.conversation_member_contact.contact_info_presence_present = true;
+    m.conversation_member_contact.contact_info_presence.contact_info_presence.presence_primitive
+        .presence_primitive_t_choice =
+        presence_primitive_t_r::presence_primitive_t_Available_tstr_c;
+    m.conversation_member_contact.contact_info_presence.contact_info_presence
+        .presence_message_present = false;
+    m.conversation_member_contact.contact_info_presence.contact_info_presence
+        .presence_emoji_present = false;
+    m.conversation_member_contact.contact_info_presence.contact_info_presence
+        .presence_mobile_present = false;
+    m.conversation_member_contact.contact_info_presence.contact_info_presence
+        .presence_idle_since_present = false;
+    m.conversation_member_contact.contact_info_permission_present = false;
+    m.conversation_member_alias_present = false;
+    m.conversation_member_nickname_present = false;
+    m.conversation_member_typing_present = false;
+    m.conversation_member_role_present = true;
+    m.conversation_member_role.conversation_member_role.member_role_choice =
+        member_role_r::member_role_Op_tstr_c;
+    m.conversation_member_session_present = false;
+    return encodeResponse(*resp);
+}
+
+// [acct-mgmt] {"ConvJoinDetails": ChannelJoinDetails{ nickname+password supported, one extra }}.
+QByteArray joinDetailsResponse() {
+    static const QByteArray fkey = QByteArrayLiteral("floor_policy");
+    static const QByteArray flabel = QByteArrayLiteral("Floor policy");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_conv_join_details_m_c;
+    channel_join_details& d =
+        resp->api_response_response_conv_join_details_m.response_conv_join_details_ConvJoinDetails;
+    d.channel_join_details_name_present = false;
+    d.channel_join_details_name_max_length_present = true;
+    d.channel_join_details_name_max_length.channel_join_details_name_max_length = 64;
+    d.channel_join_details_nickname_present = false;
+    d.channel_join_details_nickname_supported_present = true;
+    d.channel_join_details_nickname_supported.channel_join_details_nickname_supported = true;
+    d.channel_join_details_nickname_max_length_present = false;
+    d.channel_join_details_password_present = false;
+    d.channel_join_details_password_supported_present = true;
+    d.channel_join_details_password_supported.channel_join_details_password_supported = true;
+    d.channel_join_details_password_max_length_present = false;
+    d.channel_join_details_extras_schema_present = true;
+    account_settings_schema& s =
+        d.channel_join_details_extras_schema.channel_join_details_extras_schema;
+    s.account_settings_schema_fields_present = true;
+    s.account_settings_schema_fields.account_settings_schema_fields_auth_param_field_m_count = 1;
+    auth_param_field& f =
+        s.account_settings_schema_fields.account_settings_schema_fields_auth_param_field_m[0];
+    setZ(f.auth_param_field_key, fkey);
+    setZ(f.auth_param_field_label, flabel);
+    f.auth_param_field_required = false;
+    d.channel_join_details_extras_present = false;
+    return encodeResponse(*resp);
+}
+
+// [acct-mgmt] {"ConvCreateDetails": CreateConversationDetails{ max=0, one extra }}.
+QByteArray createDetailsResponse() {
+    static const QByteArray fkey = QByteArrayLiteral("room_name");
+    static const QByteArray flabel = QByteArrayLiteral("Room name");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_conv_create_details_m_c;
+    create_conversation_details& d = resp->api_response_response_conv_create_details_m
+                                         .response_conv_create_details_ConvCreateDetails;
+    d.create_conversation_details_max_participants_present = true;
+    d.create_conversation_details_max_participants.create_conversation_details_max_participants = 0;
+    d.create_conversation_details_participants_present = false;
+    d.create_conversation_details_extras_schema_present = true;
+    account_settings_schema& s =
+        d.create_conversation_details_extras_schema.create_conversation_details_extras_schema;
+    s.account_settings_schema_fields_present = true;
+    s.account_settings_schema_fields.account_settings_schema_fields_auth_param_field_m_count = 1;
+    auth_param_field& f =
+        s.account_settings_schema_fields.account_settings_schema_fields_auth_param_field_m[0];
+    setZ(f.auth_param_field_key, fkey);
+    setZ(f.auth_param_field_label, flabel);
+    f.auth_param_field_required = true;
+    d.create_conversation_details_extras_present = false;
+    return encodeResponse(*resp);
+}
+
 struct DaemonTransportFixture {
     explicit DaemonTransportFixture(const QString& sock) : client(&transport) {
         transport.setSocketPath(sock);
@@ -261,6 +384,136 @@ private slots:
         QCOMPARE(out.at(0).id, QStringLiteral("!room:hs"));
         QCOMPARE(out.at(0).kind, QStringLiteral("channel"));
         QCOMPARE(out.at(0).title, QStringLiteral("General"));
+    }
+
+    // [acct-mgmt] ConvGet decodes a single conversation carrying members (contact + role/presence).
+    void convGetMembersRoundTrip() {
+        DecodedConversation out;
+        bool found = false;
+        QVERIFY(NodeApiCodec::decodeConversation(convGetResponse(), &out, &found));
+        QVERIFY(found);
+        QCOMPARE(out.id, QStringLiteral("!room:hs"));
+        QVERIFY(out.hasMembers);
+        QCOMPARE(out.members.size(), 1);
+        QCOMPARE(out.members.at(0).contactId, QStringLiteral("@bob:matrix.org"));
+        QCOMPARE(out.members.at(0).displayName, QStringLiteral("Bob"));
+        QCOMPARE(out.members.at(0).presence, QStringLiteral("available"));
+        QCOMPARE(out.members.at(0).role, QStringLiteral("Op"));
+    }
+
+    // [acct-mgmt] The two-phase form details decode (honoring *_supported + *_max_length + extras).
+    void joinDetailsRoundTrip() {
+        daemonapp::daemon::DecodedChannelJoinDetails d;
+        QVERIFY(NodeApiCodec::decodeConvJoinDetails(joinDetailsResponse(), &d));
+        QVERIFY(d.hasNameMaxLength);
+        QCOMPARE(d.nameMaxLength, 64u);
+        QVERIFY(d.nicknameSupported);
+        QVERIFY(d.passwordSupported);
+        QCOMPARE(d.extrasSchema.size(), 1);
+        QCOMPARE(d.extrasSchema.at(0).key, QStringLiteral("floor_policy"));
+        QCOMPARE(d.extrasSchema.at(0).label, QStringLiteral("Floor policy"));
+    }
+
+    void createDetailsRoundTrip() {
+        daemonapp::daemon::DecodedCreateConversationDetails d;
+        QVERIFY(NodeApiCodec::decodeConvCreateDetails(createDetailsResponse(), &d));
+        QVERIFY(d.hasMaxParticipants);
+        QCOMPARE(d.maxParticipants, 0u);
+        QCOMPARE(d.extrasSchema.size(), 1);
+        QCOMPARE(d.extrasSchema.at(0).key, QStringLiteral("room_name"));
+        QVERIFY(d.extrasSchema.at(0).required);
+    }
+
+    // [acct-mgmt] The room-lifecycle + member request encoders each select a distinct, non-empty
+    // request arm (so a reply never crosses wires).
+    void roomAndMemberRequestsEncodeDistinctArms() {
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        const QString c = QStringLiteral("!room:hs");
+        const QString who = QStringLiteral("@bob:matrix.org");
+        daemonapp::daemon::ConvJoinForm jf;
+        jf.name = QStringLiteral("#daemon-dev");
+        jf.hasNickname = true;
+        jf.nickname = QStringLiteral("ali");
+        daemonapp::daemon::ConvCreateForm cf;
+        cf.participants = QStringList{who};
+        const QList<QByteArray> encs = {
+            NodeApiCodec::encodeConvJoinDetailsRequest(t),
+            NodeApiCodec::encodeConvCreateDetailsRequest(t),
+            NodeApiCodec::encodeConvJoinRequest(t, jf),
+            NodeApiCodec::encodeConvCreateRequest(t, cf),
+            NodeApiCodec::encodeConvLeaveRequest(t, c),
+            NodeApiCodec::encodeConvDeleteRequest(t, c),
+            NodeApiCodec::encodeConvGetRequest(t, c),
+            NodeApiCodec::encodeMemberInviteRequest(t, c, who),
+            NodeApiCodec::encodeMemberRemoveRequest(t, c, who),
+            NodeApiCodec::encodeMemberBanRequest(t, c, who),
+            NodeApiCodec::encodeMemberSetRoleRequest(t, c, who, QStringLiteral("Op")),
+        };
+        for (const QByteArray& e : encs) {
+            QVERIFY(!e.isEmpty());
+        }
+        // All distinct (no two encoders collapse to the same bytes).
+        for (int i = 0; i < encs.size(); ++i) {
+            for (int j = i + 1; j < encs.size(); ++j) {
+                QVERIFY2(encs.at(i) != encs.at(j),
+                         qPrintable(QStringLiteral("encoders %1 and %2 collided").arg(i).arg(j)));
+            }
+        }
+    }
+
+    // [acct-mgmt] conversationJoinDetails over the mux → the seam's joinDetailsReady form
+    // descriptor (honoring the node's supported/schema fields).
+    void joinDetailsPopulatesOverMux() {
+        const QString sock = m_tmp.filePath(QStringLiteral("jd.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplyPayload(joinDetailsResponse());
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("jd.db")));
+        TransportRepository repo(&tx.client, &cache);
+        DaemonTransportRegistry registry(&repo);
+
+        QSignalSpy ready(&registry, &transports::ITransportRegistry::joinDetailsReady);
+        registry.conversationJoinDetails(QStringLiteral("matrix/@bot:hs"));
+        QTRY_COMPARE_WITH_TIMEOUT(ready.count(), 1, 3000);
+        const QVariantMap form = ready.at(0).at(1).toMap();
+        QVERIFY(form.value(QStringLiteral("nicknameSupported")).toBool());
+        QVERIFY(form.value(QStringLiteral("passwordSupported")).toBool());
+        QCOMPARE(form.value(QStringLiteral("nameMaxLength")).toInt(), 64);
+        QCOMPARE(form.value(QStringLiteral("extras")).toList().size(), 1);
+    }
+
+    // [acct-mgmt] conversationMembers (ConvGet) over the mux → membersChanged; then a MemberSetRole
+    // Ok re-issues ConvGet (the palette re-hydrates) — the continuation is the codec's own bytes.
+    void membersAndMemberOpOverMux() {
+        const QString sock = m_tmp.filePath(QStringLiteral("mem.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        const QString c = QStringLiteral("!room:hs");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplyPayload(convGetResponse());
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("mem.db")));
+        TransportRepository repo(&tx.client, &cache);
+        DaemonTransportRegistry registry(&repo);
+
+        QSignalSpy members(&registry, &transports::ITransportRegistry::membersChanged);
+        registry.conversationMembers(t, c);
+        QTRY_COMPARE_WITH_TIMEOUT(members.count(), 1, 3000);
+        const QVariantList rows = members.at(0).at(2).toList();
+        QCOMPARE(rows.size(), 1);
+        QCOMPARE(rows.at(0).toMap().value(QStringLiteral("role")).toString(), QStringLiteral("Op"));
+
+        // A member op replies Ok, then the repo re-issues ConvGet (a second membersChanged).
+        fake.setReplySequence({okResponse(), convGetResponse()});
+        registry.memberSetRole(t, c, QStringLiteral("@bob:matrix.org"), QStringLiteral("Voice"));
+        QTRY_COMPARE_WITH_TIMEOUT(members.count(), 2, 3000);
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 3); // ConvGet, MemberSetRole, ConvGet
+        QCOMPARE(calls.at(1),
+                 NodeApiCodec::encodeMemberSetRoleRequest(t, c, QStringLiteral("@bob:matrix.org"),
+                                                          QStringLiteral("Voice")));
+        QCOMPARE(calls.at(2), NodeApiCodec::encodeConvGetRequest(t, c));
     }
 
     // Offline-first: a cached account renders in the registry + presence with NO connection.
@@ -380,6 +633,50 @@ private slots:
         repo.applyTransportChanged(QStringLiteral("nope"), QStringLiteral("connected"), QString(),
                                    false, QString(), false, QString(), false, false);
         QCOMPARE(cache.transportInstances().size(), 1);
+    }
+
+    // [acct-mgmt] The Mock registry carries canned rooms/members so the room-lifecycle UI works
+    // offline (UI-first): it reports an account with rooms, ConvGet-style members, and the verbs
+    // mutate the canned state + emit the same change signals the daemon registry does.
+    void mockRegistryOfflineRoomFlows() {
+        transports::MockTransportRegistry mock;
+        const QVariantList accounts = mock.instances();
+        QCOMPARE(accounts.size(), 1);
+        const QString t = accounts.at(0).toMap().value(QStringLiteral("transport")).toString();
+        QVERIFY(!t.isEmpty());
+        QVERIFY(!mock.conversations(t).isEmpty());
+        const QString conv =
+            mock.conversations(t).at(0).toMap().value(QStringLiteral("id")).toString();
+
+        // conversationMembers → membersChanged with the canned roster.
+        QSignalSpy members(&mock, &transports::ITransportRegistry::membersChanged);
+        mock.conversationMembers(t, conv);
+        QCOMPARE(members.count(), 1);
+        QVERIFY(!members.at(0).at(2).toList().isEmpty());
+
+        // Join adds a room → conversationsChanged; the new room is present.
+        QSignalSpy convs(&mock, &transports::ITransportRegistry::conversationsChanged);
+        mock.joinRoom(t, QVariantMap{{QStringLiteral("name"), QStringLiteral("newbie")}});
+        QCOMPARE(convs.count(), 1);
+        bool found = false;
+        for (const QVariant& rv : mock.conversations(t)) {
+            if (rv.toMap().value(QStringLiteral("title")).toString() == QLatin1String("newbie")) {
+                found = true;
+            }
+        }
+        QVERIFY(found);
+
+        // setRole mutates the member in place.
+        mock.memberSetRole(t, conv,
+                           members.at(0)
+                               .at(2)
+                               .toList()
+                               .at(0)
+                               .toMap()
+                               .value(QStringLiteral("contactId"))
+                               .toString(),
+                           QStringLiteral("Voice"));
+        QVERIFY(members.count() >= 2);
     }
 
     // [waveB:app-v30] D1: the two teardown intents encode to the right request arms.

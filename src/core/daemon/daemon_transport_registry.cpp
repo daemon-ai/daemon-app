@@ -19,6 +19,16 @@ DaemonTransportRegistry::DaemonTransportRegistry(daemonapp::daemon::TransportRep
                 &ITransportRegistry::instancesChanged);
         connect(m_repo, &daemonapp::daemon::TransportRepository::conversationsRefreshed, this,
                 &ITransportRegistry::conversationsChanged);
+        // [acct-mgmt] forward the two-phase form descriptors + member list + op errors so both
+        // surfaces render them off the same seam.
+        connect(m_repo, &daemonapp::daemon::TransportRepository::joinDetailsReady, this,
+                &ITransportRegistry::joinDetailsReady);
+        connect(m_repo, &daemonapp::daemon::TransportRepository::createDetailsReady, this,
+                &ITransportRegistry::createDetailsReady);
+        connect(m_repo, &daemonapp::daemon::TransportRepository::membersReady, this,
+                &ITransportRegistry::membersChanged);
+        connect(m_repo, &daemonapp::daemon::TransportRepository::operationFailed, this,
+                &ITransportRegistry::roomOperationFailed);
     }
 }
 
@@ -113,6 +123,78 @@ void DaemonTransportRegistry::markConversationSeen(const QString& transport,
                                                    const QString& conversation) {
     if (m_repo != nullptr) {
         m_repo->markConversationSeen(transport, conversation);
+    }
+}
+
+// [acct-mgmt] Room lifecycle + member management, forwarded to the repository.
+void DaemonTransportRegistry::conversationJoinDetails(const QString& transport) {
+    if (m_repo != nullptr) {
+        m_repo->conversationJoinDetails(transport);
+    }
+}
+
+void DaemonTransportRegistry::joinRoom(const QString& transport, const QVariantMap& form) {
+    if (m_repo != nullptr) {
+        m_repo->joinRoom(transport, form);
+    }
+}
+
+void DaemonTransportRegistry::conversationCreateDetails(const QString& transport) {
+    if (m_repo != nullptr) {
+        m_repo->conversationCreateDetails(transport);
+    }
+}
+
+void DaemonTransportRegistry::createRoom(const QString& transport, const QVariantMap& form) {
+    if (m_repo != nullptr) {
+        m_repo->createRoom(transport, form);
+    }
+}
+
+void DaemonTransportRegistry::leaveRoom(const QString& transport, const QString& conversation) {
+    if (m_repo != nullptr) {
+        m_repo->leaveRoom(transport, conversation);
+    }
+}
+
+void DaemonTransportRegistry::deleteRoom(const QString& transport, const QString& conversation) {
+    if (m_repo != nullptr) {
+        m_repo->deleteRoom(transport, conversation);
+    }
+}
+
+void DaemonTransportRegistry::conversationMembers(const QString& transport,
+                                                  const QString& conversation) {
+    if (m_repo != nullptr) {
+        m_repo->conversationMembers(transport, conversation);
+    }
+}
+
+void DaemonTransportRegistry::memberInvite(const QString& transport, const QString& conversation,
+                                           const QString& contactId) {
+    if (m_repo != nullptr) {
+        m_repo->memberInvite(transport, conversation, contactId);
+    }
+}
+
+void DaemonTransportRegistry::memberKick(const QString& transport, const QString& conversation,
+                                         const QString& contactId) {
+    if (m_repo != nullptr) {
+        m_repo->memberKick(transport, conversation, contactId);
+    }
+}
+
+void DaemonTransportRegistry::memberBan(const QString& transport, const QString& conversation,
+                                        const QString& contactId) {
+    if (m_repo != nullptr) {
+        m_repo->memberBan(transport, conversation, contactId);
+    }
+}
+
+void DaemonTransportRegistry::memberSetRole(const QString& transport, const QString& conversation,
+                                            const QString& contactId, const QString& role) {
+    if (m_repo != nullptr) {
+        m_repo->memberSetRole(transport, conversation, contactId, role);
     }
 }
 
