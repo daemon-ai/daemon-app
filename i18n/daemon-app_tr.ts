@@ -958,6 +958,102 @@ kadar başlatılamaz.</translation>
         <translation>Bağlantı kesildi</translation>
     </message>
     <message>
+        <source>Add contact</source>
+        <translation>Kişi ekle</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Ekle</translation>
+    </message>
+    <message>
+        <source>Contact id</source>
+        <translation>Kişi kimliği</translation>
+    </message>
+    <message>
+        <source>@bob:matrix.org</source>
+        <translation>@bob:matrix.org</translation>
+    </message>
+    <message>
+        <source>Set alias</source>
+        <translation>Takma ad ayarla</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Kaydet</translation>
+    </message>
+    <message>
+        <source>Local alias for %1 (empty clears it)</source>
+        <translation>%1 için yerel takma ad (boş bırakınca silinir)</translation>
+    </message>
+    <message>
+        <source>Remove contact?</source>
+        <translation>Kişi kaldırılsın mı?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Kaldır</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>%1 kişilerinizden kaldırılsın mı?</translation>
+    </message>
+    <message>
+        <source>Leave room?</source>
+        <translation>Odadan ayrılınsın mı?</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>Odadan ayrıl</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>“%1” odasından ayrılınsın mı? Oda izin veriyorsa daha sonra yeniden katılabilirsiniz.</translation>
+    </message>
+    <message>
+        <source>Delete room?</source>
+        <translation>Oda silinsin mi?</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>Odayı sil</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>Düğümdeki “%1” silinsin mi? Bu geri alınamaz.</translation>
+    </message>
+    <message>
+        <source>Kick member?</source>
+        <translation>Üye atılsın mı?</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>At</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room? They can be invited back.</source>
+        <translation>%1 bu odadan çıkarılsın mı? Yeniden davet edilebilir.</translation>
+    </message>
+    <message>
+        <source>Ban member?</source>
+        <translation>Üye yasaklansın mı?</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>Yasakla</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>%1 bu odadan yasaklansın mı? Yasak kaldırılana kadar yeniden katılamaz.</translation>
+    </message>
+    <message>
+        <source>Invite to room</source>
+        <translation>Odaya davet et</translation>
+    </message>
+    <message>
+        <source>Invite</source>
+        <translation>Davet et</translation>
+    </message>
+    <message>
         <source>Remove account?</source>
         <translation>Hesap kaldırılsın mı?</translation>
     </message>
@@ -974,6 +1070,22 @@ kadar başlatılamaz.</translation>
         <translation>Düğüm aktarımı keser, konuşmalarını kapatır, rotalarının bağlamasını kaldırır ve saklanan kimlik bilgisini siler. Bu geri alınamaz.</translation>
     </message>
     <message>
+        <source>Rename account</source>
+        <translation>Hesabı yeniden adlandır</translation>
+    </message>
+    <message>
+        <source>Display label (empty clears it)</source>
+        <translation>Görünen etiket (boş bırakınca silinir)</translation>
+    </message>
+    <message>
+        <source>Connect this account</source>
+        <translation>Bu hesabı bağla</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Etkin</translation>
+    </message>
+    <message>
         <source>Re-authenticate this account</source>
         <translation>Bu hesabın kimliğini yeniden doğrula</translation>
     </message>
@@ -984,6 +1096,22 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Remove this account…</source>
         <translation>Bu hesabı kaldır…</translation>
+    </message>
+    <message>
+        <source>Rename this account…</source>
+        <translation>Bu hesabı yeniden adlandır…</translation>
+    </message>
+    <message>
+        <source>Rooms</source>
+        <translation>Odalar</translation>
+    </message>
+    <message>
+        <source>Join room…</source>
+        <translation>Odaya katıl…</translation>
+    </message>
+    <message>
+        <source>New room…</source>
+        <translation>Yeni oda…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1012,6 +1140,58 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Route this room&apos;s messages to a session</source>
         <translation>Bu odanın mesajlarını bir oturuma yönlendir</translation>
+    </message>
+    <message>
+        <source>Members ▾</source>
+        <translation>Üyeler ▾</translation>
+    </message>
+    <message>
+        <source>Members ▸</source>
+        <translation>Üyeler ▸</translation>
+    </message>
+    <message>
+        <source>Leave</source>
+        <translation>Ayrıl</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Sil</translation>
+    </message>
+    <message>
+        <source>No members.</source>
+        <translation>Üye yok.</translation>
+    </message>
+    <message>
+        <source>⊕ Invite…</source>
+        <translation>⊕ Davet et…</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>Kişiler</translation>
+    </message>
+    <message>
+        <source>Add contact…</source>
+        <translation>Kişi ekle…</translation>
+    </message>
+    <message>
+        <source>Find people…</source>
+        <translation>Kişi bul…</translation>
+    </message>
+    <message>
+        <source>No contacts.</source>
+        <translation>Kişi yok.</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+    <message>
+        <source>Alias…</source>
+        <translation>Takma ad…</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profil</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -1812,6 +1992,91 @@ kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
+    <name>ContactFlow</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>Kişi profili</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>Profil ayrıntısı yok.</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Kapat</translation>
+    </message>
+    <message>
+        <source>Add contact — contact id</source>
+        <translation>Kişi ekle — kişi kimliği</translation>
+    </message>
+    <message>
+        <source>Find people — search query</source>
+        <translation>Kişi bul — arama sorgusu</translation>
+    </message>
+    <message>
+        <source>Alias for %1 (empty clears)</source>
+        <translation>%1 için takma ad (boş bırakınca silinir)</translation>
+    </message>
+    <message>
+        <source>Directory</source>
+        <translation>Dizin</translation>
+    </message>
+    <message>
+        <source>Directory action</source>
+        <translation>Dizin eylemi</translation>
+    </message>
+    <message>
+        <source>Add to contacts</source>
+        <translation>Kişilere ekle</translation>
+    </message>
+    <message>
+        <source>Message (DM)</source>
+        <translation>Mesaj (DM)</translation>
+    </message>
+</context>
+<context>
+    <name>ContactProfileDialog</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>Kişi profili</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Kapat</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>Profil ayrıntısı yok.</translation>
+    </message>
+</context>
+<context>
+    <name>ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>Kişi eklenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>Kişi güncellenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>Kişi kaldırılamadı</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>Kişi takma adı ayarlanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>Dizin aranamadı</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>Kişi profili yüklenemedi</translation>
+    </message>
+</context>
+<context>
     <name>CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
@@ -2579,6 +2844,41 @@ kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
+    <name>FindPeopleDialog</name>
+    <message>
+        <source>Find people — %1</source>
+        <translation>Kişi bul — %1</translation>
+    </message>
+    <message>
+        <source>Find people</source>
+        <translation>Kişi bul</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Tamamlandı</translation>
+    </message>
+    <message>
+        <source>Search the directory…</source>
+        <translation>Dizinde ara…</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Ara</translation>
+    </message>
+    <message>
+        <source>No results.</source>
+        <translation>Sonuç yok.</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Ekle</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>FingerprintRepository</name>
     <message>
         <source>Fingerprint revoke failed</source>
@@ -2949,6 +3249,37 @@ Thanks — proceeding with: %1
 
 Teşekkürler — şununla devam ediliyor: %1
 </translation>
+    </message>
+</context>
+<context>
+    <name>JoinRoomDialog</name>
+    <message>
+        <source>Join room — %1</source>
+        <translation>Odaya katıl — %1</translation>
+    </message>
+    <message>
+        <source>Join room</source>
+        <translation>Odaya katıl</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>Katıl</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>Kanal</translation>
+    </message>
+    <message>
+        <source>#room name</source>
+        <translation>#oda adı</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>Rumuz</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Parola</translation>
     </message>
 </context>
 <context>
@@ -3767,6 +4098,41 @@ Keşfet sekmesinden bir tane başlatın.</translation>
     <message>
         <source>Cancel</source>
         <translation>İptal</translation>
+    </message>
+</context>
+<context>
+    <name>NewRoomDialog</name>
+    <message>
+        <source>New room — %1</source>
+        <translation>Yeni oda — %1</translation>
+    </message>
+    <message>
+        <source>New room</source>
+        <translation>Yeni oda</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Oluştur</translation>
+    </message>
+    <message>
+        <source>Participants</source>
+        <translation>Katılımcılar</translation>
+    </message>
+    <message>
+        <source>Contact id (e.g. @bob:matrix.org)</source>
+        <translation>Kişi kimliği (ör. @bob:matrix.org)</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Ekle</translation>
+    </message>
+    <message>
+        <source>Max members</source>
+        <translation>En fazla üye</translation>
+    </message>
+    <message>
+        <source>(0 = unlimited)</source>
+        <translation>(0 = sınırsız)</translation>
     </message>
 </context>
 <context>
@@ -4759,6 +5125,69 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     </message>
 </context>
 <context>
+    <name>RoomFlow</name>
+    <message>
+        <source>Channel name</source>
+        <translation>Kanal adı</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Parola</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>Rumuz</translation>
+    </message>
+    <message>
+        <source>Invite to room — contact id</source>
+        <translation>Odaya davet et — kişi kimliği</translation>
+    </message>
+    <message>
+        <source>Members</source>
+        <translation>Üyeler</translation>
+    </message>
+    <message>
+        <source>Member action</source>
+        <translation>Üye eylemi</translation>
+    </message>
+    <message>
+        <source>Kick member</source>
+        <translation>Üyeyi at</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room?</source>
+        <translation>%1 bu odadan çıkarılsın mı?</translation>
+    </message>
+    <message>
+        <source>Ban member</source>
+        <translation>Üyeyi yasakla</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>%1 bu odadan yasaklansın mı? Yasak kaldırılana kadar yeniden katılamaz.</translation>
+    </message>
+    <message>
+        <source>Invite another…</source>
+        <translation>Başka birini davet et…</translation>
+    </message>
+    <message>
+        <source>Change role…</source>
+        <translation>Rolü değiştir…</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>At</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>Yasakla</translation>
+    </message>
+    <message>
+        <source>Change role</source>
+        <translation>Rolü değiştir</translation>
+    </message>
+</context>
+<context>
     <name>RootWidget</name>
     <message>
         <source>Profile</source>
@@ -4983,6 +5412,38 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Remove account</source>
         <translation>Hesabı kaldır</translation>
+    </message>
+    <message>
+        <source>Rename account (empty clears the label)</source>
+        <translation>Hesabı yeniden adlandır (boş bırakınca etiket silinir)</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>Odadan ayrıl</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>“%1” odasından ayrılınsın mı? Oda izin veriyorsa daha sonra yeniden katılabilirsiniz.</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>Odayı sil</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>Düğümdeki “%1” silinsin mi? Bu geri alınamaz.</translation>
+    </message>
+    <message>
+        <source>Pin room to session</source>
+        <translation>Odayı oturuma sabitle</translation>
+    </message>
+    <message>
+        <source>Remove contact</source>
+        <translation>Kişiyi kaldır</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>%1 kişilerinizden kaldırılsın mı?</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5786,6 +6247,13 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
     </message>
 </context>
 <context>
+    <name>SettingsSchemaForm</name>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+</context>
+<context>
     <name>Sidebar</name>
     <message>
         <source>Local node</source>
@@ -6498,8 +6966,52 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Hesap kaldırılamadı</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>Hesap bağlanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>Hesabın etkin durumu değiştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>Hesap yeniden adlandırılamadı</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>Hesabın bağlantısı kesilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>Odaya katılınamadı</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>Oda oluşturulamadı</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>Odadan ayrılınamadı</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>Oda silinemedi</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>Katılma formu yüklenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>Yeni oda formu yüklenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>Oda üyeleri yüklenemedi</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>Üyelik işlemi reddedildi</translation>
     </message>
 </context>
 <context>
@@ -7653,6 +8165,28 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
+        <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
+
+Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
+Room row: **Enter** members · **i** invite · **l** leave · **x** delete · **p** pin to agent.
+Contacts group: **a** add contact · **f** find people.
+Contact row: **Enter** profile · **a** alias · **x** remove · **m** open DM.
+
+Room invites are handled by the node; newly-joined rooms appear here automatically.
+
+</source>
+        <translation>Events-IO taşıma hesapları, odaları, üyeleri ve kişileri, GUI ile paylaşılır. **j/k** hareket.
+
+Hesap satırı: **c** bağlan · **d** bağlantıyı kes · **e** etkinleştir/devre dışı bırak · **r** yeniden adlandır · **x** hesabı kaldır · **g** odaya katıl · **n** yeni oda · **a** kişi ekle · **f** kişi bul.
+Oda satırı: **Enter** üyeler · **i** davet et · **l** ayrıl · **x** sil · **p** aracıya sabitle.
+Kişiler grubu: **a** kişi ekle · **f** kişi bul.
+Kişi satırı: **Enter** profil · **a** takma ad · **x** kaldır · **m** DM aç.
+
+Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada otomatik olarak görünür.
+
+</translation>
+    </message>
+    <message>
         <source>## Accounts
 
 </source>
@@ -7699,18 +8233,40 @@ _Hiçbir aracı seçilmedi._
         <translation>Bağlantı kesildi</translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
-
+        <source>- %1%2 **%3** — %4 · %5%6
 </source>
-        <translation>Events-IO aktarım hesapları ve canlı odaları, GUI ile paylaşılır. **j/k** taşı · **c** bağlan · **d** bağlantıyı kes · **x** hesabı kaldır. Oda davetleri düğüm tarafından yönetilir; yeni katılan odalar burada otomatik olarak görünür.
-
+        <translation>- %1%2 **%3** — %4 · %5%6
 </translation>
     </message>
     <message>
-        <source>- %1%2 **%3** — %4 · %5
+        <source> · _disabled_</source>
+        <translation> · _devre dışı_</translation>
+    </message>
+    <message>
+        <source>  - %1~ Contacts (%2)
 </source>
-        <translation>- %1%2 **%3** — %4 · %5
+        <translation>  - %1~ Kişiler (%2)
 </translation>
+    </message>
+    <message>
+        <source>    - %1%2 `%3`
+</source>
+        <translation>    - %1%2 `%3`
+</translation>
+    </message>
+    <message>
+        <source>    - %1%2 %3 · `%4`
+</source>
+        <translation>    - %1%2 %3 · `%4`
+</translation>
+    </message>
+    <message>
+        <source>  - %1# %2</source>
+        <translation>  - %1# %2</translation>
+    </message>
+    <message>
+        <source>  - %1# %2 · %3</source>
+        <translation>  - %1# %2 · %3</translation>
     </message>
     <message>
         <source>  - %1
@@ -7729,14 +8285,6 @@ _Hiçbir aracı seçilmedi._
 </source>
         <translation>  - _Oda yok._
 </translation>
-    </message>
-    <message>
-        <source>  - %1</source>
-        <translation>  - %1</translation>
-    </message>
-    <message>
-        <source>  - %1 · %2</source>
-        <translation>  - %1 · %2</translation>
     </message>
     <message>
         <source> · ⇄ `%1`</source>
@@ -7940,6 +8488,33 @@ _Hiçbir aracı seçilmedi._
     <message>
         <source>Checkpoint rewind failed</source>
         <translation>Kontrol noktasına geri sarma başarısız oldu</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>Kişi eklenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>Kişi güncellenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>Kişi kaldırılamadı</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>Kişi takma adı ayarlanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>Dizin aranamadı</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>Kişi profili yüklenemedi</translation>
     </message>
 </context>
 <context>
@@ -8222,8 +8797,52 @@ _Hiçbir aracı seçilmedi._
         <translation>Hesap kaldırılamadı</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>Hesap bağlanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>Hesabın etkin durumu değiştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>Hesap yeniden adlandırılamadı</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>Hesabın bağlantısı kesilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>Odaya katılınamadı</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>Oda oluşturulamadı</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>Odadan ayrılınamadı</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>Oda silinemedi</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>Katılma formu yüklenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>Yeni oda formu yüklenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>Oda üyeleri yüklenemedi</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>Üyelik işlemi reddedildi</translation>
     </message>
 </context>
 <context>

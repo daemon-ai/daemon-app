@@ -958,6 +958,102 @@ até que seja registrado novamente.</translation>
         <translation>Desconectado</translation>
     </message>
     <message>
+        <source>Add contact</source>
+        <translation>Adicionar contato</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Adicionar</translation>
+    </message>
+    <message>
+        <source>Contact id</source>
+        <translation>ID do contato</translation>
+    </message>
+    <message>
+        <source>@bob:matrix.org</source>
+        <translation>@bob:matrix.org</translation>
+    </message>
+    <message>
+        <source>Set alias</source>
+        <translation>Definir alias</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Salvar</translation>
+    </message>
+    <message>
+        <source>Local alias for %1 (empty clears it)</source>
+        <translation>Alias local para %1 (vazio o remove)</translation>
+    </message>
+    <message>
+        <source>Remove contact?</source>
+        <translation>Remover contato?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Remover</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>Remover %1 dos seus contatos?</translation>
+    </message>
+    <message>
+        <source>Leave room?</source>
+        <translation>Sair da sala?</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>Sair da sala</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>Sair de “%1”? Você pode entrar novamente mais tarde se a sala permitir.</translation>
+    </message>
+    <message>
+        <source>Delete room?</source>
+        <translation>Excluir sala?</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>Excluir sala</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>Excluir “%1” no nó? Isso não pode ser desfeito.</translation>
+    </message>
+    <message>
+        <source>Kick member?</source>
+        <translation>Expulsar membro?</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>Expulsar</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room? They can be invited back.</source>
+        <translation>Remover %1 desta sala? Pode ser convidado novamente.</translation>
+    </message>
+    <message>
+        <source>Ban member?</source>
+        <translation>Banir membro?</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>Banir</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>Banir %1 desta sala? Não poderá entrar novamente até que o banimento seja removido.</translation>
+    </message>
+    <message>
+        <source>Invite to room</source>
+        <translation>Convidar para a sala</translation>
+    </message>
+    <message>
+        <source>Invite</source>
+        <translation>Convidar</translation>
+    </message>
+    <message>
         <source>Remove account?</source>
         <translation>Remover conta?</translation>
     </message>
@@ -974,6 +1070,22 @@ até que seja registrado novamente.</translation>
         <translation>O nó desconecta o transporte, fecha suas conversas, desvincula suas rotas e descarta a credencial armazenada. Isso não pode ser desfeito.</translation>
     </message>
     <message>
+        <source>Rename account</source>
+        <translation>Renomear conta</translation>
+    </message>
+    <message>
+        <source>Display label (empty clears it)</source>
+        <translation>Rótulo de exibição (vazio o remove)</translation>
+    </message>
+    <message>
+        <source>Connect this account</source>
+        <translation>Conectar esta conta</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Ativado</translation>
+    </message>
+    <message>
         <source>Re-authenticate this account</source>
         <translation>Reautenticar esta conta</translation>
     </message>
@@ -984,6 +1096,22 @@ até que seja registrado novamente.</translation>
     <message>
         <source>Remove this account…</source>
         <translation>Remover esta conta…</translation>
+    </message>
+    <message>
+        <source>Rename this account…</source>
+        <translation>Renomear esta conta…</translation>
+    </message>
+    <message>
+        <source>Rooms</source>
+        <translation>Salas</translation>
+    </message>
+    <message>
+        <source>Join room…</source>
+        <translation>Entrar na sala…</translation>
+    </message>
+    <message>
+        <source>New room…</source>
+        <translation>Sala nova…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1012,6 +1140,58 @@ até que seja registrado novamente.</translation>
     <message>
         <source>Route this room&apos;s messages to a session</source>
         <translation>Rotear as mensagens desta sala para uma sessão</translation>
+    </message>
+    <message>
+        <source>Members ▾</source>
+        <translation>Membros ▾</translation>
+    </message>
+    <message>
+        <source>Members ▸</source>
+        <translation>Membros ▸</translation>
+    </message>
+    <message>
+        <source>Leave</source>
+        <translation>Sair</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Excluir</translation>
+    </message>
+    <message>
+        <source>No members.</source>
+        <translation>Nenhum membro.</translation>
+    </message>
+    <message>
+        <source>⊕ Invite…</source>
+        <translation>⊕ Convidar…</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>Contatos</translation>
+    </message>
+    <message>
+        <source>Add contact…</source>
+        <translation>Adicionar contato…</translation>
+    </message>
+    <message>
+        <source>Find people…</source>
+        <translation>Encontrar pessoas…</translation>
+    </message>
+    <message>
+        <source>No contacts.</source>
+        <translation>Nenhum contato.</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+    <message>
+        <source>Alias…</source>
+        <translation>Alias…</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Perfil</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -1812,6 +1992,91 @@ até que seja registrado novamente.</translation>
     </message>
 </context>
 <context>
+    <name>ContactFlow</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>Perfil do contato</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>Nenhum detalhe do perfil.</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Fechar</translation>
+    </message>
+    <message>
+        <source>Add contact — contact id</source>
+        <translation>Adicionar contato — ID do contato</translation>
+    </message>
+    <message>
+        <source>Find people — search query</source>
+        <translation>Encontrar pessoas — consulta de pesquisa</translation>
+    </message>
+    <message>
+        <source>Alias for %1 (empty clears)</source>
+        <translation>Alias para %1 (vazio o remove)</translation>
+    </message>
+    <message>
+        <source>Directory</source>
+        <translation>Diretório</translation>
+    </message>
+    <message>
+        <source>Directory action</source>
+        <translation>Ação do diretório</translation>
+    </message>
+    <message>
+        <source>Add to contacts</source>
+        <translation>Adicionar aos contatos</translation>
+    </message>
+    <message>
+        <source>Message (DM)</source>
+        <translation>Mensagem (DM)</translation>
+    </message>
+</context>
+<context>
+    <name>ContactProfileDialog</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>Perfil do contato</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Fechar</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>Nenhum detalhe do perfil.</translation>
+    </message>
+</context>
+<context>
+    <name>ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>Falha ao adicionar o contato</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>Falha ao atualizar o contato</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>Falha ao remover o contato</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>Falha ao definir o alias do contato</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>Falha ao pesquisar no diretório</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>Falha ao carregar o perfil do contato</translation>
+    </message>
+</context>
+<context>
     <name>CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
@@ -2581,6 +2846,41 @@ até que seja registrado novamente.</translation>
     </message>
 </context>
 <context>
+    <name>FindPeopleDialog</name>
+    <message>
+        <source>Find people — %1</source>
+        <translation>Encontrar pessoas — %1</translation>
+    </message>
+    <message>
+        <source>Find people</source>
+        <translation>Encontrar pessoas</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Concluído</translation>
+    </message>
+    <message>
+        <source>Search the directory…</source>
+        <translation>Pesquisar no diretório…</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Pesquisar</translation>
+    </message>
+    <message>
+        <source>No results.</source>
+        <translation>Nenhum resultado.</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Adicionar</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>FingerprintRepository</name>
     <message>
         <source>Fingerprint revoke failed</source>
@@ -2951,6 +3251,37 @@ Thanks — proceeding with: %1
 
 Obrigado — prosseguindo com: %1
 </translation>
+    </message>
+</context>
+<context>
+    <name>JoinRoomDialog</name>
+    <message>
+        <source>Join room — %1</source>
+        <translation>Entrar na sala — %1</translation>
+    </message>
+    <message>
+        <source>Join room</source>
+        <translation>Entrar na sala</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>Entrar</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>Canal</translation>
+    </message>
+    <message>
+        <source>#room name</source>
+        <translation>#nome da sala</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>Apelido</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Senha</translation>
     </message>
 </context>
 <context>
@@ -3771,6 +4102,41 @@ Inicie um na aba Descobrir.</translation>
     <message>
         <source>Cancel</source>
         <translation>Cancelar</translation>
+    </message>
+</context>
+<context>
+    <name>NewRoomDialog</name>
+    <message>
+        <source>New room — %1</source>
+        <translation>Sala nova — %1</translation>
+    </message>
+    <message>
+        <source>New room</source>
+        <translation>Sala nova</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Criar</translation>
+    </message>
+    <message>
+        <source>Participants</source>
+        <translation>Participantes</translation>
+    </message>
+    <message>
+        <source>Contact id (e.g. @bob:matrix.org)</source>
+        <translation>ID do contato (ex.: @bob:matrix.org)</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Adicionar</translation>
+    </message>
+    <message>
+        <source>Max members</source>
+        <translation>Máx. de membros</translation>
+    </message>
+    <message>
+        <source>(0 = unlimited)</source>
+        <translation>(0 = ilimitado)</translation>
     </message>
 </context>
 <context>
@@ -4763,6 +5129,69 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
     </message>
 </context>
 <context>
+    <name>RoomFlow</name>
+    <message>
+        <source>Channel name</source>
+        <translation>Nome do canal</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Senha</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>Apelido</translation>
+    </message>
+    <message>
+        <source>Invite to room — contact id</source>
+        <translation>Convidar para a sala — ID do contato</translation>
+    </message>
+    <message>
+        <source>Members</source>
+        <translation>Membros</translation>
+    </message>
+    <message>
+        <source>Member action</source>
+        <translation>Ação de membro</translation>
+    </message>
+    <message>
+        <source>Kick member</source>
+        <translation>Expulsar membro</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room?</source>
+        <translation>Remover %1 desta sala?</translation>
+    </message>
+    <message>
+        <source>Ban member</source>
+        <translation>Banir membro</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>Banir %1 desta sala? Não poderá entrar novamente até que o banimento seja removido.</translation>
+    </message>
+    <message>
+        <source>Invite another…</source>
+        <translation>Convidar outro…</translation>
+    </message>
+    <message>
+        <source>Change role…</source>
+        <translation>Alterar papel…</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>Expulsar</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>Banir</translation>
+    </message>
+    <message>
+        <source>Change role</source>
+        <translation>Alterar papel</translation>
+    </message>
+</context>
+<context>
     <name>RootWidget</name>
     <message>
         <source>Profile</source>
@@ -4987,6 +5416,38 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
     <message>
         <source>Remove account</source>
         <translation>Remover conta</translation>
+    </message>
+    <message>
+        <source>Rename account (empty clears the label)</source>
+        <translation>Renomear conta (vazio remove o rótulo)</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>Sair da sala</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>Sair de “%1”? Você pode entrar novamente mais tarde se a sala permitir.</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>Excluir sala</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>Excluir “%1” no nó? Isso não pode ser desfeito.</translation>
+    </message>
+    <message>
+        <source>Pin room to session</source>
+        <translation>Fixar sala na sessão</translation>
+    </message>
+    <message>
+        <source>Remove contact</source>
+        <translation>Remover contato</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>Remover %1 dos seus contatos?</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5791,6 +6252,13 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
     </message>
 </context>
 <context>
+    <name>SettingsSchemaForm</name>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+</context>
+<context>
     <name>Sidebar</name>
     <message>
         <source>Local node</source>
@@ -6505,8 +6973,52 @@ Obrigado — prosseguindo com: %1
         <translation>Falha ao remover a conta</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>Falha ao conectar a conta</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>Falha ao alterar o estado de ativação da conta</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>Falha ao renomear a conta</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>Falha ao desconectar a conta</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>Falha ao entrar na sala</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>Falha ao criar a sala</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>Falha ao sair da sala</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>Falha ao excluir a sala</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>Falha ao carregar o formulário de entrada</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>Falha ao carregar o formulário de sala nova</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>Falha ao carregar os membros da sala</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>A ação de participação foi rejeitada</translation>
     </message>
 </context>
 <context>
@@ -7660,6 +8172,28 @@ _Nenhum agente selecionado._
 </translation>
     </message>
     <message>
+        <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
+
+Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
+Room row: **Enter** members · **i** invite · **l** leave · **x** delete · **p** pin to agent.
+Contacts group: **a** add contact · **f** find people.
+Contact row: **Enter** profile · **a** alias · **x** remove · **m** open DM.
+
+Room invites are handled by the node; newly-joined rooms appear here automatically.
+
+</source>
+        <translation>Contas de transporte Events-IO, suas salas, membros e contatos, compartilhadas com a GUI. **j/k** mover.
+
+Linha da conta: **c** conectar · **d** desconectar · **e** ativar/desativar · **r** renomear · **x** remover conta · **g** entrar na sala · **n** sala nova · **a** adicionar contato · **f** encontrar pessoas.
+Linha da sala: **Enter** membros · **i** convidar · **l** sair · **x** excluir · **p** fixar no agente.
+Grupo de contatos: **a** adicionar contato · **f** encontrar pessoas.
+Linha do contato: **Enter** perfil · **a** alias · **x** remover · **m** abrir DM.
+
+Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem aqui automaticamente.
+
+</translation>
+    </message>
+    <message>
         <source>## Accounts
 
 </source>
@@ -7706,18 +8240,40 @@ _Nenhum agente selecionado._
         <translation>Desconectado</translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
-
+        <source>- %1%2 **%3** — %4 · %5%6
 </source>
-        <translation>Contas de transporte Events-IO e suas salas ao vivo, compartilhadas com a GUI. **j/k** mover · **c** conectar · **d** desconectar · **x** remover conta. Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem aqui automaticamente.
-
+        <translation>- %1%2 **%3** — %4 · %5%6
 </translation>
     </message>
     <message>
-        <source>- %1%2 **%3** — %4 · %5
+        <source> · _disabled_</source>
+        <translation> · _desativado_</translation>
+    </message>
+    <message>
+        <source>  - %1~ Contacts (%2)
 </source>
-        <translation>- %1%2 **%3** — %4 · %5
+        <translation>  - %1~ Contatos (%2)
 </translation>
+    </message>
+    <message>
+        <source>    - %1%2 `%3`
+</source>
+        <translation>    - %1%2 `%3`
+</translation>
+    </message>
+    <message>
+        <source>    - %1%2 %3 · `%4`
+</source>
+        <translation>    - %1%2 %3 · `%4`
+</translation>
+    </message>
+    <message>
+        <source>  - %1# %2</source>
+        <translation>  - %1# %2</translation>
+    </message>
+    <message>
+        <source>  - %1# %2 · %3</source>
+        <translation>  - %1# %2 · %3</translation>
     </message>
     <message>
         <source>  - %1
@@ -7736,14 +8292,6 @@ _Nenhum agente selecionado._
 </source>
         <translation>  - _Nenhuma sala._
 </translation>
-    </message>
-    <message>
-        <source>  - %1</source>
-        <translation>  - %1</translation>
-    </message>
-    <message>
-        <source>  - %1 · %2</source>
-        <translation>  - %1 · %2</translation>
     </message>
     <message>
         <source> · ⇄ `%1`</source>
@@ -7947,6 +8495,33 @@ _Nenhum agente selecionado._
     <message>
         <source>Checkpoint rewind failed</source>
         <translation>Falha ao retroceder o checkpoint</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>Falha ao adicionar o contato</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>Falha ao atualizar o contato</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>Falha ao remover o contato</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>Falha ao definir o alias do contato</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>Falha ao pesquisar no diretório</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>Falha ao carregar o perfil do contato</translation>
     </message>
 </context>
 <context>
@@ -8229,8 +8804,52 @@ _Nenhum agente selecionado._
         <translation>Falha ao remover a conta</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>Falha ao conectar a conta</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>Falha ao alterar o estado de ativação da conta</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>Falha ao renomear a conta</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>Falha ao desconectar a conta</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>Falha ao entrar na sala</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>Falha ao criar a sala</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>Falha ao sair da sala</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>Falha ao excluir a sala</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>Falha ao carregar o formulário de entrada</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>Falha ao carregar o formulário de sala nova</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>Falha ao carregar os membros da sala</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>A ação de participação foi rejeitada</translation>
     </message>
 </context>
 <context>

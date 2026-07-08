@@ -958,6 +958,102 @@ until it is re-registered.</source>
         <translation>সংযোগ বিচ্ছিন্ন</translation>
     </message>
     <message>
+        <source>Add contact</source>
+        <translation>পরিচিতি যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Contact id</source>
+        <translation>পরিচিতির আইডি</translation>
+    </message>
+    <message>
+        <source>@bob:matrix.org</source>
+        <translation>@bob:matrix.org</translation>
+    </message>
+    <message>
+        <source>Set alias</source>
+        <translation>উপনাম সেট করুন</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>সংরক্ষণ করুন</translation>
+    </message>
+    <message>
+        <source>Local alias for %1 (empty clears it)</source>
+        <translation>%1-এর জন্য স্থানীয় উপনাম (খালি রাখলে মুছে যায়)</translation>
+    </message>
+    <message>
+        <source>Remove contact?</source>
+        <translation>পরিচিতি সরাবেন?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>সরান</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>%1-কে আপনার পরিচিতি থেকে সরাবেন?</translation>
+    </message>
+    <message>
+        <source>Leave room?</source>
+        <translation>রুম ছেড়ে যাবেন?</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>রুম ছেড়ে যান</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>“%1” ছেড়ে যাবেন? রুম অনুমতি দিলে আপনি পরে আবার যোগ দিতে পারবেন।</translation>
+    </message>
+    <message>
+        <source>Delete room?</source>
+        <translation>রুম মুছবেন?</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>রুম মুছুন</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>নোডে “%1” মুছবেন? এটি আর ফেরানো যাবে না।</translation>
+    </message>
+    <message>
+        <source>Kick member?</source>
+        <translation>সদস্য বের করবেন?</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>বের করুন</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room? They can be invited back.</source>
+        <translation>%1-কে এই রুম থেকে সরাবেন? তাদের আবার আমন্ত্রণ জানানো যাবে।</translation>
+    </message>
+    <message>
+        <source>Ban member?</source>
+        <translation>সদস্যকে নিষিদ্ধ করবেন?</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>নিষিদ্ধ করুন</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>%1-কে এই রুম থেকে নিষিদ্ধ করবেন? নিষেধাজ্ঞা না তোলা পর্যন্ত তারা আবার যোগ দিতে পারবে না।</translation>
+    </message>
+    <message>
+        <source>Invite to room</source>
+        <translation>রুমে আমন্ত্রণ জানান</translation>
+    </message>
+    <message>
+        <source>Invite</source>
+        <translation>আমন্ত্রণ জানান</translation>
+    </message>
+    <message>
         <source>Remove account?</source>
         <translation>অ্যাকাউন্ট সরাবেন?</translation>
     </message>
@@ -974,6 +1070,22 @@ until it is re-registered.</source>
         <translation>নোডটি ট্রান্সপোর্ট সংযোগ বিচ্ছিন্ন করে, এর কথোপকথন বন্ধ করে, এর রুটগুলি আনবাইন্ড করে এবং সংরক্ষিত ক্রেডেনশিয়াল মুছে ফেলে। এটি পূর্বাবস্থায় ফেরানো যাবে না।</translation>
     </message>
     <message>
+        <source>Rename account</source>
+        <translation>অ্যাকাউন্টের নাম পরিবর্তন করুন</translation>
+    </message>
+    <message>
+        <source>Display label (empty clears it)</source>
+        <translation>প্রদর্শিত লেবেল (খালি রাখলে মুছে যায়)</translation>
+    </message>
+    <message>
+        <source>Connect this account</source>
+        <translation>এই অ্যাকাউন্ট সংযোগ করুন</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>সক্রিয়</translation>
+    </message>
+    <message>
         <source>Re-authenticate this account</source>
         <translation>এই অ্যাকাউন্ট পুনরায় প্রমাণীকরণ করুন</translation>
     </message>
@@ -984,6 +1096,22 @@ until it is re-registered.</source>
     <message>
         <source>Remove this account…</source>
         <translation>এই অ্যাকাউন্ট সরান…</translation>
+    </message>
+    <message>
+        <source>Rename this account…</source>
+        <translation>এই অ্যাকাউন্টের নাম পরিবর্তন করুন…</translation>
+    </message>
+    <message>
+        <source>Rooms</source>
+        <translation>রুম</translation>
+    </message>
+    <message>
+        <source>Join room…</source>
+        <translation>রুমে যোগ দিন…</translation>
+    </message>
+    <message>
+        <source>New room…</source>
+        <translation>নতুন রুম…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1012,6 +1140,58 @@ until it is re-registered.</source>
     <message>
         <source>Route this room&apos;s messages to a session</source>
         <translation>এই রুমের বার্তাগুলি একটি সেশনে রুট করুন</translation>
+    </message>
+    <message>
+        <source>Members ▾</source>
+        <translation>সদস্য ▾</translation>
+    </message>
+    <message>
+        <source>Members ▸</source>
+        <translation>সদস্য ▸</translation>
+    </message>
+    <message>
+        <source>Leave</source>
+        <translation>ছেড়ে যান</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>মুছুন</translation>
+    </message>
+    <message>
+        <source>No members.</source>
+        <translation>কোনো সদস্য নেই।</translation>
+    </message>
+    <message>
+        <source>⊕ Invite…</source>
+        <translation>⊕ আমন্ত্রণ জানান…</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>পরিচিতি</translation>
+    </message>
+    <message>
+        <source>Add contact…</source>
+        <translation>পরিচিতি যোগ করুন…</translation>
+    </message>
+    <message>
+        <source>Find people…</source>
+        <translation>মানুষ খুঁজুন…</translation>
+    </message>
+    <message>
+        <source>No contacts.</source>
+        <translation>কোনো পরিচিতি নেই।</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+    <message>
+        <source>Alias…</source>
+        <translation>উপনাম…</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>প্রোফাইল</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -1812,6 +1992,91 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ContactFlow</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>পরিচিতির প্রোফাইল</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>কোনো প্রোফাইল বিবরণ নেই।</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>বন্ধ</translation>
+    </message>
+    <message>
+        <source>Add contact — contact id</source>
+        <translation>পরিচিতি যোগ করুন — পরিচিতির আইডি</translation>
+    </message>
+    <message>
+        <source>Find people — search query</source>
+        <translation>মানুষ খুঁজুন — অনুসন্ধান কোয়েরি</translation>
+    </message>
+    <message>
+        <source>Alias for %1 (empty clears)</source>
+        <translation>%1-এর জন্য উপনাম (খালি রাখলে মুছে যায়)</translation>
+    </message>
+    <message>
+        <source>Directory</source>
+        <translation>ডিরেক্টরি</translation>
+    </message>
+    <message>
+        <source>Directory action</source>
+        <translation>ডিরেক্টরি ক্রিয়া</translation>
+    </message>
+    <message>
+        <source>Add to contacts</source>
+        <translation>পরিচিতিতে যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Message (DM)</source>
+        <translation>বার্তা (DM)</translation>
+    </message>
+</context>
+<context>
+    <name>ContactProfileDialog</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>পরিচিতির প্রোফাইল</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>বন্ধ</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>কোনো প্রোফাইল বিবরণ নেই।</translation>
+    </message>
+</context>
+<context>
+    <name>ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>পরিচিতি যোগ করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>পরিচিতি আপডেট করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>পরিচিতি সরাতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>পরিচিতির উপনাম সেট করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>ডিরেক্টরি অনুসন্ধান করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>পরিচিতির প্রোফাইল লোড করতে ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
     <name>CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
@@ -2581,6 +2846,41 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>FindPeopleDialog</name>
+    <message>
+        <source>Find people — %1</source>
+        <translation>মানুষ খুঁজুন — %1</translation>
+    </message>
+    <message>
+        <source>Find people</source>
+        <translation>মানুষ খুঁজুন</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>সম্পন্ন</translation>
+    </message>
+    <message>
+        <source>Search the directory…</source>
+        <translation>ডিরেক্টরিতে অনুসন্ধান করুন…</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>অনুসন্ধান</translation>
+    </message>
+    <message>
+        <source>No results.</source>
+        <translation>কোনো ফলাফল নেই।</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>যোগ করুন</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>FingerprintRepository</name>
     <message>
         <source>Fingerprint revoke failed</source>
@@ -2951,6 +3251,37 @@ Thanks — proceeding with: %1
 
 ধন্যবাদ — এগিয়ে যাওয়া হচ্ছে: %1
 </translation>
+    </message>
+</context>
+<context>
+    <name>JoinRoomDialog</name>
+    <message>
+        <source>Join room — %1</source>
+        <translation>রুমে যোগ দিন — %1</translation>
+    </message>
+    <message>
+        <source>Join room</source>
+        <translation>রুমে যোগ দিন</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>যোগ দিন</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>চ্যানেল</translation>
+    </message>
+    <message>
+        <source>#room name</source>
+        <translation>#রুমের নাম</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>ডাকনাম</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>পাসওয়ার্ড</translation>
     </message>
 </context>
 <context>
@@ -3771,6 +4102,41 @@ Start one from the Discover tab.</source>
     <message>
         <source>Cancel</source>
         <translation>বাতিল করুন</translation>
+    </message>
+</context>
+<context>
+    <name>NewRoomDialog</name>
+    <message>
+        <source>New room — %1</source>
+        <translation>নতুন রুম — %1</translation>
+    </message>
+    <message>
+        <source>New room</source>
+        <translation>নতুন রুম</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>তৈরি করুন</translation>
+    </message>
+    <message>
+        <source>Participants</source>
+        <translation>অংশগ্রহণকারী</translation>
+    </message>
+    <message>
+        <source>Contact id (e.g. @bob:matrix.org)</source>
+        <translation>পরিচিতির আইডি (যেমন @bob:matrix.org)</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Max members</source>
+        <translation>সর্বোচ্চ সদস্য</translation>
+    </message>
+    <message>
+        <source>(0 = unlimited)</source>
+        <translation>(0 = সীমাহীন)</translation>
     </message>
 </context>
 <context>
@@ -4763,6 +5129,69 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RoomFlow</name>
+    <message>
+        <source>Channel name</source>
+        <translation>চ্যানেলের নাম</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>পাসওয়ার্ড</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>ডাকনাম</translation>
+    </message>
+    <message>
+        <source>Invite to room — contact id</source>
+        <translation>রুমে আমন্ত্রণ জানান — পরিচিতির আইডি</translation>
+    </message>
+    <message>
+        <source>Members</source>
+        <translation>সদস্য</translation>
+    </message>
+    <message>
+        <source>Member action</source>
+        <translation>সদস্য ক্রিয়া</translation>
+    </message>
+    <message>
+        <source>Kick member</source>
+        <translation>সদস্য বের করুন</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room?</source>
+        <translation>%1-কে এই রুম থেকে সরাবেন?</translation>
+    </message>
+    <message>
+        <source>Ban member</source>
+        <translation>সদস্যকে নিষিদ্ধ করুন</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>%1-কে এই রুম থেকে নিষিদ্ধ করবেন? নিষেধাজ্ঞা না তোলা পর্যন্ত তারা আবার যোগ দিতে পারবে না।</translation>
+    </message>
+    <message>
+        <source>Invite another…</source>
+        <translation>আরও একজনকে আমন্ত্রণ জানান…</translation>
+    </message>
+    <message>
+        <source>Change role…</source>
+        <translation>ভূমিকা পরিবর্তন করুন…</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>বের করুন</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>নিষিদ্ধ করুন</translation>
+    </message>
+    <message>
+        <source>Change role</source>
+        <translation>ভূমিকা পরিবর্তন করুন</translation>
+    </message>
+</context>
+<context>
     <name>RootWidget</name>
     <message>
         <source>Profile</source>
@@ -4987,6 +5416,38 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Remove account</source>
         <translation>অ্যাকাউন্ট সরান</translation>
+    </message>
+    <message>
+        <source>Rename account (empty clears the label)</source>
+        <translation>অ্যাকাউন্টের নাম পরিবর্তন করুন (খালি রাখলে লেবেল মুছে যায়)</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>রুম ছেড়ে যান</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>“%1” ছেড়ে যাবেন? রুম অনুমতি দিলে আপনি পরে আবার যোগ দিতে পারবেন।</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>রুম মুছুন</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>নোডে “%1” মুছবেন? এটি আর ফেরানো যাবে না।</translation>
+    </message>
+    <message>
+        <source>Pin room to session</source>
+        <translation>রুমকে সেশনে পিন করুন</translation>
+    </message>
+    <message>
+        <source>Remove contact</source>
+        <translation>পরিচিতি সরান</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>%1-কে আপনার পরিচিতি থেকে সরাবেন?</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5791,6 +6252,13 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>SettingsSchemaForm</name>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+</context>
+<context>
     <name>Sidebar</name>
     <message>
         <source>Local node</source>
@@ -6505,8 +6973,52 @@ Thanks — proceeding with: %1
         <translation>অ্যাকাউন্ট সরাতে ব্যর্থ হয়েছে</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>অ্যাকাউন্ট সংযোগ করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>অ্যাকাউন্টের সক্রিয় অবস্থা পরিবর্তন করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>অ্যাকাউন্টের নাম পরিবর্তন করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>অ্যাকাউন্ট সংযোগ বিচ্ছিন্ন করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>রুমে যোগ দিতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>রুম তৈরি করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>রুম ছেড়ে যেতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>রুম মুছতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>যোগদানের ফর্ম লোড করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>নতুন রুমের ফর্ম লোড করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>রুমের সদস্য লোড করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>সদস্যপদ ক্রিয়াটি প্রত্যাখ্যান করা হয়েছে</translation>
     </message>
 </context>
 <context>
@@ -7660,6 +8172,28 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
+        <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
+
+Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
+Room row: **Enter** members · **i** invite · **l** leave · **x** delete · **p** pin to agent.
+Contacts group: **a** add contact · **f** find people.
+Contact row: **Enter** profile · **a** alias · **x** remove · **m** open DM.
+
+Room invites are handled by the node; newly-joined rooms appear here automatically.
+
+</source>
+        <translation>Events-IO ট্রান্সপোর্ট অ্যাকাউন্ট, তাদের রুম, সদস্য ও পরিচিতি, GUI-এর সাথে ভাগ করা। **j/k** সরান।
+
+অ্যাকাউন্ট সারি: **c** সংযোগ · **d** সংযোগ বিচ্ছিন্ন · **e** সক্রিয়/নিষ্ক্রিয় · **r** নাম পরিবর্তন · **x** অ্যাকাউন্ট সরান · **g** রুমে যোগ দিন · **n** নতুন রুম · **a** পরিচিতি যোগ করুন · **f** মানুষ খুঁজুন।
+রুম সারি: **Enter** সদস্য · **i** আমন্ত্রণ · **l** ছেড়ে যান · **x** মুছুন · **p** এজেন্টে পিন করুন।
+পরিচিতি গ্রুপ: **a** পরিচিতি যোগ করুন · **f** মানুষ খুঁজুন।
+পরিচিতি সারি: **Enter** প্রোফাইল · **a** উপনাম · **x** সরান · **m** DM খুলুন।
+
+রুমের আমন্ত্রণ নোড দ্বারা পরিচালিত হয়; নতুন যোগ দেওয়া রুম এখানে স্বয়ংক্রিয়ভাবে প্রদর্শিত হয়।
+
+</translation>
+    </message>
+    <message>
         <source>## Accounts
 
 </source>
@@ -7706,18 +8240,40 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
         <translation>সংযোগ বিচ্ছিন্ন</translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
-
+        <source>- %1%2 **%3** — %4 · %5%6
 </source>
-        <translation>Events-IO ট্রান্সপোর্ট অ্যাকাউন্ট এবং তাদের লাইভ রুম, GUI-এর সাথে শেয়ার করা। **j/k** সরান · **c** সংযোগ · **d** বিচ্ছিন্ন · **x** অ্যাকাউন্ট সরান। রুম আমন্ত্রণগুলি নোড দ্বারা পরিচালিত হয়; নতুন যোগ দেওয়া রুম এখানে স্বয়ংক্রিয়ভাবে প্রদর্শিত হয়।
-
+        <translation>- %1%2 **%3** — %4 · %5%6
 </translation>
     </message>
     <message>
-        <source>- %1%2 **%3** — %4 · %5
+        <source> · _disabled_</source>
+        <translation> · _নিষ্ক্রিয়_</translation>
+    </message>
+    <message>
+        <source>  - %1~ Contacts (%2)
 </source>
-        <translation>- %1%2 **%3** — %4 · %5
+        <translation>  - %1~ পরিচিতি (%2)
 </translation>
+    </message>
+    <message>
+        <source>    - %1%2 `%3`
+</source>
+        <translation>    - %1%2 `%3`
+</translation>
+    </message>
+    <message>
+        <source>    - %1%2 %3 · `%4`
+</source>
+        <translation>    - %1%2 %3 · `%4`
+</translation>
+    </message>
+    <message>
+        <source>  - %1# %2</source>
+        <translation>  - %1# %2</translation>
+    </message>
+    <message>
+        <source>  - %1# %2 · %3</source>
+        <translation>  - %1# %2 · %3</translation>
     </message>
     <message>
         <source>  - %1
@@ -7736,14 +8292,6 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </source>
         <translation>  - _কোনো রুম নেই।_
 </translation>
-    </message>
-    <message>
-        <source>  - %1</source>
-        <translation>  - %1</translation>
-    </message>
-    <message>
-        <source>  - %1 · %2</source>
-        <translation>  - %1 · %2</translation>
     </message>
     <message>
         <source> · ⇄ `%1`</source>
@@ -7947,6 +8495,33 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
     <message>
         <source>Checkpoint rewind failed</source>
         <translation>চেকপয়েন্ট রিওয়াইন্ড ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>পরিচিতি যোগ করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>পরিচিতি আপডেট করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>পরিচিতি সরাতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>পরিচিতির উপনাম সেট করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>ডিরেক্টরি অনুসন্ধান করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>পরিচিতির প্রোফাইল লোড করতে ব্যর্থ হয়েছে</translation>
     </message>
 </context>
 <context>
@@ -8229,8 +8804,52 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
         <translation>অ্যাকাউন্ট সরাতে ব্যর্থ হয়েছে</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>অ্যাকাউন্ট সংযোগ করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>অ্যাকাউন্টের সক্রিয় অবস্থা পরিবর্তন করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>অ্যাকাউন্টের নাম পরিবর্তন করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>অ্যাকাউন্ট সংযোগ বিচ্ছিন্ন করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>রুমে যোগ দিতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>রুম তৈরি করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>রুম ছেড়ে যেতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>রুম মুছতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>যোগদানের ফর্ম লোড করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>নতুন রুমের ফর্ম লোড করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>রুমের সদস্য লোড করতে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>সদস্যপদ ক্রিয়াটি প্রত্যাখ্যান করা হয়েছে</translation>
     </message>
 </context>
 <context>

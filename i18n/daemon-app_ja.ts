@@ -958,6 +958,102 @@ until it is re-registered.</source>
         <translation>切断されました</translation>
     </message>
     <message>
+        <source>Add contact</source>
+        <translation>連絡先を追加</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>追加</translation>
+    </message>
+    <message>
+        <source>Contact id</source>
+        <translation>連絡先 ID</translation>
+    </message>
+    <message>
+        <source>@bob:matrix.org</source>
+        <translation>@bob:matrix.org</translation>
+    </message>
+    <message>
+        <source>Set alias</source>
+        <translation>エイリアスを設定</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>Local alias for %1 (empty clears it)</source>
+        <translation>%1 のローカルエイリアス（空にするとクリア）</translation>
+    </message>
+    <message>
+        <source>Remove contact?</source>
+        <translation>連絡先を削除しますか？</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>削除</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>%1 を連絡先から削除しますか？</translation>
+    </message>
+    <message>
+        <source>Leave room?</source>
+        <translation>ルームを退出しますか？</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>ルームを退出</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>“%1” を退出しますか？ ルームが許可していれば後で再参加できます。</translation>
+    </message>
+    <message>
+        <source>Delete room?</source>
+        <translation>ルームを削除しますか？</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>ルームを削除</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>ノード上の “%1” を削除しますか？ この操作は元に戻せません。</translation>
+    </message>
+    <message>
+        <source>Kick member?</source>
+        <translation>メンバーをキックしますか？</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>キック</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room? They can be invited back.</source>
+        <translation>%1 をこのルームから削除しますか？ 再度招待できます。</translation>
+    </message>
+    <message>
+        <source>Ban member?</source>
+        <translation>メンバーを追放しますか？</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>追放</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>%1 をこのルームから追放しますか？ 追放を解除するまで再参加できません。</translation>
+    </message>
+    <message>
+        <source>Invite to room</source>
+        <translation>ルームに招待</translation>
+    </message>
+    <message>
+        <source>Invite</source>
+        <translation>招待</translation>
+    </message>
+    <message>
         <source>Remove account?</source>
         <translation>アカウントを削除しますか？</translation>
     </message>
@@ -974,6 +1070,22 @@ until it is re-registered.</source>
         <translation>ノードはトランスポートを切断し、その会話を閉じ、そのルートのバインドを解除し、保存された認証情報を破棄します。これは元に戻せません。</translation>
     </message>
     <message>
+        <source>Rename account</source>
+        <translation>アカウント名を変更</translation>
+    </message>
+    <message>
+        <source>Display label (empty clears it)</source>
+        <translation>表示ラベル（空にするとクリア）</translation>
+    </message>
+    <message>
+        <source>Connect this account</source>
+        <translation>このアカウントを接続</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>有効</translation>
+    </message>
+    <message>
         <source>Re-authenticate this account</source>
         <translation>このアカウントを再認証</translation>
     </message>
@@ -984,6 +1096,22 @@ until it is re-registered.</source>
     <message>
         <source>Remove this account…</source>
         <translation>このアカウントを削除…</translation>
+    </message>
+    <message>
+        <source>Rename this account…</source>
+        <translation>このアカウントの名前を変更…</translation>
+    </message>
+    <message>
+        <source>Rooms</source>
+        <translation>ルーム</translation>
+    </message>
+    <message>
+        <source>Join room…</source>
+        <translation>ルームに参加…</translation>
+    </message>
+    <message>
+        <source>New room…</source>
+        <translation>新しいルーム…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1012,6 +1140,58 @@ until it is re-registered.</source>
     <message>
         <source>Route this room&apos;s messages to a session</source>
         <translation>このルームのメッセージをセッションにルーティング</translation>
+    </message>
+    <message>
+        <source>Members ▾</source>
+        <translation>メンバー ▾</translation>
+    </message>
+    <message>
+        <source>Members ▸</source>
+        <translation>メンバー ▸</translation>
+    </message>
+    <message>
+        <source>Leave</source>
+        <translation>退出</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>削除</translation>
+    </message>
+    <message>
+        <source>No members.</source>
+        <translation>メンバーはいません。</translation>
+    </message>
+    <message>
+        <source>⊕ Invite…</source>
+        <translation>⊕ 招待…</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>連絡先</translation>
+    </message>
+    <message>
+        <source>Add contact…</source>
+        <translation>連絡先を追加…</translation>
+    </message>
+    <message>
+        <source>Find people…</source>
+        <translation>ユーザーを検索…</translation>
+    </message>
+    <message>
+        <source>No contacts.</source>
+        <translation>連絡先はありません。</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+    <message>
+        <source>Alias…</source>
+        <translation>エイリアス…</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>プロファイル</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -1812,6 +1992,91 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ContactFlow</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>連絡先プロファイル</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>プロファイルの詳細はありません。</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
+    <message>
+        <source>Add contact — contact id</source>
+        <translation>連絡先を追加 — 連絡先 ID</translation>
+    </message>
+    <message>
+        <source>Find people — search query</source>
+        <translation>ユーザーを検索 — 検索クエリ</translation>
+    </message>
+    <message>
+        <source>Alias for %1 (empty clears)</source>
+        <translation>%1 のエイリアス（空にするとクリア）</translation>
+    </message>
+    <message>
+        <source>Directory</source>
+        <translation>ディレクトリ</translation>
+    </message>
+    <message>
+        <source>Directory action</source>
+        <translation>ディレクトリ操作</translation>
+    </message>
+    <message>
+        <source>Add to contacts</source>
+        <translation>連絡先に追加</translation>
+    </message>
+    <message>
+        <source>Message (DM)</source>
+        <translation>メッセージ (DM)</translation>
+    </message>
+</context>
+<context>
+    <name>ContactProfileDialog</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>連絡先プロファイル</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>プロファイルの詳細はありません。</translation>
+    </message>
+</context>
+<context>
+    <name>ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>連絡先の追加に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>連絡先の更新に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>連絡先の削除に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>連絡先のエイリアスの設定に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>ディレクトリの検索に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>連絡先プロファイルの読み込みに失敗しました</translation>
+    </message>
+</context>
+<context>
     <name>CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
@@ -2579,6 +2844,41 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>FindPeopleDialog</name>
+    <message>
+        <source>Find people — %1</source>
+        <translation>ユーザーを検索 — %1</translation>
+    </message>
+    <message>
+        <source>Find people</source>
+        <translation>ユーザーを検索</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>完了</translation>
+    </message>
+    <message>
+        <source>Search the directory…</source>
+        <translation>ディレクトリを検索…</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>検索</translation>
+    </message>
+    <message>
+        <source>No results.</source>
+        <translation>結果はありません。</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>追加</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>FingerprintRepository</name>
     <message>
         <source>Fingerprint revoke failed</source>
@@ -2949,6 +3249,37 @@ Thanks — proceeding with: %1
 
 ありがとうございます — %1 で続行します
 </translation>
+    </message>
+</context>
+<context>
+    <name>JoinRoomDialog</name>
+    <message>
+        <source>Join room — %1</source>
+        <translation>ルームに参加 — %1</translation>
+    </message>
+    <message>
+        <source>Join room</source>
+        <translation>ルームに参加</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>参加</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>チャンネル</translation>
+    </message>
+    <message>
+        <source>#room name</source>
+        <translation>#ルーム名</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>ニックネーム</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>パスワード</translation>
     </message>
 </context>
 <context>
@@ -3767,6 +4098,41 @@ Start one from the Discover tab.</source>
     <message>
         <source>Cancel</source>
         <translation>キャンセル</translation>
+    </message>
+</context>
+<context>
+    <name>NewRoomDialog</name>
+    <message>
+        <source>New room — %1</source>
+        <translation>新しいルーム — %1</translation>
+    </message>
+    <message>
+        <source>New room</source>
+        <translation>新しいルーム</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>作成</translation>
+    </message>
+    <message>
+        <source>Participants</source>
+        <translation>参加者</translation>
+    </message>
+    <message>
+        <source>Contact id (e.g. @bob:matrix.org)</source>
+        <translation>連絡先 ID（例: @bob:matrix.org）</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>追加</translation>
+    </message>
+    <message>
+        <source>Max members</source>
+        <translation>最大メンバー数</translation>
+    </message>
+    <message>
+        <source>(0 = unlimited)</source>
+        <translation>(0 = 無制限)</translation>
     </message>
 </context>
 <context>
@@ -4759,6 +5125,69 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RoomFlow</name>
+    <message>
+        <source>Channel name</source>
+        <translation>チャンネル名</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>パスワード</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>ニックネーム</translation>
+    </message>
+    <message>
+        <source>Invite to room — contact id</source>
+        <translation>ルームに招待 — 連絡先 ID</translation>
+    </message>
+    <message>
+        <source>Members</source>
+        <translation>メンバー</translation>
+    </message>
+    <message>
+        <source>Member action</source>
+        <translation>メンバー操作</translation>
+    </message>
+    <message>
+        <source>Kick member</source>
+        <translation>メンバーをキック</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room?</source>
+        <translation>%1 をこのルームから削除しますか？</translation>
+    </message>
+    <message>
+        <source>Ban member</source>
+        <translation>メンバーを追放</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>%1 をこのルームから追放しますか？ 追放を解除するまで再参加できません。</translation>
+    </message>
+    <message>
+        <source>Invite another…</source>
+        <translation>他のユーザーを招待…</translation>
+    </message>
+    <message>
+        <source>Change role…</source>
+        <translation>ロールを変更…</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>キック</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>追放</translation>
+    </message>
+    <message>
+        <source>Change role</source>
+        <translation>ロールを変更</translation>
+    </message>
+</context>
+<context>
     <name>RootWidget</name>
     <message>
         <source>Profile</source>
@@ -4983,6 +5412,38 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Remove account</source>
         <translation>アカウントを削除</translation>
+    </message>
+    <message>
+        <source>Rename account (empty clears the label)</source>
+        <translation>アカウント名を変更（空にするとラベルをクリア）</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>ルームを退出</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>“%1” を退出しますか？ ルームが許可していれば後で再参加できます。</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>ルームを削除</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>ノード上の “%1” を削除しますか？ この操作は元に戻せません。</translation>
+    </message>
+    <message>
+        <source>Pin room to session</source>
+        <translation>ルームをセッションにピン留め</translation>
+    </message>
+    <message>
+        <source>Remove contact</source>
+        <translation>連絡先を削除</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>%1 を連絡先から削除しますか？</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5786,6 +6247,13 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>SettingsSchemaForm</name>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+</context>
+<context>
     <name>Sidebar</name>
     <message>
         <source>Local node</source>
@@ -6498,8 +6966,52 @@ Thanks — proceeding with: %1
         <translation>アカウントの削除に失敗しました</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>アカウントの接続に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>アカウントの有効状態の変更に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>アカウント名の変更に失敗しました</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>アカウントの切断に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>ルームへの参加に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>ルームの作成に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>ルームの退出に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>ルームの削除に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>参加フォームの読み込みに失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>新規ルームフォームの読み込みに失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>ルームメンバーの読み込みに失敗しました</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>メンバーシップ操作は拒否されました</translation>
     </message>
 </context>
 <context>
@@ -7653,6 +8165,28 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
+        <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
+
+Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
+Room row: **Enter** members · **i** invite · **l** leave · **x** delete · **p** pin to agent.
+Contacts group: **a** add contact · **f** find people.
+Contact row: **Enter** profile · **a** alias · **x** remove · **m** open DM.
+
+Room invites are handled by the node; newly-joined rooms appear here automatically.
+
+</source>
+        <translation>Events-IO トランスポートアカウント、そのルーム、メンバー、連絡先。GUI と共有されます。**j/k** 移動。
+
+アカウント行: **c** 接続 · **d** 切断 · **e** 有効/無効 · **r** 名前変更 · **x** アカウント削除 · **g** ルームに参加 · **n** 新しいルーム · **a** 連絡先を追加 · **f** ユーザーを検索。
+ルーム行: **Enter** メンバー · **i** 招待 · **l** 退出 · **x** 削除 · **p** エージェントにピン留め。
+連絡先グループ: **a** 連絡先を追加 · **f** ユーザーを検索。
+連絡先行: **Enter** プロファイル · **a** エイリアス · **x** 削除 · **m** DM を開く。
+
+ルームへの招待はノードが処理します。新しく参加したルームはここに自動的に表示されます。
+
+</translation>
+    </message>
+    <message>
         <source>## Accounts
 
 </source>
@@ -7699,18 +8233,40 @@ _エージェントが選択されていません。_
         <translation>切断されました</translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
-
+        <source>- %1%2 **%3** — %4 · %5%6
 </source>
-        <translation>Events-IO トランスポートアカウントとそのライブルーム（GUI と共有）。**j/k** 移動 · **c** 接続 · **d** 切断 · **x** アカウント削除。ルームの招待はノードが処理します。新しく参加したルームはここに自動的に表示されます。
-
+        <translation>- %1%2 **%3** — %4 · %5%6
 </translation>
     </message>
     <message>
-        <source>- %1%2 **%3** — %4 · %5
+        <source> · _disabled_</source>
+        <translation> · _無効_</translation>
+    </message>
+    <message>
+        <source>  - %1~ Contacts (%2)
 </source>
-        <translation>- %1%2 **%3** — %4 · %5
+        <translation>  - %1~ 連絡先 (%2)
 </translation>
+    </message>
+    <message>
+        <source>    - %1%2 `%3`
+</source>
+        <translation>    - %1%2 `%3`
+</translation>
+    </message>
+    <message>
+        <source>    - %1%2 %3 · `%4`
+</source>
+        <translation>    - %1%2 %3 · `%4`
+</translation>
+    </message>
+    <message>
+        <source>  - %1# %2</source>
+        <translation>  - %1# %2</translation>
+    </message>
+    <message>
+        <source>  - %1# %2 · %3</source>
+        <translation>  - %1# %2 · %3</translation>
     </message>
     <message>
         <source>  - %1
@@ -7729,14 +8285,6 @@ _エージェントが選択されていません。_
 </source>
         <translation>  - ルームがありません。
 </translation>
-    </message>
-    <message>
-        <source>  - %1</source>
-        <translation>  - %1</translation>
-    </message>
-    <message>
-        <source>  - %1 · %2</source>
-        <translation>  - %1 · %2</translation>
     </message>
     <message>
         <source> · ⇄ `%1`</source>
@@ -7940,6 +8488,33 @@ _エージェントが選択されていません。_
     <message>
         <source>Checkpoint rewind failed</source>
         <translation>チェックポイントの巻き戻しに失敗しました</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>連絡先の追加に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>連絡先の更新に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>連絡先の削除に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>連絡先のエイリアスの設定に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>ディレクトリの検索に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>連絡先プロファイルの読み込みに失敗しました</translation>
     </message>
 </context>
 <context>
@@ -8222,8 +8797,52 @@ _エージェントが選択されていません。_
         <translation>アカウントの削除に失敗しました</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>アカウントの接続に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>アカウントの有効状態の変更に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>アカウント名の変更に失敗しました</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>アカウントの切断に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>ルームへの参加に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>ルームの作成に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>ルームの退出に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>ルームの削除に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>参加フォームの読み込みに失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>新規ルームフォームの読み込みに失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>ルームメンバーの読み込みに失敗しました</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>メンバーシップ操作は拒否されました</translation>
     </message>
 </context>
 <context>

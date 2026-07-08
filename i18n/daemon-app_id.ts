@@ -958,6 +958,102 @@ sampai didaftarkan ulang.</translation>
         <translation>Terputus</translation>
     </message>
     <message>
+        <source>Add contact</source>
+        <translation>Tambah kontak</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Tambah</translation>
+    </message>
+    <message>
+        <source>Contact id</source>
+        <translation>ID kontak</translation>
+    </message>
+    <message>
+        <source>@bob:matrix.org</source>
+        <translation>@bob:matrix.org</translation>
+    </message>
+    <message>
+        <source>Set alias</source>
+        <translation>Atur alias</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Simpan</translation>
+    </message>
+    <message>
+        <source>Local alias for %1 (empty clears it)</source>
+        <translation>Alias lokal untuk %1 (kosong menghapusnya)</translation>
+    </message>
+    <message>
+        <source>Remove contact?</source>
+        <translation>Hapus kontak?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Hapus</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>Hapus %1 dari kontak Anda?</translation>
+    </message>
+    <message>
+        <source>Leave room?</source>
+        <translation>Keluar dari ruang?</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>Keluar dari ruang</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>Keluar dari “%1”? Anda dapat bergabung kembali nanti jika ruang mengizinkannya.</translation>
+    </message>
+    <message>
+        <source>Delete room?</source>
+        <translation>Hapus ruang?</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>Hapus ruang</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>Hapus “%1” di node? Tindakan ini tidak dapat dibatalkan.</translation>
+    </message>
+    <message>
+        <source>Kick member?</source>
+        <translation>Keluarkan anggota?</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>Keluarkan</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room? They can be invited back.</source>
+        <translation>Hapus %1 dari ruang ini? Mereka dapat diundang kembali.</translation>
+    </message>
+    <message>
+        <source>Ban member?</source>
+        <translation>Blokir anggota?</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>Blokir</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>Blokir %1 dari ruang ini? Mereka tidak dapat bergabung kembali hingga blokir dicabut.</translation>
+    </message>
+    <message>
+        <source>Invite to room</source>
+        <translation>Undang ke ruang</translation>
+    </message>
+    <message>
+        <source>Invite</source>
+        <translation>Undang</translation>
+    </message>
+    <message>
         <source>Remove account?</source>
         <translation>Hapus akun?</translation>
     </message>
@@ -974,6 +1070,22 @@ sampai didaftarkan ulang.</translation>
         <translation>Node memutuskan transport, menutup percakapannya, melepas rute-rutenya, dan menghapus kredensial tersimpan. Ini tidak dapat dibatalkan.</translation>
     </message>
     <message>
+        <source>Rename account</source>
+        <translation>Ganti nama akun</translation>
+    </message>
+    <message>
+        <source>Display label (empty clears it)</source>
+        <translation>Label tampilan (kosong menghapusnya)</translation>
+    </message>
+    <message>
+        <source>Connect this account</source>
+        <translation>Sambungkan akun ini</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Aktif</translation>
+    </message>
+    <message>
         <source>Re-authenticate this account</source>
         <translation>Autentikasi ulang akun ini</translation>
     </message>
@@ -984,6 +1096,22 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Remove this account…</source>
         <translation>Hapus akun ini…</translation>
+    </message>
+    <message>
+        <source>Rename this account…</source>
+        <translation>Ganti nama akun ini…</translation>
+    </message>
+    <message>
+        <source>Rooms</source>
+        <translation>Ruang</translation>
+    </message>
+    <message>
+        <source>Join room…</source>
+        <translation>Gabung ke ruang…</translation>
+    </message>
+    <message>
+        <source>New room…</source>
+        <translation>Ruang baru…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1012,6 +1140,58 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Route this room&apos;s messages to a session</source>
         <translation>Rutekan pesan ruang ini ke sesi</translation>
+    </message>
+    <message>
+        <source>Members ▾</source>
+        <translation>Anggota ▾</translation>
+    </message>
+    <message>
+        <source>Members ▸</source>
+        <translation>Anggota ▸</translation>
+    </message>
+    <message>
+        <source>Leave</source>
+        <translation>Keluar</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Hapus</translation>
+    </message>
+    <message>
+        <source>No members.</source>
+        <translation>Tidak ada anggota.</translation>
+    </message>
+    <message>
+        <source>⊕ Invite…</source>
+        <translation>⊕ Undang…</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>Kontak</translation>
+    </message>
+    <message>
+        <source>Add contact…</source>
+        <translation>Tambah kontak…</translation>
+    </message>
+    <message>
+        <source>Find people…</source>
+        <translation>Cari orang…</translation>
+    </message>
+    <message>
+        <source>No contacts.</source>
+        <translation>Tidak ada kontak.</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+    <message>
+        <source>Alias…</source>
+        <translation>Alias…</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profil</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -1812,6 +1992,91 @@ sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
+    <name>ContactFlow</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>Profil kontak</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>Tidak ada detail profil.</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Tutup</translation>
+    </message>
+    <message>
+        <source>Add contact — contact id</source>
+        <translation>Tambah kontak — ID kontak</translation>
+    </message>
+    <message>
+        <source>Find people — search query</source>
+        <translation>Cari orang — kueri pencarian</translation>
+    </message>
+    <message>
+        <source>Alias for %1 (empty clears)</source>
+        <translation>Alias untuk %1 (kosong menghapus)</translation>
+    </message>
+    <message>
+        <source>Directory</source>
+        <translation>Direktori</translation>
+    </message>
+    <message>
+        <source>Directory action</source>
+        <translation>Tindakan direktori</translation>
+    </message>
+    <message>
+        <source>Add to contacts</source>
+        <translation>Tambah ke kontak</translation>
+    </message>
+    <message>
+        <source>Message (DM)</source>
+        <translation>Pesan (DM)</translation>
+    </message>
+</context>
+<context>
+    <name>ContactProfileDialog</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>Profil kontak</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Tutup</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>Tidak ada detail profil.</translation>
+    </message>
+</context>
+<context>
+    <name>ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>Gagal menambahkan kontak</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>Gagal memperbarui kontak</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>Gagal menghapus kontak</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>Gagal mengatur alias kontak</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>Gagal mencari di direktori</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>Gagal memuat profil kontak</translation>
+    </message>
+</context>
+<context>
     <name>CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
@@ -2579,6 +2844,41 @@ sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
+    <name>FindPeopleDialog</name>
+    <message>
+        <source>Find people — %1</source>
+        <translation>Cari orang — %1</translation>
+    </message>
+    <message>
+        <source>Find people</source>
+        <translation>Cari orang</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Selesai</translation>
+    </message>
+    <message>
+        <source>Search the directory…</source>
+        <translation>Cari di direktori…</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Cari</translation>
+    </message>
+    <message>
+        <source>No results.</source>
+        <translation>Tidak ada hasil.</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Tambah</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>FingerprintRepository</name>
     <message>
         <source>Fingerprint revoke failed</source>
@@ -2949,6 +3249,37 @@ Thanks — proceeding with: %1
 
 Terima kasih — melanjutkan dengan: %1
 </translation>
+    </message>
+</context>
+<context>
+    <name>JoinRoomDialog</name>
+    <message>
+        <source>Join room — %1</source>
+        <translation>Gabung ke ruang — %1</translation>
+    </message>
+    <message>
+        <source>Join room</source>
+        <translation>Gabung ke ruang</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>Gabung</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>Saluran</translation>
+    </message>
+    <message>
+        <source>#room name</source>
+        <translation>#nama ruang</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>Nama panggilan</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Kata sandi</translation>
     </message>
 </context>
 <context>
@@ -3767,6 +4098,41 @@ Mulai dari tab Temukan.</translation>
     <message>
         <source>Cancel</source>
         <translation>Batal</translation>
+    </message>
+</context>
+<context>
+    <name>NewRoomDialog</name>
+    <message>
+        <source>New room — %1</source>
+        <translation>Ruang baru — %1</translation>
+    </message>
+    <message>
+        <source>New room</source>
+        <translation>Ruang baru</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Buat</translation>
+    </message>
+    <message>
+        <source>Participants</source>
+        <translation>Peserta</translation>
+    </message>
+    <message>
+        <source>Contact id (e.g. @bob:matrix.org)</source>
+        <translation>ID kontak (mis. @bob:matrix.org)</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Tambah</translation>
+    </message>
+    <message>
+        <source>Max members</source>
+        <translation>Maks. anggota</translation>
+    </message>
+    <message>
+        <source>(0 = unlimited)</source>
+        <translation>(0 = tanpa batas)</translation>
     </message>
 </context>
 <context>
@@ -4759,6 +5125,69 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     </message>
 </context>
 <context>
+    <name>RoomFlow</name>
+    <message>
+        <source>Channel name</source>
+        <translation>Nama saluran</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Kata sandi</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>Nama panggilan</translation>
+    </message>
+    <message>
+        <source>Invite to room — contact id</source>
+        <translation>Undang ke ruang — ID kontak</translation>
+    </message>
+    <message>
+        <source>Members</source>
+        <translation>Anggota</translation>
+    </message>
+    <message>
+        <source>Member action</source>
+        <translation>Tindakan anggota</translation>
+    </message>
+    <message>
+        <source>Kick member</source>
+        <translation>Keluarkan anggota</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room?</source>
+        <translation>Hapus %1 dari ruang ini?</translation>
+    </message>
+    <message>
+        <source>Ban member</source>
+        <translation>Blokir anggota</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>Blokir %1 dari ruang ini? Mereka tidak dapat bergabung kembali hingga blokir dicabut.</translation>
+    </message>
+    <message>
+        <source>Invite another…</source>
+        <translation>Undang yang lain…</translation>
+    </message>
+    <message>
+        <source>Change role…</source>
+        <translation>Ubah peran…</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>Keluarkan</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>Blokir</translation>
+    </message>
+    <message>
+        <source>Change role</source>
+        <translation>Ubah peran</translation>
+    </message>
+</context>
+<context>
     <name>RootWidget</name>
     <message>
         <source>Profile</source>
@@ -4983,6 +5412,38 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Remove account</source>
         <translation>Hapus akun</translation>
+    </message>
+    <message>
+        <source>Rename account (empty clears the label)</source>
+        <translation>Ganti nama akun (kosong menghapus label)</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>Keluar dari ruang</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>Keluar dari “%1”? Anda dapat bergabung kembali nanti jika ruang mengizinkannya.</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>Hapus ruang</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>Hapus “%1” di node? Tindakan ini tidak dapat dibatalkan.</translation>
+    </message>
+    <message>
+        <source>Pin room to session</source>
+        <translation>Sematkan ruang ke sesi</translation>
+    </message>
+    <message>
+        <source>Remove contact</source>
+        <translation>Hapus kontak</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>Hapus %1 dari kontak Anda?</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5786,6 +6247,13 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
     </message>
 </context>
 <context>
+    <name>SettingsSchemaForm</name>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+</context>
+<context>
     <name>Sidebar</name>
     <message>
         <source>Local node</source>
@@ -6498,8 +6966,52 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Gagal menghapus akun</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>Gagal menyambungkan akun</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>Gagal mengubah status aktif akun</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>Gagal mengganti nama akun</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>Gagal memutuskan akun</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>Gagal bergabung ke ruang</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>Gagal membuat ruang</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>Gagal keluar dari ruang</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>Gagal menghapus ruang</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>Gagal memuat formulir gabung</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>Gagal memuat formulir ruang baru</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>Gagal memuat anggota ruang</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>Tindakan keanggotaan ditolak</translation>
     </message>
 </context>
 <context>
@@ -7653,6 +8165,28 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
+        <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
+
+Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
+Room row: **Enter** members · **i** invite · **l** leave · **x** delete · **p** pin to agent.
+Contacts group: **a** add contact · **f** find people.
+Contact row: **Enter** profile · **a** alias · **x** remove · **m** open DM.
+
+Room invites are handled by the node; newly-joined rooms appear here automatically.
+
+</source>
+        <translation>Akun transport Events-IO, ruang, anggota, dan kontaknya, dibagikan dengan GUI. **j/k** pindah.
+
+Baris akun: **c** sambungkan · **d** putuskan · **e** aktifkan/nonaktifkan · **r** ganti nama · **x** hapus akun · **g** gabung ke ruang · **n** ruang baru · **a** tambah kontak · **f** cari orang.
+Baris ruang: **Enter** anggota · **i** undang · **l** keluar · **x** hapus · **p** sematkan ke agen.
+Grup kontak: **a** tambah kontak · **f** cari orang.
+Baris kontak: **Enter** profil · **a** alias · **x** hapus · **m** buka DM.
+
+Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini secara otomatis.
+
+</translation>
+    </message>
+    <message>
         <source>## Accounts
 
 </source>
@@ -7699,18 +8233,40 @@ _Tidak ada agen yang dipilih._
         <translation>Terputus</translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
-
+        <source>- %1%2 **%3** — %4 · %5%6
 </source>
-        <translation>Akun transport Events-IO dan ruang langsungnya, dibagikan dengan GUI. **j/k** pindah · **c** hubungkan · **d** putuskan · **x** hapus akun. Undangan ruang ditangani oleh node; ruang yang baru bergabung muncul di sini secara otomatis.
-
+        <translation>- %1%2 **%3** — %4 · %5%6
 </translation>
     </message>
     <message>
-        <source>- %1%2 **%3** — %4 · %5
+        <source> · _disabled_</source>
+        <translation> · _dinonaktifkan_</translation>
+    </message>
+    <message>
+        <source>  - %1~ Contacts (%2)
 </source>
-        <translation>- %1%2 **%3** — %4 · %5
+        <translation>  - %1~ Kontak (%2)
 </translation>
+    </message>
+    <message>
+        <source>    - %1%2 `%3`
+</source>
+        <translation>    - %1%2 `%3`
+</translation>
+    </message>
+    <message>
+        <source>    - %1%2 %3 · `%4`
+</source>
+        <translation>    - %1%2 %3 · `%4`
+</translation>
+    </message>
+    <message>
+        <source>  - %1# %2</source>
+        <translation>  - %1# %2</translation>
+    </message>
+    <message>
+        <source>  - %1# %2 · %3</source>
+        <translation>  - %1# %2 · %3</translation>
     </message>
     <message>
         <source>  - %1
@@ -7729,14 +8285,6 @@ _Tidak ada agen yang dipilih._
 </source>
         <translation>  - _Tidak ada ruang._
 </translation>
-    </message>
-    <message>
-        <source>  - %1</source>
-        <translation>  - %1</translation>
-    </message>
-    <message>
-        <source>  - %1 · %2</source>
-        <translation>  - %1 · %2</translation>
     </message>
     <message>
         <source> · ⇄ `%1`</source>
@@ -7940,6 +8488,33 @@ _Tidak ada agen yang dipilih._
     <message>
         <source>Checkpoint rewind failed</source>
         <translation>Putar balik checkpoint gagal</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>Gagal menambahkan kontak</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>Gagal memperbarui kontak</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>Gagal menghapus kontak</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>Gagal mengatur alias kontak</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>Gagal mencari di direktori</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>Gagal memuat profil kontak</translation>
     </message>
 </context>
 <context>
@@ -8222,8 +8797,52 @@ _Tidak ada agen yang dipilih._
         <translation>Gagal menghapus akun</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>Gagal menyambungkan akun</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>Gagal mengubah status aktif akun</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>Gagal mengganti nama akun</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>Gagal memutuskan akun</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>Gagal bergabung ke ruang</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>Gagal membuat ruang</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>Gagal keluar dari ruang</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>Gagal menghapus ruang</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>Gagal memuat formulir gabung</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>Gagal memuat formulir ruang baru</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>Gagal memuat anggota ruang</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>Tindakan keanggotaan ditolak</translation>
     </message>
 </context>
 <context>

@@ -958,6 +958,102 @@ until it is re-registered.</source>
         <translation>Отключено</translation>
     </message>
     <message>
+        <source>Add contact</source>
+        <translation>Добавить контакт</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Добавить</translation>
+    </message>
+    <message>
+        <source>Contact id</source>
+        <translation>Идентификатор контакта</translation>
+    </message>
+    <message>
+        <source>@bob:matrix.org</source>
+        <translation>@bob:matrix.org</translation>
+    </message>
+    <message>
+        <source>Set alias</source>
+        <translation>Задать псевдоним</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>Local alias for %1 (empty clears it)</source>
+        <translation>Локальный псевдоним для %1 (пустое значение очищает)</translation>
+    </message>
+    <message>
+        <source>Remove contact?</source>
+        <translation>Удалить контакт?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>Удалить %1 из ваших контактов?</translation>
+    </message>
+    <message>
+        <source>Leave room?</source>
+        <translation>Покинуть комнату?</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>Покинуть комнату</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>Покинуть «%1»? Позже можно снова присоединиться, если комната это разрешает.</translation>
+    </message>
+    <message>
+        <source>Delete room?</source>
+        <translation>Удалить комнату?</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>Удалить комнату</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>Удалить «%1» на узле? Это действие нельзя отменить.</translation>
+    </message>
+    <message>
+        <source>Kick member?</source>
+        <translation>Исключить участника?</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>Исключить</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room? They can be invited back.</source>
+        <translation>Удалить %1 из этой комнаты? Его можно пригласить снова.</translation>
+    </message>
+    <message>
+        <source>Ban member?</source>
+        <translation>Заблокировать участника?</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>Заблокировать</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>Заблокировать %1 в этой комнате? Он не сможет присоединиться снова, пока блокировка не будет снята.</translation>
+    </message>
+    <message>
+        <source>Invite to room</source>
+        <translation>Пригласить в комнату</translation>
+    </message>
+    <message>
+        <source>Invite</source>
+        <translation>Пригласить</translation>
+    </message>
+    <message>
         <source>Remove account?</source>
         <translation>Удалить учётную запись?</translation>
     </message>
@@ -974,6 +1070,22 @@ until it is re-registered.</source>
         <translation>Узел отключает транспорт, закрывает его беседы, отвязывает его маршруты и удаляет сохранённые учётные данные. Это нельзя отменить.</translation>
     </message>
     <message>
+        <source>Rename account</source>
+        <translation>Переименовать аккаунт</translation>
+    </message>
+    <message>
+        <source>Display label (empty clears it)</source>
+        <translation>Отображаемая метка (пустое значение очищает)</translation>
+    </message>
+    <message>
+        <source>Connect this account</source>
+        <translation>Подключить эту учётную запись</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Включено</translation>
+    </message>
+    <message>
         <source>Re-authenticate this account</source>
         <translation>Повторно аутентифицировать эту учётную запись</translation>
     </message>
@@ -984,6 +1096,22 @@ until it is re-registered.</source>
     <message>
         <source>Remove this account…</source>
         <translation>Удалить эту учётную запись…</translation>
+    </message>
+    <message>
+        <source>Rename this account…</source>
+        <translation>Переименовать эту учётную запись…</translation>
+    </message>
+    <message>
+        <source>Rooms</source>
+        <translation>Комнаты</translation>
+    </message>
+    <message>
+        <source>Join room…</source>
+        <translation>Присоединиться к комнате…</translation>
+    </message>
+    <message>
+        <source>New room…</source>
+        <translation>Новая комната…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1012,6 +1140,58 @@ until it is re-registered.</source>
     <message>
         <source>Route this room&apos;s messages to a session</source>
         <translation>Направлять сообщения этой комнаты в сессию</translation>
+    </message>
+    <message>
+        <source>Members ▾</source>
+        <translation>Участники ▾</translation>
+    </message>
+    <message>
+        <source>Members ▸</source>
+        <translation>Участники ▸</translation>
+    </message>
+    <message>
+        <source>Leave</source>
+        <translation>Покинуть</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>No members.</source>
+        <translation>Нет участников.</translation>
+    </message>
+    <message>
+        <source>⊕ Invite…</source>
+        <translation>⊕ Пригласить…</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>Контакты</translation>
+    </message>
+    <message>
+        <source>Add contact…</source>
+        <translation>Добавить контакт…</translation>
+    </message>
+    <message>
+        <source>Find people…</source>
+        <translation>Найти людей…</translation>
+    </message>
+    <message>
+        <source>No contacts.</source>
+        <translation>Нет контактов.</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+    <message>
+        <source>Alias…</source>
+        <translation>Псевдоним…</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Профиль</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -1812,6 +1992,91 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ContactFlow</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>Профиль контакта</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>Нет сведений о профиле.</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Add contact — contact id</source>
+        <translation>Добавить контакт — идентификатор контакта</translation>
+    </message>
+    <message>
+        <source>Find people — search query</source>
+        <translation>Найти людей — поисковый запрос</translation>
+    </message>
+    <message>
+        <source>Alias for %1 (empty clears)</source>
+        <translation>Псевдоним для %1 (пустое значение очищает)</translation>
+    </message>
+    <message>
+        <source>Directory</source>
+        <translation>Каталог</translation>
+    </message>
+    <message>
+        <source>Directory action</source>
+        <translation>Действие каталога</translation>
+    </message>
+    <message>
+        <source>Add to contacts</source>
+        <translation>Добавить в контакты</translation>
+    </message>
+    <message>
+        <source>Message (DM)</source>
+        <translation>Сообщение (DM)</translation>
+    </message>
+</context>
+<context>
+    <name>ContactProfileDialog</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>Профиль контакта</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>Нет сведений о профиле.</translation>
+    </message>
+</context>
+<context>
+    <name>ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>Не удалось добавить контакт</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>Не удалось обновить контакт</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>Не удалось удалить контакт</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>Не удалось задать псевдоним контакта</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>Не удалось выполнить поиск в каталоге</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>Не удалось загрузить профиль контакта</translation>
+    </message>
+</context>
+<context>
     <name>CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
@@ -2583,6 +2848,41 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>FindPeopleDialog</name>
+    <message>
+        <source>Find people — %1</source>
+        <translation>Найти людей — %1</translation>
+    </message>
+    <message>
+        <source>Find people</source>
+        <translation>Найти людей</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Готово</translation>
+    </message>
+    <message>
+        <source>Search the directory…</source>
+        <translation>Искать в каталоге…</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Поиск</translation>
+    </message>
+    <message>
+        <source>No results.</source>
+        <translation>Нет результатов.</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Добавить</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>FingerprintRepository</name>
     <message>
         <source>Fingerprint revoke failed</source>
@@ -2953,6 +3253,37 @@ Thanks — proceeding with: %1
 
 Спасибо — продолжаю с: %1
 </translation>
+    </message>
+</context>
+<context>
+    <name>JoinRoomDialog</name>
+    <message>
+        <source>Join room — %1</source>
+        <translation>Присоединиться к комнате — %1</translation>
+    </message>
+    <message>
+        <source>Join room</source>
+        <translation>Присоединиться к комнате</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>Присоединиться</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>Канал</translation>
+    </message>
+    <message>
+        <source>#room name</source>
+        <translation>#название комнаты</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>Никнейм</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Пароль</translation>
     </message>
 </context>
 <context>
@@ -3775,6 +4106,41 @@ Start one from the Discover tab.</source>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>NewRoomDialog</name>
+    <message>
+        <source>New room — %1</source>
+        <translation>Новая комната — %1</translation>
+    </message>
+    <message>
+        <source>New room</source>
+        <translation>Новая комната</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Создать</translation>
+    </message>
+    <message>
+        <source>Participants</source>
+        <translation>Участники</translation>
+    </message>
+    <message>
+        <source>Contact id (e.g. @bob:matrix.org)</source>
+        <translation>Идентификатор контакта (напр. @bob:matrix.org)</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Добавить</translation>
+    </message>
+    <message>
+        <source>Max members</source>
+        <translation>Макс. участников</translation>
+    </message>
+    <message>
+        <source>(0 = unlimited)</source>
+        <translation>(0 = без ограничений)</translation>
     </message>
 </context>
 <context>
@@ -4767,6 +5133,69 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RoomFlow</name>
+    <message>
+        <source>Channel name</source>
+        <translation>Имя канала</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Пароль</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>Никнейм</translation>
+    </message>
+    <message>
+        <source>Invite to room — contact id</source>
+        <translation>Пригласить в комнату — идентификатор контакта</translation>
+    </message>
+    <message>
+        <source>Members</source>
+        <translation>Участники</translation>
+    </message>
+    <message>
+        <source>Member action</source>
+        <translation>Действие с участником</translation>
+    </message>
+    <message>
+        <source>Kick member</source>
+        <translation>Исключить участника</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room?</source>
+        <translation>Удалить %1 из этой комнаты?</translation>
+    </message>
+    <message>
+        <source>Ban member</source>
+        <translation>Заблокировать участника</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>Заблокировать %1 в этой комнате? Он не сможет присоединиться снова, пока блокировка не будет снята.</translation>
+    </message>
+    <message>
+        <source>Invite another…</source>
+        <translation>Пригласить ещё…</translation>
+    </message>
+    <message>
+        <source>Change role…</source>
+        <translation>Изменить роль…</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>Исключить</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>Заблокировать</translation>
+    </message>
+    <message>
+        <source>Change role</source>
+        <translation>Изменить роль</translation>
+    </message>
+</context>
+<context>
     <name>RootWidget</name>
     <message>
         <source>Profile</source>
@@ -4991,6 +5420,38 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Remove account</source>
         <translation>Удалить учётную запись</translation>
+    </message>
+    <message>
+        <source>Rename account (empty clears the label)</source>
+        <translation>Переименовать аккаунт (пустое значение очищает метку)</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>Покинуть комнату</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>Покинуть «%1»? Позже можно снова присоединиться, если комната это разрешает.</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>Удалить комнату</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>Удалить «%1» на узле? Это действие нельзя отменить.</translation>
+    </message>
+    <message>
+        <source>Pin room to session</source>
+        <translation>Закрепить комнату за сессией</translation>
+    </message>
+    <message>
+        <source>Remove contact</source>
+        <translation>Удалить контакт</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>Удалить %1 из ваших контактов?</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5796,6 +6257,13 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>SettingsSchemaForm</name>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+</context>
+<context>
     <name>Sidebar</name>
     <message>
         <source>Local node</source>
@@ -6512,8 +6980,52 @@ Thanks — proceeding with: %1
         <translation>Не удалось удалить учётную запись</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>Не удалось подключить учётную запись</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>Не удалось изменить состояние активации учётной записи</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>Не удалось переименовать учётную запись</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>Не удалось отключить учётную запись</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>Не удалось присоединиться к комнате</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>Не удалось создать комнату</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>Не удалось покинуть комнату</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>Не удалось удалить комнату</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>Не удалось загрузить форму присоединения</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>Не удалось загрузить форму новой комнаты</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>Не удалось загрузить участников комнаты</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>Действие с участником было отклонено</translation>
     </message>
 </context>
 <context>
@@ -7667,6 +8179,28 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
+        <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
+
+Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
+Room row: **Enter** members · **i** invite · **l** leave · **x** delete · **p** pin to agent.
+Contacts group: **a** add contact · **f** find people.
+Contact row: **Enter** profile · **a** alias · **x** remove · **m** open DM.
+
+Room invites are handled by the node; newly-joined rooms appear here automatically.
+
+</source>
+        <translation>Транспортные аккаунты Events-IO, их комнаты, участники и контакты, доступны в GUI. **j/k** перемещение.
+
+Строка аккаунта: **c** подключить · **d** отключить · **e** включить/отключить · **r** переименовать · **x** удалить аккаунт · **g** войти в комнату · **n** новая комната · **a** добавить контакт · **f** найти людей.
+Строка комнаты: **Enter** участники · **i** пригласить · **l** покинуть · **x** удалить · **p** закрепить за агентом.
+Группа контактов: **a** добавить контакт · **f** найти людей.
+Строка контакта: **Enter** профиль · **a** псевдоним · **x** удалить · **m** открыть DM.
+
+Приглашения в комнаты обрабатываются узлом; недавно присоединённые комнаты появляются здесь автоматически.
+
+</translation>
+    </message>
+    <message>
         <source>## Accounts
 
 </source>
@@ -7713,18 +8247,40 @@ _Агент не выбран._
         <translation>Отключено</translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
-
+        <source>- %1%2 **%3** — %4 · %5%6
 </source>
-        <translation>Транспортные учётные записи Events-IO и их активные комнаты, общие с графическим интерфейсом. **j/k** перемещение · **c** подключить · **d** отключить · **x** удалить учётную запись. Приглашения в комнаты обрабатываются узлом; недавно присоединённые комнаты появляются здесь автоматически.
-
+        <translation>- %1%2 **%3** — %4 · %5%6
 </translation>
     </message>
     <message>
-        <source>- %1%2 **%3** — %4 · %5
+        <source> · _disabled_</source>
+        <translation> · _отключено_</translation>
+    </message>
+    <message>
+        <source>  - %1~ Contacts (%2)
 </source>
-        <translation>- %1%2 **%3** — %4 · %5
+        <translation>  - %1~ Контакты (%2)
 </translation>
+    </message>
+    <message>
+        <source>    - %1%2 `%3`
+</source>
+        <translation>    - %1%2 `%3`
+</translation>
+    </message>
+    <message>
+        <source>    - %1%2 %3 · `%4`
+</source>
+        <translation>    - %1%2 %3 · `%4`
+</translation>
+    </message>
+    <message>
+        <source>  - %1# %2</source>
+        <translation>  - %1# %2</translation>
+    </message>
+    <message>
+        <source>  - %1# %2 · %3</source>
+        <translation>  - %1# %2 · %3</translation>
     </message>
     <message>
         <source>  - %1
@@ -7743,14 +8299,6 @@ _Агент не выбран._
 </source>
         <translation>  - _Нет комнат._
 </translation>
-    </message>
-    <message>
-        <source>  - %1</source>
-        <translation>  - %1</translation>
-    </message>
-    <message>
-        <source>  - %1 · %2</source>
-        <translation>  - %1 · %2</translation>
     </message>
     <message>
         <source> · ⇄ `%1`</source>
@@ -7954,6 +8502,33 @@ _Агент не выбран._
     <message>
         <source>Checkpoint rewind failed</source>
         <translation>Не удалось откатить к контрольной точке</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>Не удалось добавить контакт</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>Не удалось обновить контакт</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>Не удалось удалить контакт</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>Не удалось задать псевдоним контакта</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>Не удалось выполнить поиск в каталоге</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>Не удалось загрузить профиль контакта</translation>
     </message>
 </context>
 <context>
@@ -8236,8 +8811,52 @@ _Агент не выбран._
         <translation>Не удалось удалить учётную запись</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>Не удалось подключить учётную запись</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>Не удалось изменить состояние активации учётной записи</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>Не удалось переименовать учётную запись</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>Не удалось отключить учётную запись</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>Не удалось присоединиться к комнате</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>Не удалось создать комнату</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>Не удалось покинуть комнату</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>Не удалось удалить комнату</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>Не удалось загрузить форму присоединения</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>Не удалось загрузить форму новой комнаты</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>Не удалось загрузить участников комнаты</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>Действие с участником было отклонено</translation>
     </message>
 </context>
 <context>

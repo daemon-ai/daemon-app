@@ -958,6 +958,102 @@ until it is re-registered.</source>
         <translation>已中斷連線</translation>
     </message>
     <message>
+        <source>Add contact</source>
+        <translation>新增聯絡人</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>新增</translation>
+    </message>
+    <message>
+        <source>Contact id</source>
+        <translation>聯絡人 ID</translation>
+    </message>
+    <message>
+        <source>@bob:matrix.org</source>
+        <translation>@bob:matrix.org</translation>
+    </message>
+    <message>
+        <source>Set alias</source>
+        <translation>設定別名</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>儲存</translation>
+    </message>
+    <message>
+        <source>Local alias for %1 (empty clears it)</source>
+        <translation>%1 的本機別名（留空即清除）</translation>
+    </message>
+    <message>
+        <source>Remove contact?</source>
+        <translation>移除聯絡人？</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>從聯絡人中移除 %1？</translation>
+    </message>
+    <message>
+        <source>Leave room?</source>
+        <translation>離開聊天室？</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>離開聊天室</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>離開 “%1”？如果聊天室允許，你稍後可以重新加入。</translation>
+    </message>
+    <message>
+        <source>Delete room?</source>
+        <translation>刪除聊天室？</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>刪除聊天室</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>在節點上刪除 “%1”？此操作無法復原。</translation>
+    </message>
+    <message>
+        <source>Kick member?</source>
+        <translation>踢出成員？</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>踢出</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room? They can be invited back.</source>
+        <translation>從此聊天室移除 %1？可以再次邀請。</translation>
+    </message>
+    <message>
+        <source>Ban member?</source>
+        <translation>封鎖成員？</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>封鎖</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>從此聊天室封鎖 %1？在解除封鎖前無法重新加入。</translation>
+    </message>
+    <message>
+        <source>Invite to room</source>
+        <translation>邀請進聊天室</translation>
+    </message>
+    <message>
+        <source>Invite</source>
+        <translation>邀請</translation>
+    </message>
+    <message>
         <source>Remove account?</source>
         <translation>移除帳戶？</translation>
     </message>
@@ -974,6 +1070,22 @@ until it is re-registered.</source>
         <translation>節點會中斷該傳輸、關閉其會話、解除其路由繫結並刪除已儲存的憑證。此操作無法復原。</translation>
     </message>
     <message>
+        <source>Rename account</source>
+        <translation>重新命名帳戶</translation>
+    </message>
+    <message>
+        <source>Display label (empty clears it)</source>
+        <translation>顯示標籤（留空即清除）</translation>
+    </message>
+    <message>
+        <source>Connect this account</source>
+        <translation>連線此帳戶</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>已啟用</translation>
+    </message>
+    <message>
         <source>Re-authenticate this account</source>
         <translation>重新驗證此帳戶</translation>
     </message>
@@ -984,6 +1096,22 @@ until it is re-registered.</source>
     <message>
         <source>Remove this account…</source>
         <translation>移除此帳戶…</translation>
+    </message>
+    <message>
+        <source>Rename this account…</source>
+        <translation>重新命名此帳戶…</translation>
+    </message>
+    <message>
+        <source>Rooms</source>
+        <translation>聊天室</translation>
+    </message>
+    <message>
+        <source>Join room…</source>
+        <translation>加入聊天室…</translation>
+    </message>
+    <message>
+        <source>New room…</source>
+        <translation>新增聊天室…</translation>
     </message>
     <message>
         <source>No rooms.</source>
@@ -1012,6 +1140,58 @@ until it is re-registered.</source>
     <message>
         <source>Route this room&apos;s messages to a session</source>
         <translation>將此聊天室的訊息路由到某個工作階段</translation>
+    </message>
+    <message>
+        <source>Members ▾</source>
+        <translation>成員 ▾</translation>
+    </message>
+    <message>
+        <source>Members ▸</source>
+        <translation>成員 ▸</translation>
+    </message>
+    <message>
+        <source>Leave</source>
+        <translation>離開</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>刪除</translation>
+    </message>
+    <message>
+        <source>No members.</source>
+        <translation>沒有成員。</translation>
+    </message>
+    <message>
+        <source>⊕ Invite…</source>
+        <translation>⊕ 邀請…</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>聯絡人</translation>
+    </message>
+    <message>
+        <source>Add contact…</source>
+        <translation>新增聯絡人…</translation>
+    </message>
+    <message>
+        <source>Find people…</source>
+        <translation>尋找使用者…</translation>
+    </message>
+    <message>
+        <source>No contacts.</source>
+        <translation>沒有聯絡人。</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+    <message>
+        <source>Alias…</source>
+        <translation>別名…</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>設定檔</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -1812,6 +1992,91 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ContactFlow</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>聯絡人設定檔</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>沒有設定檔詳細資料。</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>關閉</translation>
+    </message>
+    <message>
+        <source>Add contact — contact id</source>
+        <translation>新增聯絡人 — 聯絡人 ID</translation>
+    </message>
+    <message>
+        <source>Find people — search query</source>
+        <translation>尋找使用者 — 搜尋查詢</translation>
+    </message>
+    <message>
+        <source>Alias for %1 (empty clears)</source>
+        <translation>%1 的別名（留空即清除）</translation>
+    </message>
+    <message>
+        <source>Directory</source>
+        <translation>目錄</translation>
+    </message>
+    <message>
+        <source>Directory action</source>
+        <translation>目錄操作</translation>
+    </message>
+    <message>
+        <source>Add to contacts</source>
+        <translation>加入聯絡人</translation>
+    </message>
+    <message>
+        <source>Message (DM)</source>
+        <translation>訊息 (DM)</translation>
+    </message>
+</context>
+<context>
+    <name>ContactProfileDialog</name>
+    <message>
+        <source>Contact profile</source>
+        <translation>聯絡人設定檔</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>關閉</translation>
+    </message>
+    <message>
+        <source>No profile details.</source>
+        <translation>沒有設定檔詳細資料。</translation>
+    </message>
+</context>
+<context>
+    <name>ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>新增聯絡人失敗</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>更新聯絡人失敗</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>移除聯絡人失敗</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>設定聯絡人別名失敗</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>搜尋目錄失敗</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>載入聯絡人設定檔失敗</translation>
+    </message>
+</context>
+<context>
     <name>CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
@@ -2579,6 +2844,41 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>FindPeopleDialog</name>
+    <message>
+        <source>Find people — %1</source>
+        <translation>尋找使用者 — %1</translation>
+    </message>
+    <message>
+        <source>Find people</source>
+        <translation>尋找使用者</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>完成</translation>
+    </message>
+    <message>
+        <source>Search the directory…</source>
+        <translation>搜尋目錄…</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>搜尋</translation>
+    </message>
+    <message>
+        <source>No results.</source>
+        <translation>沒有結果。</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>新增</translation>
+    </message>
+    <message>
+        <source>DM</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>FingerprintRepository</name>
     <message>
         <source>Fingerprint revoke failed</source>
@@ -2949,6 +3249,37 @@ Thanks — proceeding with: %1
 
 謝謝 — 將採用：%1
 </translation>
+    </message>
+</context>
+<context>
+    <name>JoinRoomDialog</name>
+    <message>
+        <source>Join room — %1</source>
+        <translation>加入聊天室 — %1</translation>
+    </message>
+    <message>
+        <source>Join room</source>
+        <translation>加入聊天室</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>加入</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>頻道</translation>
+    </message>
+    <message>
+        <source>#room name</source>
+        <translation>#聊天室名稱</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>暱稱</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>密碼</translation>
     </message>
 </context>
 <context>
@@ -3767,6 +4098,41 @@ Start one from the Discover tab.</source>
     <message>
         <source>Cancel</source>
         <translation>取消</translation>
+    </message>
+</context>
+<context>
+    <name>NewRoomDialog</name>
+    <message>
+        <source>New room — %1</source>
+        <translation>新增聊天室 — %1</translation>
+    </message>
+    <message>
+        <source>New room</source>
+        <translation>新增聊天室</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>建立</translation>
+    </message>
+    <message>
+        <source>Participants</source>
+        <translation>參與者</translation>
+    </message>
+    <message>
+        <source>Contact id (e.g. @bob:matrix.org)</source>
+        <translation>聯絡人 ID（例如 @bob:matrix.org）</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>新增</translation>
+    </message>
+    <message>
+        <source>Max members</source>
+        <translation>成員上限</translation>
+    </message>
+    <message>
+        <source>(0 = unlimited)</source>
+        <translation>(0 = 無限制)</translation>
     </message>
 </context>
 <context>
@@ -4759,6 +5125,69 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RoomFlow</name>
+    <message>
+        <source>Channel name</source>
+        <translation>頻道名稱</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>密碼</translation>
+    </message>
+    <message>
+        <source>Nickname</source>
+        <translation>暱稱</translation>
+    </message>
+    <message>
+        <source>Invite to room — contact id</source>
+        <translation>邀請進聊天室 — 聯絡人 ID</translation>
+    </message>
+    <message>
+        <source>Members</source>
+        <translation>成員</translation>
+    </message>
+    <message>
+        <source>Member action</source>
+        <translation>成員操作</translation>
+    </message>
+    <message>
+        <source>Kick member</source>
+        <translation>踢出成員</translation>
+    </message>
+    <message>
+        <source>Remove %1 from this room?</source>
+        <translation>從此聊天室移除 %1？</translation>
+    </message>
+    <message>
+        <source>Ban member</source>
+        <translation>封鎖成員</translation>
+    </message>
+    <message>
+        <source>Ban %1 from this room? They cannot re-join until unbanned.</source>
+        <translation>從此聊天室封鎖 %1？在解除封鎖前無法重新加入。</translation>
+    </message>
+    <message>
+        <source>Invite another…</source>
+        <translation>邀請其他人…</translation>
+    </message>
+    <message>
+        <source>Change role…</source>
+        <translation>變更角色…</translation>
+    </message>
+    <message>
+        <source>Kick</source>
+        <translation>踢出</translation>
+    </message>
+    <message>
+        <source>Ban</source>
+        <translation>封鎖</translation>
+    </message>
+    <message>
+        <source>Change role</source>
+        <translation>變更角色</translation>
+    </message>
+</context>
+<context>
     <name>RootWidget</name>
     <message>
         <source>Profile</source>
@@ -4983,6 +5412,38 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Remove account</source>
         <translation>移除帳戶</translation>
+    </message>
+    <message>
+        <source>Rename account (empty clears the label)</source>
+        <translation>重新命名帳戶（留空即清除標籤）</translation>
+    </message>
+    <message>
+        <source>Leave room</source>
+        <translation>離開聊天室</translation>
+    </message>
+    <message>
+        <source>Leave “%1”? You can re-join later if the room allows it.</source>
+        <translation>離開 “%1”？如果聊天室允許，你稍後可以重新加入。</translation>
+    </message>
+    <message>
+        <source>Delete room</source>
+        <translation>刪除聊天室</translation>
+    </message>
+    <message>
+        <source>Delete “%1” on the node? This cannot be undone.</source>
+        <translation>在節點上刪除 “%1”？此操作無法復原。</translation>
+    </message>
+    <message>
+        <source>Pin room to session</source>
+        <translation>將聊天室釘選到工作階段</translation>
+    </message>
+    <message>
+        <source>Remove contact</source>
+        <translation>移除聯絡人</translation>
+    </message>
+    <message>
+        <source>Remove %1 from your contacts?</source>
+        <translation>從聯絡人中移除 %1？</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -5786,6 +6247,13 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>SettingsSchemaForm</name>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+</context>
+<context>
     <name>Sidebar</name>
     <message>
         <source>Local node</source>
@@ -6498,8 +6966,52 @@ Thanks — proceeding with: %1
         <translation>移除帳戶失敗</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>連線帳戶失敗</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>變更帳戶的啟用狀態失敗</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>重新命名帳戶失敗</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>中斷帳戶失敗</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>加入聊天室失敗</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>建立聊天室失敗</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>離開聊天室失敗</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>刪除聊天室失敗</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>載入加入表單失敗</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>載入新增聊天室表單失敗</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>載入聊天室成員失敗</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>成員操作被拒絕</translation>
     </message>
 </context>
 <context>
@@ -7653,6 +8165,28 @@ _未選取代理。_
 </translation>
     </message>
     <message>
+        <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
+
+Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
+Room row: **Enter** members · **i** invite · **l** leave · **x** delete · **p** pin to agent.
+Contacts group: **a** add contact · **f** find people.
+Contact row: **Enter** profile · **a** alias · **x** remove · **m** open DM.
+
+Room invites are handled by the node; newly-joined rooms appear here automatically.
+
+</source>
+        <translation>Events-IO 傳輸帳戶及其聊天室、成員與聯絡人，與 GUI 共享。**j/k** 移動。
+
+帳戶列：**c** 連線 · **d** 中斷 · **e** 啟用/停用 · **r** 重新命名 · **x** 移除帳戶 · **g** 加入聊天室 · **n** 新增聊天室 · **a** 新增聯絡人 · **f** 尋找使用者。
+聊天室列：**Enter** 成員 · **i** 邀請 · **l** 離開 · **x** 刪除 · **p** 釘選到代理。
+聯絡人群組：**a** 新增聯絡人 · **f** 尋找使用者。
+聯絡人列：**Enter** 設定檔 · **a** 別名 · **x** 移除 · **m** 開啟 DM。
+
+聊天室邀請由節點處理；新加入的聊天室會自動顯示於此。
+
+</translation>
+    </message>
+    <message>
         <source>## Accounts
 
 </source>
@@ -7699,18 +8233,40 @@ _未選取代理。_
         <translation>已中斷連線</translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. **j/k** move · **c** connect · **d** disconnect · **x** remove account. Room invites are handled by the node; newly-joined rooms appear here automatically.
-
+        <source>- %1%2 **%3** — %4 · %5%6
 </source>
-        <translation>Events-IO 傳輸帳戶及其即時房間，與 GUI 共享。**j/k** 移動 · **c** 連線 · **d** 中斷 · **x** 移除帳戶。房間邀請由節點處理；新加入的房間會自動顯示於此。
-
+        <translation>- %1%2 **%3** — %4 · %5%6
 </translation>
     </message>
     <message>
-        <source>- %1%2 **%3** — %4 · %5
+        <source> · _disabled_</source>
+        <translation> · _已停用_</translation>
+    </message>
+    <message>
+        <source>  - %1~ Contacts (%2)
 </source>
-        <translation>- %1%2 **%3** — %4 · %5
+        <translation>  - %1~ 聯絡人 (%2)
 </translation>
+    </message>
+    <message>
+        <source>    - %1%2 `%3`
+</source>
+        <translation>    - %1%2 `%3`
+</translation>
+    </message>
+    <message>
+        <source>    - %1%2 %3 · `%4`
+</source>
+        <translation>    - %1%2 %3 · `%4`
+</translation>
+    </message>
+    <message>
+        <source>  - %1# %2</source>
+        <translation>  - %1# %2</translation>
+    </message>
+    <message>
+        <source>  - %1# %2 · %3</source>
+        <translation>  - %1# %2 · %3</translation>
     </message>
     <message>
         <source>  - %1
@@ -7729,14 +8285,6 @@ _未選取代理。_
 </source>
         <translation>  - _沒有聊天室。_
 </translation>
-    </message>
-    <message>
-        <source>  - %1</source>
-        <translation>  - %1</translation>
-    </message>
-    <message>
-        <source>  - %1 · %2</source>
-        <translation>  - %1 · %2</translation>
     </message>
     <message>
         <source> · ⇄ `%1`</source>
@@ -7940,6 +8488,33 @@ _未選取代理。_
     <message>
         <source>Checkpoint rewind failed</source>
         <translation>檢查點回溯失敗</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ContactsRepository</name>
+    <message>
+        <source>Failed to add the contact</source>
+        <translation>新增聯絡人失敗</translation>
+    </message>
+    <message>
+        <source>Failed to update the contact</source>
+        <translation>更新聯絡人失敗</translation>
+    </message>
+    <message>
+        <source>Failed to remove the contact</source>
+        <translation>移除聯絡人失敗</translation>
+    </message>
+    <message>
+        <source>Failed to set the contact alias</source>
+        <translation>設定聯絡人別名失敗</translation>
+    </message>
+    <message>
+        <source>Failed to search the directory</source>
+        <translation>搜尋目錄失敗</translation>
+    </message>
+    <message>
+        <source>Failed to load the contact profile</source>
+        <translation>載入聯絡人設定檔失敗</translation>
     </message>
 </context>
 <context>
@@ -8222,8 +8797,52 @@ _未選取代理。_
         <translation>移除帳戶失敗</translation>
     </message>
     <message>
+        <source>Failed to connect the account</source>
+        <translation>連線帳戶失敗</translation>
+    </message>
+    <message>
+        <source>Failed to change the account&apos;s enabled state</source>
+        <translation>變更帳戶的啟用狀態失敗</translation>
+    </message>
+    <message>
+        <source>Failed to rename the account</source>
+        <translation>重新命名帳戶失敗</translation>
+    </message>
+    <message>
         <source>Failed to disconnect the account</source>
         <translation>中斷帳戶失敗</translation>
+    </message>
+    <message>
+        <source>Failed to join the room</source>
+        <translation>加入聊天室失敗</translation>
+    </message>
+    <message>
+        <source>Failed to create the room</source>
+        <translation>建立聊天室失敗</translation>
+    </message>
+    <message>
+        <source>Failed to leave the room</source>
+        <translation>離開聊天室失敗</translation>
+    </message>
+    <message>
+        <source>Failed to delete the room</source>
+        <translation>刪除聊天室失敗</translation>
+    </message>
+    <message>
+        <source>Failed to load the join form</source>
+        <translation>載入加入表單失敗</translation>
+    </message>
+    <message>
+        <source>Failed to load the new-room form</source>
+        <translation>載入新增聊天室表單失敗</translation>
+    </message>
+    <message>
+        <source>Failed to load the room members</source>
+        <translation>載入聊天室成員失敗</translation>
+    </message>
+    <message>
+        <source>The membership action was rejected</source>
+        <translation>成員操作被拒絕</translation>
     </message>
 </context>
 <context>
