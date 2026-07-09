@@ -37,6 +37,15 @@ public:
 
     [[nodiscard]] QVariantMap profile(const QString& id) const override;
     [[nodiscard]] QString resolveProfileRef(const QString& selector) const override;
+
+    // Persona (SOUL.md) seam backed by the node-owned SoulGet/SoulSet ops (wire v36). soul()
+    // returns the repository's last-known persona synchronously; requestSoul() issues a SoulGet;
+    // setSoul() issues a SoulSet (the node validates/scans/caps + rejects Foreign-engine writes).
+    // soulChanged(id) is emitted ONLY when fresh authoritative text has landed (never optimistic);
+    // a SoulSet rejection surfaces via profileOpFailed().
+    [[nodiscard]] QString soul(const QString& profileId) const override;
+    void requestSoul(const QString& profileId) override;
+    void setSoul(const QString& profileId, const QString& text) override;
     [[nodiscard]] QStringList profileNames() const override;
     [[nodiscard]] QVariantList availableSkills() const override { return {}; }
     [[nodiscard]] QVariantList availableTools() const override { return {}; }

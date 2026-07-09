@@ -42,8 +42,10 @@ public:
     // profileOpFailed()). `soul()` returns the last-known persona synchronously;
     // `requestSoul()` asks the seam to (re)fetch it; `setSoul()` persists a new persona.
     // A store emits soulChanged(profileId) whenever soul(profileId) has fresh authoritative
-    // content. The defaults ride the profile row's `systemPrompt` key so in-memory stores
-    // work unchanged; the daemon store overrides all three with the SoulGet/SoulSet wire ops.
+    // content. The defaults ride an in-memory profile-row `systemPrompt` key (a mock-store
+    // convention only — the wire ProfileSpec carries no system prompt at v36; the persona is a
+    // node-owned SOUL.md document), so in-memory stores work unchanged; the daemon store overrides
+    // all three with the SoulGet/SoulSet wire ops.
     [[nodiscard]] Q_INVOKABLE virtual QString soul(const QString& profileId) const {
         return profile(profileId).value(QStringLiteral("systemPrompt")).toString();
     }

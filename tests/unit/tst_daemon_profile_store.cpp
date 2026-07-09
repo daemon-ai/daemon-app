@@ -41,7 +41,10 @@ DecodedDistribution sampleDist() {
     d.profile.id = QStringLiteral("work");
     d.profile.provider = QStringLiteral("genai");
     d.profile.model = QStringLiteral("claude");
-    d.profile.systemPrompt = QStringLiteral("be helpful");
+    // The persona (SOUL.md) rides the distribution's node-produced `soul` field (wire v36), not
+    // the profile spec — the app passes it through on export/import.
+    d.hasSoul = true;
+    d.soul = QStringLiteral("# Persona\n\nBe helpful.");
     DecodedSkillBundle skill;
     skill.name = QStringLiteral("notes");
     skill.category = QStringLiteral("writing");
@@ -126,6 +129,32 @@ QByteArray profileIdResponse(const char* id) {
 QByteArray okResponse() {
     QByteArray b;
     cborText(b, "Ok");
+    return b;
+}
+
+// {"SoulText": <text>} — the SoulGet reply carrying the raw stored persona. Built via the
+// generated encoder so the CBOR shape matches the decoder exactly (any length). `text` must
+// outlive the call (the zcbor_string borrows it during encodeResponse).
+QByteArray soulTextResponse(const QByteArray& text) {
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_soul_text_m_c;
+    // Borrow `text` directly (it outlives encodeResponse below); setZstr is declared further down.
+    resp->api_response_response_soul_text_m.response_soul_text_SoulText.value =
+        reinterpret_cast<const uint8_t*>(text.constData());
+    resp->api_response_response_soul_text_m.response_soul_text_SoulText.len =
+        static_cast<size_t>(text.size());
+    return encodeResponse(*resp);
+}
+
+// {"Error":{"Other":"persona: empty"}} — a node persona-validation rejection (message < 24 bytes
+// so the fixture's single-byte tstr header encodes it correctly).
+QByteArray personaRejectResponse() {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "Error");
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "Other");
+    cborText(b, "persona: empty");
     return b;
 }
 
@@ -304,6 +333,106 @@ private slots:
         QCOMPARE(back.skills.at(0).name, QStringLiteral("notes"));
         QCOMPARE(back.skills.at(0).files.value(QStringLiteral("SKILL.md")),
                  QStringLiteral("# notes"));
+        // The persona survives the export/import round-trip (wire v36 `? soul`).
+        QVERIFY(back.hasSoul);
+        QCOMPARE(back.soul, QStringLiteral("# Persona\n\nBe helpful."));
+    }
+
+    // Persona (SOUL.md) codec round-trip (wire v36): SoulGet/SoulSet encode to the right arms with
+    // the id (+ text), and a SoulText response decodes to the raw persona.
+    void soulOpsCodecRoundTrip() {
+        const QByteArray getReq = NodeApiCodec::encodeSoulGetRequest(QStringLiteral("work"));
+        QVERIFY(!getReq.isEmpty());
+        auto g = std::make_unique<api_request_r>();
+        size_t consumed = 0;
+        QCOMPARE(cbor_decode_api_request(reinterpret_cast<const uint8_t*>(getReq.constData()),
+                                         static_cast<size_t>(getReq.size()), g.get(), &consumed),
+                 ZCBOR_SUCCESS);
+        QCOMPARE(g->api_request_choice, api_request_r::api_request_request_soul_get_m_c);
+        QCOMPARE(zToQString(g->api_request_request_soul_get_m.SoulGet_id), QStringLiteral("work"));
+
+        const QByteArray setReq =
+            NodeApiCodec::encodeSoulSetRequest(QStringLiteral("work"), QStringLiteral("be kind"));
+        QVERIFY(!setReq.isEmpty());
+        auto s = std::make_unique<api_request_r>();
+        QCOMPARE(cbor_decode_api_request(reinterpret_cast<const uint8_t*>(setReq.constData()),
+                                         static_cast<size_t>(setReq.size()), s.get(), &consumed),
+                 ZCBOR_SUCCESS);
+        QCOMPARE(s->api_request_choice, api_request_r::api_request_request_soul_set_m_c);
+        QCOMPARE(zToQString(s->api_request_request_soul_set_m.SoulSet_id), QStringLiteral("work"));
+        QCOMPARE(zToQString(s->api_request_request_soul_set_m.SoulSet_text),
+                 QStringLiteral("be kind"));
+
+        const QByteArray txt = QByteArrayLiteral("# Persona\n\nBe concise; lead with the answer.");
+        const QByteArray resp = soulTextResponse(txt);
+        QVERIFY(!resp.isEmpty());
+        QCOMPARE(NodeApiCodec::responseKind(resp), daemonapp::daemon::ApiResponseKind::SoulText);
+        QString out;
+        QVERIFY(NodeApiCodec::decodeSoulText(resp, &out));
+        QCOMPARE(out, QString::fromUtf8(txt));
+    }
+
+    // Store flow: requestSoul issues a SoulGet; the SoulText answer caches the persona and
+    // announces it via soulChanged, with soul() returning the fresh authoritative text.
+    void requestSoulFetchesAndSignals() {
+        const QString sock = m_tmp.filePath(QStringLiteral("soul-get.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        const QByteArray persona = QByteArrayLiteral("# Persona\n\nBe concise.");
+        fake.setReplyPayload(soulTextResponse(persona));
+        DaemonTransportFixture tx(sock);
+        ProfileRepository repo(&tx.client, nullptr);
+        DaemonProfileStore store(&repo);
+
+        QSignalSpy soulSpy(&store, &profiles::IProfileStore::soulChanged);
+        QCOMPARE(store.soul(QStringLiteral("work")), QString()); // empty until the fetch answers
+        store.requestSoul(QStringLiteral("work"));
+        QTRY_COMPARE_WITH_TIMEOUT(soulSpy.count(), 1, 3000);
+        QCOMPARE(soulSpy.last().first().toString(), QStringLiteral("work"));
+        QCOMPARE(store.soul(QStringLiteral("work")), QString::fromUtf8(persona));
+    }
+
+    // Store flow: setSoul issues a SoulSet; on Ok it re-fetches via SoulGet (never echoes the
+    // submitted text), so soulChanged fires ONCE with the node's authoritative stored text.
+    void setSoulPersistsThenRefetches() {
+        const QString sock = m_tmp.filePath(QStringLiteral("soul-set.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        const QByteArray stored = QByteArrayLiteral("# Persona\n\nBe kind (normalized).");
+        // Call #1 (SoulSet) -> Ok; call #2 (the auto SoulGet refetch) -> the stored text.
+        fake.setReplySequence({okResponse(), soulTextResponse(stored)});
+        DaemonTransportFixture tx(sock);
+        ProfileRepository repo(&tx.client, nullptr);
+        DaemonProfileStore store(&repo);
+
+        QSignalSpy soulSpy(&store, &profiles::IProfileStore::soulChanged);
+        QSignalSpy opFailed(&store, &profiles::IProfileStore::profileOpFailed);
+        store.setSoul(QStringLiteral("work"), QStringLiteral("be kind"));
+        QTRY_COMPARE_WITH_TIMEOUT(soulSpy.count(), 1, 3000);
+        QCOMPARE(soulSpy.last().first().toString(), QStringLiteral("work"));
+        QCOMPARE(store.soul(QStringLiteral("work")), QString::fromUtf8(stored));
+        QCOMPARE(opFailed.count(), 0);
+        // Exactly the two Calls (SoulSet + the refetch SoulGet) — no signal storm.
+        QCOMPARE(fake.requestCount(), 2);
+    }
+
+    // Store flow: a rejected SoulSet (node ApiError) surfaces via profileOpFailed and does NOT
+    // announce a persona change (never optimistic).
+    void setSoulRejectionSurfacesError() {
+        const QString sock = m_tmp.filePath(QStringLiteral("soul-reject.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplyPayload(personaRejectResponse());
+        DaemonTransportFixture tx(sock);
+        ProfileRepository repo(&tx.client, nullptr);
+        DaemonProfileStore store(&repo);
+
+        QSignalSpy soulSpy(&store, &profiles::IProfileStore::soulChanged);
+        QSignalSpy opFailed(&store, &profiles::IProfileStore::profileOpFailed);
+        store.setSoul(QStringLiteral("work"), QString());
+        QTRY_COMPARE_WITH_TIMEOUT(opFailed.count(), 1, 3000);
+        QVERIFY(opFailed.last().first().toString().contains(QStringLiteral("persona")));
+        QCOMPARE(soulSpy.count(), 0);
     }
 
     // PRO-8 codec round-trip: a Revisions response decodes to the revision log, with the

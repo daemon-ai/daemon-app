@@ -1344,6 +1344,30 @@ void ProfileRepository::getProfile(const QString& id) {
                           QLatin1String(kGetPrefix) + id);
 }
 
+QString ProfileRepository::cachedSoul(const QString& id) const {
+    return m_souls.value(id);
+}
+
+void ProfileRepository::requestSoul(const QString& id) {
+    if (client() == nullptr || id.isEmpty()) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeSoulGetRequest(id),
+                          QLatin1String(kSoulGetPrefix) + id);
+}
+
+void ProfileRepository::setSoul(const QString& id, const QString& text) {
+    if (client() == nullptr) {
+        emit soulOpFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    if (id.isEmpty()) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeSoulSetRequest(id, text),
+                          QLatin1String(kSoulSetPrefix) + id);
+}
+
 void ProfileRepository::exportProfile(const QString& id) {
     if (client() == nullptr) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
@@ -1421,8 +1445,10 @@ void ProfileRepository::dispatchPrefixedResponse(const QString& correlationId,
         const char* prefix;
         void (ProfileRepository::*handler)(const QString&, const QByteArray&);
     };
-    static const std::array<PrefixRoute, 4> kRoutes = {{
+    static const std::array<PrefixRoute, 6> kRoutes = {{
         {kGetPrefix, &ProfileRepository::handleProfileGetResponse},
+        {kSoulGetPrefix, &ProfileRepository::handleSoulGetResponse},
+        {kSoulSetPrefix, &ProfileRepository::handleSoulSetResponse},
         {kExportPrefix, &ProfileRepository::handleProfileExportResponse},
         {kHistoryPrefix, &ProfileRepository::handleProfileHistoryResponse},
         {kRevertPrefix, &ProfileRepository::handleProfileRevertResponse},
@@ -1474,6 +1500,32 @@ void ProfileRepository::handleProfileGetResponse(const QString& id,
     // list) so the Profiles UI renders this agent from cache on a later offline start.
     persistFetchedProfile(id, responseCbor);
     emit profileSpecLoaded(id);
+}
+
+void ProfileRepository::handleSoulGetResponse(const QString& id, const QByteArray& responseCbor) {
+    QString text;
+    if (!NodeApiCodec::decodeSoulText(responseCbor, &text)) {
+        // An ApiError (unknown profile / no persona store) or a decode miss: a read gap the
+        // persona editor already gates on (foreign profiles hide the surface). Do NOT toast off a
+        // read error — the contract makes editor visibility a design decision, not a read outcome.
+        return;
+    }
+    m_souls.insert(id, text);
+    emit soulLoaded(id);
+}
+
+void ProfileRepository::handleSoulSetResponse(const QString& id, const QByteArray& responseCbor) {
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+        DecodedApiError err;
+        emit soulOpFailed(NodeApiCodec::decodeError(responseCbor, &err)
+                              ? err.message
+                              : tr("Persona save failed"));
+        return;
+    }
+    // Ok: the node validated/scanned/capped and stored the persona (and emits ProfilesChanged for
+    // thin clients). Re-fetch the authoritative stored text via SoulGet rather than echoing the
+    // submitted string — soulLoaded fires once when that answer lands (one signal per fresh read).
+    requestSoul(id);
 }
 
 void ProfileRepository::persistFetchedProfile(const QString& id, const QByteArray& responseCbor) {
@@ -1598,6 +1650,15 @@ bool ProfileRepository::isProfileOperation(const QString& correlationId) {
 void ProfileRepository::handleFailure(const QString& correlationId, const QString& message) {
     if (correlationId == QLatin1String(kProfilesCorrelation)) {
         emit refreshFailed(message);
+        return;
+    }
+    // A SoulSet that never reached the node (transport failure) is a failed save -> surface it.
+    // A SoulGet transport failure is a silent read gap (same rationale as its ApiError arm).
+    if (correlationId.startsWith(QLatin1String(kSoulSetPrefix))) {
+        emit soulOpFailed(message);
+        return;
+    }
+    if (correlationId.startsWith(QLatin1String(kSoulGetPrefix))) {
         return;
     }
     if (isProfileOperation(correlationId)) {

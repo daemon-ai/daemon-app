@@ -124,7 +124,7 @@ QByteArray encodeWithFill(decltype(api_request_r::api_request_choice) choice,
 // Scratch buffers a populated profile_spec borrows (the zcbor_string fields point into these), so
 // the caller must keep this alive until encodeRequest runs.
 struct ProfileSpecScratch {
-    QByteArray id, model, prompt, baseUrl, credRef, fbCredRef, engineAgent;
+    QByteArray id, model, baseUrl, credRef, fbCredRef, engineAgent;
     QList<QByteArray> toolBufs, boundTransports, boundCredRefs;
     // foreign-backend arms (wire v30): the AgentNative model hint, or the NodeProvider model +
     // credential ref. zcbor borrows into these across the encode.

@@ -234,6 +234,19 @@ public:
     // Fetch a profile's full spec (ProfileGet); on success caches it + fires profileSpecLoaded.
     void getProfile(const QString& id);
 
+    // Persona (SOUL.md) seam (wire v36). requestSoul issues a SoulGet; on SoulText the text is
+    // cached and soulLoaded(id) fires. setSoul issues a SoulSet; on Ok it re-issues a SoulGet
+    // (authoritative refetch — the node validates/scans/caps + normalizes, so the app renders the
+    // stored text, never the submitted string), which lands as soulLoaded; on a node ApiError
+    // soulOpFailed(message) fires (e.g. Unsupported for a Foreign-engine profile, or persona
+    // validation rejection). A SoulGet error is a capability/existence gap the persona editor
+    // already gates on (foreign profiles hide the surface), so it is a silent no-op — never a
+    // toast.
+    void requestSoul(const QString& id);
+    void setSoul(const QString& id, const QString& text);
+    // The last-known persona for `id` if a SoulGet has answered (empty otherwise). Synchronous.
+    [[nodiscard]] QString cachedSoul(const QString& id) const;
+
     // PRO-7: export a profile (ProfileExport -> Distribution); distributionExported carries the raw
     // response bytes (the portable artifact) + the decoded form. Import a distribution
     // (ProfileImport -> ProfileId); on success re-lists + imported() fires.
@@ -253,6 +266,12 @@ signals:
     void operationFailed(const QString& message);
     // A ProfileGet completed and cachedSpec(id) is now populated.
     void profileSpecLoaded(const QString& id);
+    // A SoulGet answered (directly, or after a SoulSet re-fetch): cachedSoul(id) now holds fresh
+    // authoritative persona text. The store re-emits this as the seam's soulChanged(id).
+    void soulLoaded(const QString& id);
+    // A SoulSet was rejected (node ApiError) or failed at the transport. The store re-emits this
+    // as the seam's profileOpFailed(message). SoulGet errors do NOT come here (silent).
+    void soulOpFailed(const QString& message);
     // PRO-7/8 results.
     void distributionExported(const QString& id, const QByteArray& responseBytes,
                               const DecodedDistribution& dist);
@@ -278,6 +297,10 @@ private:
     void handleProfileImportResponse(const QByteArray& responseCbor);
     void handleProfileMutationResponse(const QByteArray& responseCbor);
     void handleProfileGetResponse(const QString& id, const QByteArray& responseCbor);
+    // SoulGet reply: SoulText -> cache + soulLoaded; error/decode-miss -> silent no-op.
+    void handleSoulGetResponse(const QString& id, const QByteArray& responseCbor);
+    // SoulSet reply: Ok -> re-issue SoulGet (authoritative refetch); error -> soulOpFailed.
+    void handleSoulSetResponse(const QString& id, const QByteArray& responseCbor);
     void handleProfileExportResponse(const QString& id, const QByteArray& responseCbor);
     void handleProfileHistoryResponse(const QString& id, const QByteArray& responseCbor);
     void handleProfileRevertResponse(const QString& id, const QByteArray& responseCbor);
@@ -292,6 +315,8 @@ private:
     static constexpr auto kUpdateCorrelation = "repo/profile-update";
     static constexpr auto kCloneCorrelation = "repo/profile-clone";
     static constexpr auto kGetPrefix = "repo/profile-get/";
+    static constexpr auto kSoulGetPrefix = "repo/soul-get/";
+    static constexpr auto kSoulSetPrefix = "repo/soul-set/";
     static constexpr auto kExportPrefix = "repo/profile-export/";
     static constexpr auto kImportCorrelation = "repo/profile-import";
     static constexpr auto kHistoryPrefix = "repo/profile-history/";
@@ -299,6 +324,8 @@ private:
 
     QList<DecodedProfileInfo> m_profiles;
     QHash<QString, DecodedProfileSpec> m_specs;
+    // Last-known persona (SOUL.md) text per profile id, from the most recent SoulGet answer.
+    QHash<QString, QString> m_souls;
     // Per-profile history page loop (wire v25): accumulate revisions across `after` pages, then
     // emit historyLoaded ONCE with the full history.
     QHash<QString, PageLoop<DecodedRevision>> m_historyLoops;

@@ -155,7 +155,6 @@ struct DecodedProfileSpec {
     QString engineForeignAgent;                  // the catalog name; only meaningful when "Foreign"
     bool hasBaseUrl = false;
     QString baseUrl;
-    QString systemPrompt;
     bool hasToolAllowlist = false; // None = full node toolset; Some(list) = allowlist
     QStringList toolAllowlist;
     bool hasBudgetTokens = false;
@@ -283,6 +282,11 @@ struct DecodedDistribution {
     DecodedProfileSpec profile;
     QList<DecodedSkillBundle> skills;
     QString source; // empty == none
+    // The profile's persona (SOUL.md) text at export time (wire v36; `? soul` on the wire). Node-
+    // produced and node-consumed: the app passes it through on export/import so a persona survives
+    // the round-trip. Absent for a Foreign-engine profile or an exporter with no persona store.
+    bool hasSoul = false;
+    QString soul;
 };
 
 // One entry of a profile's content-addressed revision log (ProfileHistory -> Revisions).
@@ -1160,6 +1164,7 @@ enum class ApiResponseKind {
     TransportInstances,
     Conversations,
     Profile,
+    SoulText,
     Distribution,
     Revisions,
     Ok,
@@ -1353,6 +1358,12 @@ public:
                                                               const QString& newId);
     // Fetch a profile's full spec (ProfileGet -> Profile(opt)). PRO-3 editor hydration.
     [[nodiscard]] static QByteArray encodeProfileGetRequest(const QString& id);
+
+    // Persona (SOUL.md) ops (wire v36): read/replace a profile's node-owned persona text. The
+    // composed system prompt is never wire-visible; the node validates/scans/caps SoulSet and
+    // rejects it for Foreign-engine profiles (typed error). SoulGet -> SoulText; SoulSet -> Ok.
+    [[nodiscard]] static QByteArray encodeSoulGetRequest(const QString& id);
+    [[nodiscard]] static QByteArray encodeSoulSetRequest(const QString& id, const QString& text);
 
     // --- Foreign-agent catalog (foreign engines) ----------------------------------------------
     // List the node's foreign-agent catalog (AgentCatalog -> [AgentEntry]): manual registrations +
@@ -1763,6 +1774,8 @@ public:
     // Decode a Profile response (ProfileGet) into a full spec. Sets *found=false on the null arm
     // (unknown id). PRO-3.
     static bool decodeProfile(const QByteArray& responseCbor, DecodedProfileSpec* out, bool* found);
+    // Decode a SoulText response (SoulGet -> the raw stored persona/SOUL.md text).
+    static bool decodeSoulText(const QByteArray& responseCbor, QString* out);
     // Decode a ProfileId response (ProfileCreate/Clone) into the new profile id.
     static bool decodeProfileId(const QByteArray& responseCbor, QString* outId);
 

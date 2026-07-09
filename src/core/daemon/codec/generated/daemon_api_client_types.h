@@ -866,7 +866,6 @@ struct profile_spec {
 		profile_spec_base_url_tstr_c,
 		profile_spec_base_url_null_m_c,
 	} profile_spec_base_url_choice;
-	struct zcbor_string profile_spec_system_prompt;
 	union {
 		struct {
 			struct zcbor_string tool_allowlist_tstr_l_tstr[64];
@@ -982,6 +981,16 @@ struct distribution_source_r {
 	} distribution_source_choice;
 };
 
+struct distribution_soul_r {
+	union {
+		struct zcbor_string distribution_soul_tstr;
+	};
+	enum {
+		distribution_soul_tstr_c,
+		distribution_soul_null_m_c,
+	} distribution_soul_choice;
+};
+
 struct distribution {
 	uint32_t distribution_wire_version;
 	struct profile_spec distribution_profile;
@@ -991,6 +1000,8 @@ struct distribution {
 	bool distribution_head_seq_present;
 	struct distribution_source_r distribution_source;
 	bool distribution_source_present;
+	struct distribution_soul_r distribution_soul;
+	bool distribution_soul_present;
 };
 
 struct ProfileImport_new_id_r {
@@ -1033,6 +1044,15 @@ struct request_profile_at {
 struct request_profile_revert {
 	struct zcbor_string ProfileRevert_id;
 	uint64_t ProfileRevert_seq;
+};
+
+struct request_soul_get {
+	struct zcbor_string SoulGet_id;
+};
+
+struct request_soul_set {
+	struct zcbor_string SoulSet_id;
+	struct zcbor_string SoulSet_text;
 };
 
 struct SkillHistory_after_r {
@@ -3236,6 +3256,8 @@ struct api_request_r {
 		struct request_profile_history api_request_request_profile_history_m;
 		struct request_profile_at api_request_request_profile_at_m;
 		struct request_profile_revert api_request_request_profile_revert_m;
+		struct request_soul_get api_request_request_soul_get_m;
+		struct request_soul_set api_request_request_soul_set_m;
 		struct request_skill_history api_request_request_skill_history_m;
 		struct request_skill_at api_request_request_skill_at_m;
 		struct request_skill_revert api_request_request_skill_revert_m;
@@ -3397,6 +3419,8 @@ struct api_request_r {
 		api_request_request_profile_history_m_c,
 		api_request_request_profile_at_m_c,
 		api_request_request_profile_revert_m_c,
+		api_request_request_soul_get_m_c,
+		api_request_request_soul_set_m_c,
 		api_request_request_skill_history_m_c,
 		api_request_request_skill_at_m_c,
 		api_request_request_skill_revert_m_c,
@@ -5294,6 +5318,10 @@ struct response_profile {
 	} response_profile_Profile_choice;
 };
 
+struct response_soul_text {
+	struct zcbor_string response_soul_text_SoulText;
+};
+
 struct credential_info_label_r {
 	union {
 		struct zcbor_string credential_info_label_tstr;
@@ -6999,6 +7027,7 @@ struct api_response_r {
 		struct response_model_inspect api_response_response_model_inspect_m;
 		struct response_profiles api_response_response_profiles_m;
 		struct response_profile api_response_response_profile_m;
+		struct response_soul_text api_response_response_soul_text_m;
 		struct response_credentials api_response_response_credentials_m;
 		struct response_models api_response_response_models_m;
 		struct response_model_current api_response_response_model_current_m;
@@ -7094,6 +7123,7 @@ struct api_response_r {
 		api_response_response_model_inspect_m_c,
 		api_response_response_profiles_m_c,
 		api_response_response_profile_m_c,
+		api_response_response_soul_text_m_c,
 		api_response_response_credentials_m_c,
 		api_response_response_models_m_c,
 		api_response_response_model_current_m_c,

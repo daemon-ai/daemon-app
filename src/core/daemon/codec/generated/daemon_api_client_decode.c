@@ -147,6 +147,7 @@ static bool decode_repeated_skill_bundle_signature(zcbor_state_t *state, struct 
 static bool decode_skill_bundle(zcbor_state_t *state, struct skill_bundle *result);
 static bool decode_repeated_distribution_head_seq(zcbor_state_t *state, struct distribution_head_seq_r *result);
 static bool decode_repeated_distribution_source(zcbor_state_t *state, struct distribution_source_r *result);
+static bool decode_repeated_distribution_soul(zcbor_state_t *state, struct distribution_soul_r *result);
 static bool decode_distribution(zcbor_state_t *state, struct distribution *result);
 static bool decode_repeated_ProfileImport_new_id(zcbor_state_t *state, struct ProfileImport_new_id_r *result);
 static bool decode_request_profile_import(zcbor_state_t *state, struct request_profile_import *result);
@@ -154,6 +155,8 @@ static bool decode_repeated_ProfileHistory_after(zcbor_state_t *state, struct Pr
 static bool decode_request_profile_history(zcbor_state_t *state, struct request_profile_history *result);
 static bool decode_request_profile_at(zcbor_state_t *state, struct request_profile_at *result);
 static bool decode_request_profile_revert(zcbor_state_t *state, struct request_profile_revert *result);
+static bool decode_request_soul_get(zcbor_state_t *state, struct request_soul_get *result);
+static bool decode_request_soul_set(zcbor_state_t *state, struct request_soul_set *result);
 static bool decode_repeated_SkillHistory_after(zcbor_state_t *state, struct SkillHistory_after_r *result);
 static bool decode_request_skill_history(zcbor_state_t *state, struct request_skill_history *result);
 static bool decode_request_skill_at(zcbor_state_t *state, struct request_skill_at *result);
@@ -656,6 +659,7 @@ static bool decode_repeated_profile_info_owner(zcbor_state_t *state, struct prof
 static bool decode_profile_info(zcbor_state_t *state, struct profile_info *result);
 static bool decode_response_profiles(zcbor_state_t *state, struct response_profiles *result);
 static bool decode_response_profile(zcbor_state_t *state, struct response_profile *result);
+static bool decode_response_soul_text(zcbor_state_t *state, struct response_soul_text *result);
 static bool decode_repeated_credential_info_label(zcbor_state_t *state, struct credential_info_label_r *result);
 static bool decode_credential_info(zcbor_state_t *state, struct credential_info *result);
 static bool decode_response_credentials(zcbor_state_t *state, struct response_credentials *result);
@@ -2685,8 +2689,6 @@ static bool decode_profile_spec(
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"base_url", tmp_str.len = sizeof("base_url") - 1, &tmp_str)))))
 	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).profile_spec_base_url_tstr)))) && (((*result).profile_spec_base_url_choice = profile_spec_base_url_tstr_c), true))
 	|| (((zcbor_nil_expect(state, NULL))) && (((*result).profile_spec_base_url_choice = profile_spec_base_url_null_m_c), true))), zcbor_union_end_code(state), int_res)))
-	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"system_prompt", tmp_str.len = sizeof("system_prompt") - 1, &tmp_str)))))
-	&& (zcbor_tstr_decode(state, (&(*result).profile_spec_system_prompt))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"tool_allowlist", tmp_str.len = sizeof("tool_allowlist") - 1, &tmp_str)))))
 	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).tool_allowlist_tstr_l_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).tool_allowlist_tstr_l_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))) && (((*result).profile_spec_tool_allowlist_choice = tool_allowlist_tstr_l_c), true))
 	|| (zcbor_union_elem_code(state) && (((zcbor_nil_expect(state, NULL))) && (((*result).profile_spec_tool_allowlist_choice = profile_spec_tool_allowlist_null_m_c), true)))), zcbor_union_end_code(state), int_res)))
@@ -2898,6 +2900,21 @@ static bool decode_repeated_distribution_source(
 	return res;
 }
 
+static bool decode_repeated_distribution_soul(
+		zcbor_state_t *state, struct distribution_soul_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"soul", tmp_str.len = sizeof("soul") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).distribution_soul_tstr)))) && (((*result).distribution_soul_choice = distribution_soul_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).distribution_soul_choice = distribution_soul_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_distribution(
 		zcbor_state_t *state, struct distribution *result)
 {
@@ -2911,7 +2928,8 @@ static bool decode_distribution(
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"skills", tmp_str.len = sizeof("skills") - 1, &tmp_str)))))
 	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).distribution_skills_skill_bundle_m_count, (zcbor_decoder_t *)decode_skill_bundle, state, (*&(*result).distribution_skills_skill_bundle_m), sizeof(struct skill_bundle))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))
 	&& zcbor_present_decode(&((*result).distribution_head_seq_present), (zcbor_decoder_t *)decode_repeated_distribution_head_seq, state, (&(*result).distribution_head_seq))
-	&& zcbor_present_decode(&((*result).distribution_source_present), (zcbor_decoder_t *)decode_repeated_distribution_source, state, (&(*result).distribution_source))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& zcbor_present_decode(&((*result).distribution_source_present), (zcbor_decoder_t *)decode_repeated_distribution_source, state, (&(*result).distribution_source))
+	&& zcbor_present_decode(&((*result).distribution_soul_present), (zcbor_decoder_t *)decode_repeated_distribution_soul, state, (&(*result).distribution_soul))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
@@ -2920,6 +2938,7 @@ static bool decode_distribution(
 		decode_skill_bundle(state, (*&(*result).distribution_skills_skill_bundle_m));
 		decode_repeated_distribution_head_seq(state, (&(*result).distribution_head_seq));
 		decode_repeated_distribution_source(state, (&(*result).distribution_source));
+		decode_repeated_distribution_soul(state, (&(*result).distribution_soul));
 	}
 
 	log_result(state, res, __func__);
@@ -3027,6 +3046,36 @@ static bool decode_request_profile_revert(
 	&& (zcbor_tstr_decode(state, (&(*result).ProfileRevert_id))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"seq", tmp_str.len = sizeof("seq") - 1, &tmp_str)))))
 	&& (zcbor_uint64_decode(state, (&(*result).ProfileRevert_seq))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_soul_get(
+		zcbor_state_t *state, struct request_soul_get *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SoulGet", tmp_str.len = sizeof("SoulGet") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SoulGet_id))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_soul_set(
+		zcbor_state_t *state, struct request_soul_set *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SoulSet", tmp_str.len = sizeof("SoulSet") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SoulSet_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"text", tmp_str.len = sizeof("text") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SoulSet_text))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -11643,6 +11692,19 @@ static bool decode_response_profile(
 	return res;
 }
 
+static bool decode_response_soul_text(
+		zcbor_state_t *state, struct response_soul_text *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SoulText", tmp_str.len = sizeof("SoulText") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).response_soul_text_SoulText))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_repeated_credential_info_label(
 		zcbor_state_t *state, struct credential_info_label_r *result)
 {
@@ -15514,6 +15576,7 @@ static bool decode_api_response(
 	|| (zcbor_union_elem_code(state) && (((decode_response_model_inspect(state, (&(*result).api_response_response_model_inspect_m)))) && (((*result).api_response_choice = api_response_response_model_inspect_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_profiles(state, (&(*result).api_response_response_profiles_m)))) && (((*result).api_response_choice = api_response_response_profiles_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_profile(state, (&(*result).api_response_response_profile_m)))) && (((*result).api_response_choice = api_response_response_profile_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_soul_text(state, (&(*result).api_response_response_soul_text_m)))) && (((*result).api_response_choice = api_response_response_soul_text_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_credentials(state, (&(*result).api_response_response_credentials_m)))) && (((*result).api_response_choice = api_response_response_credentials_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_models(state, (&(*result).api_response_response_models_m)))) && (((*result).api_response_choice = api_response_response_models_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_model_current(state, (&(*result).api_response_response_model_current_m)))) && (((*result).api_response_choice = api_response_response_model_current_m_c), true)))
@@ -15635,6 +15698,8 @@ static bool decode_api_request(
 	|| (zcbor_union_elem_code(state) && (((decode_request_profile_history(state, (&(*result).api_request_request_profile_history_m)))) && (((*result).api_request_choice = api_request_request_profile_history_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_profile_at(state, (&(*result).api_request_request_profile_at_m)))) && (((*result).api_request_choice = api_request_request_profile_at_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_profile_revert(state, (&(*result).api_request_request_profile_revert_m)))) && (((*result).api_request_choice = api_request_request_profile_revert_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_soul_get(state, (&(*result).api_request_request_soul_get_m)))) && (((*result).api_request_choice = api_request_request_soul_get_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_soul_set(state, (&(*result).api_request_request_soul_set_m)))) && (((*result).api_request_choice = api_request_request_soul_set_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_skill_history(state, (&(*result).api_request_request_skill_history_m)))) && (((*result).api_request_choice = api_request_request_skill_history_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_skill_at(state, (&(*result).api_request_request_skill_at_m)))) && (((*result).api_request_choice = api_request_request_skill_at_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_skill_revert(state, (&(*result).api_request_request_skill_revert_m)))) && (((*result).api_request_choice = api_request_request_skill_revert_m_c), true)))

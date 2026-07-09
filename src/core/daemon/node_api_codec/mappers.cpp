@@ -609,7 +609,6 @@ DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps) {
         out.hasBaseUrl = true;
         out.baseUrl = fromZcbor(ps.profile_spec_base_url_tstr);
     }
-    out.systemPrompt = fromZcbor(ps.profile_spec_system_prompt);
     if (ps.profile_spec_tool_allowlist_choice == profile_spec::tool_allowlist_tstr_l_c) {
         out.hasToolAllowlist = true;
         for (size_t i = 0; i < ps.tool_allowlist_tstr_l_tstr_count; ++i) {
@@ -1082,7 +1081,6 @@ void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecS
     };
     sc.id = s.id.toUtf8();
     sc.model = s.model.toUtf8();
-    sc.prompt = s.systemPrompt.toUtf8();
     sc.baseUrl = s.baseUrl.toUtf8();
     sc.credRef = s.credentialRef.toUtf8();
     sc.fbCredRef = s.fallbackCredentialRef.toUtf8();
@@ -1098,7 +1096,6 @@ void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecS
     }
     const QByteArray& id = sc.id;
     const QByteArray& model = sc.model;
-    const QByteArray& prompt = sc.prompt;
     const QByteArray& baseUrl = sc.baseUrl;
     const QByteArray& credRef = sc.credRef;
     const QByteArray& fbCredRef = sc.fbCredRef;
@@ -1119,7 +1116,6 @@ void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecS
     } else {
         ps.profile_spec_base_url_choice = profile_spec::profile_spec_base_url_null_m_c;
     }
-    setZ(ps.profile_spec_system_prompt, prompt);
     if (s.hasToolAllowlist) {
         ps.profile_spec_tool_allowlist_choice = profile_spec::tool_allowlist_tstr_l_c;
         const size_t n = qMin<size_t>(static_cast<size_t>(toolBufs.size()), 16);

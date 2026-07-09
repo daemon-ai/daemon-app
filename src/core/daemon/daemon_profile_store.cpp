@@ -48,9 +48,6 @@ void applySpecFields(daemonapp::daemon::DecodedProfileSpec& spec, const QVariant
     if (fields.contains(QStringLiteral("model"))) {
         spec.model = fields.value(QStringLiteral("model")).toString();
     }
-    if (fields.contains(QStringLiteral("systemPrompt"))) {
-        spec.systemPrompt = fields.value(QStringLiteral("systemPrompt")).toString();
-    }
     if (fields.contains(QStringLiteral("tools"))) {
         const QStringList tools = fields.value(QStringLiteral("tools")).toStringList();
         spec.hasToolAllowlist = true; // an explicit (possibly empty) allowlist
@@ -177,6 +174,13 @@ DaemonProfileStore::DaemonProfileStore(daemonapp::daemon::ProfileRepository* rep
         });
         connect(m_repo, &daemonapp::daemon::ProfileRepository::operationFailed, this,
                 [this](const QString& message) { emit profileOpFailed(message); });
+        // Persona (SOUL.md) seam: a SoulGet answer (direct, or after a SoulSet re-fetch) means
+        // soul(id) now returns fresh authoritative content -> announce it (never optimistically).
+        // A SoulSet rejection surfaces on the existing profileOpFailed channel.
+        connect(m_repo, &daemonapp::daemon::ProfileRepository::soulLoaded, this,
+                [this](const QString& id) { emit soulChanged(id); });
+        connect(m_repo, &daemonapp::daemon::ProfileRepository::soulOpFailed, this,
+                [this](const QString& message) { emit profileOpFailed(message); });
         // Offline-first: seed from the local cache so the Profiles UI renders the last-known agents
         // immediately, before (or entirely without) a daemon connection. The connect-ready
         // refreshProfiles() then reconciles against the live node when it comes online.
@@ -186,8 +190,9 @@ DaemonProfileStore::DaemonProfileStore(daemonapp::daemon::ProfileRepository* rep
 }
 
 void DaemonProfileStore::onProfilesRefreshed() {
-    // Fetch each profile's full spec (system_prompt, tool_allowlist, ...) so profile(id) returns
+    // Fetch each profile's full spec (tool_allowlist, tunables, ...) so profile(id) returns
     // editable fields; rebuild now shows the sparse list immediately, enriched as specs arrive.
+    // (The persona is not a spec field — it rides the SoulGet/SoulSet seam below.)
     if (m_repo != nullptr) {
         for (const daemonapp::daemon::DecodedProfileInfo& p : m_repo->profiles()) {
             m_repo->getProfile(p.id);
@@ -203,6 +208,22 @@ QObject* DaemonProfileStore::profiles() const {
 QVariantMap DaemonProfileStore::profile(const QString& id) const {
     const int row = m_profiles->indexOfId(id);
     return row >= 0 ? m_profiles->at(row) : QVariantMap{};
+}
+
+QString DaemonProfileStore::soul(const QString& profileId) const {
+    return m_repo != nullptr ? m_repo->cachedSoul(profileId) : QString();
+}
+
+void DaemonProfileStore::requestSoul(const QString& profileId) {
+    if (m_repo != nullptr) {
+        m_repo->requestSoul(profileId);
+    }
+}
+
+void DaemonProfileStore::setSoul(const QString& profileId, const QString& text) {
+    if (m_repo != nullptr) {
+        m_repo->setSoul(profileId, text);
+    }
 }
 
 QString DaemonProfileStore::resolveProfileRef(const QString& selector) const {
@@ -443,7 +464,6 @@ void DaemonProfileStore::rebuild() {
         // Enrich with the full spec when a ProfileGet has loaded it (the editable fields).
         daemonapp::daemon::DecodedProfileSpec spec;
         if (m_repo->cachedSpec(p.id, &spec)) {
-            row[QStringLiteral("systemPrompt")] = spec.systemPrompt;
             row[QStringLiteral("tools")] =
                 spec.hasToolAllowlist ? spec.toolAllowlist : QStringList{};
             row[QStringLiteral("baseUrl")] = spec.hasBaseUrl ? spec.baseUrl : QString();
@@ -466,7 +486,6 @@ void DaemonProfileStore::rebuild() {
             row[QStringLiteral("foreignBackend")] =
                 spec.hasForeignBackend ? foreignBackendRow(spec.foreignBackend) : QVariantMap{};
         } else {
-            row[QStringLiteral("systemPrompt")] = QString();
             row[QStringLiteral("tools")] = QStringList{};
             row[QStringLiteral("engine")] = QStringLiteral("Core");
             row[QStringLiteral("acpAgent")] = QString();

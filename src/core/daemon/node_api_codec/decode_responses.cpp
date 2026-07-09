@@ -56,6 +56,7 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
          ApiResponseKind::ProviderModels},
         {api_response_r::api_response_response_profiles_m_c, ApiResponseKind::Profiles},
         {api_response_r::api_response_response_profile_m_c, ApiResponseKind::Profile},
+        {api_response_r::api_response_response_soul_text_m_c, ApiResponseKind::SoulText},
         {api_response_r::api_response_response_distribution_m_c, ApiResponseKind::Distribution},
         {api_response_r::api_response_response_revisions_m_c, ApiResponseKind::Revisions},
         {api_response_r::api_response_response_drained_m_c, ApiResponseKind::Drained},
@@ -886,6 +887,19 @@ bool NodeApiCodec::decodeProfile(const QByteArray& responseCbor, DecodedProfileS
     return true;
 }
 
+bool NodeApiCodec::decodeSoulText(const QByteArray& responseCbor, QString* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_soul_text_m_c);
+    if (!response) {
+        return false;
+    }
+    *out = fromZcbor(response->api_response_response_soul_text_m.response_soul_text_SoulText);
+    return true;
+}
+
 bool NodeApiCodec::decodeSessionCreated(const QByteArray& responseCbor, QString* outId) {
     if (outId == nullptr) {
         return false;
@@ -930,6 +944,11 @@ bool NodeApiCodec::decodeDistribution(const QByteArray& responseCbor, DecodedDis
                                               distribution_source_r::distribution_source_tstr_c)
             ? fromZcbor(d.distribution_source.distribution_source_tstr)
             : QString();
+    // The persona (SOUL.md) text (wire v36, `? soul`): present + non-null carries the profile's
+    // persona so an export/import round-trip preserves it. Absent/null for a Foreign profile.
+    out->hasSoul = d.distribution_soul_present && d.distribution_soul.distribution_soul_choice ==
+                                                      distribution_soul_r::distribution_soul_tstr_c;
+    out->soul = out->hasSoul ? fromZcbor(d.distribution_soul.distribution_soul_tstr) : QString();
     out->skills.clear();
     for (size_t i = 0; i < d.distribution_skills_skill_bundle_m_count; ++i) {
         const skill_bundle& sb = d.distribution_skills_skill_bundle_m[i];

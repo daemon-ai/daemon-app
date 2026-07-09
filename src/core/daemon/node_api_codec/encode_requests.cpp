@@ -510,6 +510,24 @@ QByteArray NodeApiCodec::encodeProfileGetRequest(const QString& id) {
         });
 }
 
+QByteArray NodeApiCodec::encodeSoulGetRequest(const QString& id) {
+    const QByteArray idUtf8 = id.toUtf8();
+    return encodeWithFill(api_request_r::api_request_request_soul_get_m_c,
+                          [&](api_request_r& request) {
+                              setZcbor(request.api_request_request_soul_get_m.SoulGet_id, idUtf8);
+                          });
+}
+
+QByteArray NodeApiCodec::encodeSoulSetRequest(const QString& id, const QString& text) {
+    const QByteArray idUtf8 = id.toUtf8();
+    const QByteArray textUtf8 = text.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_soul_set_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_soul_set_m.SoulSet_id, idUtf8);
+            setZcbor(request.api_request_request_soul_set_m.SoulSet_text, textUtf8);
+        });
+}
+
 QByteArray NodeApiCodec::encodeProfileExportRequest(const QString& id) {
     const QByteArray idUtf8 = id.toUtf8();
     return encodeWithFill(
@@ -612,6 +630,17 @@ QByteArray NodeApiCodec::encodeProfileImportRequest(const DecodedDistribution& d
             setZ(sb.files_tstrtstr[fi].skill_bundle_files_tstrtstr_key, keys.last());
             setZ(sb.files_tstrtstr[fi].files_tstrtstr, vals.last());
         }
+    }
+    // The persona (SOUL.md) text rides through verbatim (wire v36, `? soul`): the app passes the
+    // node-produced payload back on import so a persona survives the export/import round-trip.
+    // `soulUtf8` must outlive encodeRequest below (the zcbor_string borrows it).
+    QByteArray soulUtf8;
+    d.distribution_soul_present = dist.hasSoul;
+    if (dist.hasSoul) {
+        d.distribution_soul.distribution_soul_choice =
+            distribution_soul_r::distribution_soul_tstr_c;
+        soulUtf8 = dist.soul.toUtf8();
+        setZ(d.distribution_soul.distribution_soul_tstr, soulUtf8);
     }
     const QByteArray newIdUtf8 = newId.toUtf8();
     imp.ProfileImport_new_id_present = !newId.isEmpty();
