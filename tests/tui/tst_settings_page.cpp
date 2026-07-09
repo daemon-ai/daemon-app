@@ -368,7 +368,6 @@ private slots:
             QStringLiteral("chat/streaming"),
             QStringLiteral("chat/sendOnEnter"),
             QStringLiteral("chat/showTokenCounts"),
-            QStringLiteral("chat/systemPrompt"),
             // Safety posture is node-owned: approval policy lives in the
             // per-session session settings, and sandbox/network are shown
             // read-only (managed rows), so no editable safety/approvalPolicy row.

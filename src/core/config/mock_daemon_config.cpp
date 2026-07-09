@@ -22,7 +22,6 @@ MockDaemonConfig::MockDaemonConfig(QObject* parent) : IDaemonConfig(parent) {
         {QStringLiteral("chat/streaming"), true},
         {QStringLiteral("chat/sendOnEnter"), true},
         {QStringLiteral("chat/showTokenCounts"), true},
-        {QStringLiteral("chat/systemPrompt"), QString()},
         // Safety posture (approval policy, filesystem sandbox, network egress) is
         // owned + enforced by the node, not this mock config — the app renders it
         // read-only (see SafetySettingsSection.qml / hub_settings.cpp), so no

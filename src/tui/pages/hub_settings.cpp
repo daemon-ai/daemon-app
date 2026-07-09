@@ -222,8 +222,6 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
     rows << configToggle(chat, chatLabel, "chat/sendOnEnter",
                          tr("Send on Enter (Shift+Enter for newline)"), true);
     rows << configToggle(chat, chatLabel, "chat/showTokenCounts", tr("Show token counts"), true);
-    rows << configText(chat, chatLabel, "chat/systemPrompt",
-                       tr("Default system prompt for new chats"), false);
 
     // Safety - SafetySettingsSection.qml. Safety posture is owned + enforced by
     // the node: approval policy lives in the per-session session settings
