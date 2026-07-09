@@ -4659,6 +4659,10 @@ Mulai dari tab Temukan.</translation>
 <context>
     <name>ProfileRepository</name>
     <message>
+        <source>Persona save failed</source>
+        <translation>Gagal menyimpan persona</translation>
+    </message>
+    <message>
         <source>Profile import failed</source>
         <translation>Impor profil gagal</translation>
     </message>
@@ -9113,6 +9117,10 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
 </context>
 <context>
     <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Persona save failed</source>
+        <translation>Gagal menyimpan persona</translation>
+    </message>
     <message>
         <source>Profile import failed</source>
         <translation>Impor profil gagal</translation>

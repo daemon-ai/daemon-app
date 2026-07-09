@@ -4663,6 +4663,10 @@ Start one from the Discover tab.</source>
 <context>
     <name>ProfileRepository</name>
     <message>
+        <source>Persona save failed</source>
+        <translation>पर्सोना सहेजना विफल</translation>
+    </message>
+    <message>
         <source>Profile import failed</source>
         <translation>प्रोफ़ाइल आयात विफल</translation>
     </message>
@@ -9121,6 +9125,10 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
 </context>
 <context>
     <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Persona save failed</source>
+        <translation>पर्सोना सहेजना विफल</translation>
+    </message>
     <message>
         <source>Profile import failed</source>
         <translation>प्रोफ़ाइल आयात विफल</translation>

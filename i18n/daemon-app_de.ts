@@ -4663,6 +4663,10 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
 <context>
     <name>ProfileRepository</name>
     <message>
+        <source>Persona save failed</source>
+        <translation>Speichern der Persona fehlgeschlagen</translation>
+    </message>
+    <message>
         <source>Profile import failed</source>
         <translation>Profilimport fehlgeschlagen</translation>
     </message>
@@ -9121,6 +9125,10 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
 </context>
 <context>
     <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Persona save failed</source>
+        <translation>Speichern der Persona fehlgeschlagen</translation>
+    </message>
     <message>
         <source>Profile import failed</source>
         <translation>Profilimport fehlgeschlagen</translation>

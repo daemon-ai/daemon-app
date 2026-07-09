@@ -4659,6 +4659,10 @@ Keşfet sekmesinden bir tane başlatın.</translation>
 <context>
     <name>ProfileRepository</name>
     <message>
+        <source>Persona save failed</source>
+        <translation>Persona kaydı başarısız oldu</translation>
+    </message>
+    <message>
         <source>Profile import failed</source>
         <translation>Profil içe aktarma başarısız oldu</translation>
     </message>
@@ -9113,6 +9117,10 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
 </context>
 <context>
     <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Persona save failed</source>
+        <translation>Persona kaydı başarısız oldu</translation>
+    </message>
     <message>
         <source>Profile import failed</source>
         <translation>Profil içe aktarma başarısız oldu</translation>

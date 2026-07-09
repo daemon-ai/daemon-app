@@ -4663,6 +4663,10 @@ Inicie um na aba Descobrir.</translation>
 <context>
     <name>ProfileRepository</name>
     <message>
+        <source>Persona save failed</source>
+        <translation>Falha ao salvar a persona</translation>
+    </message>
+    <message>
         <source>Profile import failed</source>
         <translation>Falha na importação do perfil</translation>
     </message>
@@ -9121,6 +9125,10 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
 </context>
 <context>
     <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Persona save failed</source>
+        <translation>Falha ao salvar a persona</translation>
+    </message>
     <message>
         <source>Profile import failed</source>
         <translation>Falha na importação do perfil</translation>

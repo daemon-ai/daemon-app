@@ -4663,6 +4663,10 @@ Magsimula ng isa mula sa Discover tab.</translation>
 <context>
     <name>ProfileRepository</name>
     <message>
+        <source>Persona save failed</source>
+        <translation>Nabigo ang pag-save ng persona</translation>
+    </message>
+    <message>
         <source>Profile import failed</source>
         <translation>Nabigo ang pag-import ng profile</translation>
     </message>
@@ -9121,6 +9125,10 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
 </context>
 <context>
     <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Persona save failed</source>
+        <translation>Nabigo ang pag-save ng persona</translation>
+    </message>
     <message>
         <source>Profile import failed</source>
         <translation>Nabigo ang pag-import ng profile</translation>

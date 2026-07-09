@@ -4663,6 +4663,10 @@ Inicia una desde la pestaña Descubrir.</translation>
 <context>
     <name>ProfileRepository</name>
     <message>
+        <source>Persona save failed</source>
+        <translation>Error al guardar la persona</translation>
+    </message>
+    <message>
         <source>Profile import failed</source>
         <translation>Error al importar el perfil</translation>
     </message>
@@ -9121,6 +9125,10 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
 </context>
 <context>
     <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Persona save failed</source>
+        <translation>Error al guardar la persona</translation>
+    </message>
     <message>
         <source>Profile import failed</source>
         <translation>Error al importar el perfil</translation>
