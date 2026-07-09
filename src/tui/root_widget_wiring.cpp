@@ -21,6 +21,7 @@
 #include "participants_model.h"
 #include "participants_view.h"
 #include "persistence/isession_store.h"
+#include "profiles/iprofile_store.h" // complete type for the persona (soulChanged) repaint hook
 #include "root_widget.h"
 #include "root_widget_detail.h"
 #include "session_controller.h"
@@ -138,6 +139,11 @@ void RootWidget::wirePageLiveRefresh() {
     // The per-agent Profile tab renders the same rows; keep it live too (a
     // profile edit from either frontend repaints an open agent tab).
     liveRefresh(m_services.profiles->profiles(), TabModel::Profile);
+    // The Persona (SOUL.md) section is seam-fetched, not a row field, so the
+    // row-model hooks above miss it: repaint an open Profile page when a persona
+    // freshens (a setSoul landed / an async SoulGet answered).
+    connect(m_services.profiles, &profiles::IProfileStore::soulChanged, this,
+            [this] { refreshPageIfActive(TabModel::Profile); });
     liveRefresh(m_services.roster->sessions(), TabModel::Sessions);
     liveRefresh(m_services.fleetTree->nodes(), TabModel::Fleet);
     liveRefresh(m_services.approvals->pending(), TabModel::Approvals);

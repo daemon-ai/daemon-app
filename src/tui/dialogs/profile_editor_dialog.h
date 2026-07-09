@@ -56,11 +56,13 @@ private:
 // The profile editor ('e' on the Profiles page / a per-agent Profile tab).
 // Field set == ProfileEditor.qml: name, provider (the node's ProviderCatalog,
 // selection-only), base URL (cloud providers only), model (the provider's
-// offered list; never free-text), description, multi-line system prompt, and
-// the skills/tools curators. Engine is displayed read-only: engine choice is
+// offered list; never free-text), description, multi-line persona (SOUL.md,
+// via the store's persona seam; hidden for foreign engines), and the
+// skills/tools curators. Engine is displayed read-only: engine choice is
 // create-time (NewAgentDialog) in both frontends, and ProfileUpdate carries no
 // engine change. The working copy commits on Save via the SAME updateProfile
-// field names/semantics as the GUI save() path.
+// field names/semantics as the GUI save() path, plus one setSoul for the
+// persona (native profiles only).
 class ProfileEditorDialog : public Tui::ZDialog {
     Q_OBJECT
 
@@ -79,6 +81,11 @@ public:
     [[nodiscard]] QString wSystemPrompt() const { return m_wSystemPrompt; }
     [[nodiscard]] QStringList wSkills() const { return m_wSkills; }
     [[nodiscard]] QStringList wTools() const { return m_wTools; }
+    // Whether the persona row is offered (false for a foreign engine, whose agent
+    // owns its own prompt) — read by the offscreen tests like the accessors above.
+    [[nodiscard]] bool personaRowVisible() const {
+        return m_promptRow != nullptr && m_promptRow->isLocallyVisible();
+    }
 
     // Working-copy mutators: the row sub-flows commit through these, and the
     // offscreen tests drive the same paths.

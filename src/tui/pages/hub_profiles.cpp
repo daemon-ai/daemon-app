@@ -101,8 +101,14 @@ QString TuiPageHub::buildProfileMarkdown(const QString& profileRef) const {
     md += tr("- Memory provider: **%1**\n\n")
               .arg(val(QStringLiteral("memoryProvider"), QStringLiteral("mnemosyne")));
 
-    md += tr("## Persona\n\n");
-    md += val(QStringLiteral("systemPrompt"), QStringLiteral("-")) + QStringLiteral("\n\n");
+    // Persona (SOUL.md), via the profile store's persona seam — Core-engine only:
+    // a foreign agent owns its own prompt, so the section is omitted for foreign
+    // profiles (GUI AgentProfilePage parity).
+    if (p.value(QStringLiteral("engine")).toString() != QStringLiteral("Foreign")) {
+        md += tr("## Persona\n\n");
+        const QString soul = m_deps.profiles->soul(profileRef);
+        md += (soul.isEmpty() ? QStringLiteral("-") : soul) + QStringLiteral("\n\n");
+    }
 
     const auto chips = [&md, &p](const QString& title, const QString& key) {
         const QStringList items = p.value(key).toStringList();

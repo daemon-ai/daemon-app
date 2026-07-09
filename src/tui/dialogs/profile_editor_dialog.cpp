@@ -295,6 +295,17 @@ ProfileEditorDialog::ProfileEditorDialog(profiles::IProfileStore* profiles,
                     }
                 });
     }
+    if (m_profiles != nullptr) {
+        // Persona (SOUL.md) answers arrive through the persona seam (async SoulGet on a
+        // daemon-backed store): refresh the working copy when THIS profile freshens
+        // (GUI parity: ProfileEditor.qml's onSoulChanged).
+        connect(m_profiles, &profiles::IProfileStore::soulChanged, this, [this](const QString& id) {
+            if (id == m_profileId) {
+                m_wSystemPrompt = m_profiles->soul(id);
+                syncRowLabels();
+            }
+        });
+    }
 
     load();
     m_nameRow->setFocus();
@@ -312,7 +323,13 @@ void ProfileEditorDialog::load() {
     m_wProviderId = inferProviderId(m_catalog != nullptr ? m_catalog->providers() : QVariantList{},
                                     m_wProvider, m_wModel);
     m_wDescription = p.value(QStringLiteral("description")).toString();
-    m_wSystemPrompt = p.value(QStringLiteral("systemPrompt")).toString();
+    // Persona (SOUL.md) rides the profile store's persona seam, not the spec row:
+    // seed from the last-known value, then ask the seam to (re)fetch — an async
+    // answer lands via the soulChanged hook in the constructor.
+    m_wSystemPrompt = m_profiles != nullptr ? m_profiles->soul(m_profileId) : QString();
+    if (m_profiles != nullptr) {
+        m_profiles->requestSoul(m_profileId);
+    }
     m_wSkills = p.value(QStringLiteral("skills")).toStringList();
     m_wTools = p.value(QStringLiteral("tools")).toStringList();
     m_engineKind = p.value(QStringLiteral("engine")).toString();
@@ -391,7 +408,10 @@ void ProfileEditorDialog::syncRowLabels() {
     m_modelRow->setVisible(!foreign || nodeProvider);
     m_descriptionRow->setText(row(tr("Description"), elide(m_wDescription, 36)));
     m_promptRow->setText(
-        row(tr("System prompt"), elide(m_wSystemPrompt.section(QLatin1Char('\n'), 0, 0), 34)));
+        row(tr("Persona (SOUL.md)"), elide(m_wSystemPrompt.section(QLatin1Char('\n'), 0, 0), 34)));
+    // Persona is Core-engine only: a foreign agent owns its own prompt, so the row is
+    // hidden (GUI editor parity) and save() never writes a persona for it.
+    m_promptRow->setVisible(!foreign);
     m_skillsRow->setText(row(tr("Skills"), elide(m_wSkills.join(QStringLiteral(", ")), 40)));
     m_toolsRow->setText(row(tr("Tools"), elide(m_wTools.join(QStringLiteral(", ")), 40)));
 }
@@ -527,10 +547,11 @@ void ProfileEditorDialog::save() {
                 backend[QStringLiteral("model")] = m_agentNativeHint;
             }
         }
+        // No persona write: a foreign agent owns its own prompt (the persona row is
+        // hidden for foreign profiles).
         QVariantMap fields;
         fields[QStringLiteral("name")] = m_wName;
         fields[QStringLiteral("description")] = m_wDescription;
-        fields[QStringLiteral("systemPrompt")] = m_wSystemPrompt;
         fields[QStringLiteral("skills")] = m_wSkills;
         fields[QStringLiteral("tools")] = m_wTools;
         fields[QStringLiteral("foreignBackend")] = backend;
@@ -548,10 +569,12 @@ void ProfileEditorDialog::save() {
     fields[QStringLiteral("baseUrl")] = providerIsCloud() ? m_wBaseUrl : QString();
     fields[QStringLiteral("model")] = m_wModel;
     fields[QStringLiteral("description")] = m_wDescription;
-    fields[QStringLiteral("systemPrompt")] = m_wSystemPrompt;
     fields[QStringLiteral("skills")] = m_wSkills;
     fields[QStringLiteral("tools")] = m_wTools;
     m_profiles->updateProfile(m_profileId, fields);
+    // The persona is not a spec field: persist it through the persona seam (SoulSet
+    // on a daemon-backed store), exactly like the GUI editor's save().
+    m_profiles->setSoul(m_profileId, m_wSystemPrompt);
     emit saved(m_profileId);
     close();
 }
@@ -656,7 +679,7 @@ void ProfileEditorDialog::openPromptEditor() {
     }
     auto* dlg = new Tui::ZDialog(this);
     dlg->setOptions(Tui::ZWindow::DeleteOnClose);
-    dlg->setWindowTitle(tr("System prompt"));
+    dlg->setWindowTitle(tr("Persona (SOUL.md)"));
     dlg->setContentsMargins({2, 1, 2, 1});
 
     auto* layout = new Tui::ZVBoxLayout();
