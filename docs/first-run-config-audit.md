@@ -457,7 +457,7 @@ pub struct ProfileSpec {
     pub provider: ProviderSelector,
     pub model: String,
     pub base_url: Option<String>,
-    pub system_prompt: String,           // persona (SOUL.md equivalent)
+    pub system_prompt: String,           // removed in wire v36 — persona moves to SOUL.md
     pub tool_allowlist: Option<Vec<String>>,
     pub budget: BudgetSpec,
     pub tunables: EngineTunables,
@@ -471,10 +471,14 @@ pub struct ProfileSpec {
 
 - **`ProfileApi`** implements list/get/create/update/delete/select/clone/export/import/history +
   skill revision + curator ops; persisted under `<data_dir>/profiles/`.
-- **SOUL.md** is **not** a file concept in the daemon - it maps to `ProfileSpec.system_prompt`.
-  The agent editor's "SOUL.md" textarea (hermes profiles UI) edits this field. Skills are a
-  separate index (`daemon-skills` + curator); tools are an **allowlist** over launch-registered
-  tools.
+- **SOUL.md** IS a file concept in the daemon (Hermes-parity prompt architecture): the persona
+  is a node-owned per-profile `SOUL.md` document, read/written by clients only through the
+  dedicated `SoulGet` / `SoulSet` NodeApi ops (Core engines only — a foreign agent owns its own
+  prompt, so `SoulSet` answers it with a typed rejection). `ProfileSpec.system_prompt` is
+  removed from the wire (v36), and the node-composed system prompt is never wire-visible or
+  client-settable; the app edits the persona through the profile store's
+  `soul()`/`requestSoul()`/`setSoul()` seam. Skills are a separate index (`daemon-skills` +
+  curator); tools are an **allowlist** over launch-registered tools.
 - **Session <-> profile binding is PARTIAL/implicit**: routing resolves a profile from origin +
   `bound_accounts` + active default (`submit_routed`); there is no explicit
   "open session with profile X" field on `Submit`. Worth confirming with backend before building
