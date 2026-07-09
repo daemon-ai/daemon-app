@@ -393,8 +393,8 @@ Você voltará para a configuração inicial.</translation>
         <translation>Persona (opcional)</translation>
     </message>
     <message>
-        <source>system prompt</source>
-        <translation>prompt de sistema</translation>
+        <source>persona (SOUL.md)</source>
+        <translation>persona (SOUL.md)</translation>
     </message>
 </context>
 <context>
@@ -1324,14 +1324,6 @@ até que seja registrado novamente.</translation>
     <message>
         <source>Show token counts</source>
         <translation>Mostrar contagem de tokens</translation>
-    </message>
-    <message>
-        <source>System prompt</source>
-        <translation>Prompt de sistema</translation>
-    </message>
-    <message>
-        <source>Optional default system prompt for new chats</source>
-        <translation>Prompt de sistema padrão opcional para novas conversas</translation>
     </message>
 </context>
 <context>
@@ -4473,8 +4465,8 @@ Inicie um na aba Descobrir.</translation>
         <translation>Descrição curta</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Prompt de sistema</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -4620,8 +4612,8 @@ Inicie um na aba Descobrir.</translation>
         <translation>Descrição</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Prompt de sistema</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -7557,10 +7549,6 @@ Obrigado — prosseguindo com: %1
     <message>
         <source>Show token counts</source>
         <translation>Mostrar contagem de tokens</translation>
-    </message>
-    <message>
-        <source>Default system prompt for new chats</source>
-        <translation>Prompt de sistema padrão para novas conversas</translation>
     </message>
     <message>
         <source>Safety</source>

@@ -393,8 +393,8 @@ Volverás a la configuración inicial.</translation>
         <translation>Persona (opcional)</translation>
     </message>
     <message>
-        <source>system prompt</source>
-        <translation>prompt del sistema</translation>
+        <source>persona (SOUL.md)</source>
+        <translation>persona (SOUL.md)</translation>
     </message>
 </context>
 <context>
@@ -1324,14 +1324,6 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>Show token counts</source>
         <translation>Mostrar recuentos de tokens</translation>
-    </message>
-    <message>
-        <source>System prompt</source>
-        <translation>Prompt del sistema</translation>
-    </message>
-    <message>
-        <source>Optional default system prompt for new chats</source>
-        <translation>Prompt del sistema predeterminado opcional para los chats nuevos</translation>
     </message>
 </context>
 <context>
@@ -4473,8 +4465,8 @@ Inicia una desde la pestaña Descubrir.</translation>
         <translation>Descripción breve</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Prompt del sistema</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -4620,8 +4612,8 @@ Inicia una desde la pestaña Descubrir.</translation>
         <translation>Descripción</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Prompt del sistema</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -7557,10 +7549,6 @@ Gracias — continuando con: %1
     <message>
         <source>Show token counts</source>
         <translation>Mostrar recuentos de tokens</translation>
-    </message>
-    <message>
-        <source>Default system prompt for new chats</source>
-        <translation>Prompt del sistema predeterminado para los chats nuevos</translation>
     </message>
     <message>
         <source>Safety</source>

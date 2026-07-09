@@ -393,8 +393,8 @@ You&apos;ll return to first-run setup.</source>
         <translation>Persona (isteğe bağlı)</translation>
     </message>
     <message>
-        <source>system prompt</source>
-        <translation>sistem istemi</translation>
+        <source>persona (SOUL.md)</source>
+        <translation>persona (SOUL.md)</translation>
     </message>
 </context>
 <context>
@@ -1324,14 +1324,6 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Show token counts</source>
         <translation>Token sayılarını göster</translation>
-    </message>
-    <message>
-        <source>System prompt</source>
-        <translation>Sistem istemi</translation>
-    </message>
-    <message>
-        <source>Optional default system prompt for new chats</source>
-        <translation>Yeni sohbetler için isteğe bağlı varsayılan sistem istemi</translation>
     </message>
 </context>
 <context>
@@ -3375,7 +3367,7 @@ kadar başlatılamaz.</translation>
     </message>
     <message>
         <source>Connect to a daemon to manage the gateway.</source>
-        <translation>Ağ geçidini yönetmek için bir daemon'a bağlanın.</translation>
+        <translation>Ağ geçidini yönetmek için bir daemon&apos;a bağlanın.</translation>
     </message>
     <message>
         <source>This node does not provide the OpenAI-compatible gateway.</source>
@@ -4469,8 +4461,8 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>Kısa açıklama</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Sistem istemi</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -4616,8 +4608,8 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>Açıklama</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Sistem istemi</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -7549,10 +7541,6 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Show token counts</source>
         <translation>Token sayılarını göster</translation>
-    </message>
-    <message>
-        <source>Default system prompt for new chats</source>
-        <translation>Yeni sohbetler için varsayılan sistem istemi</translation>
     </message>
     <message>
         <source>Safety</source>

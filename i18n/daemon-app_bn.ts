@@ -393,8 +393,8 @@ You&apos;ll return to first-run setup.</source>
         <translation>পারসোনা (ঐচ্ছিক)</translation>
     </message>
     <message>
-        <source>system prompt</source>
-        <translation>সিস্টেম প্রম্পট</translation>
+        <source>persona (SOUL.md)</source>
+        <translation>পারসোনা (SOUL.md)</translation>
     </message>
 </context>
 <context>
@@ -1324,14 +1324,6 @@ until it is re-registered.</source>
     <message>
         <source>Show token counts</source>
         <translation>টোকেন সংখ্যা দেখান</translation>
-    </message>
-    <message>
-        <source>System prompt</source>
-        <translation>সিস্টেম প্রম্পট</translation>
-    </message>
-    <message>
-        <source>Optional default system prompt for new chats</source>
-        <translation>নতুন চ্যাটের জন্য ঐচ্ছিক ডিফল্ট সিস্টেম প্রম্পট</translation>
     </message>
 </context>
 <context>
@@ -4473,8 +4465,8 @@ Start one from the Discover tab.</source>
         <translation>সংক্ষিপ্ত বিবরণ</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>সিস্টেম প্রম্পট</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>পারসোনা (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -4620,8 +4612,8 @@ Start one from the Discover tab.</source>
         <translation>বিবরণ</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>সিস্টেম প্রম্পট</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>পারসোনা (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -7557,10 +7549,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Show token counts</source>
         <translation>টোকেন সংখ্যা দেখান</translation>
-    </message>
-    <message>
-        <source>Default system prompt for new chats</source>
-        <translation>নতুন চ্যাটের জন্য ডিফল্ট সিস্টেম প্রম্পট</translation>
     </message>
     <message>
         <source>Safety</source>

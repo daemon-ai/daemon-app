@@ -393,8 +393,8 @@ You&apos;ll return to first-run setup.</source>
         <translation>ペルソナ（任意）</translation>
     </message>
     <message>
-        <source>system prompt</source>
-        <translation>システムプロンプト</translation>
+        <source>persona (SOUL.md)</source>
+        <translation>ペルソナ（SOUL.md）</translation>
     </message>
 </context>
 <context>
@@ -1324,14 +1324,6 @@ until it is re-registered.</source>
     <message>
         <source>Show token counts</source>
         <translation>トークン数を表示</translation>
-    </message>
-    <message>
-        <source>System prompt</source>
-        <translation>システムプロンプト</translation>
-    </message>
-    <message>
-        <source>Optional default system prompt for new chats</source>
-        <translation>新しいチャットの既定のシステムプロンプト（任意）</translation>
     </message>
 </context>
 <context>
@@ -4469,8 +4461,8 @@ Start one from the Discover tab.</source>
         <translation>短い説明</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>システムプロンプト</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>ペルソナ（SOUL.md）</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -4616,8 +4608,8 @@ Start one from the Discover tab.</source>
         <translation>説明</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>システムプロンプト</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>ペルソナ（SOUL.md）</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -7549,10 +7541,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Show token counts</source>
         <translation>トークン数を表示</translation>
-    </message>
-    <message>
-        <source>Default system prompt for new chats</source>
-        <translation>新しいチャットの既定のシステムプロンプト</translation>
     </message>
     <message>
         <source>Safety</source>

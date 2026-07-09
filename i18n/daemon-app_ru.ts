@@ -393,8 +393,8 @@ You&apos;ll return to first-run setup.</source>
         <translation>Персона (необязательно)</translation>
     </message>
     <message>
-        <source>system prompt</source>
-        <translation>системный промпт</translation>
+        <source>persona (SOUL.md)</source>
+        <translation>персона (SOUL.md)</translation>
     </message>
 </context>
 <context>
@@ -1324,14 +1324,6 @@ until it is re-registered.</source>
     <message>
         <source>Show token counts</source>
         <translation>Показывать число токенов</translation>
-    </message>
-    <message>
-        <source>System prompt</source>
-        <translation>Системный промпт</translation>
-    </message>
-    <message>
-        <source>Optional default system prompt for new chats</source>
-        <translation>Необязательный системный промпт по умолчанию для новых чатов</translation>
     </message>
 </context>
 <context>
@@ -4477,8 +4469,8 @@ Start one from the Discover tab.</source>
         <translation>Краткое описание</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Системный промпт</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Персона (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -4624,8 +4616,8 @@ Start one from the Discover tab.</source>
         <translation>Описание</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Системный промпт</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Персона (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -7565,10 +7557,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Show token counts</source>
         <translation>Показывать число токенов</translation>
-    </message>
-    <message>
-        <source>Default system prompt for new chats</source>
-        <translation>Системный промпт по умолчанию для новых чатов</translation>
     </message>
     <message>
         <source>Safety</source>

@@ -393,8 +393,8 @@ You&apos;ll return to first-run setup.</source>
         <translation>人设（可选）</translation>
     </message>
     <message>
-        <source>system prompt</source>
-        <translation>系统提示词</translation>
+        <source>persona (SOUL.md)</source>
+        <translation>人设（SOUL.md）</translation>
     </message>
 </context>
 <context>
@@ -1324,14 +1324,6 @@ until it is re-registered.</source>
     <message>
         <source>Show token counts</source>
         <translation>显示词元计数</translation>
-    </message>
-    <message>
-        <source>System prompt</source>
-        <translation>系统提示词</translation>
-    </message>
-    <message>
-        <source>Optional default system prompt for new chats</source>
-        <translation>新聊天的可选默认系统提示词</translation>
     </message>
 </context>
 <context>
@@ -4469,8 +4461,8 @@ Start one from the Discover tab.</source>
         <translation>简短描述</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>系统提示词</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>人设（SOUL.md）</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -4616,8 +4608,8 @@ Start one from the Discover tab.</source>
         <translation>描述</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>系统提示词</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>人设（SOUL.md）</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -7549,10 +7541,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Show token counts</source>
         <translation>显示词元计数</translation>
-    </message>
-    <message>
-        <source>Default system prompt for new chats</source>
-        <translation>新聊天的默认系统提示词</translation>
     </message>
     <message>
         <source>Safety</source>

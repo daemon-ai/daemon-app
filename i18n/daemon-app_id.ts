@@ -393,8 +393,8 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Persona (opsional)</translation>
     </message>
     <message>
-        <source>system prompt</source>
-        <translation>prompt sistem</translation>
+        <source>persona (SOUL.md)</source>
+        <translation>persona (SOUL.md)</translation>
     </message>
 </context>
 <context>
@@ -1324,14 +1324,6 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Show token counts</source>
         <translation>Tampilkan jumlah token</translation>
-    </message>
-    <message>
-        <source>System prompt</source>
-        <translation>Prompt sistem</translation>
-    </message>
-    <message>
-        <source>Optional default system prompt for new chats</source>
-        <translation>Prompt sistem default opsional untuk obrolan baru</translation>
     </message>
 </context>
 <context>
@@ -4469,8 +4461,8 @@ Mulai dari tab Temukan.</translation>
         <translation>Deskripsi singkat</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Prompt sistem</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -4616,8 +4608,8 @@ Mulai dari tab Temukan.</translation>
         <translation>Deskripsi</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>Prompt sistem</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -7549,10 +7541,6 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Show token counts</source>
         <translation>Tampilkan jumlah token</translation>
-    </message>
-    <message>
-        <source>Default system prompt for new chats</source>
-        <translation>Prompt sistem default untuk obrolan baru</translation>
     </message>
     <message>
         <source>Safety</source>

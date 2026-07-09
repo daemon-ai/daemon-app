@@ -393,8 +393,8 @@ Babalik ka sa first-run setup.</translation>
         <translation>Persona (opsyonal)</translation>
     </message>
     <message>
-        <source>system prompt</source>
-        <translation>system prompt</translation>
+        <source>persona (SOUL.md)</source>
+        <translation>persona (SOUL.md)</translation>
     </message>
 </context>
 <context>
@@ -1324,14 +1324,6 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Show token counts</source>
         <translation>Ipakita ang bilang ng token</translation>
-    </message>
-    <message>
-        <source>System prompt</source>
-        <translation>System prompt</translation>
-    </message>
-    <message>
-        <source>Optional default system prompt for new chats</source>
-        <translation>Opsyonal na default na system prompt para sa mga bagong chat</translation>
     </message>
 </context>
 <context>
@@ -4473,8 +4465,8 @@ Magsimula ng isa mula sa Discover tab.</translation>
         <translation>Maikling paglalarawan</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>System prompt</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -4620,8 +4612,8 @@ Magsimula ng isa mula sa Discover tab.</translation>
         <translation>Paglalarawan</translation>
     </message>
     <message>
-        <source>System prompt</source>
-        <translation>System prompt</translation>
+        <source>Persona (SOUL.md)</source>
+        <translation>Persona (SOUL.md)</translation>
     </message>
     <message>
         <source>Skills</source>
@@ -7557,10 +7549,6 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Show token counts</source>
         <translation>Ipakita ang bilang ng token</translation>
-    </message>
-    <message>
-        <source>Default system prompt for new chats</source>
-        <translation>Default na system prompt para sa mga bagong chat</translation>
     </message>
     <message>
         <source>Safety</source>
