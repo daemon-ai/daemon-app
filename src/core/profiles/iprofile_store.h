@@ -13,10 +13,12 @@
 namespace profiles {
 
 // Profiles/agents seam backing the profile editor + Skills/tools curator. A
-// profile bundles a model, system prompt, and the enabled skills/tools an agent
+// profile bundles a model, persona, and the enabled skills/tools an agent
 // runs with. The mock stores profiles in memory; a daemon adapter later maps
 // these to the node's profile endpoints. Profiles are a live VariantListModel
 // (rows: id, name, model, description, systemPrompt, skills[], tools[], isDefault).
+// The persona (SOUL.md) is read/written through the soul()/requestSoul()/setSoul()
+// surface below — never as a profile-spec field from UI code.
 class IProfileStore : public QObject {
     Q_OBJECT
     Q_PROPERTY(QObject* profiles READ profiles CONSTANT)
@@ -33,6 +35,22 @@ public:
     [[nodiscard]] virtual QString defaultProfileId() const = 0;
 
     [[nodiscard]] Q_INVOKABLE virtual QVariantMap profile(const QString& id) const = 0;
+
+    // Persona (SOUL.md) surface. A persona is a node-owned per-profile SOUL.md document,
+    // Core-engine only — a foreign profile's prompt belongs to the foreign agent, so the UI
+    // hides this surface and the node answers writes with a typed rejection (surfaced via
+    // profileOpFailed()). `soul()` returns the last-known persona synchronously;
+    // `requestSoul()` asks the seam to (re)fetch it; `setSoul()` persists a new persona.
+    // A store emits soulChanged(profileId) whenever soul(profileId) has fresh authoritative
+    // content. The defaults ride the profile row's `systemPrompt` key so in-memory stores
+    // work unchanged; the daemon store overrides all three with the SoulGet/SoulSet wire ops.
+    [[nodiscard]] Q_INVOKABLE virtual QString soul(const QString& profileId) const {
+        return profile(profileId).value(QStringLiteral("systemPrompt")).toString();
+    }
+    Q_INVOKABLE virtual void requestSoul(const QString& profileId) { Q_UNUSED(profileId) }
+    Q_INVOKABLE virtual void setSoul(const QString& profileId, const QString& text) {
+        updateProfile(profileId, {{QStringLiteral("systemPrompt"), text}});
+    }
 
     // Resolve a profile selector to the canonical profile id the node resolves (the ref used by
     // ProfileCreate/ProfileGet and Submit.profile). The session-settings UI stores a display name;
@@ -148,6 +166,9 @@ public:
 
 signals:
     void changed();
+    // The persona for `profileId` freshened (a setSoul landed / a SoulGet answered):
+    // soul(profileId) now returns current, authoritative content.
+    void soulChanged(const QString& profileId);
     void exportSaved(const QString& fileUrl);
     void imported(const QString& newId);
     void historyChanged(const QString& id);

@@ -11,7 +11,8 @@ import DaemonApp.Pages
 // Per-agent Profile tab: renders an agent's ProfileSpec (agent == profile). Bound
 // to a ProfileRef via the `profile` property (set from the tab's profile). Reads
 // the reshaped profiles seam (daemon-aligned fields: provider/model/baseUrl/
-// systemPrompt/toolAllowlist/memoryProvider/contextEngine/credentialRef). Display
+// toolAllowlist/memoryProvider/contextEngine/credentialRef; the persona comes
+// from the store's soul()/requestSoul() persona seam, not the spec row). Display
 // surface for now; the existing Profiles manager page remains the editor.
 Item {
     id: root
@@ -22,6 +23,31 @@ Item {
     readonly property var spec: (typeof Profiles !== "undefined" && Profiles && profile.length > 0)
         ? Profiles.profile(profile)
         : ({})
+
+    // Persona (SOUL.md), read-only: seeded from the seam's last-known value, refreshed
+    // when a (possibly async) requestSoul answer lands via onSoulChanged.
+    property string personaText: ""
+    readonly property bool foreignEngine: root.field("engine", "Core") === "Foreign"
+
+    function refreshPersona() {
+        if (typeof Profiles === "undefined" || !Profiles || profile.length === 0) {
+            personaText = "";
+            return;
+        }
+        personaText = Profiles.soul(profile);
+        Profiles.requestSoul(profile);
+    }
+
+    onProfileChanged: refreshPersona()
+    Component.onCompleted: refreshPersona()
+
+    Connections {
+        target: (typeof Profiles !== "undefined" && Profiles) ? Profiles : null
+        function onSoulChanged(id) {
+            if (id === root.profile)
+                root.personaText = Profiles.soul(id);
+        }
+    }
 
     function field(key, fallback) {
         return (root.spec && root.spec[key] !== undefined && String(root.spec[key]).length > 0)
@@ -146,10 +172,15 @@ Item {
                 tone: Theme.accent
             }
 
-            Section { text: qsTr("Persona"); visible: root.profile.length > 0 }
+            // Persona is Core-engine only: a foreign agent owns its own prompt, so the
+            // section is hidden for foreign profiles.
+            Section {
+                text: qsTr("Persona")
+                visible: root.profile.length > 0 && !root.foreignEngine
+            }
             Text {
-                visible: root.profile.length > 0
-                text: root.field("systemPrompt", "-")
+                visible: root.profile.length > 0 && !root.foreignEngine
+                text: root.personaText.length > 0 ? root.personaText : "-"
                 font.family: FontIcons.display
                 font.pixelSize: 12
                 color: Theme.text

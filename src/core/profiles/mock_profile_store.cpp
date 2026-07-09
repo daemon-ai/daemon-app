@@ -59,17 +59,29 @@ void normalizeProfile(QVariantMap& m) {
 
 MockProfileStore::MockProfileStore(QObject* parent)
     : IProfileStore(parent), m_profiles(new uimodels::VariantListModel(this)) {
+    // Personas are SOUL.md-flavored multi-line documents (the shape the node-owned
+    // per-profile SOUL.md files take), so the persona editor demos real content.
     m_profiles->upsert(mkProfile(
         QStringLiteral("prof-1"), QStringLiteral("General Assistant"),
         QStringLiteral("llama-3.1-8b-instruct"), QStringLiteral("Balanced everyday agent."),
-        QStringLiteral("You are a helpful, concise assistant."),
+        QStringLiteral("You are a helpful, concise assistant.\n\n"
+                       "## Voice\n"
+                       "- Plain language; lead with the answer.\n"
+                       "- Ask when a request is ambiguous.\n\n"
+                       "## Boundaries\n"
+                       "- Say when you are unsure; never invent facts."),
         {QStringLiteral("web-search"), QStringLiteral("summarize")},
         {QStringLiteral("read"), QStringLiteral("search")}, true, QStringLiteral("genai"),
         QStringLiteral("mnemosyne"), QStringLiteral("lcm")));
     m_profiles->upsert(mkProfile(
         QStringLiteral("prof-2"), QStringLiteral("Coder"), QStringLiteral("qwen2.5-coder-32b"),
         QStringLiteral("Code-focused agent with shell + edit."),
-        QStringLiteral("You are an expert software engineer. Prefer minimal diffs."),
+        QStringLiteral("You are an expert software engineer. Prefer minimal diffs.\n\n"
+                       "## Practice\n"
+                       "- Read before you write; match the codebase style.\n"
+                       "- Name trade-offs briefly, then commit to one.\n\n"
+                       "## Boundaries\n"
+                       "- Never hand-edit generated files."),
         {QStringLiteral("code-review"), QStringLiteral("refactor")},
         {QStringLiteral("read"), QStringLiteral("write"), QStringLiteral("shell"),
          QStringLiteral("search")},
@@ -77,7 +89,12 @@ MockProfileStore::MockProfileStore(QObject* parent)
     m_profiles->upsert(mkProfile(
         QStringLiteral("prof-3"), QStringLiteral("Researcher"), QStringLiteral("mixtral-8x7b"),
         QStringLiteral("Long-form research + citations."),
-        QStringLiteral("You are a meticulous research analyst. Cite sources."),
+        QStringLiteral("You are a meticulous research analyst. Cite sources.\n\n"
+                       "## Method\n"
+                       "- Separate evidence from inference.\n"
+                       "- Prefer primary sources; note their dates.\n\n"
+                       "## Boundaries\n"
+                       "- Flag low-confidence claims explicitly."),
         {QStringLiteral("web-search"), QStringLiteral("summarize"), QStringLiteral("cite")},
         {QStringLiteral("read"), QStringLiteral("search"), QStringLiteral("browse")}, false,
         QStringLiteral("genai"), QStringLiteral("mnemosyne"), QStringLiteral("budgeted")));
@@ -244,6 +261,14 @@ void MockProfileStore::remove(const QString& id) {
     }
     save();
     emit changed();
+}
+
+void MockProfileStore::setSoul(const QString& profileId, const QString& text) {
+    if (m_profiles->indexOfId(profileId) < 0) {
+        return;
+    }
+    IProfileStore::setSoul(profileId, text); // persists onto the row (the mock's truth)
+    emit soulChanged(profileId);
 }
 
 void MockProfileStore::setDefault(const QString& id) {

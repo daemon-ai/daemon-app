@@ -31,6 +31,11 @@ public:
     void remove(const QString& id) override;
     void setDefault(const QString& id) override;
 
+    // The base default persists the persona onto the row; this in-memory row IS the
+    // authoritative persona, so announce the fresh content immediately. (The daemon
+    // store instead emits when its SoulSet/SoulGet wire round-trip answers.)
+    void setSoul(const QString& profileId, const QString& text) override;
+
 private:
     // Persist the profile rows + default/next-id to the last-known on-disk cache.
     void save() const;

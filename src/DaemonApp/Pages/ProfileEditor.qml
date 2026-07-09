@@ -117,12 +117,17 @@ Item {
             ProviderCatalog.refreshModels(wProviderId, profileId, "");
         modelCombo.reload();
         descField.text = p.description !== undefined ? p.description : "";
-        promptArea.text = p.systemPrompt !== undefined ? p.systemPrompt : "";
+        // Persona (SOUL.md) rides the profile store's persona seam, not the spec row:
+        // seed from the last-known value, then ask the seam to (re)fetch — an async
+        // answer lands via onSoulChanged below.
+        promptArea.text = profileId.length > 0 ? Profiles.soul(profileId) : "";
         wSkills = p.skills !== undefined ? p.skills.slice() : [];
         wTools = p.tools !== undefined ? p.tools.slice() : [];
         credText.refresh();
-        if (profileId.length > 0)
+        if (profileId.length > 0) {
+            Profiles.requestSoul(profileId);
             Profiles.requestHistory(profileId);
+        }
     }
 
     function _toggle(arr, id) {
@@ -150,10 +155,11 @@ Item {
                         backend.model = AgentSetup.agentNativeModel;
                 }
             }
+            // No persona write: a foreign agent owns its own prompt (the persona
+            // surface below is hidden for foreign profiles).
             Profiles.updateProfile(profileId, {
                 "name": nameField.text,
                 "description": descField.text,
-                "systemPrompt": promptArea.text,
                 "skills": wSkills,
                 "tools": wTools,
                 "foreignBackend": backend,
@@ -176,10 +182,12 @@ Item {
             "baseUrl": root.providerIsCloud ? root.wBaseUrl : "",
             "model": root.wModel,
             "description": descField.text,
-            "systemPrompt": promptArea.text,
             "skills": wSkills,
             "tools": wTools,
         });
+        // The persona is not a spec field: persist it through the persona seam
+        // (SoulSet on a daemon-backed store).
+        Profiles.setSoul(profileId, promptArea.text);
         // A LOCALLY INSTALLED model additionally needs ModelActivate bound to THIS profile —
         // the spec update alone records the name, but the node's local provider loads the active
         // selection (same seam the first-run wizard uses).
@@ -395,8 +403,11 @@ Item {
                 placeholderText: qsTr("Short description")
             }
 
-            SectionLabel { text: qsTr("System prompt") }
+            // Persona (SOUL.md): Core-engine only — a foreign agent owns its own
+            // prompt natively, so the whole surface is hidden for foreign profiles.
+            SectionLabel { visible: !root.foreign; text: qsTr("Persona (SOUL.md)") }
             Rectangle {
+                visible: !root.foreign
                 Layout.fillWidth: true
                 implicitHeight: 110
                 radius: Theme.radius
@@ -551,10 +562,15 @@ Item {
         onAccepted: Profiles.importProfileFromFile(selectedFile, "")
     }
 
-    // Refresh the history panel when revisions arrive (or after a revert lands).
+    // Refresh the history panel when revisions arrive (or after a revert lands),
+    // and reflect fresh persona content when the seam answers (async SoulGet).
     Connections {
         target: Profiles
         function onReverted(id) { if (id === root.profileId) root.load(); }
+        function onSoulChanged(id) {
+            if (id === root.profileId)
+                promptArea.text = Profiles.soul(id);
+        }
     }
 
     // Profile-scoped credential entry: reuse the Add-account wizard, targeting THIS profile so the

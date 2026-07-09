@@ -616,15 +616,14 @@ bool Application::runHeadlessProfile(const QString& createId, const QString& mod
         m_services.profiles->createProfile(createId);
         settle(800); // ProfileCreate -> re-list -> ProfileGet caches the new spec
         if (!model.isEmpty() || !prompt.isEmpty()) {
-            QVariantMap fields;
             if (!model.isEmpty()) {
-                fields.insert(QStringLiteral("model"), model);
+                m_services.profiles->updateProfile(createId, {{QStringLiteral("model"), model}});
             }
             if (!prompt.isEmpty()) {
-                fields.insert(QStringLiteral("systemPrompt"), prompt);
+                // The persona rides the persona seam (SoulSet), not the profile spec.
+                m_services.profiles->setSoul(createId, prompt);
             }
-            m_services.profiles->updateProfile(createId, fields);
-            settle(800); // flush ProfileUpdate (+ its re-list/re-get)
+            settle(800); // flush the update/persona writes (+ their re-list/re-get)
         }
     }
     return true;

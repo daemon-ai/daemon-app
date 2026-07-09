@@ -16,8 +16,8 @@ import DaemonApp.Controls as Kit
 //
 // The form is selection-only: every field drives an AgentSetup intent, and submit() commits
 // through the model (AgentSetup.commit -> committed(profileId)/failed(message), re-emitted here).
-// Native persona is an optional extra applied on commit (the model's commit payload is
-// provider/model/backend; the system prompt has no ProfileSpec home in that path).
+// Native persona is an optional extra applied on commit through the profile store's persona
+// seam (setSoul -> the node-owned per-profile SOUL.md); it is not a profile-spec field.
 ColumnLayout {
     id: form
     spacing: 12
@@ -76,7 +76,7 @@ ColumnLayout {
             const persona = personaField.text.trim();
             if (persona.length > 0 && profileId.length > 0 && AgentSetup.engineKind === "Core"
                 && typeof Profiles !== "undefined" && Profiles)
-                Profiles.updateProfile(profileId, { "systemPrompt": persona });
+                Profiles.setSoul(profileId, persona);
             form.committed(profileId);
         }
         function onFailed(message) {
@@ -142,6 +142,6 @@ ColumnLayout {
         id: personaField
         visible: form._hasSetup && AgentSetup.engineKind === "Core"
         Layout.fillWidth: true
-        placeholderText: qsTr("system prompt")
+        placeholderText: qsTr("persona (SOUL.md)")
     }
 }
