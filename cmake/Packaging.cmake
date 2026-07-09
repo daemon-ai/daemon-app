@@ -258,6 +258,8 @@ if(APPLE)
     # `cmake --install` and CPack's DragNDrop staging pass through it.
     # APPLE-only on purpose: the Linux artifacts need no deploy step (the
     # static payload is self-contained) and the wasm install set likewise.
+    # STATIC builds also skip this: Qt is compiled in, nothing to deploy.
+    if(NOT DAEMON_APP_STATIC)
     qt_generate_deploy_qml_app_script(
         TARGET daemon-app
         OUTPUT_SCRIPT _da_macos_deploy_script
@@ -459,6 +461,7 @@ if(APPLE)
             "daemon-app: QMLTERMWIDGET_QML_DIR unset or module missing; the embedded terminal will be absent and the bundle will fail to launch (Main.qml imports QMLTermWidget unconditionally)"
         )
     endif()
+    endif() # NOT DAEMON_APP_STATIC
 endif()
 
 # --- CPack -------------------------------------------------------------------

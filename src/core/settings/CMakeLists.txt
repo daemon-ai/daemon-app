@@ -29,15 +29,15 @@ target_link_libraries(da_settings_store
 )
 
 # Optional OS keychain for the server-token store (auth6). When Qt Keychain is present the token
-# persists in the platform secret store; otherwise QtSettingsStore falls back to QSettings. The
-# static build never even looks: qtkeychain is a shared-Qt library (and would drag a DBus-linked
-# libsecret floor into the portable binary), so the QSettings fallback is the deliberate choice.
-# Mobile (Android/iOS/wasm) is the same: no qtkeychain is built for those targets, and on the
-# static iOS link a stray host qtkeychain would be an ABI mismatch - and a keychain read would
-# spin a headless mock boot on an unanswerable prompt (see packaging/ios/README.md). QSettings
-# fallback it is.
-if(DAEMON_APP_STATIC OR DAEMON_APP_MOBILE)
-    message(STATUS "daemon-app: static/mobile build; server-token store uses QSettings fallback")
+# persists in the platform secret store; otherwise QtSettingsStore falls back to QSettings. Only
+# WASM and mobile (Android/iOS) skip it outright: the browser sandbox has no OS secret store, and
+# a sandboxed mobile .app cannot answer a keychain prompt during a headless mock boot (see
+# packaging/ios/README.md). The POSIX static desktop builds (Linux/macOS) DO get a real keychain:
+# the flake supplies a qtkeychain built static against the same static Qt (Linux uses the D-Bus
+# Secret Service backend so it drags no libsecret floor; macOS uses Security.framework), found
+# here via find_package on CMAKE_PREFIX_PATH.
+if(DAEMON_APP_WASM OR DAEMON_APP_MOBILE)
+    message(STATUS "daemon-app: wasm/mobile build; server-token store uses QSettings fallback")
 else()
     find_package(Qt6Keychain QUIET)
 endif()
@@ -45,6 +45,6 @@ if(Qt6Keychain_FOUND)
     target_link_libraries(da_settings_store PRIVATE Qt6Keychain::Qt6Keychain)
     target_compile_definitions(da_settings_store PRIVATE DAEMON_APP_HAVE_KEYCHAIN)
     message(STATUS "daemon-app: server-token store uses Qt Keychain")
-elseif(NOT DAEMON_APP_STATIC)
+elseif(NOT DAEMON_APP_WASM AND NOT DAEMON_APP_MOBILE)
     message(STATUS "daemon-app: Qt Keychain not found; server-token store uses QSettings fallback")
 endif()

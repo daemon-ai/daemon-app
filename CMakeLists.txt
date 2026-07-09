@@ -95,13 +95,9 @@ if(DAEMON_APP_WASM AND DAEMON_APP_TUI)
     message(STATUS "daemon-app: DAEMON_APP_TUI forced OFF for the wasm build")
     set(DAEMON_APP_TUI OFF)
 endif()
-# The static gate covers the GUI only: daemon-tui stays a dynamic build (its
-# Meson-built Tui Widgets stack is shared-Qt), so the combination is refused
-# rather than half-supported.
-if(DAEMON_APP_STATIC AND DAEMON_APP_TUI)
-    message(STATUS "daemon-app: DAEMON_APP_TUI forced OFF for the static build (GUI only)")
-    set(DAEMON_APP_TUI OFF)
-endif()
+# Static + TUI is supported: the flake supplies a Tui Widgets stack (termpaint,
+# posixsignalmanager, tuiwidgets) built static against the same static Qt, so one
+# static build emits both the GUI (daemon-app) and the TUI (daemon-tui).
 if(DAEMON_APP_TUI)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Core5Compat)
 endif()

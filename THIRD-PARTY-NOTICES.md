@@ -110,10 +110,14 @@ What the static artifact contains, beyond the dynamic builds' set:
   host system's copies dynamically (like glibc, the X11/xcb/wayland client
   stack, libxkbcommon, and GL/EGL).
 
-The portable build deliberately **excludes** GPL-2.0 qmltermwidget (the
-embedded terminal shows a stub panel instead - the GPL-2.0 obligation below
-does not attach to this artifact) and qtkeychain (the token store falls back
-to QSettings).
+The POSIX static desktop build (Linux portable / AppImage / DEB / RPM, and the
+static macOS .app) is feature-complete: it **includes** the GPL-2.0 qmltermwidget
+embedded terminal (statically compiled in - so the GPL-2.0 obligation below DOES
+attach to these artifacts) and a real OS keychain via **qtkeychain**
+(BSD-3-Clause, built static; Linux uses the D-Bus Secret Service backend, macOS
+uses Security.framework - no license obligation). Only the WASM, Windows, and
+mobile (Android/iOS) builds compile the stub terminal panel + QSettings token
+store (no Unix PTY / no OS secret store on those targets).
 
 ## Rust daemon shipped alongside (daemon-node)
 
@@ -131,9 +135,11 @@ this plugin, the combined binary is effectively subject to GPL-2.0: recipients
 must be offered the complete corresponding source under GPL-2.0 terms, and the
 GPL-2.0 text (<https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>; shipped
 with the qmltermwidget source carried in the build artifact) must accompany the
-distribution. The wasm build and the portable static build do **not** include
-qmltermwidget (both compile the stub terminal panel), so this obligation does
-not attach to those artifacts.
+distribution. This applies to the dynamic desktop builds AND the POSIX static
+desktop builds (Linux portable/AppImage/DEB/RPM + static macOS), which now
+statically compile qmltermwidget in. Only the WASM, Windows, and mobile
+(Android/iOS) builds compile the stub terminal panel and therefore do **not**
+carry this obligation.
 
 This is compatible with `daemon-app`'s MPL-2.0 licensing because MPL-2.0 §3.3
 permits distributing a Larger Work that combines MPL "Covered Software" with a
