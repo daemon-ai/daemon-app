@@ -39,6 +39,33 @@ QVariantMap cloudModelRow(const DecodedModelDescriptor& d, const QString& provid
     return m;
 }
 
+QVariantMap customProviderRow(const DecodedCustomProvider& c) {
+    QVariantMap m;
+    m[QStringLiteral("id")] = c.id;
+    m[QStringLiteral("displayName")] = c.displayName;
+    m[QStringLiteral("baseUrl")] = c.baseUrl;
+    m[QStringLiteral("requiresKey")] = c.requiresKey;
+    m[QStringLiteral("credentialRef")] = c.hasCredentialRef ? c.credentialRef : QString();
+    m[QStringLiteral("source")] = c.source;
+    return m;
+}
+
+// Project an app field map into the codec write model. The node re-forces source + selector and
+// re-validates the base URL, so client-side we only carry the user-owned fields.
+DecodedCustomProvider customFromFields(const QVariantMap& f) {
+    DecodedCustomProvider c;
+    c.id = f.value(QStringLiteral("id")).toString().trimmed();
+    c.displayName = f.value(QStringLiteral("displayName")).toString();
+    c.baseUrl = f.value(QStringLiteral("baseUrl")).toString().trimmed();
+    c.wireSelector = QStringLiteral("daemon_api");
+    c.requiresKey = f.value(QStringLiteral("requiresKey")).toBool();
+    const QString cred = f.value(QStringLiteral("credentialRef")).toString().trimmed();
+    c.hasCredentialRef = !cred.isEmpty();
+    c.credentialRef = cred;
+    c.source = QStringLiteral("user");
+    return c;
+}
+
 } // namespace
 
 DaemonProviderCatalog::DaemonProviderCatalog(ProviderRepository* providers,
@@ -49,7 +76,10 @@ DaemonProviderCatalog::DaemonProviderCatalog(ProviderRepository* providers,
                 &models::IProviderCatalog::providersChanged);
         connect(m_providers, &ProviderRepository::providerModelsRefreshed, this,
                 &models::IProviderCatalog::offeredModelsChanged);
+        connect(m_providers, &ProviderRepository::customProvidersRefreshed, this,
+                &models::IProviderCatalog::customProvidersChanged);
         m_providers->refreshProviders();
+        m_providers->refreshCustomProviders();
     }
     if (m_catalog != nullptr) {
         // A finished local download makes a new model selectable: re-offer the local providers.
@@ -129,6 +159,34 @@ QVariantList DaemonProviderCatalog::offeredModels(const QString& providerId) con
         }
     }
     return out;
+}
+
+QVariantList DaemonProviderCatalog::customProviders() const {
+    QVariantList out;
+    if (m_providers == nullptr) {
+        return out;
+    }
+    for (const DecodedCustomProvider& c : m_providers->customProviders()) {
+        out.append(customProviderRow(c));
+    }
+    return out;
+}
+
+void DaemonProviderCatalog::createCustom(const QVariantMap& fields) {
+    if (m_providers != nullptr) {
+        m_providers->setCustomProvider(customFromFields(fields));
+    }
+}
+
+void DaemonProviderCatalog::updateCustom(const QVariantMap& fields) {
+    // Create and update are the same upsert node-side (keyed by id).
+    createCustom(fields);
+}
+
+void DaemonProviderCatalog::removeCustom(const QString& id) {
+    if (m_providers != nullptr) {
+        m_providers->removeCustomProvider(id);
+    }
 }
 
 } // namespace daemonapp::daemon

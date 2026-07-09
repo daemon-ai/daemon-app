@@ -81,6 +81,8 @@ DecodedUnitNode decodeUnitNodeStruct(const unit_node& n);
 CachedSessionRow sessionRowFromInfo(const session_info& info);
 void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out);
 void fillProviderDescriptor(const provider_descriptor& p, DecodedProviderDescriptor* out);
+// Project a generated `custom_provider` into the DecodedCustomProvider write-model view.
+void fillCustomProvider(const custom_provider& p, DecodedCustomProvider* out);
 DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps);
 // Project a generated author into the wire string ("operator" or the agent id); *isAgent (when
 // non-null) is set true for the author-agent arm (an agent id) so callers can disambiguate an agent

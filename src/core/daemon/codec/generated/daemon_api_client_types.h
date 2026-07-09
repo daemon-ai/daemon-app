@@ -1431,6 +1431,42 @@ struct request_provider_models {
 	bool ProviderModels_after_present;
 };
 
+struct custom_provider_credential_ref_r {
+	union {
+		struct zcbor_string custom_provider_credential_ref_tstr;
+	};
+	enum {
+		custom_provider_credential_ref_tstr_c,
+		custom_provider_credential_ref_null_m_c,
+	} custom_provider_credential_ref_choice;
+};
+
+struct custom_provider_source_t_r {
+	enum {
+		custom_provider_source_t_config_tstr_c,
+		custom_provider_source_t_user_tstr_c,
+	} custom_provider_source_t_choice;
+};
+
+struct custom_provider {
+	struct zcbor_string custom_provider_id;
+	struct zcbor_string custom_provider_display_name;
+	struct zcbor_string custom_provider_base_url;
+	struct provider_selector_r custom_provider_wire_selector;
+	bool custom_provider_requires_key;
+	struct custom_provider_credential_ref_r custom_provider_credential_ref;
+	bool custom_provider_credential_ref_present;
+	struct custom_provider_source_t_r custom_provider_source;
+};
+
+struct request_custom_provider_set {
+	struct custom_provider CustomProviderSet_provider;
+};
+
+struct request_custom_provider_remove {
+	struct zcbor_string CustomProviderRemove_id;
+};
+
 struct params_tstrtstr {
 	struct zcbor_string auth_begin_request_params_tstrtstr_key;
 	struct zcbor_string params_tstrtstr;
@@ -3284,6 +3320,8 @@ struct api_request_r {
 		struct request_models api_request_request_models_m;
 		struct request_model_current api_request_request_model_current_m;
 		struct request_provider_models api_request_request_provider_models_m;
+		struct request_custom_provider_set api_request_request_custom_provider_set_m;
+		struct request_custom_provider_remove api_request_request_custom_provider_remove_m;
 		struct request_auth_begin api_request_request_auth_begin_m;
 		struct request_auth_step api_request_request_auth_step_m;
 		struct request_auth_complete api_request_request_auth_complete_m;
@@ -3452,6 +3490,9 @@ struct api_request_r {
 		api_request_request_model_current_m_c,
 		api_request_request_provider_catalog_m_c,
 		api_request_request_provider_models_m_c,
+		api_request_request_custom_provider_list_m_c,
+		api_request_request_custom_provider_set_m_c,
+		api_request_request_custom_provider_remove_m_c,
 		api_request_request_auth_begin_m_c,
 		api_request_request_auth_step_m_c,
 		api_request_request_auth_complete_m_c,
@@ -5465,6 +5506,11 @@ struct response_provider_models {
 	struct model_page response_provider_models_ProviderModels;
 };
 
+struct response_custom_providers {
+	struct custom_provider response_custom_providers_CustomProviders_custom_provider_m[64];
+	size_t response_custom_providers_CustomProviders_custom_provider_m_count;
+};
+
 struct response_distribution {
 	struct distribution response_distribution_Distribution;
 };
@@ -7033,6 +7079,7 @@ struct api_response_r {
 		struct response_model_current api_response_response_model_current_m;
 		struct response_provider_catalog api_response_response_provider_catalog_m;
 		struct response_provider_models api_response_response_provider_models_m;
+		struct response_custom_providers api_response_response_custom_providers_m;
 		struct response_distribution api_response_response_distribution_m;
 		struct response_profile_id api_response_response_profile_id_m;
 		struct response_revisions api_response_response_revisions_m;
@@ -7129,6 +7176,7 @@ struct api_response_r {
 		api_response_response_model_current_m_c,
 		api_response_response_provider_catalog_m_c,
 		api_response_response_provider_models_m_c,
+		api_response_response_custom_providers_m_c,
 		api_response_response_distribution_m_c,
 		api_response_response_profile_id_m_c,
 		api_response_response_revisions_m_c,

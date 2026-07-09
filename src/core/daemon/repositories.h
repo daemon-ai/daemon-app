@@ -583,9 +583,23 @@ public:
     void refreshProviderModels(const QString& provider, const QString& credentialRef = QString(),
                                const QString& transientKey = QString());
 
+    // The persisted user-defined custom providers (the editor's read-your-writes view; empty until
+    // a CustomProviderList resolves).
+    [[nodiscard]] const QList<DecodedCustomProvider>& customProviders() const {
+        return m_customProviders;
+    }
+    // Issue a CustomProviderList; on success customProvidersRefreshed() fires.
+    void refreshCustomProviders();
+    // Create/update a custom provider (CustomProviderSet). On the node's ack, BOTH the custom list
+    // and the merged provider catalog are re-fetched (a custom row surfaces in the picker).
+    void setCustomProvider(const DecodedCustomProvider& provider);
+    // Remove a user-defined custom provider by id (CustomProviderRemove). On ack, both re-fetch.
+    void removeCustomProvider(const QString& id);
+
 signals:
     void providersRefreshed();
     void providerModelsRefreshed(const QString& provider);
+    void customProvidersRefreshed();
     void operationFailed(const QString& message);
 
 private:
@@ -594,8 +608,12 @@ private:
 
     static constexpr auto kCatalogCorrelation = "repo/provider-catalog";
     static constexpr auto kModelsPrefix = "repo/provider-models/";
+    static constexpr auto kCustomListCorrelation = "repo/custom-provider-list";
+    static constexpr auto kCustomSetCorrelation = "repo/custom-provider-set";
+    static constexpr auto kCustomRemoveCorrelation = "repo/custom-provider-remove";
 
     QList<DecodedProviderDescriptor> m_providers;
+    QList<DecodedCustomProvider> m_customProviders;
     QHash<QString, QList<DecodedModelDescriptor>> m_models; // provider id -> its offered models
     // Per-provider ProviderModels page loop (wire v25) + the credentials the continuation pages
     // re-issue verbatim; providerModelsRefreshed fires ONCE with the complete listing.

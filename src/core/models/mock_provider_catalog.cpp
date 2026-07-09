@@ -50,7 +50,7 @@ MockProviderCatalog::MockProviderCatalog(IModelCatalog* catalog, QObject* parent
 QVariantList MockProviderCatalog::providers() const {
     // Daemon Cloud first (the new-profile default), then a couple of genai cloud vendors, then the
     // local engines. Mock is deliberately absent.
-    return {
+    QVariantList out = {
         // Daemon Cloud lists models keyless (see refreshModels), but running turns needs a Bearer
         // key, so requiresKey is true to match the corrected node semantics.
         providerRow(QStringLiteral("daemon_cloud"), QStringLiteral("Daemon Cloud"),
@@ -65,6 +65,65 @@ QVariantList MockProviderCatalog::providers() const {
         providerRow(QStringLiteral("mistral_rs"), QStringLiteral("Mistral.rs"),
                     QStringLiteral("local"), QStringLiteral("mistral_rs"), false, QString()),
     };
+    // Persisted custom providers overlay onto the picker (a Daemon-Cloud-kind OpenAI gateway each).
+    for (const QVariantMap& c : m_customProviders) {
+        const QString name = c.value(QStringLiteral("displayName")).toString();
+        out.append(providerRow(c.value(QStringLiteral("id")).toString(),
+                               name.isEmpty() ? c.value(QStringLiteral("id")).toString() : name,
+                               QStringLiteral("daemon_cloud"), QStringLiteral("daemon_api"),
+                               c.value(QStringLiteral("requiresKey")).toBool(),
+                               c.value(QStringLiteral("baseUrl")).toString()));
+    }
+    return out;
+}
+
+QVariantList MockProviderCatalog::customProviders() const {
+    QVariantList out;
+    for (const QVariantMap& c : m_customProviders) {
+        out.append(c);
+    }
+    return out;
+}
+
+void MockProviderCatalog::createCustom(const QVariantMap& fields) {
+    const QString id = fields.value(QStringLiteral("id")).toString().trimmed();
+    if (id.isEmpty()) {
+        return;
+    }
+    QVariantMap row;
+    row[QStringLiteral("id")] = id;
+    row[QStringLiteral("displayName")] = fields.value(QStringLiteral("displayName")).toString();
+    row[QStringLiteral("baseUrl")] = fields.value(QStringLiteral("baseUrl")).toString().trimmed();
+    row[QStringLiteral("requiresKey")] = fields.value(QStringLiteral("requiresKey")).toBool();
+    row[QStringLiteral("credentialRef")] =
+        fields.value(QStringLiteral("credentialRef")).toString().trimmed();
+    row[QStringLiteral("source")] = QStringLiteral("user");
+    // Upsert keyed by id.
+    for (QVariantMap& existing : m_customProviders) {
+        if (existing.value(QStringLiteral("id")).toString() == id) {
+            existing = row;
+            emit customProvidersChanged();
+            emit providersChanged();
+            return;
+        }
+    }
+    m_customProviders.append(row);
+    emit customProvidersChanged();
+    emit providersChanged();
+}
+
+void MockProviderCatalog::updateCustom(const QVariantMap& fields) {
+    createCustom(fields);
+}
+
+void MockProviderCatalog::removeCustom(const QString& id) {
+    const auto before = m_customProviders.size();
+    m_customProviders.removeIf(
+        [&](const QVariantMap& c) { return c.value(QStringLiteral("id")).toString() == id; });
+    if (m_customProviders.size() != before) {
+        emit customProvidersChanged();
+        emit providersChanged();
+    }
 }
 
 QVariantMap MockProviderCatalog::descriptorFor(const QString& providerId) const {

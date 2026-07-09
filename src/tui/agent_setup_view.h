@@ -99,6 +99,10 @@ private:
     Tui::ZInputBox* m_baseUrl = nullptr;
     Tui::ZLabel* m_customModelLabel = nullptr;
     Tui::ZInputBox* m_customModel = nullptr;
+    // Persist the one-off custom endpoint as a named, reusable custom provider (node-backed): the
+    // TUI twin of the GUI "Save as a reusable provider" button. It then appears in the provider
+    // list like any other provider.
+    Tui::ZButton* m_saveCustomBtn = nullptr;
 
     QString m_providerId;
     QString m_selectedModel;

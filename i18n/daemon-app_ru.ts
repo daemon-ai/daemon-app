@@ -251,6 +251,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Эндпоинт используется как есть — первое сообщение проверит его, а при ошибке вы вернётесь сюда.</translation>
     </message>
     <message>
+        <source>Save as a reusable provider</source>
+        <translation>Сохранить как повторно используемого провайдера</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>Ключ API (необязательно)</translation>
     </message>
@@ -445,6 +449,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model id</source>
         <translation>Идентификатор модели</translation>
+    </message>
+    <message>
+        <source>Save as reusable provider</source>
+        <translation>Сохранить как повторно используемого провайдера</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
@@ -2240,6 +2248,77 @@ until it is re-registered.</source>
     <message>
         <source>Edit</source>
         <translation>Изменить</translation>
+    </message>
+</context>
+<context>
+    <name>CustomProvidersSection</name>
+    <message>
+        <source>Custom providers</source>
+        <translation>Пользовательские провайдеры</translation>
+    </message>
+    <message>
+        <source>Add custom provider</source>
+        <translation>Добавить пользовательского провайдера</translation>
+    </message>
+    <message>
+        <source>No custom providers yet. Add an OpenAI-compatible endpoint to select it like any other provider.</source>
+        <translation>Пользовательских провайдеров пока нет. Добавьте OpenAI-совместимый эндпоинт, чтобы выбирать его как любого другого провайдера.</translation>
+    </message>
+    <message>
+        <source>From config</source>
+        <translation>Из конфигурации</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Изменить</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Edit custom provider</source>
+        <translation>Изменить пользовательского провайдера</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>Id</source>
+        <translation>Идентификатор</translation>
+    </message>
+    <message>
+        <source>custom/my-gateway</source>
+        <translation>custom/my-gateway</translation>
+    </message>
+    <message>
+        <source>Display name</source>
+        <translation>Отображаемое имя</translation>
+    </message>
+    <message>
+        <source>My Gateway</source>
+        <translation>My Gateway</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Базовый URL</translation>
+    </message>
+    <message>
+        <source>https://my-gateway/v1/</source>
+        <translation>https://my-gateway/v1/</translation>
+    </message>
+    <message>
+        <source>Requires an API key</source>
+        <translation>Требуется ключ API</translation>
+    </message>
+    <message>
+        <source>Default credential (optional)</source>
+        <translation>Учётные данные по умолчанию (необязательно)</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>ссылка на учётные данные</translation>
     </message>
 </context>
 <context>

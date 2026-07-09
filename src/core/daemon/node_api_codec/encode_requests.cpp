@@ -463,6 +463,52 @@ QByteArray NodeApiCodec::encodeProviderModelsRequest(const QString& provider,
         });
 }
 
+QByteArray NodeApiCodec::encodeCustomProviderListRequest() {
+    return encodeSimple(api_request_r::api_request_request_custom_provider_list_m_c);
+}
+
+QByteArray NodeApiCodec::encodeCustomProviderSetRequest(const DecodedCustomProvider& provider) {
+    // UTF-8 buffers must outlive the encode: zcbor borrows into their bytes across encodeWithFill.
+    const QByteArray idUtf8 = provider.id.toUtf8();
+    const QByteArray nameUtf8 = provider.displayName.toUtf8();
+    const QByteArray baseUtf8 = provider.baseUrl.toUtf8();
+    const QByteArray credUtf8 = provider.credentialRef.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_custom_provider_set_m_c, [&](api_request_r& request) {
+            custom_provider& cp =
+                request.api_request_request_custom_provider_set_m.CustomProviderSet_provider;
+            setZcbor(cp.custom_provider_id, idUtf8);
+            setZcbor(cp.custom_provider_display_name, nameUtf8);
+            setZcbor(cp.custom_provider_base_url, baseUtf8);
+            // A custom provider is always the OpenAI-compatible DaemonApi selector; the node
+            // re-forces this regardless, but we send the correct arm to match the round-trip.
+            cp.custom_provider_wire_selector.provider_selector_choice =
+                provider_selector_r::provider_selector_daemon_api_tstr_c;
+            cp.custom_provider_requires_key = provider.requiresKey;
+            if (provider.hasCredentialRef && !provider.credentialRef.isEmpty()) {
+                cp.custom_provider_credential_ref_present = true;
+                cp.custom_provider_credential_ref.custom_provider_credential_ref_choice =
+                    custom_provider_credential_ref_r::custom_provider_credential_ref_tstr_c;
+                setZcbor(cp.custom_provider_credential_ref.custom_provider_credential_ref_tstr,
+                         credUtf8);
+            } else {
+                cp.custom_provider_credential_ref_present = false;
+            }
+            // The node forces source = User on a wire set; we send User to match the round-trip.
+            cp.custom_provider_source.custom_provider_source_t_choice =
+                custom_provider_source_t_r::custom_provider_source_t_user_tstr_c;
+        });
+}
+
+QByteArray NodeApiCodec::encodeCustomProviderRemoveRequest(const QString& id) {
+    const QByteArray idUtf8 = id.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_custom_provider_remove_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_custom_provider_remove_m.CustomProviderRemove_id,
+                     idUtf8);
+        });
+}
+
 QByteArray NodeApiCodec::encodeProfileListRequest() {
     return encodeSimple(api_request_r::api_request_request_profile_list_m_c);
 }

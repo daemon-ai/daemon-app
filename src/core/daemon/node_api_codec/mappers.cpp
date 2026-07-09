@@ -538,6 +538,25 @@ void fillProviderDescriptor(const provider_descriptor& p, DecodedProviderDescrip
     }
 }
 
+void fillCustomProvider(const custom_provider& p, DecodedCustomProvider* out) {
+    out->id = fromZcbor(p.custom_provider_id);
+    out->displayName = fromZcbor(p.custom_provider_display_name);
+    out->baseUrl = fromZcbor(p.custom_provider_base_url);
+    out->wireSelector = providerName(p.custom_provider_wire_selector.provider_selector_choice);
+    out->requiresKey = p.custom_provider_requires_key;
+    if (p.custom_provider_credential_ref_present &&
+        p.custom_provider_credential_ref.custom_provider_credential_ref_choice ==
+            custom_provider_credential_ref_r::custom_provider_credential_ref_tstr_c) {
+        out->hasCredentialRef = true;
+        out->credentialRef =
+            fromZcbor(p.custom_provider_credential_ref.custom_provider_credential_ref_tstr);
+    }
+    out->source = p.custom_provider_source.custom_provider_source_t_choice ==
+                          custom_provider_source_t_r::custom_provider_source_t_config_tstr_c
+                      ? QStringLiteral("config")
+                      : QStringLiteral("user");
+}
+
 QString contextEngineName(int choice) {
     return choice == context_engine_sel_r::context_engine_sel_budgeted_tstr_c
                ? QStringLiteral("budgeted")

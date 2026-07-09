@@ -251,6 +251,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>端點會原樣使用——你的第一則訊息會驗證它，若失敗會引導你回到這裡。</translation>
     </message>
     <message>
+        <source>Save as a reusable provider</source>
+        <translation>儲存為可重複使用的供應商</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API 金鑰（選填）</translation>
     </message>
@@ -445,6 +449,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model id</source>
         <translation>模型 ID</translation>
+    </message>
+    <message>
+        <source>Save as reusable provider</source>
+        <translation>儲存為可重複使用的供應商</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
@@ -2240,6 +2248,77 @@ until it is re-registered.</source>
     <message>
         <source>Edit</source>
         <translation>編輯</translation>
+    </message>
+</context>
+<context>
+    <name>CustomProvidersSection</name>
+    <message>
+        <source>Custom providers</source>
+        <translation>自訂供應商</translation>
+    </message>
+    <message>
+        <source>Add custom provider</source>
+        <translation>新增自訂供應商</translation>
+    </message>
+    <message>
+        <source>No custom providers yet. Add an OpenAI-compatible endpoint to select it like any other provider.</source>
+        <translation>尚無自訂供應商。新增一個相容 OpenAI 的端點，即可像其他供應商一樣選擇它。</translation>
+    </message>
+    <message>
+        <source>From config</source>
+        <translation>來自設定</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>編輯</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+    <message>
+        <source>Edit custom provider</source>
+        <translation>編輯自訂供應商</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>儲存</translation>
+    </message>
+    <message>
+        <source>Id</source>
+        <translation>ID</translation>
+    </message>
+    <message>
+        <source>custom/my-gateway</source>
+        <translation>custom/my-gateway</translation>
+    </message>
+    <message>
+        <source>Display name</source>
+        <translation>顯示名稱</translation>
+    </message>
+    <message>
+        <source>My Gateway</source>
+        <translation>My Gateway</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>基礎網址</translation>
+    </message>
+    <message>
+        <source>https://my-gateway/v1/</source>
+        <translation>https://my-gateway/v1/</translation>
+    </message>
+    <message>
+        <source>Requires an API key</source>
+        <translation>需要 API 金鑰</translation>
+    </message>
+    <message>
+        <source>Default credential (optional)</source>
+        <translation>預設憑證（選填）</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>憑證參照</translation>
     </message>
 </context>
 <context>

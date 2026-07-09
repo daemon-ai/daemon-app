@@ -96,6 +96,9 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
          ApiResponseKind::TelemetryConsent},
         // node gateway status (wire v32).
         {api_response_r::api_response_response_gateway_status_m_c, ApiResponseKind::GatewayStatus},
+        // custom OpenAI-compatible providers (generalized Daemon Cloud).
+        {api_response_r::api_response_response_custom_providers_m_c,
+         ApiResponseKind::CustomProviders},
     });
     for (const auto& entry : kKindMap) {
         if (response->api_response_choice == entry.choice) {
@@ -734,6 +737,28 @@ bool NodeApiCodec::decodeProviderCatalog(const QByteArray& responseCbor,
             catalog.response_provider_catalog_ProviderCatalog_provider_descriptor_m[i],
             &descriptor);
         out->append(descriptor);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeCustomProviders(const QByteArray& responseCbor,
+                                         QList<DecodedCustomProvider>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_custom_providers_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_custom_providers& list = response->api_response_response_custom_providers_m;
+    out->clear();
+    for (size_t i = 0; i < list.response_custom_providers_CustomProviders_custom_provider_m_count;
+         ++i) {
+        DecodedCustomProvider cp;
+        fillCustomProvider(list.response_custom_providers_CustomProviders_custom_provider_m[i],
+                           &cp);
+        out->append(cp);
     }
     return true;
 }

@@ -61,12 +61,35 @@ public:
     [[nodiscard]] Q_INVOKABLE virtual QVariantList
     offeredModels(const QString& providerId) const = 0;
 
+    // --- Custom providers (generalized Daemon Cloud) ------------------------------------------
+    // The persisted user-defined custom providers (the management editor's read-your-writes view,
+    // distinct from the merged providers() picker rows). Each row:
+    //   { id, displayName, baseUrl, requiresKey (bool), credentialRef (string, "" = none),
+    //     source ("config"|"user") }
+    // A "config"-source row is seeded from node config and is not user-removable. Defaults to empty
+    // for a seam without custom-provider support (test fakes); real seams override.
+    [[nodiscard]] Q_INVOKABLE virtual QVariantList customProviders() const { return {}; }
+
+    // Create or update a custom OpenAI-compatible provider from a field map
+    //   { id, displayName, baseUrl, requiresKey (bool), credentialRef (string, optional) }
+    // The node forces source = User + the DaemonApi selector and re-validates the base URL; on
+    // success the created row appears both here (customProvidersChanged) and in providers()
+    // (providersChanged). Default: no-op (a seam without custom-provider support).
+    Q_INVOKABLE virtual void createCustom(const QVariantMap& fields) { Q_UNUSED(fields) }
+    // Update an existing custom provider (same shape as createCustom; keyed by `id`).
+    Q_INVOKABLE virtual void updateCustom(const QVariantMap& fields) { Q_UNUSED(fields) }
+    // Remove a user-defined custom provider by id (config-seeded ids are refused node-side).
+    Q_INVOKABLE virtual void removeCustom(const QString& id) { Q_UNUSED(id) }
+
 signals:
     // The provider list changed (a ProviderCatalog landed / the mock seeded).
     void providersChanged();
     // The offered-model list for `providerId` changed (a ProviderModels landed, a local download
     // finished, or a local compose ran).
     void offeredModelsChanged(const QString& providerId);
+    // The persisted custom-provider list changed (a CustomProviderList landed / a set/remove
+    // acked).
+    void customProvidersChanged();
 };
 
 } // namespace models

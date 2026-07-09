@@ -251,6 +251,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Endpoint digunakan apa adanya — pesan pertama Anda memverifikasinya, dan jika gagal Anda akan diarahkan kembali ke sini.</translation>
     </message>
     <message>
+        <source>Save as a reusable provider</source>
+        <translation>Simpan sebagai penyedia yang dapat digunakan kembali</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>Kunci API (opsional)</translation>
     </message>
@@ -445,6 +449,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Model id</source>
         <translation>ID model</translation>
+    </message>
+    <message>
+        <source>Save as reusable provider</source>
+        <translation>Simpan sebagai penyedia yang dapat digunakan kembali</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
@@ -2240,6 +2248,77 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Edit</source>
         <translation>Edit</translation>
+    </message>
+</context>
+<context>
+    <name>CustomProvidersSection</name>
+    <message>
+        <source>Custom providers</source>
+        <translation>Penyedia khusus</translation>
+    </message>
+    <message>
+        <source>Add custom provider</source>
+        <translation>Tambah penyedia khusus</translation>
+    </message>
+    <message>
+        <source>No custom providers yet. Add an OpenAI-compatible endpoint to select it like any other provider.</source>
+        <translation>Belum ada penyedia khusus. Tambahkan endpoint yang kompatibel dengan OpenAI untuk memilihnya seperti penyedia lainnya.</translation>
+    </message>
+    <message>
+        <source>From config</source>
+        <translation>Dari konfigurasi</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Edit</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Hapus</translation>
+    </message>
+    <message>
+        <source>Edit custom provider</source>
+        <translation>Edit penyedia khusus</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Simpan</translation>
+    </message>
+    <message>
+        <source>Id</source>
+        <translation>Id</translation>
+    </message>
+    <message>
+        <source>custom/my-gateway</source>
+        <translation>custom/my-gateway</translation>
+    </message>
+    <message>
+        <source>Display name</source>
+        <translation>Nama tampilan</translation>
+    </message>
+    <message>
+        <source>My Gateway</source>
+        <translation>My Gateway</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Base URL</translation>
+    </message>
+    <message>
+        <source>https://my-gateway/v1/</source>
+        <translation>https://my-gateway/v1/</translation>
+    </message>
+    <message>
+        <source>Requires an API key</source>
+        <translation>Memerlukan kunci API</translation>
+    </message>
+    <message>
+        <source>Default credential (optional)</source>
+        <translation>Kredensial default (opsional)</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>ref kredensial</translation>
     </message>
 </context>
 <context>

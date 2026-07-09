@@ -251,6 +251,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>এন্ডপয়েন্টটি যেমন আছে তেমনই ব্যবহৃত হয় — আপনার প্রথম বার্তা এটি যাচাই করে, এবং ব্যর্থ হলে আপনাকে আবার এখানে ফিরিয়ে আনা হবে।</translation>
     </message>
     <message>
+        <source>Save as a reusable provider</source>
+        <translation>পুনঃব্যবহারযোগ্য প্রোভাইডার হিসেবে সংরক্ষণ করুন</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API কী (ঐচ্ছিক)</translation>
     </message>
@@ -445,6 +449,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model id</source>
         <translation>মডেল আইডি</translation>
+    </message>
+    <message>
+        <source>Save as reusable provider</source>
+        <translation>পুনঃব্যবহারযোগ্য প্রোভাইডার হিসেবে সংরক্ষণ করুন</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
@@ -2240,6 +2248,77 @@ until it is re-registered.</source>
     <message>
         <source>Edit</source>
         <translation>সম্পাদনা করুন</translation>
+    </message>
+</context>
+<context>
+    <name>CustomProvidersSection</name>
+    <message>
+        <source>Custom providers</source>
+        <translation>কাস্টম প্রোভাইডার</translation>
+    </message>
+    <message>
+        <source>Add custom provider</source>
+        <translation>কাস্টম প্রোভাইডার যোগ করুন</translation>
+    </message>
+    <message>
+        <source>No custom providers yet. Add an OpenAI-compatible endpoint to select it like any other provider.</source>
+        <translation>এখনও কোনো কাস্টম প্রোভাইডার নেই। অন্য যেকোনো প্রোভাইডারের মতো নির্বাচন করতে একটি OpenAI-সঙ্গতিপূর্ণ এন্ডপয়েন্ট যোগ করুন।</translation>
+    </message>
+    <message>
+        <source>From config</source>
+        <translation>কনফিগ থেকে</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>সম্পাদনা করুন</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>সরান</translation>
+    </message>
+    <message>
+        <source>Edit custom provider</source>
+        <translation>কাস্টম প্রোভাইডার সম্পাদনা করুন</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>সংরক্ষণ করুন</translation>
+    </message>
+    <message>
+        <source>Id</source>
+        <translation>আইডি</translation>
+    </message>
+    <message>
+        <source>custom/my-gateway</source>
+        <translation>custom/my-gateway</translation>
+    </message>
+    <message>
+        <source>Display name</source>
+        <translation>প্রদর্শন নাম</translation>
+    </message>
+    <message>
+        <source>My Gateway</source>
+        <translation>My Gateway</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>বেস URL</translation>
+    </message>
+    <message>
+        <source>https://my-gateway/v1/</source>
+        <translation>https://my-gateway/v1/</translation>
+    </message>
+    <message>
+        <source>Requires an API key</source>
+        <translation>একটি API কী প্রয়োজন</translation>
+    </message>
+    <message>
+        <source>Default credential (optional)</source>
+        <translation>ডিফল্ট শংসাপত্র (ঐচ্ছিক)</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>ক্রেডেনশিয়াল রেফ</translation>
     </message>
 </context>
 <context>

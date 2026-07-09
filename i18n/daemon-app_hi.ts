@@ -251,6 +251,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>एंडपॉइंट को ज्यों-का-त्यों उपयोग किया जाता है — आपका पहला संदेश इसे सत्यापित करता है, और विफलता आपको वापस यहाँ मार्गदर्शित करेगी।</translation>
     </message>
     <message>
+        <source>Save as a reusable provider</source>
+        <translation>पुन: प्रयोज्य प्रोवाइडर के रूप में सहेजें</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API कुंजी (वैकल्पिक)</translation>
     </message>
@@ -445,6 +449,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model id</source>
         <translation>मॉडल id</translation>
+    </message>
+    <message>
+        <source>Save as reusable provider</source>
+        <translation>पुन: प्रयोज्य प्रोवाइडर के रूप में सहेजें</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
@@ -2240,6 +2248,77 @@ until it is re-registered.</source>
     <message>
         <source>Edit</source>
         <translation>संपादित करें</translation>
+    </message>
+</context>
+<context>
+    <name>CustomProvidersSection</name>
+    <message>
+        <source>Custom providers</source>
+        <translation>कस्टम प्रोवाइडर</translation>
+    </message>
+    <message>
+        <source>Add custom provider</source>
+        <translation>कस्टम प्रोवाइडर जोड़ें</translation>
+    </message>
+    <message>
+        <source>No custom providers yet. Add an OpenAI-compatible endpoint to select it like any other provider.</source>
+        <translation>अभी तक कोई कस्टम प्रोवाइडर नहीं। किसी भी अन्य प्रोवाइडर की तरह इसे चुनने के लिए एक OpenAI-संगत एंडपॉइंट जोड़ें।</translation>
+    </message>
+    <message>
+        <source>From config</source>
+        <translation>कॉन्फ़िग से</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>संपादित करें</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>हटाएँ</translation>
+    </message>
+    <message>
+        <source>Edit custom provider</source>
+        <translation>कस्टम प्रोवाइडर संपादित करें</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>सहेजें</translation>
+    </message>
+    <message>
+        <source>Id</source>
+        <translation>आईडी</translation>
+    </message>
+    <message>
+        <source>custom/my-gateway</source>
+        <translation>custom/my-gateway</translation>
+    </message>
+    <message>
+        <source>Display name</source>
+        <translation>प्रदर्शित नाम</translation>
+    </message>
+    <message>
+        <source>My Gateway</source>
+        <translation>My Gateway</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>बेस URL</translation>
+    </message>
+    <message>
+        <source>https://my-gateway/v1/</source>
+        <translation>https://my-gateway/v1/</translation>
+    </message>
+    <message>
+        <source>Requires an API key</source>
+        <translation>एक API कुंजी आवश्यक है</translation>
+    </message>
+    <message>
+        <source>Default credential (optional)</source>
+        <translation>डिफ़ॉल्ट क्रेडेंशियल (वैकल्पिक)</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>क्रेडेंशियल संदर्भ</translation>
     </message>
 </context>
 <context>

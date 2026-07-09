@@ -75,6 +75,16 @@ ColumnLayout {
                               kind: "custom", requiresKey: false }]);
     }
 
+    // A stable, user-namespaced custom-provider id derived from a base URL (for the "save as a
+    // reusable provider" convenience). The node keys the durable entry by this id.
+    function _customIdFromBase(base) {
+        var slug = base.replace(/^https?:\/\//, "").replace(/[^A-Za-z0-9._-]+/g, "-")
+                       .replace(/^-+|-+$/g, "").toLowerCase();
+        if (slug.length === 0)
+            slug = "endpoint";
+        return "custom/" + slug;
+    }
+
     readonly property bool _hasSetup: (typeof AgentSetup !== "undefined" && AgentSetup)
 
     // Report the live provider/key selection to the shared key gate (re-arms it: a proven key
@@ -220,6 +230,26 @@ ColumnLayout {
                        + "failure will guide you back here.")
             font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
             Layout.fillWidth: true; wrapMode: Text.WordWrap
+        }
+        // Promote this one-off endpoint into a persisted, named custom provider (node-backed): it
+        // then appears in the provider list above like any other provider, reusable across agents.
+        // Manage them in Settings → Models → Providers.
+        Kit.TextButton {
+            text: qsTr("Save as a reusable provider")
+            enabled: baseUrlField.text.trim().length > 0
+            Layout.alignment: Qt.AlignLeft
+            onClicked: {
+                if (typeof ProviderCatalog === "undefined" || !ProviderCatalog)
+                    return;
+                var base = baseUrlField.text.trim();
+                ProviderCatalog.createCustom({
+                    "id": picker._customIdFromBase(base),
+                    "displayName": base,
+                    "baseUrl": base,
+                    "requiresKey": keyField.text.length > 0,
+                    "credentialRef": ""
+                });
+            }
         }
     }
 

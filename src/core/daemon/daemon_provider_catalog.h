@@ -35,6 +35,11 @@ public:
                        const QString& transientKey = QString()) override;
     [[nodiscard]] QVariantList offeredModels(const QString& providerId) const override;
 
+    [[nodiscard]] QVariantList customProviders() const override;
+    void createCustom(const QVariantMap& fields) override;
+    void updateCustom(const QVariantMap& fields) override;
+    void removeCustom(const QString& id) override;
+
 private:
     [[nodiscard]] bool isLocal(const QString& providerId) const;
     [[nodiscard]] QString wireSelectorFor(const QString& providerId) const;

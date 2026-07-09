@@ -48,6 +48,7 @@ qt_add_qml_module(da_pages
         ModelsDownloads.qml
         ModelsInstalled.qml
         ModelsProviders.qml
+        CustomProvidersSection.qml
         AccountsPage.qml
         AddAccountWizard.qml
         AuthFlowSheet.qml

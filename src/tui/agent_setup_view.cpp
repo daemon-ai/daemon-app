@@ -7,6 +7,7 @@
 #include "setup/agent_setup_model.h"
 
 #include <QAbstractItemModel>
+#include <QRegularExpression>
 #include <Tui/ZVBoxLayout.h>
 
 namespace {
@@ -68,6 +69,9 @@ AgentSetupView::AgentSetupView(setup::AgentSetupModel* setup, models::IProviderC
     m_customModel = new Tui::ZInputBox(QString(), this);
     m_customModel->setObjectName(QStringLiteral("setupCustomModel"));
     layout->addWidget(m_customModel);
+    m_saveCustomBtn = new Tui::ZButton(tr("Save as reusable provider"), this);
+    m_saveCustomBtn->setObjectName(QStringLiteral("setupSaveCustomProvider"));
+    layout->addWidget(m_saveCustomBtn);
 
     // --- Wiring ---------------------------------------------------------------------------------
     connect(m_agentNativeBtn, &Tui::ZButton::clicked, this, [this] {
@@ -114,6 +118,31 @@ AgentSetupView::AgentSetupView(setup::AgentSetupModel* setup, models::IProviderC
         if (m_catalog != nullptr && !m_providerId.isEmpty() && !customSelected()) {
             m_catalog->refreshModels(m_providerId, QString(), m_key->text());
         }
+    });
+    connect(m_saveCustomBtn, &Tui::ZButton::clicked, this, [this] {
+        if (m_catalog == nullptr || m_baseUrl == nullptr) {
+            return;
+        }
+        const QString base = m_baseUrl->text().trimmed();
+        if (base.isEmpty()) {
+            return;
+        }
+        // Derive a stable, user-namespaced id from the base URL (mirrors AgentInferencePicker).
+        QString slug = base;
+        slug.remove(QRegularExpression(QStringLiteral("^https?://")));
+        slug.replace(QRegularExpression(QStringLiteral("[^A-Za-z0-9._-]+")), QStringLiteral("-"));
+        slug.remove(QRegularExpression(QStringLiteral("^-+|-+$")));
+        slug = slug.toLower();
+        if (slug.isEmpty()) {
+            slug = QStringLiteral("endpoint");
+        }
+        QVariantMap fields;
+        fields[QStringLiteral("id")] = QStringLiteral("custom/") + slug;
+        fields[QStringLiteral("displayName")] = base;
+        fields[QStringLiteral("baseUrl")] = base;
+        fields[QStringLiteral("requiresKey")] = m_key != nullptr && !m_key->text().isEmpty();
+        fields[QStringLiteral("credentialRef")] = QString();
+        m_catalog->createCustom(fields);
     });
     connect(m_baseUrl, &Tui::ZInputBox::textChanged, this, [this](const QString&) {
         if (m_syncing) {
@@ -371,6 +400,11 @@ void AgentSetupView::refreshInferenceControls() {
     }
     if (m_customModel != nullptr) {
         m_customModel->setVisible(needsInference && custom);
+    }
+    if (m_saveCustomBtn != nullptr) {
+        // Offer persistence only once the custom endpoint has a base URL to save.
+        const bool haveBase = m_baseUrl != nullptr && !m_baseUrl->text().trimmed().isEmpty();
+        m_saveCustomBtn->setVisible(needsInference && custom && haveBase);
     }
     if (m_keyGateMsg != nullptr) {
         const QString reason = m_setup != nullptr ? m_setup->keyGateMessage() : QString();

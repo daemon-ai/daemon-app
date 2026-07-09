@@ -644,6 +644,36 @@ void ProviderRepository::refreshProviderModels(const QString& provider,
         QString::fromLatin1(kModelsPrefix) + provider);
 }
 
+void ProviderRepository::refreshCustomProviders() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeCustomProviderListRequest(),
+                          QLatin1String(kCustomListCorrelation));
+}
+
+void ProviderRepository::setCustomProvider(const DecodedCustomProvider& provider) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeCustomProviderSetRequest(provider),
+                          QLatin1String(kCustomSetCorrelation));
+}
+
+void ProviderRepository::removeCustomProvider(const QString& id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    if (id.isEmpty()) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeCustomProviderRemoveRequest(id),
+                          QLatin1String(kCustomRemoveCorrelation));
+}
+
 void ProviderRepository::handleResponse(const QString& correlationId,
                                         const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kCatalogCorrelation)) {
@@ -653,6 +683,22 @@ void ProviderRepository::handleResponse(const QString& correlationId,
             return;
         }
         emit providersRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kCustomListCorrelation)) {
+        if (!NodeApiCodec::decodeCustomProviders(responseCbor, &m_customProviders)) {
+            emit operationFailed(QStringLiteral("Failed to decode CustomProviders response"));
+            return;
+        }
+        emit customProvidersRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kCustomSetCorrelation) ||
+        correlationId == QLatin1String(kCustomRemoveCorrelation)) {
+        // The node acked the mutation (a failure would arrive via handleFailure). Re-fetch the
+        // editor list AND the merged catalog so both the management view and the picker update.
+        refreshCustomProviders();
+        refreshProviders();
         return;
     }
     if (correlationId.startsWith(QLatin1String(kModelsPrefix))) {
@@ -682,7 +728,10 @@ void ProviderRepository::handleResponse(const QString& correlationId,
 
 void ProviderRepository::handleFailure(const QString& correlationId, const QString& message) {
     if (correlationId == QLatin1String(kCatalogCorrelation) ||
-        correlationId.startsWith(QLatin1String(kModelsPrefix))) {
+        correlationId.startsWith(QLatin1String(kModelsPrefix)) ||
+        correlationId == QLatin1String(kCustomListCorrelation) ||
+        correlationId == QLatin1String(kCustomSetCorrelation) ||
+        correlationId == QLatin1String(kCustomRemoveCorrelation)) {
         if (correlationId.startsWith(QLatin1String(kModelsPrefix))) {
             // A dead page loop must not leak its partial accumulation into the next refresh.
             m_modelsLoops.remove(correlationId.mid(int(qstrlen(kModelsPrefix))));

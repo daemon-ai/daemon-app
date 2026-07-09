@@ -251,6 +251,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>エンドポイントはそのまま使用されます — 最初のメッセージで検証され、失敗した場合はここに戻ります。</translation>
     </message>
     <message>
+        <source>Save as a reusable provider</source>
+        <translation>再利用可能なプロバイダーとして保存</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API キー（任意）</translation>
     </message>
@@ -445,6 +449,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model id</source>
         <translation>モデル ID</translation>
+    </message>
+    <message>
+        <source>Save as reusable provider</source>
+        <translation>再利用可能なプロバイダーとして保存</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
@@ -2240,6 +2248,77 @@ until it is re-registered.</source>
     <message>
         <source>Edit</source>
         <translation>編集</translation>
+    </message>
+</context>
+<context>
+    <name>CustomProvidersSection</name>
+    <message>
+        <source>Custom providers</source>
+        <translation>カスタムプロバイダー</translation>
+    </message>
+    <message>
+        <source>Add custom provider</source>
+        <translation>カスタムプロバイダーを追加</translation>
+    </message>
+    <message>
+        <source>No custom providers yet. Add an OpenAI-compatible endpoint to select it like any other provider.</source>
+        <translation>カスタムプロバイダーはまだありません。OpenAI 互換のエンドポイントを追加すると、他のプロバイダーと同様に選択できます。</translation>
+    </message>
+    <message>
+        <source>From config</source>
+        <translation>設定から</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>編集</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>削除</translation>
+    </message>
+    <message>
+        <source>Edit custom provider</source>
+        <translation>カスタムプロバイダーを編集</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>Id</source>
+        <translation>ID</translation>
+    </message>
+    <message>
+        <source>custom/my-gateway</source>
+        <translation>custom/my-gateway</translation>
+    </message>
+    <message>
+        <source>Display name</source>
+        <translation>表示名</translation>
+    </message>
+    <message>
+        <source>My Gateway</source>
+        <translation>My Gateway</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>ベース URL</translation>
+    </message>
+    <message>
+        <source>https://my-gateway/v1/</source>
+        <translation>https://my-gateway/v1/</translation>
+    </message>
+    <message>
+        <source>Requires an API key</source>
+        <translation>API キーが必要</translation>
+    </message>
+    <message>
+        <source>Default credential (optional)</source>
+        <translation>デフォルトの認証情報（任意）</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>認証情報の参照</translation>
     </message>
 </context>
 <context>

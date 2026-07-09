@@ -251,6 +251,10 @@ Você voltará para a configuração inicial.</translation>
         <translation>O endpoint é usado como está — sua primeira mensagem o verifica, e uma falha o trará de volta para cá.</translation>
     </message>
     <message>
+        <source>Save as a reusable provider</source>
+        <translation>Salvar como provedor reutilizável</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>Chave de API (opcional)</translation>
     </message>
@@ -445,6 +449,10 @@ Você voltará para a configuração inicial.</translation>
     <message>
         <source>Model id</source>
         <translation>ID do modelo</translation>
+    </message>
+    <message>
+        <source>Save as reusable provider</source>
+        <translation>Salvar como provedor reutilizável</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
@@ -2240,6 +2248,77 @@ até que seja registrado novamente.</translation>
     <message>
         <source>Edit</source>
         <translation>Editar</translation>
+    </message>
+</context>
+<context>
+    <name>CustomProvidersSection</name>
+    <message>
+        <source>Custom providers</source>
+        <translation>Provedores personalizados</translation>
+    </message>
+    <message>
+        <source>Add custom provider</source>
+        <translation>Adicionar provedor personalizado</translation>
+    </message>
+    <message>
+        <source>No custom providers yet. Add an OpenAI-compatible endpoint to select it like any other provider.</source>
+        <translation>Ainda não há provedores personalizados. Adicione um endpoint compatível com OpenAI para selecioná-lo como qualquer outro provedor.</translation>
+    </message>
+    <message>
+        <source>From config</source>
+        <translation>Da configuração</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Editar</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Remover</translation>
+    </message>
+    <message>
+        <source>Edit custom provider</source>
+        <translation>Editar provedor personalizado</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Salvar</translation>
+    </message>
+    <message>
+        <source>Id</source>
+        <translation>Id</translation>
+    </message>
+    <message>
+        <source>custom/my-gateway</source>
+        <translation>custom/my-gateway</translation>
+    </message>
+    <message>
+        <source>Display name</source>
+        <translation>Nome de exibição</translation>
+    </message>
+    <message>
+        <source>My Gateway</source>
+        <translation>My Gateway</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>URL base</translation>
+    </message>
+    <message>
+        <source>https://my-gateway/v1/</source>
+        <translation>https://my-gateway/v1/</translation>
+    </message>
+    <message>
+        <source>Requires an API key</source>
+        <translation>Requer uma chave de API</translation>
+    </message>
+    <message>
+        <source>Default credential (optional)</source>
+        <translation>Credencial padrão (opcional)</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>ref. de credencial</translation>
     </message>
 </context>
 <context>

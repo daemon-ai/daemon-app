@@ -66,5 +66,16 @@ QQC.ScrollView {
                 }
             }
         }
+
+        // Custom OpenAI-compatible providers (generalized Daemon Cloud): add/edit/remove named
+        // endpoints that then appear in the provider picker like any other provider.
+        CustomProvidersSection {
+            Layout.fillWidth: true
+            Layout.leftMargin: 20
+            Layout.rightMargin: 20
+            Layout.topMargin: 8
+        }
+
+        Item { implicitHeight: 12 }
     }
 }

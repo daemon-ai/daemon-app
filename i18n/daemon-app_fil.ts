@@ -251,6 +251,10 @@ Babalik ka sa first-run setup.</translation>
         <translation>Gagamitin ang endpoint nang tulad ng nakalagay — bine-verify ito ng iyong unang mensahe, at kapag nabigo ay ibabalik ka rito.</translation>
     </message>
     <message>
+        <source>Save as a reusable provider</source>
+        <translation>I-save bilang reusable na provider</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API key (opsyonal)</translation>
     </message>
@@ -445,6 +449,10 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Model id</source>
         <translation>Model id</translation>
+    </message>
+    <message>
+        <source>Save as reusable provider</source>
+        <translation>I-save bilang reusable na provider</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
@@ -2240,6 +2248,77 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Edit</source>
         <translation>I-edit</translation>
+    </message>
+</context>
+<context>
+    <name>CustomProvidersSection</name>
+    <message>
+        <source>Custom providers</source>
+        <translation>Mga custom na provider</translation>
+    </message>
+    <message>
+        <source>Add custom provider</source>
+        <translation>Magdagdag ng custom na provider</translation>
+    </message>
+    <message>
+        <source>No custom providers yet. Add an OpenAI-compatible endpoint to select it like any other provider.</source>
+        <translation>Wala pang custom na provider. Magdagdag ng endpoint na tugma sa OpenAI para mapili ito tulad ng ibang provider.</translation>
+    </message>
+    <message>
+        <source>From config</source>
+        <translation>Mula sa config</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>I-edit</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Alisin</translation>
+    </message>
+    <message>
+        <source>Edit custom provider</source>
+        <translation>I-edit ang custom na provider</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>I-save</translation>
+    </message>
+    <message>
+        <source>Id</source>
+        <translation>Id</translation>
+    </message>
+    <message>
+        <source>custom/my-gateway</source>
+        <translation>custom/my-gateway</translation>
+    </message>
+    <message>
+        <source>Display name</source>
+        <translation>Pangalang ipapakita</translation>
+    </message>
+    <message>
+        <source>My Gateway</source>
+        <translation>My Gateway</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Base URL</translation>
+    </message>
+    <message>
+        <source>https://my-gateway/v1/</source>
+        <translation>https://my-gateway/v1/</translation>
+    </message>
+    <message>
+        <source>Requires an API key</source>
+        <translation>Nangangailangan ng API key</translation>
+    </message>
+    <message>
+        <source>Default credential (optional)</source>
+        <translation>Default na kredensyal (opsyonal)</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>credential ref</translation>
     </message>
 </context>
 <context>

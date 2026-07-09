@@ -80,6 +80,22 @@ struct DecodedProviderDescriptor {
     QString signInLabel;
 };
 
+// A user-named, persisted custom OpenAI-compatible provider (the "generalized Daemon Cloud" write
+// model; CustomProviderList -> [CustomProvider]). This is the editor's read-your-writes view,
+// distinct from the merged DecodedProviderDescriptor the picker renders: it carries only the
+// user-owned fields. `wireSelector` is fixed to "daemon_api" and `source` is "config" (seeded from
+// node config) or "user" (created over the wire; the only kind a set/remove may create or delete).
+struct DecodedCustomProvider {
+    QString id;
+    QString displayName;
+    QString baseUrl;
+    QString wireSelector; // "daemon_api"
+    bool requiresKey = false;
+    bool hasCredentialRef = false;
+    QString credentialRef;
+    QString source; // "config" | "user"
+};
+
 // A decoded error envelope (ApiResponse::Error): the variant kind + its human-readable message.
 struct DecodedApiError {
     QString kind; // "UnknownSession" | "Unsupported" | "Conflict" | "Unauthenticated" |
@@ -1207,6 +1223,8 @@ enum class ApiResponseKind {
     TelemetryConsent,
     // node gateway status (wire v32; GatewayGet/GatewaySet -> GatewayStatus).
     GatewayStatus,
+    // custom OpenAI-compatible providers (generalized Daemon Cloud): CustomProviderList response.
+    CustomProviders,
 };
 
 // Input for a FeedbackSubmit request (the app-side view-model builds this from the message anchor /
@@ -1761,6 +1779,17 @@ public:
     // gets the resume cursor (cleared on the last page).
     static bool decodeProviderModels(const QByteArray& responseCbor,
                                      QList<DecodedModelDescriptor>* out, QString* next = nullptr);
+    // List the persisted user-defined custom providers (CustomProviderList -> [CustomProvider]).
+    [[nodiscard]] static QByteArray encodeCustomProviderListRequest();
+    // Create/update a custom OpenAI-compatible provider (CustomProviderSet{provider}). The node
+    // forces source = User + the DaemonApi selector and re-validates the base URL.
+    [[nodiscard]] static QByteArray
+    encodeCustomProviderSetRequest(const DecodedCustomProvider& provider);
+    // Remove a user-defined custom provider by id (CustomProviderRemove{id}).
+    [[nodiscard]] static QByteArray encodeCustomProviderRemoveRequest(const QString& id);
+    // Decode a CustomProviders response into the persisted custom-provider list.
+    static bool decodeCustomProviders(const QByteArray& responseCbor,
+                                      QList<DecodedCustomProvider>* out);
     // Decode a ModelCurrent response. Sets *hasModel=false when the daemon resolves no model
     // (null).
     static bool decodeModelCurrent(const QByteArray& responseCbor, DecodedModelDescriptor* out,

@@ -251,6 +251,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Uç nokta olduğu gibi kullanılır — ilk mesajınız onu doğrular ve bir başarısızlık sizi buraya geri yönlendirir.</translation>
     </message>
     <message>
+        <source>Save as a reusable provider</source>
+        <translation>Yeniden kullanılabilir sağlayıcı olarak kaydet</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API anahtarı (isteğe bağlı)</translation>
     </message>
@@ -445,6 +449,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model id</source>
         <translation>Model kimliği</translation>
+    </message>
+    <message>
+        <source>Save as reusable provider</source>
+        <translation>Yeniden kullanılabilir sağlayıcı olarak kaydet</translation>
     </message>
     <message>
         <source>Custom endpoint…</source>
@@ -2240,6 +2248,77 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Edit</source>
         <translation>Düzenle</translation>
+    </message>
+</context>
+<context>
+    <name>CustomProvidersSection</name>
+    <message>
+        <source>Custom providers</source>
+        <translation>Özel sağlayıcılar</translation>
+    </message>
+    <message>
+        <source>Add custom provider</source>
+        <translation>Özel sağlayıcı ekle</translation>
+    </message>
+    <message>
+        <source>No custom providers yet. Add an OpenAI-compatible endpoint to select it like any other provider.</source>
+        <translation>Henüz özel sağlayıcı yok. Diğer sağlayıcılar gibi seçebilmek için OpenAI uyumlu bir uç nokta ekleyin.</translation>
+    </message>
+    <message>
+        <source>From config</source>
+        <translation>Yapılandırmadan</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Düzenle</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Kaldır</translation>
+    </message>
+    <message>
+        <source>Edit custom provider</source>
+        <translation>Özel sağlayıcıyı düzenle</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Kaydet</translation>
+    </message>
+    <message>
+        <source>Id</source>
+        <translation>Kimlik</translation>
+    </message>
+    <message>
+        <source>custom/my-gateway</source>
+        <translation>custom/my-gateway</translation>
+    </message>
+    <message>
+        <source>Display name</source>
+        <translation>Görünen ad</translation>
+    </message>
+    <message>
+        <source>My Gateway</source>
+        <translation>My Gateway</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Temel URL</translation>
+    </message>
+    <message>
+        <source>https://my-gateway/v1/</source>
+        <translation>https://my-gateway/v1/</translation>
+    </message>
+    <message>
+        <source>Requires an API key</source>
+        <translation>API anahtarı gerektirir</translation>
+    </message>
+    <message>
+        <source>Default credential (optional)</source>
+        <translation>Varsayılan kimlik bilgisi (isteğe bağlı)</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>kimlik bilgisi başvurusu</translation>
     </message>
 </context>
 <context>
