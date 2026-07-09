@@ -84,6 +84,49 @@ private slots:
         QVERIFY(s.defaultProfileId() != QStringLiteral("prof-1"));
     }
 
+    // Persona (SOUL.md) seam: soul() reads the seeded persona (a multi-line
+    // SOUL.md-flavored document), and an unknown id resolves to empty.
+    void soulReadsSeededPersona() {
+        MockProfileStore s;
+        const QString persona = s.soul(QStringLiteral("prof-1"));
+        QVERIFY(persona.startsWith(QStringLiteral("You are a helpful, concise assistant.")));
+        QVERIFY(persona.contains(QLatin1Char('\n')));
+        QCOMPARE(s.soul(QStringLiteral("missing")), QString());
+    }
+
+    // setSoul() persists the persona (surviving a restart via the on-disk cache)
+    // and announces the fresh content via soulChanged(profileId).
+    void setSoulPersistsAndSignals() {
+        QString id;
+        {
+            MockProfileStore s;
+            QSignalSpy soulSpy(&s, &profiles::IProfileStore::soulChanged);
+            id = s.createProfile(QStringLiteral("Persona"));
+            s.setSoul(id, QStringLiteral("# Soul\n\nBe kind."));
+            QCOMPARE(soulSpy.count(), 1);
+            QCOMPARE(soulSpy.last().first().toString(), id);
+            QCOMPARE(s.soul(id), QStringLiteral("# Soul\n\nBe kind."));
+            // An unknown id is a no-op: no row invented, no signal.
+            s.setSoul(QStringLiteral("missing"), QStringLiteral("x"));
+            QCOMPARE(soulSpy.count(), 1);
+            QVERIFY(s.profile(QStringLiteral("missing")).isEmpty());
+        }
+        MockProfileStore reborn;
+        QCOMPARE(reborn.soul(id), QStringLiteral("# Soul\n\nBe kind."));
+    }
+
+    // requestSoul() is inert on the live in-memory store: soul() already answers
+    // synchronously, so no signal fires and nothing changes (the daemon store
+    // overrides it with a SoulGet fetch that answers via soulChanged).
+    void requestSoulIsInert() {
+        MockProfileStore s;
+        QSignalSpy soulSpy(&s, &profiles::IProfileStore::soulChanged);
+        const QString before = s.soul(QStringLiteral("prof-1"));
+        s.requestSoul(QStringLiteral("prof-1"));
+        QCOMPARE(soulSpy.count(), 0);
+        QCOMPARE(s.soul(QStringLiteral("prof-1")), before);
+    }
+
     // Tier 3: a created profile + default switch survive across construction via
     // the last-known on-disk cache.
     void profilesPersistAcrossRestart() {
