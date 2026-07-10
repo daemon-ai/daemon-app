@@ -14,7 +14,7 @@ namespace daemonapp::daemon {
 namespace {
 // Split a job scope-tail into transport [+ conv] (unit-separator, §3.1).
 void splitScope(const QString& scope, QString* transport, QString* conv) {
-    const int sep = scope.indexOf(QChar(0x1f));
+    const qsizetype sep = scope.indexOf(QChar(0x1f));
     if (sep < 0) {
         *transport = scope;
         conv->clear();
