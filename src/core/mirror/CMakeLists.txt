@@ -26,3 +26,51 @@ target_link_libraries(da_mirror
         # the decoded codec structs the mappers consume (daemon_api_client_types.h) + its include dir
         daemon-app::daemon_codec
 )
+
+# ---------------------------------------------------------------------------
+# Mirror substrate (spec 09 §4, §11; ADR-002/-001/-008) — the store root, the
+# ACTIVE degraded journal, mirror-<id>.db persistence, and the swappable observe
+# seam (both spike implementations). Built ONLY when the header-only immer +
+# zug + lager reactive-core subset is vendored (cmake/Dependencies.cmake sets
+# DAEMON_APP_HAVE_MIRROR_SUBSTRATE and creates the immer/zug/lager targets).
+# Platform stacks that do not pass the sources simply skip it; the generated
+# entity layer (da_mirror, above) still builds everywhere.
+# ---------------------------------------------------------------------------
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    add_library(da_mirror_substrate STATIC
+        journal.cpp
+        store.cpp
+        persistence.cpp
+        observe_coarse.cpp
+        model.h
+        entity_reflect.h
+        journal.h
+        store.h
+        observe.h
+        observe_coarse.h
+        observe_lager.h
+    )
+    add_library(daemon-app::mirror_substrate ALIAS da_mirror_substrate)
+
+    # store.h / observe_coarse.h carry Q_OBJECT.
+    set_target_properties(da_mirror_substrate PROPERTIES AUTOMOC ON)
+
+    # Embed the generated, drift-gated DDL as a Qt resource (read, never copied):
+    # mirror::Persistence applies it verbatim to create mirror-<id>.db.
+    qt_add_resources(da_mirror_substrate "da_mirror_schema"
+        PREFIX "/mirror"
+        BASE "${CMAKE_CURRENT_SOURCE_DIR}/generated"
+        FILES "${CMAKE_CURRENT_SOURCE_DIR}/generated/mirror_schema_gen.sql"
+    )
+
+    target_include_directories(da_mirror_substrate PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+
+    target_link_libraries(da_mirror_substrate
+        PUBLIC
+            Qt6::Core
+            Qt6::Sql
+            daemon-app::mirror   # the generated Q_GADGET entities
+            immer::immer
+            lager::lager         # reactive-core subset only (observe seam); pulls zug + boost::intrusive
+    )
+endif()
