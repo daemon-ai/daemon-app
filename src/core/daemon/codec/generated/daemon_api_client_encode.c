@@ -464,6 +464,30 @@ static bool encode_feedback_diagnostics(zcbor_state_t *state, const struct feedb
 static bool encode_repeated_FeedbackSubmit_diagnostics(zcbor_state_t *state, const struct FeedbackSubmit_diagnostics_r *input);
 static bool encode_request_feedback_submit(zcbor_state_t *state, const struct request_feedback_submit *input);
 static bool encode_request_telemetry_consent_set(zcbor_state_t *state, const struct request_telemetry_consent_set *input);
+static bool encode_repeated_saved_presence_name(zcbor_state_t *state, const struct saved_presence_name_r *input);
+static bool encode_repeated_saved_presence_message(zcbor_state_t *state, const struct saved_presence_message_r *input);
+static bool encode_repeated_saved_presence_emoji(zcbor_state_t *state, const struct saved_presence_emoji_r *input);
+static bool encode_repeated_saved_presence_last_used(zcbor_state_t *state, const struct saved_presence_last_used_r *input);
+static bool encode_repeated_saved_presence_use_count(zcbor_state_t *state, const struct saved_presence_use_count *input);
+static bool encode_saved_presence(zcbor_state_t *state, const struct saved_presence *input);
+static bool encode_request_presence_save(zcbor_state_t *state, const struct request_presence_save *input);
+static bool encode_request_presence_delete(zcbor_state_t *state, const struct request_presence_delete *input);
+static bool encode_request_presence_set_active(zcbor_state_t *state, const struct request_presence_set_active *input);
+static bool encode_file_transfer_direction_t(zcbor_state_t *state, const struct file_transfer_direction_t_r *input);
+static bool encode_repeated_file_transfer_direction(zcbor_state_t *state, const struct file_transfer_direction *input);
+static bool encode_file_transfer_state_t(zcbor_state_t *state, const struct file_transfer_state_t_r *input);
+static bool encode_repeated_file_transfer_state(zcbor_state_t *state, const struct file_transfer_state *input);
+static bool encode_repeated_file_transfer_remote(zcbor_state_t *state, const struct file_transfer_remote_r *input);
+static bool encode_repeated_file_transfer_initiator(zcbor_state_t *state, const struct file_transfer_initiator_r *input);
+static bool encode_repeated_file_transfer_file_size(zcbor_state_t *state, const struct file_transfer_file_size *input);
+static bool encode_repeated_file_transfer_transferred(zcbor_state_t *state, const struct file_transfer_transferred *input);
+static bool encode_repeated_file_transfer_content_type(zcbor_state_t *state, const struct file_transfer_content_type_r *input);
+static bool encode_repeated_file_transfer_message(zcbor_state_t *state, const struct file_transfer_message_r *input);
+static bool encode_repeated_file_transfer_error(zcbor_state_t *state, const struct file_transfer_error_r *input);
+static bool encode_repeated_file_transfer_source(zcbor_state_t *state, const struct file_transfer_source_r *input);
+static bool encode_file_transfer(zcbor_state_t *state, const struct file_transfer *input);
+static bool encode_request_ft_send(zcbor_state_t *state, const struct request_ft_send *input);
+static bool encode_request_ft_receive(zcbor_state_t *state, const struct request_ft_receive *input);
 static bool encode_response_routed(zcbor_state_t *state, const struct response_routed *input);
 static bool encode_response_session_created(zcbor_state_t *state, const struct response_session_created *input);
 static bool encode_completion_source_process(zcbor_state_t *state, const struct completion_source_process *input);
@@ -586,6 +610,29 @@ static bool encode_transcript_block_request(zcbor_state_t *state, const struct t
 static bool encode_transcript_block_content(zcbor_state_t *state, const struct transcript_block_content *input);
 static bool encode_transcript_block(zcbor_state_t *state, const struct transcript_block_r *input);
 static bool encode_journal_record_payload_block(zcbor_state_t *state, const struct journal_record_payload_block *input);
+static bool encode_repeated_chat_message_id(zcbor_state_t *state, const struct chat_message_id_r *input);
+static bool encode_repeated_chat_message_author(zcbor_state_t *state, const struct chat_message_author_r *input);
+static bool encode_repeated_chat_message_replying_to(zcbor_state_t *state, const struct chat_message_replying_to_r *input);
+static bool encode_repeated_message_attachment_content_type(zcbor_state_t *state, const struct message_attachment_content_type_r *input);
+static bool encode_repeated_message_attachment_is_inline(zcbor_state_t *state, const struct message_attachment_is_inline *input);
+static bool encode_repeated_message_attachment_local_uri(zcbor_state_t *state, const struct message_attachment_local_uri_r *input);
+static bool encode_repeated_message_attachment_remote_uri(zcbor_state_t *state, const struct message_attachment_remote_uri_r *input);
+static bool encode_repeated_message_attachment_size(zcbor_state_t *state, const struct message_attachment_size *input);
+static bool encode_message_attachment(zcbor_state_t *state, const struct message_attachment *input);
+static bool encode_repeated_chat_message_attachments(zcbor_state_t *state, const struct chat_message_attachments_r *input);
+static bool encode_repeated_chat_message_timestamp(zcbor_state_t *state, const struct chat_message_timestamp_r *input);
+static bool encode_repeated_chat_message_delivered_at(zcbor_state_t *state, const struct chat_message_delivered_at_r *input);
+static bool encode_repeated_chat_message_edited_at(zcbor_state_t *state, const struct chat_message_edited_at_r *input);
+static bool encode_repeated_chat_message_error(zcbor_state_t *state, const struct chat_message_error_r *input);
+static bool encode_repeated_chat_message_title(zcbor_state_t *state, const struct chat_message_title_r *input);
+static bool encode_repeated_chat_message_highlight_color(zcbor_state_t *state, const struct chat_message_highlight_color_r *input);
+static bool encode_repeated_chat_message_action(zcbor_state_t *state, const struct chat_message_action *input);
+static bool encode_repeated_chat_message_event(zcbor_state_t *state, const struct chat_message_event *input);
+static bool encode_repeated_chat_message_notice(zcbor_state_t *state, const struct chat_message_notice *input);
+static bool encode_repeated_chat_message_system(zcbor_state_t *state, const struct chat_message_system *input);
+static bool encode_repeated_chat_message_highlighted(zcbor_state_t *state, const struct chat_message_highlighted *input);
+static bool encode_chat_message(zcbor_state_t *state, const struct chat_message *input);
+static bool encode_journal_record_payload_chat(zcbor_state_t *state, const struct journal_record_payload_chat *input);
 static bool encode_journal_record_payload_t(zcbor_state_t *state, const struct journal_record_payload_t_r *input);
 static bool encode_journal_record(zcbor_state_t *state, const struct journal_record *input);
 static bool encode_journal_page_view(zcbor_state_t *state, const struct journal_page_view *input);
@@ -885,6 +932,37 @@ static bool encode_response_who_am_i(zcbor_state_t *state, const struct response
 static bool encode_feedback_ack(zcbor_state_t *state, const struct feedback_ack *input);
 static bool encode_response_feedback_ack(zcbor_state_t *state, const struct response_feedback_ack *input);
 static bool encode_response_telemetry_consent(zcbor_state_t *state, const struct response_telemetry_consent *input);
+static bool encode_response_saved_presences(zcbor_state_t *state, const struct response_saved_presences *input);
+static bool encode_repeated_notification_info_account(zcbor_state_t *state, const struct notification_info_account_r *input);
+static bool encode_repeated_notification_info_created_ms(zcbor_state_t *state, const struct notification_info_created_ms *input);
+static bool encode_repeated_notification_info_read(zcbor_state_t *state, const struct notification_info_read *input);
+static bool encode_repeated_notification_info_title(zcbor_state_t *state, const struct notification_info_title_r *input);
+static bool encode_repeated_notification_info_subtitle(zcbor_state_t *state, const struct notification_info_subtitle_r *input);
+static bool encode_repeated_notification_info_icon_name(zcbor_state_t *state, const struct notification_info_icon_name_r *input);
+static bool encode_repeated_notification_info_interactive(zcbor_state_t *state, const struct notification_info_interactive *input);
+static bool encode_repeated_notification_info_persistent(zcbor_state_t *state, const struct notification_info_persistent *input);
+static bool encode_repeated_add_contact_request_message(zcbor_state_t *state, const struct add_contact_request_message_r *input);
+static bool encode_repeated_add_contact_request_handled(zcbor_state_t *state, const struct add_contact_request_handled *input);
+static bool encode_add_contact_request(zcbor_state_t *state, const struct add_contact_request *input);
+static bool encode_notification_kind_add_contact(zcbor_state_t *state, const struct notification_kind_add_contact *input);
+static bool encode_repeated_authorization_request_message(zcbor_state_t *state, const struct authorization_request_message_r *input);
+static bool encode_repeated_authorization_request_add(zcbor_state_t *state, const struct authorization_request_add *input);
+static bool encode_repeated_authorization_request_handled(zcbor_state_t *state, const struct authorization_request_handled *input);
+static bool encode_authorization_request(zcbor_state_t *state, const struct authorization_request *input);
+static bool encode_notification_kind_authorization(zcbor_state_t *state, const struct notification_kind_authorization *input);
+static bool encode_repeated_Link_link_text(zcbor_state_t *state, const struct Link_link_text_r *input);
+static bool encode_notification_kind_link(zcbor_state_t *state, const struct notification_kind_link *input);
+static bool encode_notification_kind(zcbor_state_t *state, const struct notification_kind_r *input);
+static bool encode_repeated_notification_info_deleted(zcbor_state_t *state, const struct notification_info_deleted *input);
+static bool encode_notification_info(zcbor_state_t *state, const struct notification_info *input);
+static bool encode_response_notifications(zcbor_state_t *state, const struct response_notifications *input);
+static bool encode_repeated_person_alias(zcbor_state_t *state, const struct person_alias_r *input);
+static bool encode_image(zcbor_state_t *state, const struct image *input);
+static bool encode_repeated_person_avatar(zcbor_state_t *state, const struct person_avatar_r *input);
+static bool encode_person_endpoint(zcbor_state_t *state, const struct person_endpoint *input);
+static bool encode_repeated_person_endpoints(zcbor_state_t *state, const struct person_endpoints_r *input);
+static bool encode_person(zcbor_state_t *state, const struct person *input);
+static bool encode_response_persons(zcbor_state_t *state, const struct response_persons *input);
 static bool encode_api_response(zcbor_state_t *state, const struct api_response_r *input);
 static bool encode_api_request(zcbor_state_t *state, const struct api_request_r *input);
 
@@ -7512,6 +7590,371 @@ static bool encode_request_telemetry_consent_set(
 	return res;
 }
 
+static bool encode_repeated_saved_presence_name(
+		zcbor_state_t *state, const struct saved_presence_name_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"name", tmp_str.len = sizeof("name") - 1, &tmp_str)))))
+	&& (((*input).saved_presence_name_choice == saved_presence_name_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).saved_presence_name_tstr))))
+	: (((*input).saved_presence_name_choice == saved_presence_name_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_saved_presence_message(
+		zcbor_state_t *state, const struct saved_presence_message_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"message", tmp_str.len = sizeof("message") - 1, &tmp_str)))))
+	&& (((*input).saved_presence_message_choice == saved_presence_message_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).saved_presence_message_tstr))))
+	: (((*input).saved_presence_message_choice == saved_presence_message_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_saved_presence_emoji(
+		zcbor_state_t *state, const struct saved_presence_emoji_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"emoji", tmp_str.len = sizeof("emoji") - 1, &tmp_str)))))
+	&& (((*input).saved_presence_emoji_choice == saved_presence_emoji_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).saved_presence_emoji_tstr))))
+	: (((*input).saved_presence_emoji_choice == saved_presence_emoji_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_saved_presence_last_used(
+		zcbor_state_t *state, const struct saved_presence_last_used_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"last_used", tmp_str.len = sizeof("last_used") - 1, &tmp_str)))))
+	&& (((*input).saved_presence_last_used_choice == saved_presence_last_used_uint64_m_c) ? ((zcbor_uint64_encode(state, (&(*input).saved_presence_last_used_uint64_m))))
+	: (((*input).saved_presence_last_used_choice == saved_presence_last_used_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_saved_presence_use_count(
+		zcbor_state_t *state, const struct saved_presence_use_count *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"use_count", tmp_str.len = sizeof("use_count") - 1, &tmp_str)))))
+	&& (zcbor_uint64_encode(state, (&(*input).saved_presence_use_count)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_saved_presence(
+		zcbor_state_t *state, const struct saved_presence *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 7) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).saved_presence_id))))
+	&& (!(*input).saved_presence_name_present || encode_repeated_saved_presence_name(state, (&(*input).saved_presence_name)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"primitive", tmp_str.len = sizeof("primitive") - 1, &tmp_str)))))
+	&& (encode_presence_primitive_t(state, (&(*input).saved_presence_primitive))))
+	&& (!(*input).saved_presence_message_present || encode_repeated_saved_presence_message(state, (&(*input).saved_presence_message)))
+	&& (!(*input).saved_presence_emoji_present || encode_repeated_saved_presence_emoji(state, (&(*input).saved_presence_emoji)))
+	&& (!(*input).saved_presence_last_used_present || encode_repeated_saved_presence_last_used(state, (&(*input).saved_presence_last_used)))
+	&& (!(*input).saved_presence_use_count_present || encode_repeated_saved_presence_use_count(state, (&(*input).saved_presence_use_count)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 7))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_presence_save(
+		zcbor_state_t *state, const struct request_presence_save *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"PresenceSave", tmp_str.len = sizeof("PresenceSave") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"presence", tmp_str.len = sizeof("presence") - 1, &tmp_str)))))
+	&& (encode_saved_presence(state, (&(*input).PresenceSave_presence))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_presence_delete(
+		zcbor_state_t *state, const struct request_presence_delete *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"PresenceDelete", tmp_str.len = sizeof("PresenceDelete") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).PresenceDelete_id))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_presence_set_active(
+		zcbor_state_t *state, const struct request_presence_set_active *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"PresenceSetActive", tmp_str.len = sizeof("PresenceSetActive") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).PresenceSetActive_id))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_file_transfer_direction_t(
+		zcbor_state_t *state, const struct file_transfer_direction_t_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).file_transfer_direction_t_choice == file_transfer_direction_t_Send_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Send", tmp_str.len = sizeof("Send") - 1, &tmp_str)))))
+	: (((*input).file_transfer_direction_t_choice == file_transfer_direction_t_Receive_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Receive", tmp_str.len = sizeof("Receive") - 1, &tmp_str)))))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_direction(
+		zcbor_state_t *state, const struct file_transfer_direction *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"direction", tmp_str.len = sizeof("direction") - 1, &tmp_str)))))
+	&& (encode_file_transfer_direction_t(state, (&(*input).file_transfer_direction)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_file_transfer_state_t(
+		zcbor_state_t *state, const struct file_transfer_state_t_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).file_transfer_state_t_choice == file_transfer_state_t_Unknown_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Unknown", tmp_str.len = sizeof("Unknown") - 1, &tmp_str)))))
+	: (((*input).file_transfer_state_t_choice == file_transfer_state_t_Negotiating_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Negotiating", tmp_str.len = sizeof("Negotiating") - 1, &tmp_str)))))
+	: (((*input).file_transfer_state_t_choice == file_transfer_state_t_Started_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Started", tmp_str.len = sizeof("Started") - 1, &tmp_str)))))
+	: (((*input).file_transfer_state_t_choice == file_transfer_state_t_Finished_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Finished", tmp_str.len = sizeof("Finished") - 1, &tmp_str)))))
+	: (((*input).file_transfer_state_t_choice == file_transfer_state_t_Failed_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Failed", tmp_str.len = sizeof("Failed") - 1, &tmp_str)))))
+	: false)))))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_state(
+		zcbor_state_t *state, const struct file_transfer_state *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"state", tmp_str.len = sizeof("state") - 1, &tmp_str)))))
+	&& (encode_file_transfer_state_t(state, (&(*input).file_transfer_state)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_remote(
+		zcbor_state_t *state, const struct file_transfer_remote_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"remote", tmp_str.len = sizeof("remote") - 1, &tmp_str)))))
+	&& (((*input).file_transfer_remote_choice == file_transfer_remote_contact_info_m_c) ? ((encode_contact_info(state, (&(*input).file_transfer_remote_contact_info_m))))
+	: (((*input).file_transfer_remote_choice == file_transfer_remote_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_initiator(
+		zcbor_state_t *state, const struct file_transfer_initiator_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"initiator", tmp_str.len = sizeof("initiator") - 1, &tmp_str)))))
+	&& (((*input).file_transfer_initiator_choice == file_transfer_initiator_contact_info_m_c) ? ((encode_contact_info(state, (&(*input).file_transfer_initiator_contact_info_m))))
+	: (((*input).file_transfer_initiator_choice == file_transfer_initiator_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_file_size(
+		zcbor_state_t *state, const struct file_transfer_file_size *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"file_size", tmp_str.len = sizeof("file_size") - 1, &tmp_str)))))
+	&& (zcbor_uint64_encode(state, (&(*input).file_transfer_file_size)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_transferred(
+		zcbor_state_t *state, const struct file_transfer_transferred *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transferred", tmp_str.len = sizeof("transferred") - 1, &tmp_str)))))
+	&& (zcbor_uint64_encode(state, (&(*input).file_transfer_transferred)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_content_type(
+		zcbor_state_t *state, const struct file_transfer_content_type_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"content_type", tmp_str.len = sizeof("content_type") - 1, &tmp_str)))))
+	&& (((*input).file_transfer_content_type_choice == file_transfer_content_type_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).file_transfer_content_type_tstr))))
+	: (((*input).file_transfer_content_type_choice == file_transfer_content_type_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_message(
+		zcbor_state_t *state, const struct file_transfer_message_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"message", tmp_str.len = sizeof("message") - 1, &tmp_str)))))
+	&& (((*input).file_transfer_message_choice == file_transfer_message_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).file_transfer_message_tstr))))
+	: (((*input).file_transfer_message_choice == file_transfer_message_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_error(
+		zcbor_state_t *state, const struct file_transfer_error_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"error", tmp_str.len = sizeof("error") - 1, &tmp_str)))))
+	&& (((*input).file_transfer_error_choice == file_transfer_error_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).file_transfer_error_tstr))))
+	: (((*input).file_transfer_error_choice == file_transfer_error_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_file_transfer_source(
+		zcbor_state_t *state, const struct file_transfer_source_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"source", tmp_str.len = sizeof("source") - 1, &tmp_str)))))
+	&& (((*input).file_transfer_source_choice == file_transfer_source_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).file_transfer_source_tstr))))
+	: (((*input).file_transfer_source_choice == file_transfer_source_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_file_transfer(
+		zcbor_state_t *state, const struct file_transfer *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 12) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"name", tmp_str.len = sizeof("name") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).file_transfer_name))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"blob", tmp_str.len = sizeof("blob") - 1, &tmp_str)))))
+	&& (encode_blob_ref(state, (&(*input).file_transfer_blob))))
+	&& (!(*input).file_transfer_direction_present || encode_repeated_file_transfer_direction(state, (&(*input).file_transfer_direction)))
+	&& (!(*input).file_transfer_state_present || encode_repeated_file_transfer_state(state, (&(*input).file_transfer_state)))
+	&& (!(*input).file_transfer_remote_present || encode_repeated_file_transfer_remote(state, (&(*input).file_transfer_remote)))
+	&& (!(*input).file_transfer_initiator_present || encode_repeated_file_transfer_initiator(state, (&(*input).file_transfer_initiator)))
+	&& (!(*input).file_transfer_file_size_present || encode_repeated_file_transfer_file_size(state, (&(*input).file_transfer_file_size)))
+	&& (!(*input).file_transfer_transferred_present || encode_repeated_file_transfer_transferred(state, (&(*input).file_transfer_transferred)))
+	&& (!(*input).file_transfer_content_type_present || encode_repeated_file_transfer_content_type(state, (&(*input).file_transfer_content_type)))
+	&& (!(*input).file_transfer_message_present || encode_repeated_file_transfer_message(state, (&(*input).file_transfer_message)))
+	&& (!(*input).file_transfer_error_present || encode_repeated_file_transfer_error(state, (&(*input).file_transfer_error)))
+	&& (!(*input).file_transfer_source_present || encode_repeated_file_transfer_source(state, (&(*input).file_transfer_source)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 12))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_ft_send(
+		zcbor_state_t *state, const struct request_ft_send *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"FtSend", tmp_str.len = sizeof("FtSend") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).FtSend_transport))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transfer", tmp_str.len = sizeof("transfer") - 1, &tmp_str)))))
+	&& (encode_file_transfer(state, (&(*input).FtSend_transfer))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_ft_receive(
+		zcbor_state_t *state, const struct request_ft_receive *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"FtReceive", tmp_str.len = sizeof("FtReceive") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).FtReceive_transport))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transfer", tmp_str.len = sizeof("transfer") - 1, &tmp_str)))))
+	&& (encode_file_transfer(state, (&(*input).FtReceive_transfer))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_response_routed(
 		zcbor_state_t *state, const struct response_routed *input)
 {
@@ -9453,6 +9896,350 @@ static bool encode_journal_record_payload_block(
 	return res;
 }
 
+static bool encode_repeated_chat_message_id(
+		zcbor_state_t *state, const struct chat_message_id_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (((*input).chat_message_id_choice == chat_message_id_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).chat_message_id_tstr))))
+	: (((*input).chat_message_id_choice == chat_message_id_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_author(
+		zcbor_state_t *state, const struct chat_message_author_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"author", tmp_str.len = sizeof("author") - 1, &tmp_str)))))
+	&& (((*input).chat_message_author_choice == chat_message_author_participant_m_c) ? ((encode_participant(state, (&(*input).chat_message_author_participant_m))))
+	: (((*input).chat_message_author_choice == chat_message_author_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_replying_to(
+		zcbor_state_t *state, const struct chat_message_replying_to_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"replying_to", tmp_str.len = sizeof("replying_to") - 1, &tmp_str)))))
+	&& (((*input).chat_message_replying_to_choice == chat_message_replying_to_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).chat_message_replying_to_tstr))))
+	: (((*input).chat_message_replying_to_choice == chat_message_replying_to_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_message_attachment_content_type(
+		zcbor_state_t *state, const struct message_attachment_content_type_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"content_type", tmp_str.len = sizeof("content_type") - 1, &tmp_str)))))
+	&& (((*input).message_attachment_content_type_choice == message_attachment_content_type_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).message_attachment_content_type_tstr))))
+	: (((*input).message_attachment_content_type_choice == message_attachment_content_type_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_message_attachment_is_inline(
+		zcbor_state_t *state, const struct message_attachment_is_inline *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"is_inline", tmp_str.len = sizeof("is_inline") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).message_attachment_is_inline)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_message_attachment_local_uri(
+		zcbor_state_t *state, const struct message_attachment_local_uri_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"local_uri", tmp_str.len = sizeof("local_uri") - 1, &tmp_str)))))
+	&& (((*input).message_attachment_local_uri_choice == message_attachment_local_uri_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).message_attachment_local_uri_tstr))))
+	: (((*input).message_attachment_local_uri_choice == message_attachment_local_uri_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_message_attachment_remote_uri(
+		zcbor_state_t *state, const struct message_attachment_remote_uri_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"remote_uri", tmp_str.len = sizeof("remote_uri") - 1, &tmp_str)))))
+	&& (((*input).message_attachment_remote_uri_choice == message_attachment_remote_uri_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).message_attachment_remote_uri_tstr))))
+	: (((*input).message_attachment_remote_uri_choice == message_attachment_remote_uri_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_message_attachment_size(
+		zcbor_state_t *state, const struct message_attachment_size *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"size", tmp_str.len = sizeof("size") - 1, &tmp_str)))))
+	&& (zcbor_uint64_encode(state, (&(*input).message_attachment_size)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_message_attachment(
+		zcbor_state_t *state, const struct message_attachment *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 6) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).message_attachment_id))))
+	&& (!(*input).message_attachment_content_type_present || encode_repeated_message_attachment_content_type(state, (&(*input).message_attachment_content_type)))
+	&& (!(*input).message_attachment_is_inline_present || encode_repeated_message_attachment_is_inline(state, (&(*input).message_attachment_is_inline)))
+	&& (!(*input).message_attachment_local_uri_present || encode_repeated_message_attachment_local_uri(state, (&(*input).message_attachment_local_uri)))
+	&& (!(*input).message_attachment_remote_uri_present || encode_repeated_message_attachment_remote_uri(state, (&(*input).message_attachment_remote_uri)))
+	&& (!(*input).message_attachment_size_present || encode_repeated_message_attachment_size(state, (&(*input).message_attachment_size)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 6))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_attachments(
+		zcbor_state_t *state, const struct chat_message_attachments_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"attachments", tmp_str.len = sizeof("attachments") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 64) && ((zcbor_multi_encode_minmax(0, 64, &(*input).chat_message_attachments_message_attachment_m_count, (zcbor_encoder_t *)encode_message_attachment, state, (*&(*input).chat_message_attachments_message_attachment_m), sizeof(struct message_attachment))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 64))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_timestamp(
+		zcbor_state_t *state, const struct chat_message_timestamp_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"timestamp", tmp_str.len = sizeof("timestamp") - 1, &tmp_str)))))
+	&& (((*input).chat_message_timestamp_choice == chat_message_timestamp_uint64_m_c) ? ((zcbor_uint64_encode(state, (&(*input).chat_message_timestamp_uint64_m))))
+	: (((*input).chat_message_timestamp_choice == chat_message_timestamp_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_delivered_at(
+		zcbor_state_t *state, const struct chat_message_delivered_at_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"delivered_at", tmp_str.len = sizeof("delivered_at") - 1, &tmp_str)))))
+	&& (((*input).chat_message_delivered_at_choice == chat_message_delivered_at_uint64_m_c) ? ((zcbor_uint64_encode(state, (&(*input).chat_message_delivered_at_uint64_m))))
+	: (((*input).chat_message_delivered_at_choice == chat_message_delivered_at_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_edited_at(
+		zcbor_state_t *state, const struct chat_message_edited_at_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"edited_at", tmp_str.len = sizeof("edited_at") - 1, &tmp_str)))))
+	&& (((*input).chat_message_edited_at_choice == chat_message_edited_at_uint64_m_c) ? ((zcbor_uint64_encode(state, (&(*input).chat_message_edited_at_uint64_m))))
+	: (((*input).chat_message_edited_at_choice == chat_message_edited_at_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_error(
+		zcbor_state_t *state, const struct chat_message_error_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"error", tmp_str.len = sizeof("error") - 1, &tmp_str)))))
+	&& (((*input).chat_message_error_choice == chat_message_error_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).chat_message_error_tstr))))
+	: (((*input).chat_message_error_choice == chat_message_error_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_title(
+		zcbor_state_t *state, const struct chat_message_title_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"title", tmp_str.len = sizeof("title") - 1, &tmp_str)))))
+	&& (((*input).chat_message_title_choice == chat_message_title_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).chat_message_title_tstr))))
+	: (((*input).chat_message_title_choice == chat_message_title_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_highlight_color(
+		zcbor_state_t *state, const struct chat_message_highlight_color_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"highlight_color", tmp_str.len = sizeof("highlight_color") - 1, &tmp_str)))))
+	&& (((*input).chat_message_highlight_color_choice == chat_message_highlight_color_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).chat_message_highlight_color_tstr))))
+	: (((*input).chat_message_highlight_color_choice == chat_message_highlight_color_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_action(
+		zcbor_state_t *state, const struct chat_message_action *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"action", tmp_str.len = sizeof("action") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).chat_message_action)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_event(
+		zcbor_state_t *state, const struct chat_message_event *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"event", tmp_str.len = sizeof("event") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).chat_message_event)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_notice(
+		zcbor_state_t *state, const struct chat_message_notice *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"notice", tmp_str.len = sizeof("notice") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).chat_message_notice)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_system(
+		zcbor_state_t *state, const struct chat_message_system *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"system", tmp_str.len = sizeof("system") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).chat_message_system)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_chat_message_highlighted(
+		zcbor_state_t *state, const struct chat_message_highlighted *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"highlighted", tmp_str.len = sizeof("highlighted") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).chat_message_highlighted)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_chat_message(
+		zcbor_state_t *state, const struct chat_message *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 16) && (((!(*input).chat_message_id_present || encode_repeated_chat_message_id(state, (&(*input).chat_message_id)))
+	&& (!(*input).chat_message_author_present || encode_repeated_chat_message_author(state, (&(*input).chat_message_author)))
+	&& (!(*input).chat_message_replying_to_present || encode_repeated_chat_message_replying_to(state, (&(*input).chat_message_replying_to)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"text", tmp_str.len = sizeof("text") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).chat_message_text))))
+	&& (!(*input).chat_message_attachments_present || encode_repeated_chat_message_attachments(state, (&(*input).chat_message_attachments)))
+	&& (!(*input).chat_message_timestamp_present || encode_repeated_chat_message_timestamp(state, (&(*input).chat_message_timestamp)))
+	&& (!(*input).chat_message_delivered_at_present || encode_repeated_chat_message_delivered_at(state, (&(*input).chat_message_delivered_at)))
+	&& (!(*input).chat_message_edited_at_present || encode_repeated_chat_message_edited_at(state, (&(*input).chat_message_edited_at)))
+	&& (!(*input).chat_message_error_present || encode_repeated_chat_message_error(state, (&(*input).chat_message_error)))
+	&& (!(*input).chat_message_title_present || encode_repeated_chat_message_title(state, (&(*input).chat_message_title)))
+	&& (!(*input).chat_message_highlight_color_present || encode_repeated_chat_message_highlight_color(state, (&(*input).chat_message_highlight_color)))
+	&& (!(*input).chat_message_action_present || encode_repeated_chat_message_action(state, (&(*input).chat_message_action)))
+	&& (!(*input).chat_message_event_present || encode_repeated_chat_message_event(state, (&(*input).chat_message_event)))
+	&& (!(*input).chat_message_notice_present || encode_repeated_chat_message_notice(state, (&(*input).chat_message_notice)))
+	&& (!(*input).chat_message_system_present || encode_repeated_chat_message_system(state, (&(*input).chat_message_system)))
+	&& (!(*input).chat_message_highlighted_present || encode_repeated_chat_message_highlighted(state, (&(*input).chat_message_highlighted)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 16))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_journal_record_payload_chat(
+		zcbor_state_t *state, const struct journal_record_payload_chat *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Chat", tmp_str.len = sizeof("Chat") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"message", tmp_str.len = sizeof("message") - 1, &tmp_str)))))
+	&& (encode_chat_message(state, (&(*input).Chat_message))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_journal_record_payload_t(
 		zcbor_state_t *state, const struct journal_record_payload_t_r *input)
 {
@@ -9460,7 +10247,8 @@ static bool encode_journal_record_payload_t(
 
 	bool res = (((((*input).journal_record_payload_t_choice == journal_record_payload_t_journal_record_payload_management_m_c) ? ((encode_journal_record_payload_management(state, (&(*input).journal_record_payload_t_journal_record_payload_management_m))))
 	: (((*input).journal_record_payload_t_choice == journal_record_payload_t_journal_record_payload_block_m_c) ? ((encode_journal_record_payload_block(state, (&(*input).journal_record_payload_t_journal_record_payload_block_m))))
-	: false))));
+	: (((*input).journal_record_payload_t_choice == journal_record_payload_t_journal_record_payload_chat_m_c) ? ((encode_journal_record_payload_chat(state, (&(*input).journal_record_payload_t_journal_record_payload_chat_m))))
+	: false)))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -10088,7 +10876,9 @@ static bool encode_node_event(
 	: (((*input).node_event_choice == node_event_membership_changed_m_c) ? ((encode_node_event_membership_changed(state, (&(*input).node_event_membership_changed_m))))
 	: (((*input).node_event_choice == node_event_contacts_changed_m_c) ? ((encode_node_event_contacts_changed(state, (&(*input).node_event_contacts_changed_m))))
 	: (((*input).node_event_choice == node_event_resync_needed_m_c) ? ((encode_node_event_resync_needed(state, (&(*input).node_event_resync_needed_m))))
-	: false)))))))))))))));
+	: (((*input).node_event_choice == node_event_notifications_changed_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"NotificationsChanged", tmp_str.len = sizeof("NotificationsChanged") - 1, &tmp_str)))))
+	: (((*input).node_event_choice == node_event_persons_changed_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"PersonsChanged", tmp_str.len = sizeof("PersonsChanged") - 1, &tmp_str)))))
+	: false)))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -14177,6 +14967,454 @@ static bool encode_response_telemetry_consent(
 	return res;
 }
 
+static bool encode_response_saved_presences(
+		zcbor_state_t *state, const struct response_saved_presences *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"SavedPresences", tmp_str.len = sizeof("SavedPresences") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 64) && ((zcbor_multi_encode_minmax(0, 64, &(*input).response_saved_presences_SavedPresences_saved_presence_m_count, (zcbor_encoder_t *)encode_saved_presence, state, (*&(*input).response_saved_presences_SavedPresences_saved_presence_m), sizeof(struct saved_presence))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 64)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_notification_info_account(
+		zcbor_state_t *state, const struct notification_info_account_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"account", tmp_str.len = sizeof("account") - 1, &tmp_str)))))
+	&& (((*input).notification_info_account_choice == notification_info_account_transport_id_m_c) ? ((zcbor_tstr_encode(state, (&(*input).notification_info_account_transport_id_m))))
+	: (((*input).notification_info_account_choice == notification_info_account_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_notification_info_created_ms(
+		zcbor_state_t *state, const struct notification_info_created_ms *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"created_ms", tmp_str.len = sizeof("created_ms") - 1, &tmp_str)))))
+	&& (zcbor_uint64_encode(state, (&(*input).notification_info_created_ms)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_notification_info_read(
+		zcbor_state_t *state, const struct notification_info_read *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"read", tmp_str.len = sizeof("read") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).notification_info_read)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_notification_info_title(
+		zcbor_state_t *state, const struct notification_info_title_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"title", tmp_str.len = sizeof("title") - 1, &tmp_str)))))
+	&& (((*input).notification_info_title_choice == notification_info_title_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).notification_info_title_tstr))))
+	: (((*input).notification_info_title_choice == notification_info_title_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_notification_info_subtitle(
+		zcbor_state_t *state, const struct notification_info_subtitle_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"subtitle", tmp_str.len = sizeof("subtitle") - 1, &tmp_str)))))
+	&& (((*input).notification_info_subtitle_choice == notification_info_subtitle_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).notification_info_subtitle_tstr))))
+	: (((*input).notification_info_subtitle_choice == notification_info_subtitle_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_notification_info_icon_name(
+		zcbor_state_t *state, const struct notification_info_icon_name_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"icon_name", tmp_str.len = sizeof("icon_name") - 1, &tmp_str)))))
+	&& (((*input).notification_info_icon_name_choice == notification_info_icon_name_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).notification_info_icon_name_tstr))))
+	: (((*input).notification_info_icon_name_choice == notification_info_icon_name_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_notification_info_interactive(
+		zcbor_state_t *state, const struct notification_info_interactive *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"interactive", tmp_str.len = sizeof("interactive") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).notification_info_interactive)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_notification_info_persistent(
+		zcbor_state_t *state, const struct notification_info_persistent *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"persistent", tmp_str.len = sizeof("persistent") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).notification_info_persistent)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_add_contact_request_message(
+		zcbor_state_t *state, const struct add_contact_request_message_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"message", tmp_str.len = sizeof("message") - 1, &tmp_str)))))
+	&& (((*input).add_contact_request_message_choice == add_contact_request_message_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).add_contact_request_message_tstr))))
+	: (((*input).add_contact_request_message_choice == add_contact_request_message_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_add_contact_request_handled(
+		zcbor_state_t *state, const struct add_contact_request_handled *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"handled", tmp_str.len = sizeof("handled") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).add_contact_request_handled)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_add_contact_request(
+		zcbor_state_t *state, const struct add_contact_request *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"contact", tmp_str.len = sizeof("contact") - 1, &tmp_str)))))
+	&& (encode_contact_info(state, (&(*input).add_contact_request_contact))))
+	&& (!(*input).add_contact_request_message_present || encode_repeated_add_contact_request_message(state, (&(*input).add_contact_request_message)))
+	&& (!(*input).add_contact_request_handled_present || encode_repeated_add_contact_request_handled(state, (&(*input).add_contact_request_handled)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_notification_kind_add_contact(
+		zcbor_state_t *state, const struct notification_kind_add_contact *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"AddContact", tmp_str.len = sizeof("AddContact") - 1, &tmp_str)))))
+	&& (encode_add_contact_request(state, (&(*input).notification_kind_add_contact_AddContact))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_authorization_request_message(
+		zcbor_state_t *state, const struct authorization_request_message_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"message", tmp_str.len = sizeof("message") - 1, &tmp_str)))))
+	&& (((*input).authorization_request_message_choice == authorization_request_message_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).authorization_request_message_tstr))))
+	: (((*input).authorization_request_message_choice == authorization_request_message_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_authorization_request_add(
+		zcbor_state_t *state, const struct authorization_request_add *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"add", tmp_str.len = sizeof("add") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).authorization_request_add)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_authorization_request_handled(
+		zcbor_state_t *state, const struct authorization_request_handled *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"handled", tmp_str.len = sizeof("handled") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).authorization_request_handled)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_authorization_request(
+		zcbor_state_t *state, const struct authorization_request *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 4) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"contact", tmp_str.len = sizeof("contact") - 1, &tmp_str)))))
+	&& (encode_contact_info(state, (&(*input).authorization_request_contact))))
+	&& (!(*input).authorization_request_message_present || encode_repeated_authorization_request_message(state, (&(*input).authorization_request_message)))
+	&& (!(*input).authorization_request_add_present || encode_repeated_authorization_request_add(state, (&(*input).authorization_request_add)))
+	&& (!(*input).authorization_request_handled_present || encode_repeated_authorization_request_handled(state, (&(*input).authorization_request_handled)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 4))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_notification_kind_authorization(
+		zcbor_state_t *state, const struct notification_kind_authorization *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Authorization", tmp_str.len = sizeof("Authorization") - 1, &tmp_str)))))
+	&& (encode_authorization_request(state, (&(*input).notification_kind_authorization_Authorization))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_Link_link_text(
+		zcbor_state_t *state, const struct Link_link_text_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"link_text", tmp_str.len = sizeof("link_text") - 1, &tmp_str)))))
+	&& (((*input).Link_link_text_choice == Link_link_text_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).Link_link_text_tstr))))
+	: (((*input).Link_link_text_choice == Link_link_text_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_notification_kind_link(
+		zcbor_state_t *state, const struct notification_kind_link *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Link", tmp_str.len = sizeof("Link") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 2) && (((!(*input).Link_link_text_present || encode_repeated_Link_link_text(state, (&(*input).Link_link_text)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"link_uri", tmp_str.len = sizeof("link_uri") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).Link_link_uri))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_notification_kind(
+		zcbor_state_t *state, const struct notification_kind_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).notification_kind_choice == notification_kind_generic_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Generic", tmp_str.len = sizeof("Generic") - 1, &tmp_str)))))
+	: (((*input).notification_kind_choice == notification_kind_add_contact_m_c) ? ((encode_notification_kind_add_contact(state, (&(*input).notification_kind_add_contact_m))))
+	: (((*input).notification_kind_choice == notification_kind_authorization_m_c) ? ((encode_notification_kind_authorization(state, (&(*input).notification_kind_authorization_m))))
+	: (((*input).notification_kind_choice == notification_kind_link_m_c) ? ((encode_notification_kind_link(state, (&(*input).notification_kind_link_m))))
+	: (((*input).notification_kind_choice == notification_kind_connection_error_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ConnectionError", tmp_str.len = sizeof("ConnectionError") - 1, &tmp_str)))))
+	: false)))))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_notification_info_deleted(
+		zcbor_state_t *state, const struct notification_info_deleted *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"deleted", tmp_str.len = sizeof("deleted") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).notification_info_deleted)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_notification_info(
+		zcbor_state_t *state, const struct notification_info *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 11) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).notification_info_id))))
+	&& (!(*input).notification_info_account_present || encode_repeated_notification_info_account(state, (&(*input).notification_info_account)))
+	&& (!(*input).notification_info_created_ms_present || encode_repeated_notification_info_created_ms(state, (&(*input).notification_info_created_ms)))
+	&& (!(*input).notification_info_read_present || encode_repeated_notification_info_read(state, (&(*input).notification_info_read)))
+	&& (!(*input).notification_info_title_present || encode_repeated_notification_info_title(state, (&(*input).notification_info_title)))
+	&& (!(*input).notification_info_subtitle_present || encode_repeated_notification_info_subtitle(state, (&(*input).notification_info_subtitle)))
+	&& (!(*input).notification_info_icon_name_present || encode_repeated_notification_info_icon_name(state, (&(*input).notification_info_icon_name)))
+	&& (!(*input).notification_info_interactive_present || encode_repeated_notification_info_interactive(state, (&(*input).notification_info_interactive)))
+	&& (!(*input).notification_info_persistent_present || encode_repeated_notification_info_persistent(state, (&(*input).notification_info_persistent)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"kind", tmp_str.len = sizeof("kind") - 1, &tmp_str)))))
+	&& (encode_notification_kind(state, (&(*input).notification_info_kind))))
+	&& (!(*input).notification_info_deleted_present || encode_repeated_notification_info_deleted(state, (&(*input).notification_info_deleted)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 11))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_notifications(
+		zcbor_state_t *state, const struct response_notifications *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Notifications", tmp_str.len = sizeof("Notifications") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 64) && ((zcbor_multi_encode_minmax(0, 64, &(*input).response_notifications_Notifications_notification_info_m_count, (zcbor_encoder_t *)encode_notification_info, state, (*&(*input).response_notifications_Notifications_notification_info_m), sizeof(struct notification_info))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 64)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_person_alias(
+		zcbor_state_t *state, const struct person_alias_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"alias", tmp_str.len = sizeof("alias") - 1, &tmp_str)))))
+	&& (((*input).person_alias_choice == person_alias_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).person_alias_tstr))))
+	: (((*input).person_alias_choice == person_alias_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_image(
+		zcbor_state_t *state, const struct image *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"blob", tmp_str.len = sizeof("blob") - 1, &tmp_str)))))
+	&& (encode_blob_ref(state, (&(*input).image_blob))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_person_avatar(
+		zcbor_state_t *state, const struct person_avatar_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"avatar", tmp_str.len = sizeof("avatar") - 1, &tmp_str)))))
+	&& (((*input).person_avatar_choice == person_avatar_image_m_c) ? ((encode_image(state, (&(*input).person_avatar_image_m))))
+	: (((*input).person_avatar_choice == person_avatar_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_person_endpoint(
+		zcbor_state_t *state, const struct person_endpoint *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).person_endpoint_transport))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"contact", tmp_str.len = sizeof("contact") - 1, &tmp_str)))))
+	&& (encode_contact_info(state, (&(*input).person_endpoint_contact))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_person_endpoints(
+		zcbor_state_t *state, const struct person_endpoints_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"endpoints", tmp_str.len = sizeof("endpoints") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 64) && ((zcbor_multi_encode_minmax(0, 64, &(*input).person_endpoints_person_endpoint_m_count, (zcbor_encoder_t *)encode_person_endpoint, state, (*&(*input).person_endpoints_person_endpoint_m), sizeof(struct person_endpoint))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 64))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_person(
+		zcbor_state_t *state, const struct person *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 4) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).person_id))))
+	&& (!(*input).person_alias_present || encode_repeated_person_alias(state, (&(*input).person_alias)))
+	&& (!(*input).person_avatar_present || encode_repeated_person_avatar(state, (&(*input).person_avatar)))
+	&& (!(*input).person_endpoints_present || encode_repeated_person_endpoints(state, (&(*input).person_endpoints)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 4))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_persons(
+		zcbor_state_t *state, const struct response_persons *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Persons", tmp_str.len = sizeof("Persons") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 64) && ((zcbor_multi_encode_minmax(0, 64, &(*input).response_persons_Persons_person_m_count, (zcbor_encoder_t *)encode_person, state, (*&(*input).response_persons_Persons_person_m), sizeof(struct person))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 64)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_api_response(
 		zcbor_state_t *state, const struct api_response_r *input)
 {
@@ -14278,7 +15516,10 @@ static bool encode_api_response(
 	: (((*input).api_response_choice == api_response_response_who_am_i_m_c) ? ((encode_response_who_am_i(state, (&(*input).api_response_response_who_am_i_m))))
 	: (((*input).api_response_choice == api_response_response_feedback_ack_m_c) ? ((encode_response_feedback_ack(state, (&(*input).api_response_response_feedback_ack_m))))
 	: (((*input).api_response_choice == api_response_response_telemetry_consent_m_c) ? ((encode_response_telemetry_consent(state, (&(*input).api_response_response_telemetry_consent_m))))
-	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: (((*input).api_response_choice == api_response_response_saved_presences_m_c) ? ((encode_response_saved_presences(state, (&(*input).api_response_response_saved_presences_m))))
+	: (((*input).api_response_choice == api_response_response_notifications_m_c) ? ((encode_response_notifications(state, (&(*input).api_response_response_notifications_m))))
+	: (((*input).api_response_choice == api_response_response_persons_m_c) ? ((encode_response_persons(state, (&(*input).api_response_response_persons_m))))
+	: false))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -14477,7 +15718,15 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_feedback_submit_m_c) ? ((encode_request_feedback_submit(state, (&(*input).api_request_request_feedback_submit_m))))
 	: (((*input).api_request_choice == api_request_request_telemetry_consent_get_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TelemetryConsentGet", tmp_str.len = sizeof("TelemetryConsentGet") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_telemetry_consent_set_m_c) ? ((encode_request_telemetry_consent_set(state, (&(*input).api_request_request_telemetry_consent_set_m))))
-	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: (((*input).api_request_choice == api_request_request_presence_list_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"PresenceList", tmp_str.len = sizeof("PresenceList") - 1, &tmp_str)))))
+	: (((*input).api_request_choice == api_request_request_presence_save_m_c) ? ((encode_request_presence_save(state, (&(*input).api_request_request_presence_save_m))))
+	: (((*input).api_request_choice == api_request_request_presence_delete_m_c) ? ((encode_request_presence_delete(state, (&(*input).api_request_request_presence_delete_m))))
+	: (((*input).api_request_choice == api_request_request_presence_set_active_m_c) ? ((encode_request_presence_set_active(state, (&(*input).api_request_request_presence_set_active_m))))
+	: (((*input).api_request_choice == api_request_request_notification_list_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"NotificationList", tmp_str.len = sizeof("NotificationList") - 1, &tmp_str)))))
+	: (((*input).api_request_choice == api_request_request_ft_send_m_c) ? ((encode_request_ft_send(state, (&(*input).api_request_request_ft_send_m))))
+	: (((*input).api_request_choice == api_request_request_ft_receive_m_c) ? ((encode_request_ft_receive(state, (&(*input).api_request_request_ft_receive_m))))
+	: (((*input).api_request_choice == api_request_request_person_list_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"PersonList", tmp_str.len = sizeof("PersonList") - 1, &tmp_str)))))
+	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;

@@ -3250,6 +3250,205 @@ struct request_telemetry_consent_set {
 	bool TelemetryConsentSet_enabled;
 };
 
+struct saved_presence_name_r {
+	union {
+		struct zcbor_string saved_presence_name_tstr;
+	};
+	enum {
+		saved_presence_name_tstr_c,
+		saved_presence_name_null_m_c,
+	} saved_presence_name_choice;
+};
+
+struct saved_presence_message_r {
+	union {
+		struct zcbor_string saved_presence_message_tstr;
+	};
+	enum {
+		saved_presence_message_tstr_c,
+		saved_presence_message_null_m_c,
+	} saved_presence_message_choice;
+};
+
+struct saved_presence_emoji_r {
+	union {
+		struct zcbor_string saved_presence_emoji_tstr;
+	};
+	enum {
+		saved_presence_emoji_tstr_c,
+		saved_presence_emoji_null_m_c,
+	} saved_presence_emoji_choice;
+};
+
+struct saved_presence_last_used_r {
+	union {
+		uint64_t saved_presence_last_used_uint64_m;
+	};
+	enum {
+		saved_presence_last_used_uint64_m_c,
+		saved_presence_last_used_null_m_c,
+	} saved_presence_last_used_choice;
+};
+
+struct saved_presence_use_count {
+	uint64_t saved_presence_use_count;
+};
+
+struct saved_presence {
+	struct zcbor_string saved_presence_id;
+	struct saved_presence_name_r saved_presence_name;
+	bool saved_presence_name_present;
+	struct presence_primitive_t_r saved_presence_primitive;
+	struct saved_presence_message_r saved_presence_message;
+	bool saved_presence_message_present;
+	struct saved_presence_emoji_r saved_presence_emoji;
+	bool saved_presence_emoji_present;
+	struct saved_presence_last_used_r saved_presence_last_used;
+	bool saved_presence_last_used_present;
+	struct saved_presence_use_count saved_presence_use_count;
+	bool saved_presence_use_count_present;
+};
+
+struct request_presence_save {
+	struct saved_presence PresenceSave_presence;
+};
+
+struct request_presence_delete {
+	struct zcbor_string PresenceDelete_id;
+};
+
+struct request_presence_set_active {
+	struct zcbor_string PresenceSetActive_id;
+};
+
+struct file_transfer_direction_t_r {
+	enum {
+		file_transfer_direction_t_Send_tstr_c,
+		file_transfer_direction_t_Receive_tstr_c,
+	} file_transfer_direction_t_choice;
+};
+
+struct file_transfer_direction {
+	struct file_transfer_direction_t_r file_transfer_direction;
+};
+
+struct file_transfer_state_t_r {
+	enum {
+		file_transfer_state_t_Unknown_tstr_c,
+		file_transfer_state_t_Negotiating_tstr_c,
+		file_transfer_state_t_Started_tstr_c,
+		file_transfer_state_t_Finished_tstr_c,
+		file_transfer_state_t_Failed_tstr_c,
+	} file_transfer_state_t_choice;
+};
+
+struct file_transfer_state {
+	struct file_transfer_state_t_r file_transfer_state;
+};
+
+struct file_transfer_remote_r {
+	union {
+		struct contact_info file_transfer_remote_contact_info_m;
+	};
+	enum {
+		file_transfer_remote_contact_info_m_c,
+		file_transfer_remote_null_m_c,
+	} file_transfer_remote_choice;
+};
+
+struct file_transfer_initiator_r {
+	union {
+		struct contact_info file_transfer_initiator_contact_info_m;
+	};
+	enum {
+		file_transfer_initiator_contact_info_m_c,
+		file_transfer_initiator_null_m_c,
+	} file_transfer_initiator_choice;
+};
+
+struct file_transfer_file_size {
+	uint64_t file_transfer_file_size;
+};
+
+struct file_transfer_transferred {
+	uint64_t file_transfer_transferred;
+};
+
+struct file_transfer_content_type_r {
+	union {
+		struct zcbor_string file_transfer_content_type_tstr;
+	};
+	enum {
+		file_transfer_content_type_tstr_c,
+		file_transfer_content_type_null_m_c,
+	} file_transfer_content_type_choice;
+};
+
+struct file_transfer_message_r {
+	union {
+		struct zcbor_string file_transfer_message_tstr;
+	};
+	enum {
+		file_transfer_message_tstr_c,
+		file_transfer_message_null_m_c,
+	} file_transfer_message_choice;
+};
+
+struct file_transfer_error_r {
+	union {
+		struct zcbor_string file_transfer_error_tstr;
+	};
+	enum {
+		file_transfer_error_tstr_c,
+		file_transfer_error_null_m_c,
+	} file_transfer_error_choice;
+};
+
+struct file_transfer_source_r {
+	union {
+		struct zcbor_string file_transfer_source_tstr;
+	};
+	enum {
+		file_transfer_source_tstr_c,
+		file_transfer_source_null_m_c,
+	} file_transfer_source_choice;
+};
+
+struct file_transfer {
+	struct zcbor_string file_transfer_name;
+	struct blob_ref file_transfer_blob;
+	struct file_transfer_direction file_transfer_direction;
+	bool file_transfer_direction_present;
+	struct file_transfer_state file_transfer_state;
+	bool file_transfer_state_present;
+	struct file_transfer_remote_r file_transfer_remote;
+	bool file_transfer_remote_present;
+	struct file_transfer_initiator_r file_transfer_initiator;
+	bool file_transfer_initiator_present;
+	struct file_transfer_file_size file_transfer_file_size;
+	bool file_transfer_file_size_present;
+	struct file_transfer_transferred file_transfer_transferred;
+	bool file_transfer_transferred_present;
+	struct file_transfer_content_type_r file_transfer_content_type;
+	bool file_transfer_content_type_present;
+	struct file_transfer_message_r file_transfer_message;
+	bool file_transfer_message_present;
+	struct file_transfer_error_r file_transfer_error;
+	bool file_transfer_error_present;
+	struct file_transfer_source_r file_transfer_source;
+	bool file_transfer_source_present;
+};
+
+struct request_ft_send {
+	struct zcbor_string FtSend_transport;
+	struct file_transfer FtSend_transfer;
+};
+
+struct request_ft_receive {
+	struct zcbor_string FtReceive_transport;
+	struct file_transfer FtReceive_transfer;
+};
+
 struct api_request_r {
 	union {
 		struct request_submit api_request_request_submit_m;
@@ -3408,6 +3607,11 @@ struct api_request_r {
 		struct request_resource_grant_revoke api_request_request_resource_grant_revoke_m;
 		struct request_feedback_submit api_request_request_feedback_submit_m;
 		struct request_telemetry_consent_set api_request_request_telemetry_consent_set_m;
+		struct request_presence_save api_request_request_presence_save_m;
+		struct request_presence_delete api_request_request_presence_delete_m;
+		struct request_presence_set_active api_request_request_presence_set_active_m;
+		struct request_ft_send api_request_request_ft_send_m;
+		struct request_ft_receive api_request_request_ft_receive_m;
 	};
 	enum {
 		api_request_request_submit_m_c,
@@ -3597,6 +3801,14 @@ struct api_request_r {
 		api_request_request_feedback_submit_m_c,
 		api_request_request_telemetry_consent_get_m_c,
 		api_request_request_telemetry_consent_set_m_c,
+		api_request_request_presence_list_m_c,
+		api_request_request_presence_save_m_c,
+		api_request_request_presence_delete_m_c,
+		api_request_request_presence_set_active_m_c,
+		api_request_request_notification_list_m_c,
+		api_request_request_ft_send_m_c,
+		api_request_request_ft_receive_m_c,
+		api_request_request_person_list_m_c,
 	} api_request_choice;
 };
 
@@ -4592,14 +4804,221 @@ struct journal_record_payload_block {
 	struct transcript_block_r Block_block;
 };
 
+struct chat_message_id_r {
+	union {
+		struct zcbor_string chat_message_id_tstr;
+	};
+	enum {
+		chat_message_id_tstr_c,
+		chat_message_id_null_m_c,
+	} chat_message_id_choice;
+};
+
+struct chat_message_author_r {
+	union {
+		struct participant_r chat_message_author_participant_m;
+	};
+	enum {
+		chat_message_author_participant_m_c,
+		chat_message_author_null_m_c,
+	} chat_message_author_choice;
+};
+
+struct chat_message_replying_to_r {
+	union {
+		struct zcbor_string chat_message_replying_to_tstr;
+	};
+	enum {
+		chat_message_replying_to_tstr_c,
+		chat_message_replying_to_null_m_c,
+	} chat_message_replying_to_choice;
+};
+
+struct message_attachment_content_type_r {
+	union {
+		struct zcbor_string message_attachment_content_type_tstr;
+	};
+	enum {
+		message_attachment_content_type_tstr_c,
+		message_attachment_content_type_null_m_c,
+	} message_attachment_content_type_choice;
+};
+
+struct message_attachment_is_inline {
+	bool message_attachment_is_inline;
+};
+
+struct message_attachment_local_uri_r {
+	union {
+		struct zcbor_string message_attachment_local_uri_tstr;
+	};
+	enum {
+		message_attachment_local_uri_tstr_c,
+		message_attachment_local_uri_null_m_c,
+	} message_attachment_local_uri_choice;
+};
+
+struct message_attachment_remote_uri_r {
+	union {
+		struct zcbor_string message_attachment_remote_uri_tstr;
+	};
+	enum {
+		message_attachment_remote_uri_tstr_c,
+		message_attachment_remote_uri_null_m_c,
+	} message_attachment_remote_uri_choice;
+};
+
+struct message_attachment_size {
+	uint64_t message_attachment_size;
+};
+
+struct message_attachment {
+	struct zcbor_string message_attachment_id;
+	struct message_attachment_content_type_r message_attachment_content_type;
+	bool message_attachment_content_type_present;
+	struct message_attachment_is_inline message_attachment_is_inline;
+	bool message_attachment_is_inline_present;
+	struct message_attachment_local_uri_r message_attachment_local_uri;
+	bool message_attachment_local_uri_present;
+	struct message_attachment_remote_uri_r message_attachment_remote_uri;
+	bool message_attachment_remote_uri_present;
+	struct message_attachment_size message_attachment_size;
+	bool message_attachment_size_present;
+};
+
+struct chat_message_attachments_r {
+	struct message_attachment chat_message_attachments_message_attachment_m[64];
+	size_t chat_message_attachments_message_attachment_m_count;
+};
+
+struct chat_message_timestamp_r {
+	union {
+		uint64_t chat_message_timestamp_uint64_m;
+	};
+	enum {
+		chat_message_timestamp_uint64_m_c,
+		chat_message_timestamp_null_m_c,
+	} chat_message_timestamp_choice;
+};
+
+struct chat_message_delivered_at_r {
+	union {
+		uint64_t chat_message_delivered_at_uint64_m;
+	};
+	enum {
+		chat_message_delivered_at_uint64_m_c,
+		chat_message_delivered_at_null_m_c,
+	} chat_message_delivered_at_choice;
+};
+
+struct chat_message_edited_at_r {
+	union {
+		uint64_t chat_message_edited_at_uint64_m;
+	};
+	enum {
+		chat_message_edited_at_uint64_m_c,
+		chat_message_edited_at_null_m_c,
+	} chat_message_edited_at_choice;
+};
+
+struct chat_message_error_r {
+	union {
+		struct zcbor_string chat_message_error_tstr;
+	};
+	enum {
+		chat_message_error_tstr_c,
+		chat_message_error_null_m_c,
+	} chat_message_error_choice;
+};
+
+struct chat_message_title_r {
+	union {
+		struct zcbor_string chat_message_title_tstr;
+	};
+	enum {
+		chat_message_title_tstr_c,
+		chat_message_title_null_m_c,
+	} chat_message_title_choice;
+};
+
+struct chat_message_highlight_color_r {
+	union {
+		struct zcbor_string chat_message_highlight_color_tstr;
+	};
+	enum {
+		chat_message_highlight_color_tstr_c,
+		chat_message_highlight_color_null_m_c,
+	} chat_message_highlight_color_choice;
+};
+
+struct chat_message_action {
+	bool chat_message_action;
+};
+
+struct chat_message_event {
+	bool chat_message_event;
+};
+
+struct chat_message_notice {
+	bool chat_message_notice;
+};
+
+struct chat_message_system {
+	bool chat_message_system;
+};
+
+struct chat_message_highlighted {
+	bool chat_message_highlighted;
+};
+
+struct chat_message {
+	struct chat_message_id_r chat_message_id;
+	bool chat_message_id_present;
+	struct chat_message_author_r chat_message_author;
+	bool chat_message_author_present;
+	struct chat_message_replying_to_r chat_message_replying_to;
+	bool chat_message_replying_to_present;
+	struct zcbor_string chat_message_text;
+	struct chat_message_attachments_r chat_message_attachments;
+	bool chat_message_attachments_present;
+	struct chat_message_timestamp_r chat_message_timestamp;
+	bool chat_message_timestamp_present;
+	struct chat_message_delivered_at_r chat_message_delivered_at;
+	bool chat_message_delivered_at_present;
+	struct chat_message_edited_at_r chat_message_edited_at;
+	bool chat_message_edited_at_present;
+	struct chat_message_error_r chat_message_error;
+	bool chat_message_error_present;
+	struct chat_message_title_r chat_message_title;
+	bool chat_message_title_present;
+	struct chat_message_highlight_color_r chat_message_highlight_color;
+	bool chat_message_highlight_color_present;
+	struct chat_message_action chat_message_action;
+	bool chat_message_action_present;
+	struct chat_message_event chat_message_event;
+	bool chat_message_event_present;
+	struct chat_message_notice chat_message_notice;
+	bool chat_message_notice_present;
+	struct chat_message_system chat_message_system;
+	bool chat_message_system_present;
+	struct chat_message_highlighted chat_message_highlighted;
+	bool chat_message_highlighted_present;
+};
+
+struct journal_record_payload_chat {
+	struct chat_message Chat_message;
+};
+
 struct journal_record_payload_t_r {
 	union {
 		struct journal_record_payload_management journal_record_payload_t_journal_record_payload_management_m;
 		struct journal_record_payload_block journal_record_payload_t_journal_record_payload_block_m;
+		struct journal_record_payload_chat journal_record_payload_t_journal_record_payload_chat_m;
 	};
 	enum {
 		journal_record_payload_t_journal_record_payload_management_m_c,
 		journal_record_payload_t_journal_record_payload_block_m_c,
+		journal_record_payload_t_journal_record_payload_chat_m_c,
 	} journal_record_payload_t_choice;
 };
 
@@ -4907,6 +5326,8 @@ struct node_event_r {
 		node_event_membership_changed_m_c,
 		node_event_contacts_changed_m_c,
 		node_event_resync_needed_m_c,
+		node_event_notifications_changed_m_c,
+		node_event_persons_changed_m_c,
 	} node_event_choice;
 };
 
@@ -7041,6 +7462,237 @@ struct response_telemetry_consent {
 	bool TelemetryConsent_enabled;
 };
 
+struct response_saved_presences {
+	struct saved_presence response_saved_presences_SavedPresences_saved_presence_m[64];
+	size_t response_saved_presences_SavedPresences_saved_presence_m_count;
+};
+
+struct notification_info_account_r {
+	union {
+		struct zcbor_string notification_info_account_transport_id_m;
+	};
+	enum {
+		notification_info_account_transport_id_m_c,
+		notification_info_account_null_m_c,
+	} notification_info_account_choice;
+};
+
+struct notification_info_created_ms {
+	uint64_t notification_info_created_ms;
+};
+
+struct notification_info_read {
+	bool notification_info_read;
+};
+
+struct notification_info_title_r {
+	union {
+		struct zcbor_string notification_info_title_tstr;
+	};
+	enum {
+		notification_info_title_tstr_c,
+		notification_info_title_null_m_c,
+	} notification_info_title_choice;
+};
+
+struct notification_info_subtitle_r {
+	union {
+		struct zcbor_string notification_info_subtitle_tstr;
+	};
+	enum {
+		notification_info_subtitle_tstr_c,
+		notification_info_subtitle_null_m_c,
+	} notification_info_subtitle_choice;
+};
+
+struct notification_info_icon_name_r {
+	union {
+		struct zcbor_string notification_info_icon_name_tstr;
+	};
+	enum {
+		notification_info_icon_name_tstr_c,
+		notification_info_icon_name_null_m_c,
+	} notification_info_icon_name_choice;
+};
+
+struct notification_info_interactive {
+	bool notification_info_interactive;
+};
+
+struct notification_info_persistent {
+	bool notification_info_persistent;
+};
+
+struct add_contact_request_message_r {
+	union {
+		struct zcbor_string add_contact_request_message_tstr;
+	};
+	enum {
+		add_contact_request_message_tstr_c,
+		add_contact_request_message_null_m_c,
+	} add_contact_request_message_choice;
+};
+
+struct add_contact_request_handled {
+	bool add_contact_request_handled;
+};
+
+struct add_contact_request {
+	struct contact_info add_contact_request_contact;
+	struct add_contact_request_message_r add_contact_request_message;
+	bool add_contact_request_message_present;
+	struct add_contact_request_handled add_contact_request_handled;
+	bool add_contact_request_handled_present;
+};
+
+struct notification_kind_add_contact {
+	struct add_contact_request notification_kind_add_contact_AddContact;
+};
+
+struct authorization_request_message_r {
+	union {
+		struct zcbor_string authorization_request_message_tstr;
+	};
+	enum {
+		authorization_request_message_tstr_c,
+		authorization_request_message_null_m_c,
+	} authorization_request_message_choice;
+};
+
+struct authorization_request_add {
+	bool authorization_request_add;
+};
+
+struct authorization_request_handled {
+	bool authorization_request_handled;
+};
+
+struct authorization_request {
+	struct contact_info authorization_request_contact;
+	struct authorization_request_message_r authorization_request_message;
+	bool authorization_request_message_present;
+	struct authorization_request_add authorization_request_add;
+	bool authorization_request_add_present;
+	struct authorization_request_handled authorization_request_handled;
+	bool authorization_request_handled_present;
+};
+
+struct notification_kind_authorization {
+	struct authorization_request notification_kind_authorization_Authorization;
+};
+
+struct Link_link_text_r {
+	union {
+		struct zcbor_string Link_link_text_tstr;
+	};
+	enum {
+		Link_link_text_tstr_c,
+		Link_link_text_null_m_c,
+	} Link_link_text_choice;
+};
+
+struct notification_kind_link {
+	struct Link_link_text_r Link_link_text;
+	bool Link_link_text_present;
+	struct zcbor_string Link_link_uri;
+};
+
+struct notification_kind_r {
+	union {
+		struct notification_kind_add_contact notification_kind_add_contact_m;
+		struct notification_kind_authorization notification_kind_authorization_m;
+		struct notification_kind_link notification_kind_link_m;
+	};
+	enum {
+		notification_kind_generic_m_c,
+		notification_kind_add_contact_m_c,
+		notification_kind_authorization_m_c,
+		notification_kind_link_m_c,
+		notification_kind_connection_error_m_c,
+	} notification_kind_choice;
+};
+
+struct notification_info_deleted {
+	bool notification_info_deleted;
+};
+
+struct notification_info {
+	struct zcbor_string notification_info_id;
+	struct notification_info_account_r notification_info_account;
+	bool notification_info_account_present;
+	struct notification_info_created_ms notification_info_created_ms;
+	bool notification_info_created_ms_present;
+	struct notification_info_read notification_info_read;
+	bool notification_info_read_present;
+	struct notification_info_title_r notification_info_title;
+	bool notification_info_title_present;
+	struct notification_info_subtitle_r notification_info_subtitle;
+	bool notification_info_subtitle_present;
+	struct notification_info_icon_name_r notification_info_icon_name;
+	bool notification_info_icon_name_present;
+	struct notification_info_interactive notification_info_interactive;
+	bool notification_info_interactive_present;
+	struct notification_info_persistent notification_info_persistent;
+	bool notification_info_persistent_present;
+	struct notification_kind_r notification_info_kind;
+	struct notification_info_deleted notification_info_deleted;
+	bool notification_info_deleted_present;
+};
+
+struct response_notifications {
+	struct notification_info response_notifications_Notifications_notification_info_m[64];
+	size_t response_notifications_Notifications_notification_info_m_count;
+};
+
+struct person_alias_r {
+	union {
+		struct zcbor_string person_alias_tstr;
+	};
+	enum {
+		person_alias_tstr_c,
+		person_alias_null_m_c,
+	} person_alias_choice;
+};
+
+struct image {
+	struct blob_ref image_blob;
+};
+
+struct person_avatar_r {
+	union {
+		struct image person_avatar_image_m;
+	};
+	enum {
+		person_avatar_image_m_c,
+		person_avatar_null_m_c,
+	} person_avatar_choice;
+};
+
+struct person_endpoint {
+	struct zcbor_string person_endpoint_transport;
+	struct contact_info person_endpoint_contact;
+};
+
+struct person_endpoints_r {
+	struct person_endpoint person_endpoints_person_endpoint_m[64];
+	size_t person_endpoints_person_endpoint_m_count;
+};
+
+struct person {
+	struct zcbor_string person_id;
+	struct person_alias_r person_alias;
+	bool person_alias_present;
+	struct person_avatar_r person_avatar;
+	bool person_avatar_present;
+	struct person_endpoints_r person_endpoints;
+	bool person_endpoints_present;
+};
+
+struct response_persons {
+	struct person response_persons_Persons_person_m[64];
+	size_t response_persons_Persons_person_m_count;
+};
+
 struct api_response_r {
 	union {
 		struct response_routed api_response_response_routed_m;
@@ -7137,6 +7789,9 @@ struct api_response_r {
 		struct response_who_am_i api_response_response_who_am_i_m;
 		struct response_feedback_ack api_response_response_feedback_ack_m;
 		struct response_telemetry_consent api_response_response_telemetry_consent_m;
+		struct response_saved_presences api_response_response_saved_presences_m;
+		struct response_notifications api_response_response_notifications_m;
+		struct response_persons api_response_response_persons_m;
 	};
 	enum {
 		api_response_response_ok_m_c,
@@ -7234,6 +7889,9 @@ struct api_response_r {
 		api_response_response_who_am_i_m_c,
 		api_response_response_feedback_ack_m_c,
 		api_response_response_telemetry_consent_m_c,
+		api_response_response_saved_presences_m_c,
+		api_response_response_notifications_m_c,
+		api_response_response_persons_m_c,
 	} api_response_choice;
 };
 
