@@ -1316,6 +1316,13 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>বার্তা পাঠাতে ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
     <name>ChatSettingsSection</name>
     <message>
         <source>Behaviour</source>
@@ -7412,6 +7419,10 @@ Thanks — proceeding with: %1
         <source>The membership action was rejected</source>
         <translation>সদস্যপদ ক্রিয়াটি প্রত্যাখ্যান করা হয়েছে</translation>
     </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>অ্যাকাউন্ট সেটিংস প্রয়োগ করতে ব্যর্থ হয়েছে</translation>
+    </message>
 </context>
 <context>
     <name>TuiFileTabController</name>
@@ -8945,6 +8956,13 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>বার্তা পাঠাতে ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9319,6 +9337,10 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>The membership action was rejected</source>
         <translation>সদস্যপদ ক্রিয়াটি প্রত্যাখ্যান করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>অ্যাকাউন্ট সেটিংস প্রয়োগ করতে ব্যর্থ হয়েছে</translation>
     </message>
 </context>
 <context>

@@ -1316,6 +1316,13 @@ bis er erneut registriert wird.</translation>
     </message>
 </context>
 <context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Nachricht konnte nicht gesendet werden</translation>
+    </message>
+</context>
+<context>
     <name>ChatSettingsSection</name>
     <message>
         <source>Behaviour</source>
@@ -7412,6 +7419,10 @@ Danke — es geht weiter mit: %1
         <source>The membership action was rejected</source>
         <translation>Die Mitgliedschaftsaktion wurde abgelehnt</translation>
     </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Kontoeinstellungen konnten nicht angewendet werden</translation>
+    </message>
 </context>
 <context>
     <name>TuiFileTabController</name>
@@ -8945,6 +8956,13 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Nachricht konnte nicht gesendet werden</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9319,6 +9337,10 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <message>
         <source>The membership action was rejected</source>
         <translation>Die Mitgliedschaftsaktion wurde abgelehnt</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Kontoeinstellungen konnten nicht angewendet werden</translation>
     </message>
 </context>
 <context>

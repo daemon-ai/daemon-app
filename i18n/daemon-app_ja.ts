@@ -1316,6 +1316,13 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>メッセージの送信に失敗しました</translation>
+    </message>
+</context>
+<context>
     <name>ChatSettingsSection</name>
     <message>
         <source>Behaviour</source>
@@ -7404,6 +7411,10 @@ Thanks — proceeding with: %1
         <source>The membership action was rejected</source>
         <translation>メンバーシップ操作は拒否されました</translation>
     </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>アカウント設定の適用に失敗しました</translation>
+    </message>
 </context>
 <context>
     <name>TuiFileTabController</name>
@@ -8937,6 +8948,13 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>メッセージの送信に失敗しました</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9311,6 +9329,10 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>The membership action was rejected</source>
         <translation>メンバーシップ操作は拒否されました</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>アカウント設定の適用に失敗しました</translation>
     </message>
 </context>
 <context>

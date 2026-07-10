@@ -1316,6 +1316,13 @@ hanggang muli itong mairehistro.</translation>
     </message>
 </context>
 <context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Nabigong ipadala ang mensahe</translation>
+    </message>
+</context>
+<context>
     <name>ChatSettingsSection</name>
     <message>
         <source>Behaviour</source>
@@ -7412,6 +7419,10 @@ Salamat — magpapatuloy sa: %1
         <source>The membership action was rejected</source>
         <translation>Tinanggihan ang membership action</translation>
     </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Nabigong ilapat ang mga setting ng account</translation>
+    </message>
 </context>
 <context>
     <name>TuiFileTabController</name>
@@ -8945,6 +8956,13 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Nabigong ipadala ang mensahe</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9319,6 +9337,10 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <message>
         <source>The membership action was rejected</source>
         <translation>Tinanggihan ang membership action</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Nabigong ilapat ang mga setting ng account</translation>
     </message>
 </context>
 <context>

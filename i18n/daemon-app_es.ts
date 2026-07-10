@@ -1316,6 +1316,13 @@ hasta que se vuelva a registrar.</translation>
     </message>
 </context>
 <context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>No se pudo enviar el mensaje</translation>
+    </message>
+</context>
+<context>
     <name>ChatSettingsSection</name>
     <message>
         <source>Behaviour</source>
@@ -7412,6 +7419,10 @@ Gracias — continuando con: %1
         <source>The membership action was rejected</source>
         <translation>La acción de membresía fue rechazada</translation>
     </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>No se pudo aplicar la configuración de la cuenta</translation>
+    </message>
 </context>
 <context>
     <name>TuiFileTabController</name>
@@ -8945,6 +8956,13 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>No se pudo enviar el mensaje</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9319,6 +9337,10 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     <message>
         <source>The membership action was rejected</source>
         <translation>La acción de membresía fue rechazada</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>No se pudo aplicar la configuración de la cuenta</translation>
     </message>
 </context>
 <context>

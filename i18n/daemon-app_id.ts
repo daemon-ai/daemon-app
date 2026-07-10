@@ -1316,6 +1316,13 @@ sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Gagal mengirim pesan</translation>
+    </message>
+</context>
+<context>
     <name>ChatSettingsSection</name>
     <message>
         <source>Behaviour</source>
@@ -7404,6 +7411,10 @@ Terima kasih — melanjutkan dengan: %1
         <source>The membership action was rejected</source>
         <translation>Tindakan keanggotaan ditolak</translation>
     </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Gagal menerapkan pengaturan akun</translation>
+    </message>
 </context>
 <context>
     <name>TuiFileTabController</name>
@@ -8937,6 +8948,13 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Gagal mengirim pesan</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9311,6 +9329,10 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     <message>
         <source>The membership action was rejected</source>
         <translation>Tindakan keanggotaan ditolak</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Gagal menerapkan pengaturan akun</translation>
     </message>
 </context>
 <context>

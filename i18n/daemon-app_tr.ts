@@ -1316,6 +1316,13 @@ kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Mesaj gönderilemedi</translation>
+    </message>
+</context>
+<context>
     <name>ChatSettingsSection</name>
     <message>
         <source>Behaviour</source>
@@ -7404,6 +7411,10 @@ Teşekkürler — şununla devam ediliyor: %1
         <source>The membership action was rejected</source>
         <translation>Üyelik işlemi reddedildi</translation>
     </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Hesap ayarları uygulanamadı</translation>
+    </message>
 </context>
 <context>
     <name>TuiFileTabController</name>
@@ -8937,6 +8948,13 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Mesaj gönderilemedi</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9311,6 +9329,10 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>The membership action was rejected</source>
         <translation>Üyelik işlemi reddedildi</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Hesap ayarları uygulanamadı</translation>
     </message>
 </context>
 <context>
