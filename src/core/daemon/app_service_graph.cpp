@@ -73,6 +73,17 @@
 #include <QString>
 #include <QtGlobal>
 
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+#include "daemon/daemon_fetch_executor.h"
+#include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
+#include "local_database.h"
+#include "mirror/mirror_service.h"
+#include "outbox.h"
+
+#include <QJsonDocument>
+#include <QJsonObject>
+#endif
+
 namespace daemonapp::daemon {
 
 ServiceMode serviceModeFromEnvironment(ServiceMode fallback) {
@@ -535,6 +546,90 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // hygiene and persists the ETag / dismissed-version / auto-check bookkeeping.
     graph.update = new update::UpdateManager(owner);
     graph.update->setSettings(graph.settings);
+
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+    // ---- mirror A5 (spec 09 wave M2): live-wire the ingestor beside the legacy paths ----
+    // Dual-write discipline (§13 M0–M2): the SubscriptionManager + repositories keep writing their
+    // caches; the mirror is fed in parallel and the M2 read lenses (chat/persons/contacts/
+    // conversation) read it. The ingestor is the single writer (§5.1).
+    {
+        auto* svc = new mirror::MirrorService(owner);
+        // Persistent per-identity boot (offline render from mirror-<id>.db) wires identically to
+        // the cache store's DbPathProvider — the remaining live-persistence step (seam). At M2 the
+        // live store runs in-memory (re-fetched on connect); offline-render-from-disk is proven at
+        // the unit level (tst_mirror_service), so dev-reset/e2e semantics stay unperturbed by A5.
+        svc->openInMemory();
+        graph.mirrorService = svc;
+
+        // The precious local-<id>.db + the durable outbox (§6): the ConvSend + turn-prompt lanes.
+        graph.localDb = new mirror::LocalDatabase(QString(), owner);
+        graph.outbox = new mirror::Outbox(graph.localDb, owner);
+        graph.outbox->load();
+
+        if (daemonConnection != nullptr) {
+            // Fulfil the ingestor's fetch jobs over the SAME NodeApiClient (shared pipeline).
+            graph.mirrorExecutor =
+                new DaemonFetchExecutor(graph.nodeApi, svc->ingestor(), svc->scheduler(), owner);
+            svc->setFetchExecutor(graph.mirrorExecutor);
+
+            // Feed the node event stream into the ingestor through the bridge. A per-session
+            // Subscribe item is not an events page (decode fails) so it is ignored — the mirror
+            // follows only the node-wide feed. Read-only, parallel to the SubscriptionManager
+            // (dual-write): neither owns the other's cursor.
+            QObject::connect(graph.nodeApi, &NodeApiClient::streamItem, svc,
+                             [svc](quint64 /*id*/, const QByteArray& cbor) {
+                                 DecodedEventsPage page;
+                                 if (!NodeApiCodec::decodeEventsPage(cbor, &page)) {
+                                     return;
+                                 }
+                                 for (const DecodedNodeEvent& e : page.events) {
+                                     svc->ingest(translateNodeEvent(e));
+                                 }
+                             });
+
+            // The outbox drains ConvSend to the wire on a MANUAL tap (§6.8 no auto-replay). The
+            // provenance-keyed confirm (§6.6) lands when the resulting MessagesChanged→ConvHistory
+            // delta reaches the ingestor; the ack/rejection below advances the lane state.
+            QObject::connect(
+                graph.outbox, &mirror::Outbox::sendRequested, graph.nodeApi,
+                [nodeApi = graph.nodeApi](const mirror::PendingOp& op) {
+                    if (op.verb != QStringLiteral("ConvSend")) {
+                        return; // other lanes are wired by their owners; turn-prompt is dispatch
+                    }
+                    const QJsonObject args = QJsonDocument::fromJson(op.payload).object();
+                    const QByteArray req = NodeApiCodec::encodeConvSendRequest(
+                        args.value(QStringLiteral("transport")).toString(),
+                        args.value(QStringLiteral("conv")).toString(),
+                        args.value(QStringLiteral("message")).toString());
+                    nodeApi->sendRequest(req, QStringLiteral("outbox/") + op.opId);
+                });
+            QObject::connect(graph.nodeApi, &NodeApiClient::responseReady, graph.outbox,
+                             [outbox = graph.outbox](const QString& corr, const QByteArray& cbor) {
+                                 if (!corr.startsWith(QStringLiteral("outbox/"))) {
+                                     return;
+                                 }
+                                 const QString opId = corr.mid(7);
+                                 // Ok → accepted/landed; a node rejection (api-error) pauses the
+                                 // lane (§6.5).
+                                 if (NodeApiCodec::responseKind(cbor) == ApiResponseKind::Error) {
+                                     DecodedApiError err;
+                                     NodeApiCodec::decodeError(cbor, &err);
+                                     outbox->onRejection(opId, err.kind, err.message);
+                                 } else {
+                                     outbox->onAck(opId);
+                                 }
+                             });
+            QObject::connect(graph.nodeApi, &NodeApiClient::failed, graph.outbox,
+                             [outbox = graph.outbox](const QString& corr, const QString& msg) {
+                                 if (corr.startsWith(QStringLiteral("outbox/"))) {
+                                     // A transport-level failure is transient — backoff, keep
+                                     // order.
+                                     outbox->onTransientFailure(corr.mid(7), msg);
+                                 }
+                             });
+        }
+    }
+#endif
     return graph;
 }
 
