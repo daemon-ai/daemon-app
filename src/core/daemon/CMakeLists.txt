@@ -61,6 +61,7 @@ add_library(da_daemon_client STATIC
     node_api_codec/wire_l0.cpp
     node_api_codec/decode_responses.cpp
     node_api_codec/fs_fleet_channels.cpp
+    node_api_codec/chat_persons.cpp
     local_daemon_launcher.h
     windows_pipe_name.h
     daemon_connection_service.h
@@ -104,6 +105,10 @@ add_library(da_daemon_client STATIC
     daemon_transport_registry.cpp
     daemon_contacts_service.h
     daemon_contacts_service.cpp
+    daemon_persons_service.h
+    daemon_persons_service.cpp
+    daemon_chat_service.h
+    daemon_chat_service.cpp
     daemon_presence_service.h
     daemon_presence_service.cpp
     daemon_cache_store.h

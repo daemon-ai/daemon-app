@@ -3536,4 +3536,119 @@ void GatewayRepository::handleFailure(const QString& correlationId, const QStrin
     }
 }
 
+// --- [integrations wire v38] Transport account settings (read + configure) — STUBS (red) --------
+void TransportRepository::refreshSettings(const QString& transport) {
+    Q_UNUSED(transport)
+}
+
+void TransportRepository::configure(const QString& transport,
+                                    const QMap<QString, QString>& values) {
+    Q_UNUSED(transport)
+    Q_UNUSED(values)
+}
+
+void TransportRepository::handleSettingsResponse(const QString& transport,
+                                                 const QByteArray& responseCbor) {
+    Q_UNUSED(transport)
+    Q_UNUSED(responseCbor)
+}
+
+void TransportRepository::handleConfigureResponse(const QString& transport,
+                                                  const QByteArray& responseCbor) {
+    Q_UNUSED(transport)
+    Q_UNUSED(responseCbor)
+}
+
+// --- [integrations wire v38] Persons registry (PersonList) — STUBS (red) ------------------------
+PersonsRepository::PersonsRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                     QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &PersonsRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &PersonsRepository::handleFailure);
+    }
+}
+
+void PersonsRepository::refresh() {}
+
+void PersonsRepository::handleResponse(const QString& correlationId,
+                                       const QByteArray& responseCbor) {
+    Q_UNUSED(correlationId)
+    Q_UNUSED(responseCbor)
+}
+
+void PersonsRepository::handleFailure(const QString& correlationId, const QString& message) {
+    Q_UNUSED(correlationId)
+    Q_UNUSED(message)
+}
+
+// --- [integrations wire v38] Native chat (ConvHistory / ConvSend) — STUBS (red) -----------------
+QString ChatRepository::convKey(const QString& transport, const QString& conv) {
+    return transport + QChar(0x1f) + conv;
+}
+
+bool ChatRepository::splitConvKey(const QString& tail, QString* transport, QString* conv) {
+    const qsizetype us = tail.indexOf(QChar(0x1f));
+    if (us < 0) {
+        return false;
+    }
+    if (transport != nullptr) {
+        *transport = tail.left(us);
+    }
+    if (conv != nullptr) {
+        *conv = tail.mid(us + 1);
+    }
+    return true;
+}
+
+ChatRepository::ChatRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &ChatRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &ChatRepository::handleFailure);
+    }
+}
+
+void ChatRepository::refreshHistory(const QString& transport, const QString& conv) {
+    Q_UNUSED(transport)
+    Q_UNUSED(conv)
+}
+
+void ChatRepository::send(const QString& transport, const QString& conv, const QString& text) {
+    Q_UNUSED(transport)
+    Q_UNUSED(conv)
+    Q_UNUSED(text)
+}
+
+void ChatRepository::applyMessagesChanged(const QString& transport, const QString& conv) {
+    Q_UNUSED(transport)
+    Q_UNUSED(conv)
+}
+
+void ChatRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
+    Q_UNUSED(correlationId)
+    Q_UNUSED(responseCbor)
+}
+
+void ChatRepository::handleFailure(const QString& correlationId, const QString& message) {
+    Q_UNUSED(correlationId)
+    Q_UNUSED(message)
+}
+
+void ChatRepository::handleHistoryResponse(const QString& transport, const QString& conv,
+                                           const QByteArray& responseCbor) {
+    Q_UNUSED(transport)
+    Q_UNUSED(conv)
+    Q_UNUSED(responseCbor)
+}
+
+void ChatRepository::handleSendResponse(const QString& transport, const QString& conv,
+                                        const QByteArray& responseCbor) {
+    Q_UNUSED(transport)
+    Q_UNUSED(conv)
+    Q_UNUSED(responseCbor)
+}
+
 } // namespace daemonapp::daemon

@@ -160,10 +160,30 @@ public:
         Q_UNUSED(role)
     }
 
+    // [integrations wire v38] Account settings read + configure (edit an existing account). The
+    // node owns the persisted NON-SECRET values; `settings(transport)` returns the last-known map,
+    // `refreshSettings(transport)` fetches them live (TransportSettings) and fires settingsChanged
+    // when they land, and `configure(transport, values)` applies a merge-edit (TransportConfigure —
+    // the node validates + reconnects) then re-reads. Secrets never ride these ops (they go to the
+    // credential store); an edit form leaves an unchanged masked field out of `values`. Default
+    // no-ops / empty so the mock + non-daemon seams need not implement them.
+    [[nodiscard]] Q_INVOKABLE virtual QVariantMap settings(const QString& transport) const {
+        Q_UNUSED(transport)
+        return {};
+    }
+    Q_INVOKABLE virtual void refreshSettings(const QString& transport) { Q_UNUSED(transport) }
+    Q_INVOKABLE virtual void configure(const QString& transport, const QVariantMap& values) {
+        Q_UNUSED(transport)
+        Q_UNUSED(values)
+    }
+
 signals:
     void adaptersChanged();
     void instancesChanged();
     void conversationsChanged(const QString& transport);
+    // [integrations wire v38] A transport's account settings were (re-)read (TransportSettings
+    // landed / a configure re-read them). `values` is the fresh non-secret key->value map.
+    void settingsChanged(const QString& transport, const QVariantMap& values);
     // [acct-mgmt] Two-phase form descriptors + the member list for the member palette + a
     // room/member operation error (surfaced as a toast / TUI notice by both surfaces).
     void joinDetailsReady(const QString& transport, const QVariantMap& form);

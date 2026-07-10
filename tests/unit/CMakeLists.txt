@@ -501,6 +501,24 @@ target_link_libraries(tst_daemon_transports
 add_test(NAME tst_daemon_transports COMMAND tst_daemon_transports)
 set_tests_properties(tst_daemon_transports PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_integrations_seams (A1 app/core-seams; wire v38): the integrations foundation the later app
+# packages consume — the v38 codec wrappers (enriched auth-param-field, AuthFlowKind::UserPassword,
+# ConversationInfo.parent + Space, AdapterInfo.account_schema, ConvSend/ConvHistory, PersonList,
+# TransportSettings/Configure, MessagesChanged/PersonsChanged), the ChatRepository / PersonsRepository
+# + transport-settings repository surface, the daemon + mock IChatService/IPersonsService seams, and
+# the SubscriptionManager fan-out — over the vendored zcbor codec + the WireMuxServer fixture.
+qt_add_executable(tst_integrations_seams tst_integrations_seams.cpp)
+target_link_libraries(tst_integrations_seams
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::transports
+)
+add_test(NAME tst_integrations_seams COMMAND tst_integrations_seams)
+set_tests_properties(tst_integrations_seams PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_profile_store: client-side id-derivation (slug) for ProfileCreate/Clone; the PRO-7/8
 # distribution + revisions codec round-trips; and the DaemonProfileStore export->file->import +
 # history/revert flows over the WireMuxServer fixture. End-to-end daemon acceptance: system-tests.

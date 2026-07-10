@@ -838,11 +838,27 @@ public:
     void memberSetRole(const QString& transport, const QString& conversation,
                        const QString& contactId, const QString& role);
 
+    // --- [integrations wire v38] Account settings (read + configure) ---------------------------
+    // The node owns the persisted NON-SECRET account-settings values. refreshSettings(transport)
+    // issues TransportSettings and, on the reply, caches the values + fires settingsRefreshed;
+    // settings(transport) returns the last-known map (empty until a refresh lands). configure
+    // (transport, values) issues TransportConfigure (merge-edit; the node validates + reconnects)
+    // and, on Ok, re-reads the settings (authoritative — the client renders the node's stored
+    // values, never the submitted ones). Secrets never ride these ops.
+    [[nodiscard]] QMap<QString, QString> settings(const QString& transport) const {
+        return m_settings.value(transport);
+    }
+    void refreshSettings(const QString& transport);
+    void configure(const QString& transport, const QMap<QString, QString>& values);
+
 signals:
     void adaptersRefreshed();
     void instancesRefreshed();
     void conversationsRefreshed(const QString& transport);
     void operationFailed(const QString& message);
+    // [integrations wire v38] A transport's account settings landed (TransportSettings decoded /
+    // a configure re-read them). `settings(transport)` is now populated.
+    void settingsRefreshed(const QString& transport);
     // [acct-mgmt] Two-phase form descriptors + the member list for the member palette. The forms
     // are QVariantMaps the dialogs render (see the codec's DecodedChannelJoinDetails /
     // DecodedCreateConversationDetails); `members` is a QVariantList of member maps.
@@ -872,6 +888,10 @@ private:
                               const QString& failMessage);
     void handleMemberOpResponse(const QString& transport, const QString& conv,
                                 const QByteArray& responseCbor);
+    // [integrations wire v38] TransportSettings reply -> cache values + settingsRefreshed; a
+    // TransportConfigure Ok -> re-read the settings (authoritative); Error -> operationFailed.
+    void handleSettingsResponse(const QString& transport, const QByteArray& responseCbor);
+    void handleConfigureResponse(const QString& transport, const QByteArray& responseCbor);
 
     QList<DecodedAdapterInfo> m_adapters; // in-memory (connect-only); not cached
     // Per-transport conversations page loop (wire v25): accumulate across `after` pages, then
@@ -908,6 +928,12 @@ private:
     static constexpr auto kDeletePrefix = "repo/conv-delete/";
     static constexpr auto kConvGetPrefix = "repo/conv-get/";
     static constexpr auto kMemberOpPrefix = "repo/member-op/";
+    // [integrations wire v38] Account settings read/configure; the transport rides the tail.
+    static constexpr auto kSettingsPrefix = "repo/transport-settings/";
+    static constexpr auto kConfigurePrefix = "repo/transport-configure/";
+
+    // [integrations wire v38] transport -> last-known non-secret account-settings values.
+    QHash<QString, QMap<QString, QString>> m_settings;
 };
 
 // [acct-mgmt] Transport contacts / roster (Phase D, wire v34). The node owns the roster; this
@@ -984,6 +1010,97 @@ private:
     QHash<QString, QList<DecodedContact>> m_directory; // transport -> last directory results
     // Per-transport RosterList page loop (wire v34): accumulate across `next` pages, then swap.
     QHash<QString, PageLoop<DecodedContact>> m_contactLoops;
+};
+
+// [integrations wire v38] The node's person/metacontact registry (PersonList -> Persons; re-listed
+// on PersonsChanged). refresh() issues PersonList; on the reply persons() is populated and
+// personsRefreshed() fires. Read-only at v38 (the node owns the registry). Kept in memory
+// (re-fetched on connect/focus + the PersonsChanged feed event), like the contacts roster — small,
+// authoritative, no offline schema.
+class PersonsRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    PersonsRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedPerson>& persons() const { return m_persons; }
+
+    // Issue a PersonList; on success personsRefreshed() fires with persons() populated.
+    void refresh();
+
+signals:
+    void personsRefreshed();
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kListCorrelation = "repo/person-list";
+
+    QList<DecodedPerson> m_persons;
+};
+
+// [integrations wire v38] Native chat: a conversation's durable transcript (ConvHistory) + the send
+// intent (ConvSend). refreshHistory(transport, conv) issues ConvHistory and loops the
+// `after_cursor` (kWirePageMax) into an in-memory per-conversation message list (newest cursor
+// tracked for the MessagesChanged incremental fetch), swapping
+// messages(transport, conv) and firing historyRefreshed ONCE per refresh. send(transport, conv,
+// text) issues ConvSend and, on Ok, fires messageSent (no optimistic echo — the node appends the
+// Chat record + emits MessagesChanged, which drives the authoritative refetch via
+// applyMessagesChanged). applyMessagesChanged(transport, conv) is the feed hook (fetch the tail
+// past the known cursor). NOTHING is derived client-side; the node owns the transcript. Not cached
+// offline — a live, per-conversation query (like the roster).
+class ChatRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    ChatRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    // The last-known messages for a conversation (oldest-first; empty until a refresh lands).
+    [[nodiscard]] QList<DecodedChatMessage> messages(const QString& transport,
+                                                     const QString& conv) const {
+        return m_messages.value(convKey(transport, conv));
+    }
+
+    // ConvHistory (paged forward from the start): accumulate the full transcript, swap
+    // messages(transport, conv), and emit historyRefreshed ONCE. (The v38 wire pages forward from a
+    // cursor only — there is no backward "load older" op.)
+    void refreshHistory(const QString& transport, const QString& conv);
+    // ConvSend a plain-text message; on Ok messageSent(transport, conv) fires. The authoritative
+    // transcript update arrives via the MessagesChanged feed event (applyMessagesChanged).
+    void send(const QString& transport, const QString& conv, const QString& text);
+    // Feed hook (MessagesChanged): re-fetch the conversation's transcript so the tail lands. Kept a
+    // full refresh at v38 for simplicity (the node bounds the page); a later delta can page the
+    // tail past the known cursor.
+    void applyMessagesChanged(const QString& transport, const QString& conv);
+
+signals:
+    void historyRefreshed(const QString& transport, const QString& conv);
+    void messageSent(const QString& transport, const QString& conv);
+    void operationFailed(const QString& transport, const QString& conv, const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+    void handleHistoryResponse(const QString& transport, const QString& conv,
+                               const QByteArray& responseCbor);
+    void handleSendResponse(const QString& transport, const QString& conv,
+                            const QByteArray& responseCbor);
+
+    // The conversation key ("<transport>\x1f<conv>", the unit-separator never in an id) shared by
+    // the message map + the correlation tail (transport and conv both ride it).
+    [[nodiscard]] static QString convKey(const QString& transport, const QString& conv);
+    // Split a "<transport>\x1f<conv>" tail back into its two ids.
+    static bool splitConvKey(const QString& tail, QString* transport, QString* conv);
+
+    static constexpr auto kHistoryPrefix = "repo/conv-history/";
+    static constexpr auto kSendPrefix = "repo/conv-send/";
+
+    // conv-key -> its accumulated (oldest-first) message list.
+    QHash<QString, QList<DecodedChatMessage>> m_messages;
+    // Per-conversation ConvHistory page loop: accumulate across `after_cursor` pages, then swap.
+    QHash<QString, PageLoop<DecodedChatMessage>> m_historyLoops;
 };
 
 // Durable checkpoints (E4/TOOL-9): refresh(session) issues a CheckpointList (page loop) and

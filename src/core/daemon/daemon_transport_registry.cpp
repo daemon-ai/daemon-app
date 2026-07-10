@@ -242,4 +242,19 @@ void DaemonTransportRegistry::memberSetRole(const QString& transport, const QStr
     }
 }
 
+// [integrations wire v38] Account settings read + configure — STUBS (red).
+QVariantMap DaemonTransportRegistry::settings(const QString& transport) const {
+    Q_UNUSED(transport)
+    return {};
+}
+
+void DaemonTransportRegistry::refreshSettings(const QString& transport) {
+    Q_UNUSED(transport)
+}
+
+void DaemonTransportRegistry::configure(const QString& transport, const QVariantMap& values) {
+    Q_UNUSED(transport)
+    Q_UNUSED(values)
+}
+
 } // namespace transports

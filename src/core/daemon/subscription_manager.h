@@ -21,6 +21,8 @@ class ProfileRepository;
 class TransportRepository; // [wave2:app-channels-liveness]
 class RoutingRepository;   // [waveB:app-v30] D2
 class ContactsRepository;  // [acct-mgmt] transport contacts / roster (wire v34)
+class ChatRepository;      // [integrations wire v38] native chat (ConvHistory / MessagesChanged)
+class PersonsRepository;   // [integrations wire v38] person registry (PersonList / PersonsChanged)
 class DaemonCacheStore;
 struct DecodedNodeEvent;
 
@@ -81,6 +83,13 @@ public:
     // the repo is constructed after this manager. Optional; ContactsChanged is ignored when unset.
     void setContactsRepository(ContactsRepository* contacts) { m_contacts = contacts; }
 
+    // [integrations wire v38] The chat repository the MessagesChanged feed event drives (an
+    // incremental ConvHistory re-fetch for the affected conversation) and the persons repository
+    // the PersonsChanged event refetches (PersonList). Wired via setters because both repos are
+    // constructed after this manager. Optional; the events are ignored when unset.
+    void setChatRepository(ChatRepository* chat) { m_chat = chat; }
+    void setPersonsRepository(PersonsRepository* persons) { m_persons = persons; }
+
     [[nodiscard]] quint64 feedCursor() const { return m_feedCursor; }
 
 signals:
@@ -103,6 +112,8 @@ private:
     TransportRepository* m_transports = nullptr; // [wave2:app-channels-liveness]
     RoutingRepository* m_routing = nullptr;      // [waveB:app-v30] D2
     ContactsRepository* m_contacts = nullptr;    // [acct-mgmt] wire v34
+    ChatRepository* m_chat = nullptr;            // [integrations wire v38]
+    PersonsRepository* m_persons = nullptr;      // [integrations wire v38]
     DaemonCacheStore* m_cache = nullptr;
 
     quint64 m_feedStreamId = 0; // the open EventsSince stream id (0 = none)

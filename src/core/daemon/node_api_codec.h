@@ -315,6 +315,26 @@ struct DecodedRevision {
     quint64 tsMs = 0;
 };
 
+// [acct-mgmt] One field of an AccountSettingsSchema. Shared by the ChannelJoinDetails /
+// CreateConversationDetails extras schemas and (wire v38) the transport account-settings schema
+// (SettingsSchemaForm renders these).
+// [integrations wire v38] The wire `auth-param-field` gained render/validation metadata (it backs
+// both auth-provider forms and account-settings schemas): `kind` (Text|Password|Number|Choice;
+// empty decodes as "Text"), an optional prefill `defaultValue`, an optional empty-input
+// `placeholder`, and the allowed `choices` when kind == Choice. All optional on the wire, so the
+// has* flags mark which the node supplied; a masked field renders with kind == "Password".
+struct DecodedSettingsField {
+    QString key;
+    QString label;
+    bool required = false;
+    QString kind = QStringLiteral("Text"); // Text|Password|Number|Choice
+    bool hasDefault = false;
+    QString defaultValue;
+    bool hasPlaceholder = false;
+    QString placeholder;
+    QStringList choices; // allowed values (kind == Choice)
+};
+
 // --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9)
 // ------------------------------------ One self-describing transport adapter family
 // (TransportAdapters -> Adapters). Backs the "Add channel" picker; the account-setup schema is
@@ -344,6 +364,11 @@ struct DecodedAdapterInfo {
     QVariantMap rosterOps; // list/add/update/remove -> bool (list, wire v34, gates the Contacts UI)
     bool hasDirectory = false;
     bool directory = false; // the adapter offers a people directory (DirectorySearch)
+    // [integrations wire v38] The adapter's account-settings schema (AdapterInfo.account_schema):
+    // the field descriptors the schema-driven add/edit-account form renders (empty when the adapter
+    // reported none). Carries the enriched auth-param-field metadata (kind/default/placeholder/
+    // choices) so a masked secret field renders correctly.
+    QList<DecodedSettingsField> accountSchema;
 };
 
 // One configured transport instance/account + its live status (TransportInstances ->
@@ -367,14 +392,6 @@ struct DecodedTransportInstance {
     // account renders (set via TransportSetLabel).
     bool enabled = true;
     QString label;
-};
-
-// [acct-mgmt] One field of an AccountSettingsSchema ({key,label,required}). Shared by the
-// ChannelJoinDetails / CreateConversationDetails extras schemas (SettingsSchemaForm renders these).
-struct DecodedSettingsField {
-    QString key;
-    QString label;
-    bool required = false;
 };
 
 // [acct-mgmt] One transport contact (contact-info: RosterList/DirectorySearch page items,
@@ -414,12 +431,79 @@ struct DecodedConversationMember {
 struct DecodedConversation {
     QString transport;
     QString id;
-    QString kind; // unset|dm|groupdm|channel|thread
+    QString kind; // unset|dm|groupdm|channel|thread|space ([integrations wire v38] adds "space")
     QString title;
     QString topic;
     QString description;
     bool hasMembers = false;
     QList<DecodedConversationMember> members;
+    // [integrations wire v38] Optional containing space/server-level conversation id on the same
+    // transport (absent/null = a root). Clients treat an unknown/cyclic parent as a root; `kind ==
+    // "space"` marks a container node the hierarchy groups under. `hasParent` marks presence.
+    bool hasParent = false;
+    QString parent;
+};
+
+// [integrations wire v38] One attachment carried by a ChatMessage (message-attachment). File
+// transfer itself is out of scope (the plan); this decodes the metadata so a transcript can render
+// an attachment chip / link. `id` is required; the rest are optional (has* marks presence).
+struct DecodedMessageAttachment {
+    QString id;
+    QString contentType; // empty = none
+    bool isInline = false;
+    QString localUri;  // empty = none
+    QString remoteUri; // empty = none
+    quint64 size = 0;  // 0 = unknown/absent
+};
+
+// [integrations wire v38] One conversation message (ChatMessage) as returned by ConvHistory (a
+// per-conversation JournalRecordPayload::Chat stream). The chat transcript renders these; the node
+// owns every field. `cursor` is the owning journal record's cursor (paging + unread coordinates,
+// stamped by decodeConvHistory). `author` is projected from the wire participant: `authorId` is the
+// contact id or the agent member, `authorName` its display name (empty = use the id),
+// `authorIsAgent` marks the Agent arm. Timestamps are unix-ms (0 + has* == absent).
+struct DecodedChatMessage {
+    quint64 cursor = 0;
+    QString id; // empty = none
+    QString authorId;
+    QString authorName; // empty = use authorId
+    bool authorIsAgent = false;
+    QString replyingTo; // message id this replies to (empty = none)
+    QString text;
+    QList<DecodedMessageAttachment> attachments;
+    bool hasTimestamp = false;
+    quint64 timestamp = 0;
+    bool hasDeliveredAt = false;
+    quint64 deliveredAt = 0;
+    bool hasEditedAt = false;
+    quint64 editedAt = 0;
+    QString error;          // delivery error (empty = none)
+    QString title;          // optional message title (empty = none)
+    QString highlightColor; // optional highlight color token (empty = none)
+    bool action = false;
+    bool event = false;
+    bool notice = false;
+    bool system = false;
+    bool highlighted = false;
+};
+
+// [integrations wire v38] One transport-scoped endpoint of a person (person-endpoint): the
+// transport instance + the contact reachable there. Backs the Persons section (a person's reach
+// across transports).
+struct DecodedPersonEndpoint {
+    QString transport;
+    DecodedContact contact;
+};
+
+// [integrations wire v38] One person / metacontact (PersonList -> Persons; re-listed on
+// PersonsChanged). Auto-minted `id`, an optional user `alias`, and contact endpoints across
+// transports. The avatar (a content-addressed image blob) is intentionally not projected here (out
+// of scope; a later avatar surface can add it). `hasAlias` marks the optional alias.
+struct DecodedPerson {
+    QString id;
+    bool hasAlias = false;
+    QString alias;
+    QList<DecodedPersonEndpoint> endpoints;
 };
 
 // [acct-mgmt] The node-described join form (ConvJoinDetails -> ChannelJoinDetails). Honor the
@@ -871,7 +955,15 @@ struct DecodedNodeEvent {
         // Profile roster mutation (wire v31): a create/update/delete/select bumped the profile
         // revision. Invalidation pointer only — the client refetches ProfileList (codec-only here;
         // SubscriptionManager routing lands in a later phase).
-        ProfilesChanged
+        ProfilesChanged,
+        // [integrations wire v38] The node's person/metacontact registry changed (create/remove/
+        // associate/dissociate). Invalidation pointer only (payload-free) — the client refetches
+        // PersonList.
+        PersonsChanged,
+        // [integrations wire v38] A conversation's durable transcript grew (an inbound/outbound
+        // ChatMessage was appended to `conv:<transport>:<conv>`). Carries `transport` + `conv`; the
+        // client refetches ConvHistory from its cursor instead of re-polling the whole transcript.
+        MessagesChanged
     } kind = Kind::Unknown;
     QString session;        // SessionAdvanced / SessionMetaChanged / ApprovalPending
     quint64 epoch = 0;      // SessionAdvanced
@@ -1006,10 +1098,21 @@ struct DecodedGatewayStatus {
 // --- Interactive auth (AuthProviders / AuthBegin / AuthComplete; app-wizard-auth stream) --------
 // One family the node offers interactive auth for (AuthProviders -> [AuthProviderInfo]). The
 // params schema drives the begin form (e.g. Matrix SSO wants a `homeserver`).
+// [integrations wire v38] Enriched with the same render/validation metadata as DecodedSettingsField
+// (the wire type is one `auth-param-field`): `kind` (Text|Password|Number|Choice; empty => "Text"),
+// optional prefill `defaultValue`, optional `placeholder`, and `choices` (kind == Choice). The
+// has* flags mark which optionals the node supplied so a schema-driven form masks secrets
+// (kind == "Password") and prefills without guessing.
 struct DecodedAuthParamField {
     QString key;
     QString label;
     bool required = false;
+    QString kind = QStringLiteral("Text"); // Text|Password|Number|Choice
+    bool hasDefault = false;
+    QString defaultValue;
+    bool hasPlaceholder = false;
+    QString placeholder;
+    QStringList choices; // allowed values (kind == Choice)
 };
 
 struct DecodedAuthProviderInfo {
@@ -1651,6 +1754,42 @@ public:
                                         DecodedCreateConversationDetails* out);
     static bool decodeConversation(const QByteArray& responseCbor, DecodedConversation* out,
                                    bool* found);
+
+    // --- [integrations wire v38] Native chat: send + history ----------------------------------
+    // Send a plain-text message to a conversation (ConvSend{transport, conv, message}). The node
+    // fills `from` (this account's identity), appends a JournalRecordPayload::Chat record, and
+    // emits MessagesChanged; the reply is Ok/Error. (Attachments are out of scope — text only.)
+    [[nodiscard]] static QByteArray encodeConvSendRequest(const QString& transport,
+                                                          const QString& conv, const QString& text);
+    // Read a conversation's durable transcript (ConvHistory{transport, conv, ? after_cursor,
+    // ? max} -> Journal). `hasAfter` resumes past a prior page's cursor (exclusive); `hasMax`
+    // bounds the page (the node also caps at WIRE_PAGE_MAX).
+    [[nodiscard]] static QByteArray
+    encodeConvHistoryRequest(const QString& transport, const QString& conv, bool hasAfter = false,
+                             quint64 afterCursor = 0, bool hasMax = false, quint32 max = 0);
+    // Decode a ConvHistory reply (a JournalPageView) into the conversation's ChatMessages: only
+    // the JournalRecordPayload::Chat records are projected (Block/Management records — if any —
+    // are skipped), each stamped with its journal `cursor`. `*nextCursor`/`*headCursor` (when
+    // non-null) get the paging coordinates.
+    static bool decodeConvHistory(const QByteArray& responseCbor, QList<DecodedChatMessage>* out,
+                                  quint64* nextCursor = nullptr, quint64* headCursor = nullptr);
+
+    // --- [integrations wire v38] Persons / metacontacts ---------------------------------------
+    // List the node's person registry (PersonList -> Persons; re-listed on PersonsChanged).
+    [[nodiscard]] static QByteArray encodePersonListRequest();
+    static bool decodePersons(const QByteArray& responseCbor, QList<DecodedPerson>* out);
+
+    // --- [integrations wire v38] Transport account settings (read + configure) ----------------
+    // Read a transport instance's persisted NON-SECRET account-settings values (TransportSettings
+    // {transport} -> TransportSettings(account-settings-values); secrets live in the credential
+    // store, never here). Configure applies a merge-edit of the values (TransportConfigure
+    // {transport, settings} -> Ok/Error); the node validates + reconnects.
+    [[nodiscard]] static QByteArray encodeTransportSettingsRequest(const QString& transport);
+    static bool decodeTransportSettings(const QByteArray& responseCbor,
+                                        QMap<QString, QString>* out);
+    [[nodiscard]] static QByteArray
+    encodeTransportConfigureRequest(const QString& transport,
+                                    const QMap<QString, QString>& settings);
 
     // --- [acct-mgmt] Transport contacts / roster (wire v34) -----------------------------------
     // The roster read is paged: RosterList carries the transport + an optional `after` cursor

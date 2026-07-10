@@ -7,12 +7,18 @@ add_library(da_transports STATIC
     itransport_registry.h
     ipresence_service.h
     icontacts_service.h
+    ipersons_service.h
+    ichat_service.h
     mock_transport_registry.h
     mock_transport_registry.cpp
     mock_presence_service.h
     mock_presence_service.cpp
     mock_contacts_service.h
     mock_contacts_service.cpp
+    mock_persons_service.h
+    mock_persons_service.cpp
+    mock_chat_service.h
+    mock_chat_service.cpp
 )
 add_library(daemon-app::transports ALIAS da_transports)
 
