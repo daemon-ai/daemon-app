@@ -353,6 +353,31 @@ target_link_libraries(tui_tab_title_refresh_tests
 add_test(NAME tui_tab_title_refresh_tests COMMAND tui_tab_title_refresh_tests)
 set_tests_properties(tui_tab_title_refresh_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_chat_activation (A4 app/chat-tabs; wire v38): the activation-dispatch rewire -
+# activating a room/DM opens (or focuses) a native Chat tab for (transport, conv)
+# via rwdetail::openConversationTab, instead of the Channels page it fell back to
+# before. Drives the shared helper against the real TabModel (the GUI + TUI both
+# route conversationActivated through it).
+qt_add_executable(tui_chat_activation_tests
+    tst_chat_activation.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/root_widget_detail.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs/tab_model.cpp
+)
+set_target_properties(tui_chat_activation_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_chat_activation_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/tui
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs
+)
+target_link_libraries(tui_chat_activation_tests
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        daemon-app::domain
+        daemon-app::persistence
+)
+add_test(NAME tui_chat_activation_tests COMMAND tui_chat_activation_tests)
+set_tests_properties(tui_chat_activation_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_profile_editor: the W5 TUI profile editor - drives ProfileEditorDialog
 # (and its text-prompt / multi-line / checklist sub-flows, with real key
 # events) against the mock profile store + mock provider catalog in an

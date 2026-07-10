@@ -50,6 +50,10 @@ QVariant TabModel::data(const QModelIndex& index, int role) const {
         return tab.dirty;
     case ProfileRole:
         return tab.profile;
+    case TransportRole:
+        return tab.transport;
+    case ConversationRole:
+        return tab.conversation;
     default:
         return {};
     }
@@ -57,10 +61,19 @@ QVariant TabModel::data(const QModelIndex& index, int role) const {
 
 QHash<int, QByteArray> TabModel::roleNames() const {
     return {
-        {TabIdRole, "tabId"},         {KindRole, "kind"},         {TitleRole, "title"},
-        {SessionIdRole, "sessionId"}, {ClosableRole, "closable"}, {CurrentRole, "current"},
-        {PreviewRole, "preview"},     {FilePathRole, "filePath"}, {FileRootRole, "fileRoot"},
-        {DirtyRole, "dirty"},         {ProfileRole, "profile"},
+        {TabIdRole, "tabId"},
+        {KindRole, "kind"},
+        {TitleRole, "title"},
+        {SessionIdRole, "sessionId"},
+        {ClosableRole, "closable"},
+        {CurrentRole, "current"},
+        {PreviewRole, "preview"},
+        {FilePathRole, "filePath"},
+        {FileRootRole, "fileRoot"},
+        {DirtyRole, "dirty"},
+        {ProfileRole, "profile"},
+        {TransportRole, "transport"},
+        {ConversationRole, "conversation"},
     };
 }
 
@@ -231,6 +244,31 @@ int TabModel::openAgentTab(int kind, const QString& profile, const QString& titl
 
 QString TabModel::agentRefAt(int index) const {
     return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).profile : QString();
+}
+
+// ===== STUB (red) — implemented in the green commit =====
+int TabModel::openConversation(const QString& transport, const QString& conversation,
+                               const QString& title) {
+    Q_UNUSED(transport)
+    Q_UNUSED(conversation)
+    Q_UNUSED(title)
+    return -1;
+}
+
+QString TabModel::transportAt(int index) const {
+    Q_UNUSED(index)
+    return {};
+}
+
+QString TabModel::conversationAt(int index) const {
+    Q_UNUSED(index)
+    return {};
+}
+
+int TabModel::findConversationRow(const QString& transport, const QString& conversation) const {
+    Q_UNUSED(transport)
+    Q_UNUSED(conversation)
+    return -1;
 }
 
 int TabModel::previewFile(const QString& rootId, const QString& path, const QString& title) {

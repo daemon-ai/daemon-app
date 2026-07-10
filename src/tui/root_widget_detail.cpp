@@ -111,6 +111,16 @@ QString pageMarkdown(int kind) {
     return {};
 }
 
+// ===== STUB (red) — implemented in the green commit =====
+int openConversationTab(TabModel* tabs, const QString& transport, const QString& conversation,
+                        const QString& label) {
+    Q_UNUSED(tabs)
+    Q_UNUSED(transport)
+    Q_UNUSED(conversation)
+    Q_UNUSED(label)
+    return -1;
+}
+
 QString attachmentKindForName(const QString& name) {
     // Keep in sync with the GUI's drop-path detection (Composer.qml DropArea:
     // /\.(png|jpe?g|gif|webp|bmp|svg)$/ over the lowercased name).

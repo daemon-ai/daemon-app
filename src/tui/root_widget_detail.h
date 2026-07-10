@@ -41,6 +41,14 @@ void refreshTranscriptTabTitles(TabModel* tabs, const persistence::ISessionStore
 // The static markdown shown for a (non-transcript) page tab.
 QString pageMarkdown(int kind);
 
+// [integrations wire v38] Activation dispatch (A4): open (or focus) a native Chat
+// tab for a room/DM `(transport, conversation)`, returning its stable tab id. The
+// single shared rule both the sidebar's conversationActivated wiring (GUI Main.qml
+// + this TUI RootWidget) route through, replacing today's open-Channels fallback.
+// `label` is the tab title; empty falls back to the conversation id.
+int openConversationTab(TabModel* tabs, const QString& transport, const QString& conversation,
+                        const QString& label = {});
+
 // The attachment kind for a picked workspace file: "image" for image
 // extensions, else "file" - the same heuristic the GUI composer's drag-drop
 // applies (Composer.qml DropArea). Folders are not pickable through the

@@ -315,6 +315,78 @@ private slots:
         QCOMPARE(roleAt<QString>(model, 1, TabModel::FilePathRole), QStringLiteral("b.cpp"));
     }
 
+    // [integrations wire v38] Chat tabs (A4): activating a room/DM opens a Chat
+    // kind tab keyed by (transport, conversation), carrying both ids + an empty
+    // sessionId, and activates it.
+    void openConversationAppendsActivatesAndCarriesKeys() {
+        TabModel model;
+        QSignalSpy currentSpy(&model, &TabModel::currentTabChanged);
+
+        const int id = model.openConversation(
+            QStringLiteral("demo/acct"), QStringLiteral("!room:demo"), QStringLiteral("#general"));
+        QVERIFY(id > 0);
+        QCOMPARE(model.count(), 1);
+        QCOMPARE(model.currentIndex(), 0);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::KindRole), int(TabModel::Chat));
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::TransportRole), QStringLiteral("demo/acct"));
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::ConversationRole),
+                 QStringLiteral("!room:demo"));
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::TitleRole), QStringLiteral("#general"));
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::SessionIdRole), QString());
+        QVERIFY(roleAt<bool>(model, 0, TabModel::CurrentRole));
+        QCOMPARE(model.transportAt(0), QStringLiteral("demo/acct"));
+        QCOMPARE(model.conversationAt(0), QStringLiteral("!room:demo"));
+        QCOMPARE(currentSpy.count(), 1);
+    }
+
+    // Find-or-create per (transport, conversation): re-activating the same
+    // conversation reuses its tab (and refreshes the title); a different
+    // conversation, or the same conversation on a different transport, appends.
+    void openConversationDedupesPerTransportConv() {
+        TabModel model;
+        const int room = model.openConversation(
+            QStringLiteral("demo/acct"), QStringLiteral("!room:demo"), QStringLiteral("#room"));
+        const int dm = model.openConversation(QStringLiteral("demo/acct"),
+                                              QStringLiteral("@bob:demo"), QStringLiteral("Bob"));
+        QCOMPARE(model.count(), 2);
+        QVERIFY(dm != room);
+
+        QSignalSpy insertSpy(&model, &TabModel::rowsInserted);
+        const int again =
+            model.openConversation(QStringLiteral("demo/acct"), QStringLiteral("!room:demo"),
+                                   QStringLiteral("#room (topic)"));
+        QCOMPARE(again, room);          // reused
+        QCOMPARE(insertSpy.count(), 0); // no new row
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(model.currentIndex(), 0); // re-activated the room tab
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::TitleRole), QStringLiteral("#room (topic)"));
+
+        // Same conversation id on a different transport is a distinct tab.
+        const int otherAccount = model.openConversation(
+            QStringLiteral("demo/acct2"), QStringLiteral("!room:demo"), QStringLiteral("#room@2"));
+        QVERIFY(otherAccount != room);
+        QCOMPARE(model.count(), 3);
+    }
+
+    // A chat tab is not a page singleton: two different conversations coexist, and
+    // closing one keeps the other (restore/close parity with the other tab kinds).
+    void chatTabsCoexistAndCloseIndependently() {
+        TabModel model;
+        const int a = model.openConversation(QStringLiteral("demo/acct"), QStringLiteral("!a:demo"),
+                                             QStringLiteral("A"));
+        const int b = model.openConversation(QStringLiteral("demo/acct"), QStringLiteral("!b:demo"),
+                                             QStringLiteral("B"));
+        QCOMPARE(model.count(), 2);
+
+        QSignalSpy closedSpy(&model, &TabModel::tabClosed);
+        model.closeTabById(a);
+        QCOMPARE(closedSpy.count(), 1);
+        QCOMPARE(closedSpy.takeFirst().at(0).toInt(), a);
+        QCOMPARE(model.count(), 1);
+        QCOMPARE(model.tabIdAt(0), b);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::ConversationRole), QStringLiteral("!b:demo"));
+    }
+
     void previewFileReassignmentEmitsFileChanged() {
         TabModel model;
         const int id = model.previewFile(QStringLiteral("workspace"), QStringLiteral("a.cpp"),

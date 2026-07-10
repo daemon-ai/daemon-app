@@ -59,6 +59,10 @@ public:
         // Gated on the access_admin capability; the user-CRUD data path is pending
         // the node access-admin API (Auth 5).
         UsersAccess = 15,
+        // [integrations wire v38] Native chat tabs (A4): a room/DM conversation's
+        // transcript + composer. Multi-instance, keyed by (transport, conversation)
+        // rather than a sessionId — activating a room/DM opens (or focuses) one.
+        Chat = 16,
     };
     Q_ENUM(Kind)
 
@@ -74,6 +78,8 @@ public:
         FileRootRole,                 // File tabs: owning root id
         DirtyRole,                    // File tabs: unsaved-changes flag
         ProfileRole,                  // Memory/Profile tabs: agent ref (ProfileRef)
+        TransportRole,                // Chat tabs: owning transport instance id
+        ConversationRole,             // Chat tabs: conversation id (room/DM)
     };
 
     explicit TabModel(QObject* parent = nullptr);
@@ -117,6 +123,17 @@ public:
     // opening the same agent re-activates the existing tab. Returns the tab id.
     Q_INVOKABLE int openAgentTab(int kind, const QString& profile, const QString& title);
     [[nodiscard]] Q_INVOKABLE QString agentRefAt(int index) const;
+
+    // [integrations wire v38] Chat tabs (multi-instance, keyed by (transport,
+    // conversation)). Find-or-create a PINNED chat tab for the conversation,
+    // activate it, refresh its title, and return its stable tab id. Activating a
+    // room/DM opens (or focuses, if already open) one of these — the deliberate
+    // replacement for today's open-Channels fallback. Restore/close/cycle/reorder
+    // semantics are identical to the other pinned tab kinds.
+    Q_INVOKABLE int openConversation(const QString& transport, const QString& conversation,
+                                     const QString& title);
+    [[nodiscard]] Q_INVOKABLE QString transportAt(int index) const;
+    [[nodiscard]] Q_INVOKABLE QString conversationAt(int index) const;
 
     // File tabs (multi-instance, keyed by (rootId, path)). previewFile reuses the
     // single preview slot (VSCode-style transient open); openFilePinned makes a
@@ -179,6 +196,8 @@ private:
         QString path;         // File tabs: root-relative path
         bool dirty = false;   // File tabs: unsaved changes
         QString profile;      // Memory/Profile tabs: agent ref (ProfileRef)
+        QString transport;    // Chat tabs: owning transport instance id
+        QString conversation; // Chat tabs: conversation id (room/DM)
     };
 
     // Move the active row to `index` (already validated/clamped by the caller),
@@ -190,6 +209,8 @@ private:
     [[nodiscard]] int findPreviewRow() const;
     [[nodiscard]] int findFileRow(const QString& rootId, const QString& path) const;
     [[nodiscard]] int findAgentRow(int kind, const QString& profile) const;
+    [[nodiscard]] int findConversationRow(const QString& transport,
+                                          const QString& conversation) const;
 
     QList<Tab> m_tabs;
     int m_currentIndex = -1;
