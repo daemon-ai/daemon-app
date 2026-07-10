@@ -38,11 +38,14 @@ public:
     explicit MirrorService(QObject* parent = nullptr);
     ~MirrorService() override;
 
-    // Boot (§4.5): open mirror-<id>.db at the provider's path, load the M tables + chat window via
-    // transients, adopt the snapshot + seed the rev counter from the persisted head, then start the
-    // write-behind consumer flushing on every commit. Returns false on a hard sql error (the
-    // in-memory store still works; the app degrades to a non-persisted cache and logs). Safe to
-    // call once; re-open on a per-identity namespace switch closes and reopens.
+    // Boot AND per-identity reopen (§4.5): open mirror-<id>.db at the provider's path, load the M
+    // tables + the chat windows' persisted tails via transients, adopt the snapshot (journal
+    // rebased to the new persisted head; per-conv cursors re-seeded), then start the write-behind
+    // consumer flushing on every commit. Returns false on a hard sql error (the in-memory store
+    // still works; the app degrades to a non-persisted cache and logs). Calling it again with a
+    // different identity's paths closes the current file and rebases onto the new one — the prior
+    // identity's rows/deltas never leak. Live lens models do NOT re-prime on a mid-run switch (the
+    // A6 seam); the graph guards reopen to actual identity CHANGES.
     bool open(const DbPathProvider& paths);
 
     // Run entirely in memory (no persistence) — used by mock mode until A8's seeder + the WASM/
@@ -89,6 +92,7 @@ private:
     FetchScheduler scheduler_;
     Ingestor ingestor_;
     bool persistent_ = false;
+    bool wb_started_ = false; // write-behind starts once; reopen only rebases its watermark
 };
 
 } // namespace mirror

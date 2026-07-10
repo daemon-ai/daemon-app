@@ -8,8 +8,12 @@
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
 #include "fleet/idashboard.h"
+#include "mirror/chat_window_model.h"
+#include "mirror/mirror_service.h"
 #include "persistence/isession_store.h"
 
+#include <QSettings>
+#include <QStandardPaths>
 #include <QtTest/QtTest>
 
 class AppServiceGraphTests : public QObject {
@@ -131,6 +135,69 @@ private slots:
         QVERIFY(graph.dashboard->runningAgents() >= 0);
         QVERIFY(graph.dashboard->activeSessions() >= 0);
         QVERIFY(graph.dashboard->pendingApprovals() >= 0);
+    }
+
+    // mirror A5 (spec 09 wave M2, E1): the REAL daemon graph persists the mirror per identity and
+    // a cold "reboot" with NO connection renders last-known state — M tables AND the chat
+    // window's persisted tail — from mirror.db. Mock mode gets NO mirror at M2 (legacy fallback;
+    // A8's seeder changes that).
+    void daemonGraphMirrorPersistsAndRebootsOffline() {
+        QStandardPaths::setTestModeEnabled(true);
+        // Deterministic start: default identity + a fresh default mirror.db in the test AppData.
+        QSettings().remove(QStringLiteral("mirror/lastIdentity"));
+        const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        QFile::remove(QDir(appData).filePath(QStringLiteral("mirror.db")));
+
+        const mirror::ChatMessageScope scope{QStringLiteral("m"), QStringLiteral("!room")};
+        {
+            QObject owner;
+            const auto graph = daemonapp::daemon::createAppServiceGraph(
+                daemonapp::daemon::ServiceMode::Daemon, &owner);
+            QVERIFY(graph.mirrorService != nullptr);
+            QVERIFY(graph.mirrorExecutor != nullptr);
+            QVERIFY(graph.outbox != nullptr);
+            QVERIFY(graph.mirrorService->persistent()); // per-identity file, not in-memory
+            // "Online session": the ingestor applies node truth; flush-on-commit persists it.
+            mirror::Conversation c;
+            c.transport = QStringLiteral("m");
+            c.id = QStringLiteral("!room");
+            c.title = QStringLiteral("The Room");
+            graph.mirrorService->ingestor().deliverConversations(QStringLiteral("m"), {c},
+                                                                 /*isFinalPage=*/true);
+            mirror::ChatMessage m1;
+            m1.transport = QStringLiteral("m");
+            m1.conv = QStringLiteral("!room");
+            m1.cursor = 1;
+            m1.text = QStringLiteral("hello");
+            graph.mirrorService->ingestor().deliverChatPage(QStringLiteral("m"),
+                                                            QStringLiteral("!room"), {m1},
+                                                            /*nextCursor=*/1, /*headCursor=*/1);
+        }
+        // Cold reboot, still offline (nothing ever connected): the graph re-opens the same
+        // per-identity file and the surfaces render last-known state end-to-end.
+        {
+            QObject owner;
+            const auto graph = daemonapp::daemon::createAppServiceGraph(
+                daemonapp::daemon::ServiceMode::Daemon, &owner);
+            QVERIFY(graph.mirrorService != nullptr);
+            const auto& snap = graph.mirrorService->store().snapshot();
+            QCOMPARE(snap.conversations.size(), std::size_t(1));
+            QVERIFY(snap.chat.count(scope) != 0U);
+            mirror::ChatWindowModel timeline(graph.mirrorService->store(), scope);
+            QCOMPARE(timeline.rowCount(), 1);
+            QCOMPARE(
+                timeline.data(timeline.index(0, 0), mirror::ChatWindowModel::TextRole).toString(),
+                QStringLiteral("hello"));
+        }
+
+        // Mock mode: no mirror at M2 — the chat surfaces keep the legacy mock path (§9).
+        {
+            QObject owner;
+            const auto graph = daemonapp::daemon::createAppServiceGraph(
+                daemonapp::daemon::ServiceMode::Mock, &owner);
+            QVERIFY(graph.mirrorService == nullptr);
+            QVERIFY(graph.outbox == nullptr);
+        }
     }
 
     // W3 (plan 2d): Daemon mode must not pass the mock transports tree off as live Integrations.
