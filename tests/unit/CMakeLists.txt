@@ -1145,3 +1145,16 @@ target_link_libraries(tst_composer_upload
 )
 add_test(NAME tst_composer_upload COMMAND tst_composer_upload)
 set_tests_properties(tst_composer_upload PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_mirror_entities: the generated mirror entity layer (spec 09 §3). Linking daemon-app::mirror
+# IS the "generated headers compile in the app build" gate (moc-processed Q_GADGET structs + typed
+# keys + provenance table); the asserts cover §3.1 census completeness, provenance completeness,
+# and canonical \x1f key serialization. Pure logic, runs headless.
+qt_add_executable(tst_mirror_entities tst_mirror_entities.cpp)
+target_link_libraries(tst_mirror_entities
+    PRIVATE
+        Qt6::Test
+        daemon-app::mirror
+)
+add_test(NAME tst_mirror_entities COMMAND tst_mirror_entities)
+set_tests_properties(tst_mirror_entities PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

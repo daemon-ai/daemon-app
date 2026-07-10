@@ -1,0 +1,1038 @@
+# entity-map.toml — the mirror data model (human-owned codegen INPUT).
+#
+# This is the single review surface for the client-side data model (spec 09 §3.2): one
+# [entity.<Kind>] table per §3.1 census row. The second update-codec emitter
+# (daemon-node/crates/contracts/daemon-api/mirror-codegen/entity_codegen.py) reads THIS file
+# plus the pinned daemon-api.cddl and emits the vendored artifacts under generated/. Editing a
+# field here is a one-line diff instead of N-surface row-shape drift (§3.6 / ADR-004).
+#
+# Provenance (§3.3): every generated field names exactly one of
+#   wire = "<rule>[.<member>][#<derivation>]"   — a wire source path or named mapper derivation
+#   client_local = true                         — sidecar-only, never in a mirror table
+# The emitter FAILS if any field lacks provenance, if a wire path does not ground in the CDDL,
+# or if a client_local field appears in a mirror table (fields.*). client_local fields live only
+# under [entity.<Kind>.sidecar.*].
+#
+# Classes (§3.1): M = mirrored + persisted (m_* table); W = windowed (w_* table, retention
+# policy §4.6); L = live (in memory, never persisted — no table). T entities are never stored and
+# are deliberately absent from this map.
+#
+# key = the composite key components (§3.1 Key column), serialized canonically joined by \x1f.
+# Every key component must be a declared field. For W entities, scope + window_key describe the
+# per-scope window (§4.6); the window item is stored as a canonical-CBOR payload blob (§4.5).
+
+# ============================================================================================
+# M — mirrored + persisted
+# ============================================================================================
+
+[entity.TransportAccount]
+class = "M"
+key = ["transport"]
+table = "m_transport_accounts"
+invalidators = ["TransportChanged"]
+wire_read = ["TransportInstances", "TransportSettings"]
+
+  [entity.TransportAccount.fields.transport]
+  wire = "transport-instance-info.transport"
+  type = "QString"
+  [entity.TransportAccount.fields.family]
+  wire = "transport-instance-info.family"
+  type = "QString"
+  [entity.TransportAccount.fields.display_name]
+  wire = "transport-instance-info.display_name"
+  type = "QString"
+  [entity.TransportAccount.fields.connection]
+  wire = "transport-instance-info.connection"   # connection-state enum -> string
+  type = "QString"
+  [entity.TransportAccount.fields.presence]
+  wire = "transport-instance-info.presence"     # presence-state enum -> string
+  type = "QString"
+  [entity.TransportAccount.fields.bound_profile]
+  wire = "transport-instance-info.bound_profile"
+  type = "QString"
+  [entity.TransportAccount.fields.reason]
+  wire = "transport-instance-info.reason"        # disconnect-reason enum -> string (v38)
+  type = "QString"
+  [entity.TransportAccount.fields.message]
+  wire = "transport-instance-info.message"       # v38
+  type = "QString"
+  [entity.TransportAccount.fields.fatal]
+  wire = "transport-instance-info.fatal"         # v38
+  type = "bool"
+  [entity.TransportAccount.fields.enabled]
+  wire = "transport-instance-info.enabled"       # v38
+  type = "bool"
+  [entity.TransportAccount.fields.label]
+  wire = "transport-instance-info.label"         # v38
+  type = "QString"
+  [entity.TransportAccount.fields.settings_json]
+  wire = "account-settings-values.values#json"   # hydrated via TransportSettings; map -> canonical json
+  type = "QString"
+
+[entity.Adapter]
+class = "M"
+key = ["family"]
+table = "m_adapters"
+invalidators = ["connect-refresh"]
+wire_read = ["TransportAdapters"]
+
+  [entity.Adapter.fields.family]
+  wire = "adapter-info.family"
+  type = "QString"
+  [entity.Adapter.fields.display_name]
+  wire = "adapter-info.display_name"
+  type = "QString"
+  [entity.Adapter.fields.directory]
+  wire = "adapter-info.directory"
+  type = "bool"
+  [entity.Adapter.fields.cap_rooms]
+  wire = "adapter-capabilities.rooms#adapter_info_capabilities"
+  type = "bool"
+  [entity.Adapter.fields.cap_direct_messages]
+  wire = "adapter-capabilities.direct_messages#adapter_info_capabilities"
+  type = "bool"
+  [entity.Adapter.fields.cap_file_transfer]
+  wire = "adapter-capabilities.file_transfer#adapter_info_capabilities"
+  type = "bool"
+  [entity.Adapter.fields.ops_json]
+  wire = "adapter-info.conversation_ops#ops_json"   # per-verb ops maps -> canonical json (cddl:1147-1151)
+  type = "QString"
+
+[entity.Conversation]
+class = "M"
+key = ["transport", "id"]
+table = "m_conversations"
+invalidators = ["ConversationsChanged", "MembershipChanged"]
+wire_read = ["ConvList", "ConvGet"]
+
+  [entity.Conversation.fields.transport]
+  wire = "conversation-info.transport"
+  type = "QString"
+  [entity.Conversation.fields.id]
+  wire = "conversation-info.id"
+  type = "QString"
+  [entity.Conversation.fields.kind]
+  wire = "conversation-info.kind"                # conversation-type enum -> string, named once here
+  type = "QString"
+  [entity.Conversation.fields.title]
+  wire = "conversation-info.title"
+  type = "QString"
+  [entity.Conversation.fields.topic]
+  wire = "conversation-info.topic"
+  type = "QString"
+  [entity.Conversation.fields.description]
+  wire = "conversation-info.description"
+  type = "QString"
+  [entity.Conversation.fields.parent]
+  wire = "conversation-info.parent"             # "" = root; unknown/cyclic treated as root (§3.5)
+  type = "QString"
+  [entity.Conversation.fields.member_count]
+  wire = "conversation-info.members#count"       # derived-at-map: mapper-owned #count
+  type = "int"
+
+  [entity.Conversation.sidecar.unread_count]
+  type = "int"
+  [entity.Conversation.sidecar.last_read_cursor]
+  type = "quint64"
+  [entity.Conversation.sidecar.muted]
+  type = "bool"
+  [entity.Conversation.sidecar.collapsed]
+  type = "bool"
+  [entity.Conversation.sidecar.draft]
+  type = "QString"
+
+[entity.ConversationMember]
+class = "M"
+key = ["transport", "conv", "contact"]
+table = "m_conversation_members"
+invalidators = ["MembershipChanged"]
+wire_read = ["ConvGet"]
+
+  [entity.ConversationMember.fields.transport]
+  wire = "conversation-info.transport"           # scope: the containing conversation's transport
+  type = "QString"
+  [entity.ConversationMember.fields.conv]
+  wire = "conversation-info.id"                   # scope: the containing conversation's id
+  type = "QString"
+  [entity.ConversationMember.fields.contact]
+  wire = "conversation-member.contact#id"         # contact-info.id of the member
+  type = "QString"
+  [entity.ConversationMember.fields.alias]
+  wire = "conversation-member.alias"
+  type = "QString"
+  [entity.ConversationMember.fields.nickname]
+  wire = "conversation-member.nickname"
+  type = "QString"
+  [entity.ConversationMember.fields.typing]
+  wire = "conversation-member.typing"             # typing-state enum -> string
+  type = "QString"
+  [entity.ConversationMember.fields.role]
+  wire = "conversation-member.role"               # member-role enum -> string
+  type = "QString"
+  [entity.ConversationMember.fields.session]
+  wire = "conversation-member.session"
+  type = "QString"
+
+[entity.Contact]
+class = "M"
+key = ["transport", "id"]
+table = "m_contacts"
+invalidators = ["ContactsChanged"]
+wire_read = ["RosterList"]
+
+  [entity.Contact.fields.transport]
+  wire = "request-roster-list.RosterList#transport"  # scope: the RosterList request's transport arg
+  type = "QString"
+  [entity.Contact.fields.id]
+  wire = "contact-info.id"
+  type = "QString"
+  [entity.Contact.fields.display_name]
+  wire = "contact-info.display_name"
+  type = "QString"
+  [entity.Contact.fields.permission]
+  wire = "contact-info.permission"                # contact-permission enum -> string
+  type = "QString"
+  [entity.Contact.fields.presence_primitive]
+  wire = "contact-info.presence#primitive"        # presence.primitive enum -> string
+  type = "QString"
+
+[entity.Person]
+class = "M"
+key = ["id"]
+table = "m_persons"
+invalidators = ["PersonsChanged"]
+wire_read = ["PersonList"]
+
+  [entity.Person.fields.id]
+  wire = "person.id"
+  type = "QString"
+  [entity.Person.fields.alias]
+  wire = "person.alias"
+  type = "QString"
+  [entity.Person.fields.avatar_blob]
+  wire = "person.avatar#blob_hash"                # image.blob content-hash -> hex string
+  type = "QString"
+  [entity.Person.fields.endpoint_count]
+  wire = "person.endpoints#count"
+  type = "int"
+
+[entity.PersonEndpoint]
+class = "M"
+key = ["person", "transport", "contact"]
+table = "m_person_endpoints"
+invalidators = ["PersonsChanged"]
+wire_read = ["PersonList"]
+
+  [entity.PersonEndpoint.fields.person]
+  wire = "person.id"                              # scope: the owning person's id
+  type = "QString"
+  [entity.PersonEndpoint.fields.transport]
+  wire = "person-endpoint.transport"
+  type = "QString"
+  [entity.PersonEndpoint.fields.contact]
+  wire = "person-endpoint.contact#id"             # contact-info.id reachable on this transport
+  type = "QString"
+  [entity.PersonEndpoint.fields.display_name]
+  wire = "person-endpoint.contact#display_name"
+  type = "QString"
+
+[entity.Session]
+class = "M"
+key = ["session"]
+table = "m_sessions"
+invalidators = ["RosterChanged", "SessionMetaChanged", "SessionAdvanced"]
+wire_read = ["SessionsQuery", "SessionGet"]
+
+  [entity.Session.fields.session]
+  wire = "session-info.session"
+  type = "QString"
+  [entity.Session.fields.state]
+  wire = "session-info.state"                     # session-state enum -> string
+  type = "QString"
+  [entity.Session.fields.title]
+  wire = "session-info.title"
+  type = "QString"
+  [entity.Session.fields.bound_profile]
+  wire = "session-info.bound_profile"
+  type = "QString"
+  [entity.Session.fields.last_activity_ms]
+  wire = "session-info.last_activity_ms"
+  type = "quint64"
+  [entity.Session.fields.lifecycle]
+  wire = "session-info.lifecycle"                 # lifecycle enum -> string
+  type = "QString"
+  [entity.Session.fields.role]
+  wire = "session-info.role"                      # session-role enum -> string
+  type = "QString"
+  [entity.Session.fields.parent]
+  wire = "session-info.parent"
+  type = "QString"
+  [entity.Session.fields.pinned]
+  wire = "session-info.pinned"
+  type = "bool"
+  [entity.Session.fields.archived]
+  wire = "session-info.archived"
+  type = "bool"
+  [entity.Session.fields.rewindable]
+  wire = "session-info.rewindable"
+  type = "bool"
+  [entity.Session.fields.model]
+  wire = "session-detail.model"                   # hydrated via SessionGet (nullable)
+  type = "QString"
+  [entity.Session.fields.checkpoints]
+  wire = "session-detail.checkpoints"             # hydrated
+  type = "int"
+
+  [entity.Session.sidecar.draft]
+  type = "QString"
+
+[entity.FleetUnit]
+class = "M"
+key = ["id"]
+table = "m_fleet_units"
+invalidators = ["FleetChanged"]
+wire_read = ["Tree"]
+
+  [entity.FleetUnit.fields.id]
+  wire = "unit-node.id"
+  type = "QString"
+  [entity.FleetUnit.fields.kind]
+  wire = "unit-node.kind"                          # unit-kind enum -> string
+  type = "QString"
+  [entity.FleetUnit.fields.state]
+  wire = "unit-node.state"                         # unit-state enum -> string
+  type = "QString"
+  [entity.FleetUnit.fields.work]
+  wire = "unit-node.work"
+  type = "QString"
+  [entity.FleetUnit.fields.profile]
+  wire = "unit-node.profile"
+  type = "QString"
+  [entity.FleetUnit.fields.session]
+  wire = "unit-node.session"
+  type = "QString"
+  [entity.FleetUnit.fields.title]
+  wire = "unit-node.title"
+  type = "QString"
+  [entity.FleetUnit.fields.role]
+  wire = "unit-node.role"                          # session-role enum -> string (null => Primary)
+  type = "QString"
+  [entity.FleetUnit.fields.lifetime]
+  wire = "unit-node.lifetime"                      # delegation-lifetime enum -> string
+  type = "QString"
+  [entity.FleetUnit.fields.child_count]
+  wire = "unit-node.children#count"
+  type = "int"
+
+[entity.Profile]
+class = "M"
+key = ["id"]
+table = "m_profiles"
+invalidators = ["ProfilesChanged"]
+wire_read = ["ProfileList", "ProfileGet", "SoulGet"]
+
+  [entity.Profile.fields.id]
+  wire = "profile-info.id"
+  type = "QString"
+  [entity.Profile.fields.provider]
+  wire = "profile-info.provider"                   # provider-selector enum -> string
+  type = "QString"
+  [entity.Profile.fields.model]
+  wire = "profile-info.model"
+  type = "QString"
+  [entity.Profile.fields.is_active]
+  wire = "profile-info.is_active"
+  type = "bool"
+  [entity.Profile.fields.owner]
+  wire = "profile-info.owner"
+  type = "QString"
+  [entity.Profile.fields.spec_blob]
+  wire = "response-profile.Profile#cbor"           # hydrated via ProfileGet: full profile-spec as canonical CBOR (07§4.1 precedent)
+  type = "QByteArray"
+  [entity.Profile.fields.soul]
+  wire = "response-soul-text.SoulText"             # hydrated via SoulGet (persona text)
+  type = "QString"
+
+[entity.Credential]
+class = "M"
+key = ["profile"]
+table = "m_credentials"
+invalidators = ["verb-refetch"]
+wire_read = ["CredentialList"]
+
+  [entity.Credential.fields.profile]
+  wire = "credential-info.profile"
+  type = "QString"
+  [entity.Credential.fields.present]
+  wire = "credential-info.present"
+  type = "bool"
+  [entity.Credential.fields.hint]
+  wire = "credential-info.hint"
+  type = "QString"
+  [entity.Credential.fields.label]
+  wire = "credential-info.label"
+  type = "QString"
+
+[entity.InstalledModel]
+class = "M"
+key = ["id"]
+table = "m_installed_models"
+invalidators = ["CatalogChanged"]
+wire_read = ["ModelCatalog"]
+
+  [entity.InstalledModel.fields.id]
+  wire = "installed-model.id"
+  type = "QString"
+  [entity.InstalledModel.fields.display_name]
+  wire = "installed-model.display_name"
+  type = "QString"
+  [entity.InstalledModel.fields.local_path]
+  wire = "installed-model.local_path"
+  type = "QString"
+  [entity.InstalledModel.fields.size_bytes]
+  wire = "installed-model.size_bytes"
+  type = "quint64"
+  [entity.InstalledModel.fields.quant]
+  wire = "installed-model.quant"
+  type = "QString"
+  [entity.InstalledModel.fields.installed_at_ms]
+  wire = "installed-model.installed_at_ms"
+  type = "quint64"
+  [entity.InstalledModel.fields.arch]
+  wire = "installed-model.arch"
+  type = "QString"
+  [entity.InstalledModel.fields.context_length]
+  wire = "installed-model.context_length"
+  type = "int"
+  [entity.InstalledModel.fields.mmproj_path]
+  wire = "installed-model.mmproj_path"
+  type = "QString"
+  [entity.InstalledModel.fields.sha256]
+  wire = "installed-model.sha256"
+  type = "QString"
+
+[entity.ProviderDescriptor]
+class = "M"
+key = ["id"]
+table = "m_provider_descriptors"
+invalidators = ["connect-refresh"]
+wire_read = ["ProviderCatalog"]
+
+  [entity.ProviderDescriptor.fields.id]
+  wire = "provider-descriptor.id"
+  type = "QString"
+  [entity.ProviderDescriptor.fields.display_name]
+  wire = "provider-descriptor.display_name"
+  type = "QString"
+  [entity.ProviderDescriptor.fields.kind]
+  wire = "provider-descriptor.kind"                # provider-kind-wire enum -> string
+  type = "QString"
+  [entity.ProviderDescriptor.fields.wire_selector]
+  wire = "provider-descriptor.wire_selector"       # provider-selector enum -> string
+  type = "QString"
+  [entity.ProviderDescriptor.fields.requires_key]
+  wire = "provider-descriptor.requires_key"
+  type = "bool"
+  [entity.ProviderDescriptor.fields.supports_model_discovery]
+  wire = "provider-descriptor.supports_model_discovery"
+  type = "bool"
+  [entity.ProviderDescriptor.fields.default_base_url]
+  wire = "provider-descriptor.default_base_url"
+  type = "QString"
+
+[entity.CustomProvider]
+class = "M"
+key = ["id"]
+table = "m_custom_providers"
+invalidators = ["verb-refetch"]
+wire_read = ["CustomProviderList"]
+
+  [entity.CustomProvider.fields.id]
+  wire = "custom-provider.id"
+  type = "QString"
+  [entity.CustomProvider.fields.display_name]
+  wire = "custom-provider.display_name"
+  type = "QString"
+  [entity.CustomProvider.fields.base_url]
+  wire = "custom-provider.base_url"
+  type = "QString"
+  [entity.CustomProvider.fields.wire_selector]
+  wire = "custom-provider.wire_selector"           # provider-selector enum -> string
+  type = "QString"
+  [entity.CustomProvider.fields.requires_key]
+  wire = "custom-provider.requires_key"
+  type = "bool"
+  [entity.CustomProvider.fields.credential_ref]
+  wire = "custom-provider.credential_ref"
+  type = "QString"
+  [entity.CustomProvider.fields.source]
+  wire = "custom-provider.source"                  # custom-provider-source-t enum -> string
+  type = "QString"
+
+[entity.RoutePin]
+class = "M"
+key = ["origin_key"]
+table = "m_route_pins"
+invalidators = ["MembershipChanged", "verb-refetch"]
+wire_read = ["RoutingListChats"]
+
+  [entity.RoutePin.fields.origin_key]
+  wire = "chat-route.origin#origin_key"            # canonical transport␟scopeKind␟scopeFields… (§3.5)
+  type = "QString"
+  [entity.RoutePin.fields.transport]
+  wire = "origin.transport"
+  type = "QString"
+  [entity.RoutePin.fields.session]
+  wire = "chat-route.session"
+  type = "QString"
+  [entity.RoutePin.fields.profile]
+  wire = "chat-route.profile"
+  type = "QString"
+  [entity.RoutePin.fields.isolation]
+  wire = "chat-route.isolation"                    # isolation-policy enum -> string
+  type = "QString"
+
+[entity.Room]
+class = "M"
+key = ["transport", "room"]
+table = "m_rooms"
+invalidators = ["MembershipChanged", "ConversationsChanged"]
+wire_read = ["TransportRooms"]
+
+  [entity.Room.fields.transport]
+  wire = "room-info.transport"
+  type = "QString"
+  [entity.Room.fields.room]
+  wire = "room-info.room"
+  type = "QString"
+  [entity.Room.fields.name]
+  wire = "room-info.name"
+  type = "QString"
+  [entity.Room.fields.session]
+  wire = "room-info.session"
+  type = "QString"
+
+[entity.Notification]
+class = "M"
+key = ["id"]
+table = "m_notifications"
+invalidators = ["NotificationsChanged"]
+wire_read = ["NotificationList"]
+
+  [entity.Notification.fields.id]
+  wire = "notification-info.id"
+  type = "QString"
+  [entity.Notification.fields.account]
+  wire = "notification-info.account"
+  type = "QString"
+  [entity.Notification.fields.created_ms]
+  wire = "notification-info.created_ms"
+  type = "quint64"
+  [entity.Notification.fields.read]
+  wire = "notification-info.read"
+  type = "bool"
+  [entity.Notification.fields.title]
+  wire = "notification-info.title"
+  type = "QString"
+  [entity.Notification.fields.subtitle]
+  wire = "notification-info.subtitle"
+  type = "QString"
+  [entity.Notification.fields.icon_name]
+  wire = "notification-info.icon_name"
+  type = "QString"
+  [entity.Notification.fields.interactive]
+  wire = "notification-info.interactive"
+  type = "bool"
+  [entity.Notification.fields.persistent]
+  wire = "notification-info.persistent"
+  type = "bool"
+  [entity.Notification.fields.kind]
+  wire = "notification-info.kind#tag"              # notification-kind union discriminator -> string
+  type = "QString"
+  [entity.Notification.fields.deleted]
+  wire = "notification-info.deleted"
+  type = "bool"
+
+[entity.SavedPresence]
+class = "M"
+key = ["id"]
+table = "m_saved_presences"
+invalidators = ["verb-refetch"]
+wire_read = ["PresenceList"]
+
+  [entity.SavedPresence.fields.id]
+  wire = "saved-presence.id"
+  type = "QString"
+  [entity.SavedPresence.fields.name]
+  wire = "saved-presence.name"
+  type = "QString"
+  [entity.SavedPresence.fields.primitive]
+  wire = "saved-presence.primitive"                # presence-primitive-t enum -> string
+  type = "QString"
+  [entity.SavedPresence.fields.message]
+  wire = "saved-presence.message"
+  type = "QString"
+  [entity.SavedPresence.fields.emoji]
+  wire = "saved-presence.emoji"
+  type = "QString"
+  [entity.SavedPresence.fields.last_used]
+  wire = "saved-presence.last_used"
+  type = "quint64"
+  [entity.SavedPresence.fields.use_count]
+  wire = "saved-presence.use_count"
+  type = "quint64"
+
+[entity.ToolInfo]
+class = "M"
+key = ["name"]
+table = "m_tools"
+invalidators = ["connect-refresh"]
+wire_read = ["ToolList"]
+
+  [entity.ToolInfo.fields.name]
+  wire = "tool-info.name"
+  type = "QString"
+  [entity.ToolInfo.fields.description]
+  wire = "tool-info.description"
+  type = "QString"
+  [entity.ToolInfo.fields.enabled]
+  wire = "tool-info.enabled"
+  type = "bool"
+  [entity.ToolInfo.fields.requires_config]
+  wire = "tool-info.requires"                      # renamed: `requires` is a C++20 keyword
+  type = "QString"
+
+[entity.AgentEntry]
+class = "M"
+key = ["name"]
+table = "m_agent_entries"
+invalidators = ["discover-register"]
+wire_read = ["AgentCatalog"]
+
+  [entity.AgentEntry.fields.name]
+  wire = "agent-entry.name"
+  type = "QString"
+  [entity.AgentEntry.fields.source]
+  wire = "agent-entry.source"                      # agent-source enum -> string
+  type = "QString"
+  [entity.AgentEntry.fields.protocol]
+  wire = "agent-entry.protocol"                    # agent-protocol enum -> string
+  type = "QString"
+  [entity.AgentEntry.fields.installed]
+  wire = "agent-entry.installed"
+  type = "bool"
+  [entity.AgentEntry.fields.version]
+  wire = "agent-entry.version"
+  type = "QString"
+  [entity.AgentEntry.fields.verification]
+  wire = "agent-entry.verification"                # agent-verification enum -> string
+  type = "QString"
+
+[entity.CronJob]
+class = "M"
+key = ["id"]
+table = "m_cron_jobs"
+invalidators = ["verb-refetch"]
+wire_read = ["CronList"]
+
+  [entity.CronJob.fields.id]
+  wire = "cron-job.id"
+  type = "QString"
+  [entity.CronJob.fields.name]
+  wire = "cron-spec.name#cron_job_spec"            # cron-job.spec.name
+  type = "QString"
+  [entity.CronJob.fields.schedule]
+  wire = "cron-spec.schedule#cron_job_spec"
+  type = "QString"
+  [entity.CronJob.fields.next_fire_unix]
+  wire = "cron-job.next_fire_unix"
+  type = "quint64"
+  [entity.CronJob.fields.paused]
+  wire = "cron-job.paused"
+  type = "bool"
+  [entity.CronJob.fields.last_run_unix]
+  wire = "cron-job.last_run_unix"
+  type = "quint64"
+  [entity.CronJob.fields.last_ok]
+  wire = "cron-job.last_ok"
+  type = "bool"
+  [entity.CronJob.fields.last_detail]
+  wire = "cron-job.last_detail"
+  type = "QString"
+  [entity.CronJob.fields.fire_count]
+  wire = "cron-job.fire_count"
+  type = "int"
+
+[entity.CommandSpec]
+class = "M"
+key = ["name"]
+table = "m_command_specs"
+invalidators = ["connect-refresh"]
+wire_read = ["CommandList"]
+
+  [entity.CommandSpec.fields.name]
+  wire = "command-spec.name"
+  type = "QString"
+  [entity.CommandSpec.fields.summary]
+  wire = "command-spec.summary"
+  type = "QString"
+  [entity.CommandSpec.fields.category]
+  wire = "command-spec.category"
+  type = "QString"
+  [entity.CommandSpec.fields.args_hint]
+  wire = "command-spec.args_hint"
+  type = "QString"
+  [entity.CommandSpec.fields.scope]
+  wire = "command-spec.scope"                      # command-scope enum -> string
+  type = "QString"
+  [entity.CommandSpec.fields.side_effecting]
+  wire = "command-spec.side_effecting"
+  type = "bool"
+  [entity.CommandSpec.fields.confirm]
+  wire = "command-spec.confirm"
+  type = "bool"
+  [entity.CommandSpec.fields.min_access]
+  wire = "command-spec.min_access"                 # command-access enum -> string
+  type = "QString"
+  [entity.CommandSpec.fields.source]
+  wire = "command-spec.source"
+  type = "QString"
+
+[entity.RememberedFingerprint]
+class = "M"
+key = ["session", "fingerprint"]
+table = "m_remembered_fingerprints"
+invalidators = ["verb-refetch"]
+wire_read = ["FingerprintList"]
+
+  [entity.RememberedFingerprint.fields.session]
+  wire = "request-fingerprint-list.FingerprintList#session"  # scope: FingerprintList request session arg
+  type = "QString"
+  [entity.RememberedFingerprint.fields.fingerprint]
+  wire = "remembered-fingerprint.fingerprint"
+  type = "QString"
+  [entity.RememberedFingerprint.fields.label]
+  wire = "remembered-fingerprint.label"
+  type = "QString"
+  [entity.RememberedFingerprint.fields.remembered_at_ms]
+  wire = "remembered-fingerprint.remembered_at_ms"
+  type = "quint64"
+
+# ============================================================================================
+# W — windowed (per-scope, cursor-ordered; persisted as a canonical-CBOR payload blob, §4.5/§4.6)
+# ============================================================================================
+
+[entity.ChatMessage]
+class = "W"
+scope = ["transport", "conv"]
+window_key = "cursor"
+policy = "chat"
+table = "w_chat_messages"
+invalidators = ["MessagesChanged"]
+wire_read = ["ConvHistory"]
+
+  [entity.ChatMessage.fields.transport]
+  wire = "conv-history-args.transport"             # scope: the ConvHistory request transport
+  type = "QString"
+  [entity.ChatMessage.fields.conv]
+  wire = "conv-history-args.conv"                  # scope: the ConvHistory request conversation
+  type = "QString"
+  [entity.ChatMessage.fields.cursor]
+  wire = "journal-record.cursor"                   # window key = node journal cursor
+  type = "quint64"
+  [entity.ChatMessage.fields.id]
+  wire = "chat-message.id"
+  type = "QString"
+  [entity.ChatMessage.fields.author]
+  wire = "chat-message.author#participant"         # participant union -> display id
+  type = "QString"
+  [entity.ChatMessage.fields.replying_to]
+  wire = "chat-message.replying_to"
+  type = "QString"
+  [entity.ChatMessage.fields.text]
+  wire = "chat-message.text"
+  type = "QString"
+  [entity.ChatMessage.fields.timestamp]
+  wire = "chat-message.timestamp"
+  type = "quint64"
+  [entity.ChatMessage.fields.edited_at]
+  wire = "chat-message.edited_at"
+  type = "quint64"
+  [entity.ChatMessage.fields.error]
+  wire = "chat-message.error"
+  type = "QString"
+  [entity.ChatMessage.fields.attachment_count]
+  wire = "chat-message.attachments#count"
+  type = "int"
+  [entity.ChatMessage.fields.origin_op]
+  wire = "journal-record#origin_op"                # rung-3 provenance on the node-owned envelope (§10.3; null until api/39)
+  type = "QString"
+
+[entity.FsEntry]
+class = "W"
+scope = ["root", "dir"]
+window_key = "path"
+policy = "fs"
+table = "w_fs_entries"
+invalidators = ["FsWatchPoll"]
+wire_read = ["FsList", "FsStat"]
+
+  [entity.FsEntry.fields.root]
+  wire = "request-fs-list.FsList#root"             # scope: FsList request root arg (fs-root-id-t -> string)
+  type = "QString"
+  [entity.FsEntry.fields.dir]
+  wire = "request-fs-list.FsList#dir"              # scope: FsList request dir arg
+  type = "QString"
+  [entity.FsEntry.fields.path]
+  wire = "fs-entry.path"                           # window key within (root, dir)
+  type = "QString"
+  [entity.FsEntry.fields.name]
+  wire = "fs-entry.name"
+  type = "QString"
+  [entity.FsEntry.fields.kind]
+  wire = "fs-entry.kind"                           # fs-entry-kind-t enum -> string
+  type = "QString"
+  [entity.FsEntry.fields.size]
+  wire = "fs-entry.size"
+  type = "quint64"
+  [entity.FsEntry.fields.mtime_ms]
+  wire = "fs-entry.mtime_ms"
+  type = "quint64"
+  [entity.FsEntry.fields.ignored]
+  wire = "fs-entry.ignored"
+  type = "bool"
+
+[entity.TranscriptBlock]
+class = "W"
+scope = ["session"]
+window_key = "seq"
+policy = "transcript"
+table = "w_transcript_blocks"
+invalidators = ["SessionAdvanced"]
+wire_read = ["SessionHistory"]
+# NOTE (§3.1): TranscriptBlock joins the mirror in M4/M5; until then the legacy table is frozen.
+# transcript-block is a CDDL union (Message/ToolCall/ToolResult/Request/Content); modeled here with
+# a union discriminator plus the fields common across variants, all grounded on the variant rules.
+
+  [entity.TranscriptBlock.fields.session]
+  wire = "request-session-history.SessionHistory#session"  # scope: the SessionHistory request session
+  type = "QString"
+  [entity.TranscriptBlock.fields.seq]
+  wire = "journal-record.seq"                      # window key = journal seq
+  type = "quint64"
+  [entity.TranscriptBlock.fields.kind]
+  wire = "transcript-block#tag"                    # union discriminator -> string
+  type = "QString"
+  [entity.TranscriptBlock.fields.role]
+  wire = "transcript-block-message.role"           # transcript-role enum -> string (Message)
+  type = "QString"
+  [entity.TranscriptBlock.fields.text]
+  wire = "transcript-block-message.text"           # (Message)
+  type = "QString"
+  [entity.TranscriptBlock.fields.call_id]
+  wire = "transcript-block-tool-call.call_id"      # (ToolCall)
+  type = "QString"
+  [entity.TranscriptBlock.fields.name]
+  wire = "transcript-block-tool-call.name"         # (ToolCall)
+  type = "QString"
+  [entity.TranscriptBlock.fields.summary]
+  wire = "transcript-block-tool-result.summary"    # (ToolResult)
+  type = "QString"
+  [entity.TranscriptBlock.fields.ok]
+  wire = "transcript-block-tool-result.ok"         # (ToolResult)
+  type = "bool"
+  [entity.TranscriptBlock.fields.origin_op]
+  wire = "journal-record#origin_op"                # rung-3 provenance (§10.3; null until api/39)
+  type = "QString"
+
+# ============================================================================================
+# L — live (mirrored in memory, deliberately never persisted; no table)
+# ============================================================================================
+
+[entity.Approval]
+class = "L"
+key = ["session", "request_id"]
+invalidators = ["ApprovalPending", "ResyncNeeded"]
+wire_read = ["ApprovalsPending"]
+# freshness-critical; acting on stale rows is unsafe -> never persisted.
+
+  [entity.Approval.fields.session]
+  wire = "approval-info.session"
+  type = "QString"
+  [entity.Approval.fields.request_id]
+  wire = "approval-info.request_id"
+  type = "QString"
+  [entity.Approval.fields.prompt]
+  wire = "approval-info.prompt"
+  type = "QString"
+  [entity.Approval.fields.path]
+  wire = "approval-info.path"
+  type = "QString"
+  [entity.Approval.fields.fingerprint]
+  wire = "approval-info.fingerprint"
+  type = "QString"
+
+[entity.Checkpoint]
+class = "L"
+key = ["id"]
+invalidators = ["refetch-on-open"]
+wire_read = ["CheckpointList"]
+
+  [entity.Checkpoint.fields.id]
+  wire = "checkpoint-info.id"
+  type = "QString"
+  [entity.Checkpoint.fields.session]
+  wire = "checkpoint-info.session"
+  type = "QString"
+  [entity.Checkpoint.fields.tool]
+  wire = "checkpoint-info.tool"
+  type = "QString"
+  [entity.Checkpoint.fields.created_unix]
+  wire = "checkpoint-info.created_unix"
+  type = "quint64"
+  [entity.Checkpoint.fields.turn_ordinal]
+  wire = "checkpoint-info.turn_ordinal"
+  type = "quint64"
+  [entity.Checkpoint.fields.cursor]
+  wire = "checkpoint-info.cursor"
+  type = "quint64"
+
+[entity.ModelDownload]
+class = "L"
+key = ["id"]
+invalidators = ["DownloadProgress"]
+wire_read = ["ModelDownloads"]
+
+  [entity.ModelDownload.fields.id]
+  wire = "download-status.id"                       # download-id (uint) -> string handle
+  type = "QString"
+  [entity.ModelDownload.fields.state]
+  wire = "download-status.state"                    # download-state enum -> string
+  type = "QString"
+  [entity.ModelDownload.fields.downloaded_bytes]
+  wire = "download-status.downloaded_bytes"
+  type = "quint64"
+  [entity.ModelDownload.fields.total_bytes]
+  wire = "download-status.total_bytes"
+  type = "quint64"
+  [entity.ModelDownload.fields.files_done]
+  wire = "download-status.files_done"
+  type = "int"
+  [entity.ModelDownload.fields.files_total]
+  wire = "download-status.files_total"
+  type = "int"
+  [entity.ModelDownload.fields.error]
+  wire = "download-status.error"
+  type = "QString"
+
+[entity.QuantizeJob]
+class = "L"
+key = ["id"]
+invalidators = ["verb-refetch"]
+wire_read = ["ModelQuantizes"]
+
+  [entity.QuantizeJob.fields.id]
+  wire = "quantize-status.id"                       # quantize-id (uint) -> string handle
+  type = "QString"
+  [entity.QuantizeJob.fields.repo]
+  wire = "quantize-status.repo"
+  type = "QString"
+  [entity.QuantizeJob.fields.source_file]
+  wire = "quantize-status.source_file"
+  type = "QString"
+  [entity.QuantizeJob.fields.target_quant]
+  wire = "quantize-status.target_quant"
+  type = "QString"
+  [entity.QuantizeJob.fields.state]
+  wire = "quantize-status.state"                    # quantize-state enum -> string
+  type = "QString"
+  [entity.QuantizeJob.fields.output_path]
+  wire = "quantize-status.output_path"
+  type = "QString"
+  [entity.QuantizeJob.fields.model_id]
+  wire = "quantize-status.model_id"
+  type = "QString"
+  [entity.QuantizeJob.fields.error]
+  wire = "quantize-status.error"
+  type = "QString"
+
+[entity.CapsReport]
+class = "L"
+key = ["singleton"]
+singleton = true
+invalidators = ["focus-refetch"]
+wire_read = ["Caps"]
+
+  [entity.CapsReport.fields.singleton]
+  wire = "response-caps.Caps#singleton"            # singleton sentinel key (always "")
+  type = "QString"
+  [entity.CapsReport.fields.orchestrate_max_depth]
+  wire = "caps-report.orchestrate_max_depth"
+  type = "int"
+  [entity.CapsReport.fields.orchestrate_max_fanout]
+  wire = "caps-report.orchestrate_max_fanout"
+  type = "int"
+  [entity.CapsReport.fields.max_composed_profiles]
+  wire = "caps-report.max_composed_profiles"
+  type = "int"
+  [entity.CapsReport.fields.max_ephemeral_per_session]
+  wire = "caps-report.max_ephemeral_per_session"
+  type = "int"
+
+[entity.GatewayStatus]
+class = "L"
+key = ["singleton"]
+singleton = true
+invalidators = ["verb-refetch"]
+wire_read = ["GatewayGet"]
+
+  [entity.GatewayStatus.fields.singleton]
+  wire = "response-gateway-status.GatewayStatus#singleton"
+  type = "QString"
+  [entity.GatewayStatus.fields.enabled]
+  wire = "gateway-status.enabled"
+  type = "bool"
+  [entity.GatewayStatus.fields.addr]
+  wire = "gateway-status.addr"
+  type = "QString"
+  [entity.GatewayStatus.fields.listening]
+  wire = "gateway-status.listening"
+  type = "bool"
+  [entity.GatewayStatus.fields.last_error]
+  wire = "gateway-status.last_error"
+  type = "QString"
+
+[entity.AccessUser]
+class = "L"
+key = ["user_id"]
+invalidators = ["admin-verbs"]
+wire_read = ["UserList"]
+
+  [entity.AccessUser.fields.user_id]
+  wire = "access-user.user_id"
+  type = "QString"
+  [entity.AccessUser.fields.username]
+  wire = "access-user.username"
+  type = "QString"
+  [entity.AccessUser.fields.disabled]
+  wire = "access-user.disabled"
+  type = "bool"
+  [entity.AccessUser.fields.created_at]
+  wire = "access-user.created_at"
+  type = "qint64"
+  [entity.AccessUser.fields.role_count]
+  wire = "access-user.roles#count"
+  type = "int"
+
+[entity.RoleInfo]
+class = "L"
+key = ["role"]
+invalidators = ["admin-verbs"]
+wire_read = ["RoleList"]
+
+  [entity.RoleInfo.fields.role]
+  wire = "role-info.role"
+  type = "QString"
+  [entity.RoleInfo.fields.capability_count]
+  wire = "role-info.capabilities#count"
+  type = "int"

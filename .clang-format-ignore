@@ -3,6 +3,10 @@
 src/core/daemon/codec/generated/*
 src/core/daemon/codec/vendor/*
 
+# Generated mirror entity artifacts: kept byte-identical to the entity map + contract (enforced by
+# the superproject codec-drift entity gate). Never reformat - clang-format must skip these entirely.
+src/core/mirror/generated/*
+
 # Vendored public-domain SHA-256 (Brad Conte) used by the daemon-updater helper:
 # kept byte-verbatim from upstream, so clang-format must skip it too.
 src/tools/updater/vendor/*
