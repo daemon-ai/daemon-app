@@ -445,10 +445,16 @@ inline QByteArray neDownloadProgress(quint64 id, quint64 pct, const char* state,
     return b;
 }
 
-// v26: the payload-free catalog-changed pointer (a bare externally-tagged unit variant).
-inline QByteArray neCatalogChanged() {
+// v26: the catalog-changed pointer. api/39 (per-collection revs) turned the former payload-free
+// unit variant into {"CatalogChanged":{"rev":R}}; the v38-behaving client refetches on the pointer
+// and ignores rev.
+inline QByteArray neCatalogChanged(quint64 rev = 1) {
     QByteArray b;
+    b.append(static_cast<char>(0xA1));
     cborText(b, "CatalogChanged");
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "rev");
+    cborUint(b, rev);
     return b;
 }
 
@@ -508,17 +514,21 @@ inline QByteArray neTransportChanged(const char* transport, const char* connecti
 // [waveB:app-v30] D2: {"ConversationsChanged":{"transport","conv","change"}} — change is the
 // conv-change enum tstr ("Added"/"Removed").
 inline QByteArray neConversationsChanged(const char* transport, const char* conv,
-                                         const char* change) {
+                                         const char* change, quint64 rev = 1) {
     QByteArray b;
     b.append(static_cast<char>(0xA1));
     cborText(b, "ConversationsChanged");
-    b.append(static_cast<char>(0xA3));
+    // api/39: gained a required `rev` (after `change`) plus an optional `origin_op` (encoded
+    // absent).
+    b.append(static_cast<char>(0xA4));
     cborText(b, "transport");
     cborText(b, transport);
     cborText(b, "conv");
     cborText(b, conv);
     cborText(b, "change");
     cborText(b, change);
+    cborText(b, "rev");
+    cborUint(b, rev);
     return b;
 }
 
@@ -545,13 +555,16 @@ inline QByteArray neMembershipChanged(const char* transport, const char* conv, c
 
 // [acct-mgmt] {"ContactsChanged":{"transport"}} (wire v34) — the transport-roster invalidation
 // pointer (distinct from the session-inbox RosterChanged).
-inline QByteArray neContactsChanged(const char* transport) {
+inline QByteArray neContactsChanged(const char* transport, quint64 rev = 1) {
     QByteArray b;
     b.append(static_cast<char>(0xA1));
     cborText(b, "ContactsChanged");
-    b.append(static_cast<char>(0xA1));
+    // api/39: gained a required `rev` after `transport`.
+    b.append(static_cast<char>(0xA2));
     cborText(b, "transport");
     cborText(b, transport);
+    cborText(b, "rev");
+    cborUint(b, rev);
     return b;
 }
 

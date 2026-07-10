@@ -242,8 +242,8 @@ QByteArray personsResponse() {
     auto resp = std::make_unique<api_response_r>();
     resp->api_response_choice = api_response_r::api_response_response_persons_m_c;
     response_persons& rp = resp->api_response_response_persons_m;
-    rp.response_persons_Persons_person_m_count = 1;
-    person& p = rp.response_persons_Persons_person_m[0];
+    rp.Persons_items_person_m_count = 1;
+    person& p = rp.Persons_items_person_m[0];
     setZ(p.person_id, pid);
     p.person_alias_present = true;
     p.person_alias.person_alias_choice = person_alias_r::person_alias_tstr_c;
@@ -374,10 +374,16 @@ QByteArray neMessagesChanged(const char* transport, const char* conv) {
     return b;
 }
 
-// "PersonsChanged" — the payload-free person-registry invalidation pointer (a bare tstr variant).
-QByteArray nePersonsChanged() {
+// {"PersonsChanged":{"rev":R}} — the person-registry invalidation pointer (rev-carrying at api/39).
+QByteArray nePersonsChanged(quint64 rev = 1) {
     QByteArray b;
+    // api/39 (per-collection revs) turned the former payload-free PersonsChanged unit variant into
+    // {"PersonsChanged":{"rev":R}}; the v38-behaving client refetches on the pointer, ignoring rev.
+    b.append(static_cast<char>(0xA1));
     daemonapp::test::cborText(b, "PersonsChanged");
+    b.append(static_cast<char>(0xA1));
+    daemonapp::test::cborText(b, "rev");
+    daemonapp::test::cborUint(b, rev);
     return b;
 }
 
