@@ -73,4 +73,32 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
             immer::immer
             lager::lager         # reactive-core subset only (observe seam); pulls zug + boost::intrusive
     )
+
+    # -----------------------------------------------------------------------
+    # Mirror lens layer (spec 09 §8; package A3) — the generic journal-delta
+    # collection adapters (mirror::TableModel / mirror::WindowModel), the 64-bit
+    # stable-id interner, and the ConversationListModel role-map demonstrator.
+    # GUI-free C++ (QAbstractListModel is Qt6::Core): QML binds these, the TUI
+    # consumes them via DisplayRoleAdapter (§8.4). Built on the substrate.
+    # -----------------------------------------------------------------------
+    add_library(da_mirror_lens STATIC
+        table_model.cpp
+        conversation_list_model.cpp
+        table_model.h
+        window_model.h
+        stable_id.h
+        conversation_list_model.h
+    )
+    add_library(daemon-app::mirror_lens ALIAS da_mirror_lens)
+
+    # TableModelBase + ConversationListModel carry Q_OBJECT.
+    set_target_properties(da_mirror_lens PROPERTIES AUTOMOC ON)
+
+    target_include_directories(da_mirror_lens PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+
+    target_link_libraries(da_mirror_lens
+        PUBLIC
+            Qt6::Core
+            daemon-app::mirror_substrate
+    )
 endif()
