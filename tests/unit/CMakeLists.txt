@@ -1215,4 +1215,15 @@ if(TARGET daemon-app::mirror_ingestor)
         add_test(NAME ${_itst} COMMAND ${_itst})
         set_tests_properties(${_itst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endforeach()
+
+    # The daemon bridge translation (DecodedNodeEvent → mirror::NodeEvent): the second compile-time
+    # exhaustiveness layer tying the app's generated wire enum to the policy table (spec §5.1/§12).
+    # Needs the daemon codec facade (node_api_codec.h) + the ingestor's policy table.
+    if(TARGET daemon-app::daemon_client)
+        qt_add_executable(tst_mirror_bridge tst_mirror_bridge.cpp)
+        target_link_libraries(tst_mirror_bridge
+            PRIVATE Qt6::Test daemon-app::mirror_ingestor daemon-app::daemon_client)
+        add_test(NAME tst_mirror_bridge COMMAND tst_mirror_bridge)
+        set_tests_properties(tst_mirror_bridge PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
 endif()
