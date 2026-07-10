@@ -24,11 +24,19 @@ bool MirrorService::open(const DbPathProvider& paths) {
         openInMemory();
         return false;
     }
-    // Boot load: rebuild the M tables via transients, seed the rev counter from the persisted
-    // head, then adopt the snapshot as the live root (§4.5 boot path).
+    // Boot load: rebuild the M tables + the chat windows' persisted contiguous tails via
+    // transients, seed the rev counter from the persisted head, then adopt the snapshot as the
+    // live root (§4.5 boot path; E1 offline render includes the last-known timeline).
     MirrorModel loaded;
-    persistence_.loadInto(loaded);
+    (void)persistence_.loadInto(loaded, store_.windowMaxItems(EntityKind::ChatMessage));
     store_.adoptLoaded(std::move(loaded), persistence_.persistedJournalHead());
+    // Seed the ingestor's per-conversation ConvHistory cursors from the reloaded windows so the
+    // reconnect top-up resumes AFTER the persisted tail — never re-appending (and thus never
+    // duplicating/disordering) what the boot-load restored (§13 M1 cursor fix, boot edge).
+    for (const auto& entry : store_.snapshot().chat) {
+        ingestor_.syncState().setConvCursor(entry.first.serialize(),
+                                            entry.second.meta.newest_cursor);
+    }
     // The durable consumer resumes at its persisted watermark and flushes every commit thereafter
     // (write-behind, B7) so the disposable cache always reflects committed node truth.
     write_behind_.start();

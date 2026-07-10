@@ -1243,7 +1243,8 @@ if(TARGET daemon-app::mirror_ingestor)
     if(TARGET daemon-app::local)
         qt_add_executable(tst_mirror_e1_offline tst_mirror_e1_offline.cpp)
         target_link_libraries(tst_mirror_e1_offline
-            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::local)
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::mirror_lens
+                    daemon-app::local)
         add_test(NAME tst_mirror_e1_offline COMMAND tst_mirror_e1_offline)
         set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif()

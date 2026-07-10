@@ -1,11 +1,12 @@
-// tst_mirror_e1_offline (mirror A5) — the E1 cold-boot-offline scenario (spec 09 §12, §4.5, §6.6).
-// A prior online session persisted node truth into mirror-<id>.db (disposable) AND enqueued a
-// ConvSend into local-<id>.db (precious). A cold boot with NO connection must render the
-// last-known state from mirror.db AND still carry the pending op from local.db (the two-file split:
-// a mirror nuke can never destroy pending user intent). This is the integrations-vertical E1
-// parity assertion: offline shows last-known + pending, with NO auto-replay.
+// tst_mirror_e1_offline (mirror A5) — the E1 cold-boot-offline scenario (spec 09 §12, §4.5, §4.6,
+// §6.6). A prior online session persisted node truth into mirror-<id>.db (disposable) AND enqueued
+// a ConvSend into local-<id>.db (precious). A cold boot with NO connection must render the
+// last-known state from mirror.db — the M tables AND the chat window's persisted contiguous tail —
+// and still carry the pending op from local.db (the two-file split: a mirror nuke can never
+// destroy pending user intent). Offline shows last-known + pending, with NO auto-replay.
 
 #include "local_database.h"
+#include "mirror/chat_window_model.h"
 #include "mirror/mirror_service.h"
 #include "outbox.h"
 #include "pending_ops_model.h"
@@ -79,11 +80,26 @@ private slots:
                 ConversationKey{QStringLiteral("m"), QStringLiteral("!room")});
             QVERIFY(room != nullptr);
             QCOMPARE(room->title, QStringLiteral("The Room"));
-            // The chat WINDOW is the disposable class-W cache: A1 fills a cold window forward on
-            // demand (§4.6 interim) rather than reloading rows, so an offline chat timeline is
-            // empty until reconnect — a documented A1/BR seam, not an A5 regression.
+            // The chat window's persisted contiguous tail reloads too (§4.6 + E1 "last-known
+            // state"): the OFFLINE TIMELINE IS NON-EMPTY. Forward-fill-on-demand remains the
+            // reconnect top-up path, resuming after the seeded per-conv cursor.
             const ChatMessageScope scope{QStringLiteral("m"), QStringLiteral("!room")};
-            QCOMPARE(svc.store().snapshot().chat.count(scope), std::size_t(0));
+            QVERIFY(svc.store().snapshot().chat.count(scope) != 0U);
+            const Window<ChatMessage>& win = svc.store().snapshot().chat[scope];
+            QCOMPARE(static_cast<int>(win.items.size()), 2);
+            QCOMPARE(win.items[0].get().text, QStringLiteral("hello"));
+            QCOMPARE(win.items[1].get().text, QStringLiteral("there"));
+            QCOMPARE(win.meta.newest_cursor, quint64(2));
+            // The ChatWindowModel lens renders the reloaded tail (the surface-level assert).
+            ChatWindowModel timeline(svc.store(), scope);
+            QCOMPARE(timeline.rowCount(), 2);
+            QCOMPARE(timeline.data(timeline.index(0, 0), ChatWindowModel::TextRole).toString(),
+                     QStringLiteral("hello"));
+            // The reconnect top-up resumes AFTER the persisted tail: the per-conv cursor was
+            // seeded from the reloaded window, so the next MessagesChanged pages from cursor 2 —
+            // never re-appending (or disordering) what boot restored.
+            QCOMPARE(svc.ingestor().syncState().convCursor(QStringLiteral("m\x1f!room")),
+                     quint64(2));
 
             // The precious local.db is never dropped: the pending ConvSend survived the restart
             // (booted inflight→pending; §6.6) and renders in the pending strip — NOT as a mirror

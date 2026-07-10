@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <QDateTime>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMetaProperty>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStringList>
@@ -41,6 +44,24 @@ QStringList schemaStatements() {
 
 qint64 nowMsWall() {
     return QDateTime::currentMSecsSinceEpoch();
+}
+
+// Rebuild one ChatMessage from its persisted canonical JSON payload (the write-behind's
+// meta-object dump; the entity CBOR encoder replaces the format with BR). Generic over the
+// Q_GADGET properties so no per-field code; the scope fields + cursor are then overwritten from
+// the row columns, which are authoritative.
+ChatMessage chatMessageFromPayload(const QByteArray& payload) {
+    ChatMessage m;
+    const QJsonObject obj = QJsonDocument::fromJson(payload).object();
+    const QMetaObject& mo = ChatMessage::staticMetaObject;
+    for (int i = mo.propertyOffset(); i < mo.propertyCount(); ++i) {
+        const QMetaProperty p = mo.property(i);
+        const auto it = obj.constFind(QString::fromLatin1(p.name()));
+        if (it != obj.constEnd()) {
+            p.writeOnGadget(&m, it->toVariant());
+        }
+    }
+    return m;
 }
 
 } // namespace
@@ -377,7 +398,7 @@ bool Persistence::writeBehind(const WriteBatch& batch) {
     return true;
 }
 
-bool Persistence::loadInto(MirrorModel& model) {
+bool Persistence::loadInto(MirrorModel& model, int chatWindowLimit) {
     QSqlQuery q(db_);
     if (!q.exec(
             QStringLiteral("SELECT transport,id,kind,title,topic,description,parent,member_count "
@@ -442,8 +463,62 @@ bool Persistence::loadInto(MirrorModel& model) {
         }
         model.persons = pt.persistent();
     }
-    // Chat windows are the disposable class-W cache; a cold window fills forward on demand
-    // (§4.6 interim) rather than reloading rows — deliberately not rebuilt here.
+    // Class-W chat windows (E1 offline render): rebuild each scope's persisted CONTIGUOUS TAIL —
+    // rows are read newest-first bounded by the §4.6 policy max, then reversed into cursor order.
+    // The on-disk row set is a superset of the in-memory window (eviction trims memory only), so
+    // the newest N rows ARE the contiguous tail. Reconnect tops up forward from the seeded per-conv
+    // cursor (MirrorService seeds it from newest_cursor), never re-appending what boot restored.
+    QSqlQuery sq(db_);
+    if (sq.exec(QStringLiteral("SELECT DISTINCT scope FROM w_chat_messages"))) {
+        auto wt = model.chat.transient();
+        while (sq.next()) {
+            const QString scopeKey = sq.value(0).toString();
+            const QStringList sp = scopeKey.split(QChar(0x1f));
+            const ChatMessageScope scope{sp.value(0), sp.value(1)};
+
+            QSqlQuery rq(db_);
+            rq.prepare(QStringLiteral("SELECT cursor,payload FROM w_chat_messages WHERE scope=? "
+                                      "ORDER BY cursor DESC LIMIT ?"));
+            rq.addBindValue(scopeKey);
+            rq.addBindValue(chatWindowLimit > 0 ? chatWindowLimit : -1); // -1 = no LIMIT (sqlite)
+            if (!rq.exec()) {
+                continue;
+            }
+            std::vector<ChatMessage> newestFirst;
+            while (rq.next()) {
+                ChatMessage m = chatMessageFromPayload(rq.value(1).toByteArray());
+                m.transport = scope.transport;
+                m.conv = scope.conv;
+                m.cursor = rq.value(0).toULongLong();
+                newestFirst.push_back(std::move(m));
+            }
+            if (newestFirst.empty()) {
+                continue;
+            }
+
+            Window<ChatMessage> win;
+            auto items = win.items.transient();
+            qint64 bytes = 0;
+            for (auto it = newestFirst.rbegin(); it != newestFirst.rend(); ++it) {
+                bytes += static_cast<qint64>(reflect::gadget_dump(*it).size());
+                items.push_back(immer::box<ChatMessage>{*it});
+            }
+            win.items = items.persistent();
+            win.meta.item_count = static_cast<int>(win.items.size());
+            win.meta.byte_count = bytes; // same measure the in-memory append accounting uses
+            win.meta.oldest_cursor = newestFirst.back().cursor;
+            win.meta.newest_cursor = newestFirst.front().cursor;
+            QSqlQuery mq(db_);
+            mq.prepare(QStringLiteral(
+                "SELECT contiguous_to_head FROM window_meta WHERE kind='ChatMessage' AND scope=?"));
+            mq.addBindValue(scopeKey);
+            if (mq.exec() && mq.next()) {
+                win.meta.contiguous_to_head = mq.value(0).toBool();
+            }
+            wt.set(scope, std::move(win));
+        }
+        model.chat = wt.persistent();
+    }
     return true;
 }
 
