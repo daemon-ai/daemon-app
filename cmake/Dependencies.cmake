@@ -296,12 +296,17 @@ if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM AND DAEMON_APP_DESKTOP_DEPS)
 endif()
 
 # ---------------------------------------------------------------------------
-# Mirror substrate (spec 09 §4, ADR-002/-008): immer + zug + the severable
-# lager reactive-core header subset. All header-only, wired as INTERFACE
-# targets from the flake's <DEP>_SOURCE_DIR pins (revs match references/ study
-# clones). OPTIONAL: platform stacks that do not pass the sources simply skip
-# them, and src/core/mirror only builds the substrate library when
-# DAEMON_APP_HAVE_MIRROR_SUBSTRATE is set below.
+# Mirror substrate (spec 09 §4, ADR-002/-008): the header-only immer value
+# substrate, wired as an INTERFACE target from the flake's IMMER_SOURCE_DIR pin
+# (rev matches the references/ study clone). OPTIONAL: platform stacks that do
+# not pass the source simply skip it, and src/core/mirror only builds the
+# substrate library when DAEMON_APP_HAVE_MIRROR_SUBSTRATE is set below.
+#
+# ADR-008 FINALIZED (A3, M1): the observe seam is coarse signals; the lager
+# candidate (and its zug + boost::intrusive transitive headers) was deleted
+# after gate 1 stayed decisively RED on the representative VM TU set
+# (+50% clean / +53% incremental vs coarse — see
+# src/core/mirror/ADR-008-addendum-A3.md). immer is the only mirror dependency.
 #
 # immer's ODR-relevant compile switches are set ONCE here, globally, exactly as
 # study 01 §6 requires (never per-target/per-TU). IMMER_NO_THREAD_SAFETY drops
@@ -309,20 +314,11 @@ endif()
 # (spec §11), async lives only at the wire edge. Exceptions are left to immer's
 # auto-detection of -fno-exceptions (config.hpp), which the wasm preset relies on.
 # ---------------------------------------------------------------------------
-set(DAEMON_APP_HAVE_MIRROR_SUBSTRATE OFF CACHE INTERNAL "immer+lager substrate available")
+set(DAEMON_APP_HAVE_MIRROR_SUBSTRATE OFF CACHE INTERNAL "immer substrate available")
 _daemon_app_resolve_dir(_immer_dir IMMER_SOURCE_DIR)
-_daemon_app_resolve_dir(_zug_dir ZUG_SOURCE_DIR)
-_daemon_app_resolve_dir(_lager_dir LAGER_SOURCE_DIR)
-_daemon_app_resolve_dir(_boost_inc BOOST_INCLUDE_DIR)
-if(_immer_dir AND _zug_dir AND _lager_dir)
+if(_immer_dir)
     if(NOT EXISTS "${_immer_dir}/immer/table.hpp")
         message(FATAL_ERROR "IMMER_SOURCE_DIR must point at an immer source tree (got '${_immer_dir}')")
-    endif()
-    if(NOT EXISTS "${_zug_dir}/zug/meta/pack.hpp")
-        message(FATAL_ERROR "ZUG_SOURCE_DIR must point at a zug source tree (got '${_zug_dir}')")
-    endif()
-    if(NOT EXISTS "${_lager_dir}/lager/state.hpp")
-        message(FATAL_ERROR "LAGER_SOURCE_DIR must point at a lager source tree (got '${_lager_dir}')")
     endif()
 
     if(NOT TARGET immer)
@@ -333,38 +329,13 @@ if(_immer_dir AND _zug_dir AND _lager_dir)
         target_include_directories(immer SYSTEM INTERFACE "${_immer_dir}")
     endif()
 
-    if(NOT TARGET zug)
-        add_library(zug INTERFACE)
-        add_library(zug::zug ALIAS zug)
-        target_include_directories(zug SYSTEM INTERFACE "${_zug_dir}")
-    endif()
-
-    # lager: ONLY the reactive-core subset is ever #included (state/commit/
-    # reader/cursor/writer/watch/setter + lenses + detail/nodes + extra/qt).
-    # That subset needs zug + header-only boost::intrusive (from detail/signal.hpp);
-    # it does NOT need boost::hana (which only lager::store/deps pull in — never
-    # compiled here). See references/architecture/lager/CMakeLists.txt.
-    if(NOT TARGET lager)
-        add_library(lager INTERFACE)
-        add_library(lager::lager ALIAS lager)
-        target_include_directories(lager SYSTEM INTERFACE "${_lager_dir}")
-        target_link_libraries(lager INTERFACE zug)
-        if(_boost_inc AND EXISTS "${_boost_inc}/boost/intrusive/list.hpp")
-            target_include_directories(lager SYSTEM INTERFACE "${_boost_inc}")
-        else()
-            message(FATAL_ERROR
-                "BOOST_INCLUDE_DIR must provide boost/intrusive/list.hpp for the lager "
-                "reactive core (got '${_boost_inc}')")
-        endif()
-    endif()
-
     # ODR-global immer switch (study 01 §6). Applied to the whole project so
     # every TU that includes an immer header agrees on the memory policy.
     add_compile_definitions(IMMER_NO_THREAD_SAFETY=1)
 
-    set(DAEMON_APP_HAVE_MIRROR_SUBSTRATE ON CACHE INTERNAL "immer+lager substrate available" FORCE)
-    message(STATUS "Dependencies: mirror substrate available (immer + zug + lager reactive core).")
+    set(DAEMON_APP_HAVE_MIRROR_SUBSTRATE ON CACHE INTERNAL "immer substrate available" FORCE)
+    message(STATUS "Dependencies: mirror substrate available (immer value substrate; coarse observe seam).")
 else()
-    message(STATUS "Dependencies: IMMER/ZUG/LAGER_SOURCE_DIR not all set; mirror substrate library skipped "
+    message(STATUS "Dependencies: IMMER_SOURCE_DIR not set; mirror substrate library skipped "
         "(generated entity layer still builds).")
 endif()

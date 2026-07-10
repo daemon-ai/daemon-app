@@ -55,7 +55,7 @@ private slots:
         // After forgetting a key, re-interning it yields a NEW higher id — never the old one.
         StableIdInterner in;
         const qint64 first = in.intern(QStringLiteral("x")); // 1
-        in.intern(QStringLiteral("y"));                      // 2
+        (void)in.intern(QStringLiteral("y"));                // 2
         in.forget(QStringLiteral("x"));
         const qint64 reassigned = in.intern(QStringLiteral("x")); // 3, not 1
         QVERIFY(reassigned != first);
