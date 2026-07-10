@@ -92,7 +92,12 @@ QByteArray NodeApiCodec::encodeSessionHistoryRequest(const QString& sessionId, q
     request_session_history& hist = request.api_request_request_session_history_m;
     hist.SessionHistory_session.value = reinterpret_cast<const uint8_t*>(session.constData());
     hist.SessionHistory_session.len = static_cast<size_t>(session.size());
-    hist.SessionHistory_after_cursor = static_cast<uint32_t>(afterCursor);
+    // [api/39] after_cursor became optional (`?`) when the backward `before_cursor` window was
+    // added. The v38-behaving client always pages forward from after_cursor, so keep encoding it
+    // present (byte-identical to v38 for every cursor) and leave before_cursor absent.
+    hist.SessionHistory_after_cursor_present = true;
+    hist.SessionHistory_after_cursor.SessionHistory_after_cursor =
+        static_cast<uint32_t>(afterCursor);
     hist.SessionHistory_max = max;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};

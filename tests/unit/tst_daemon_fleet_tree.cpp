@@ -111,13 +111,16 @@ QByteArray treeRespFinishedFailed() {
     QByteArray b;
     mapHdr(b, 1);
     cborText(b, "Tree");
-    mapHdr(b, 2);
+    // api/39: tree report gained a required trailing `rev` (root, nodes, ?next, rev).
+    mapHdr(b, 3);
     cborText(b, "root");
     cborText(b, "u1");
     cborText(b, "nodes");
     arrHdr(b, 2);
     unitNode(b, "u1", "Orchestrator", {"u2"});
     finishedUnitNode(b, "u2", "Engine", "Failed");
+    cborText(b, "rev");
+    cborUint(b, 1);
     return b;
 }
 
@@ -126,13 +129,16 @@ QByteArray treeResp() {
     QByteArray b;
     mapHdr(b, 1);
     cborText(b, "Tree");
-    mapHdr(b, 2);
+    // api/39: tree report gained a required trailing `rev` (root, nodes, ?next, rev).
+    mapHdr(b, 3);
     cborText(b, "root");
     cborText(b, "u1");
     cborText(b, "nodes");
     arrHdr(b, 2);
     unitNode(b, "u1", "Orchestrator", {"u2"});
     unitNode(b, "u2", "Engine", {});
+    cborText(b, "rev");
+    cborUint(b, 1);
     return b;
 }
 
@@ -142,13 +148,16 @@ QByteArray treeRespEnriched() {
     QByteArray b;
     mapHdr(b, 1);
     cborText(b, "Tree");
-    mapHdr(b, 2);
+    // api/39: tree report gained a required trailing `rev` (root, nodes, ?next, rev).
+    mapHdr(b, 3);
     cborText(b, "root");
     cborText(b, "u1");
     cborText(b, "nodes");
     arrHdr(b, 2);
     unitNode(b, "u1", "Orchestrator", {"u2"});
     unitNode(b, "u2", "Engine", {}, "Ephemeral", "gemini-cli");
+    cborText(b, "rev");
+    cborUint(b, 1);
     return b;
 }
 
@@ -159,7 +168,8 @@ QByteArray treePageResp(const char* nodeId, const char* kind, const QList<const 
     QByteArray b;
     mapHdr(b, 1);
     cborText(b, "Tree");
-    mapHdr(b, next != nullptr ? 3 : 2);
+    // api/39: tree report gained a required trailing `rev` (root, nodes, ?next, rev).
+    mapHdr(b, next != nullptr ? 4 : 3);
     cborText(b, "root");
     cborText(b, "u1");
     cborText(b, "nodes");
@@ -169,6 +179,8 @@ QByteArray treePageResp(const char* nodeId, const char* kind, const QList<const 
         cborText(b, "next");
         cborText(b, next);
     }
+    cborText(b, "rev");
+    cborUint(b, 1);
     return b;
 }
 

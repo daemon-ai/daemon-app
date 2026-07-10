@@ -233,8 +233,12 @@ bool NodeApiCodec::decodePersons(const QByteArray& responseCbor, QList<DecodedPe
     }
     const response_persons& rp = response->api_response_response_persons_m;
     out->clear();
-    for (size_t i = 0; i < rp.response_persons_Persons_person_m_count; ++i) {
-        const person& p = rp.response_persons_Persons_person_m[i];
+    // [api/39] Persons became a rev+delta list: the roster now lives under `items`, alongside a
+    // per-collection `rev` and optional `removed`/`origin_ops` deltas. The v38-behaving client only
+    // consumes the full `items` snapshot (re-fetched on PersonsChanged); rev/removed/origin_ops are
+    // decoded-and-ignored until the later SyncState flip wires them.
+    for (size_t i = 0; i < rp.Persons_items_person_m_count; ++i) {
+        const person& p = rp.Persons_items_person_m[i];
         DecodedPerson d;
         d.id = fromZcbor(p.person_id);
         if (p.person_alias_present &&
