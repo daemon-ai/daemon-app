@@ -96,9 +96,40 @@ Ledger → RED (failing tests committed, QSKIP-guarded where a suite must stay g
   mirror's persisted M-tables + chat window on the migrated surfaces; the repositories' WRITE
   paths (fetch cores) remain as A4's dual-write feeders until A6+ removes them.
 
+## Completion notes (second pass — parent rulings applied)
+
+- **Offline chat timeline**: `Persistence::loadInto` rebuilds each scope's persisted CONTIGUOUS
+  TAIL from `w_chat_messages`/`window_meta` (newest-first, bounded by the §4.6 policy max,
+  reversed into cursor order); `MirrorService::open` seeds the per-conv ConvHistory cursors from
+  the reloaded `newest_cursor` so the reconnect top-up resumes AFTER the tail (no duplicate /
+  disordered appends). E1 offline render includes the timeline (tst_mirror_e1_offline).
+- **Per-identity live mirror**: the daemon graph opens `mirror-<sha256[:16]>.db` under the LAST
+  authenticated identity (persisted `mirror/lastIdentity`), same hash convention as
+  DaemonCacheStore + LocalDatabase; on AuthOk it persists the key and — only on an actual identity
+  CHANGE — reopens both durable stores (journal REBASE: tail dropped, consumer watermarks jump to
+  the new head). E1 holds in the REAL graph (tst_app_service_graph). Mid-run identity-switch lens
+  re-priming is A6's (rare path; tabs are per-conversation and per-identity).
+- **Render bindings, both surfaces**: GUI ChatPage.qml + TUI (ChatPendingStripView +
+  root_widget wiring) bind the pending strip beside the timeline, route the composer through
+  `ConvSendController::send()`+`drain()` (durable enqueue → explicit user tap; §6.8 auto-replay
+  asserted OFF), read the timeline from `ChatWindowModel` via the shared controller (visibility
+  declaration → ingestor top-up, §5.8), and expose load-earlier (GUI button / TUI Ctrl+PgUp,
+  end-of-history surfaced per §4.6 v38 semantics).
+- **Mock mode at M2**: `Mirror`/`Outbox` are null in mock — the chat surfaces fall back to the
+  legacy IChatService path unchanged (§9 "mock keeps working"). A8's seeder feeds the mirror in
+  mock and deletes the fallback (the ledgered `SeededFetchExecutor` idea is superseded by this
+  null-fallback: strictly less mock-only machinery below the seam).
+- **Canonical-shape degradation (documented)**: the entity-map ChatMessage carries
+  author/text/error/edited — the legacy system/notice/action styling flags are not entity fields,
+  so mirror-mode markdown renders them as plain lines. Extending the map is a G-series
+  entity-codegen change (wire fields exist; needs `just update-codec`), not an A5 hand-edit.
+
 ## Seams left for siblings
 
-- A6 (M3 routing): routing/`IDaemonNet` deletion + sidebar legacy path — untouched here.
-- A8 (M5 seeder): `SeededFetchExecutor` is the M2 keep-mock-working bridge; A8 replaces it with
-  `mirror::Seeder` + scripted verb outcomes writing through the same apply pipeline.
-- BR: `wire_delta` + auto-replay flip on api/39 — the gate stays OFF here and is asserted OFF.
+- A6 (M3 routing): routing/`IDaemonNet` deletion + sidebar legacy path — untouched here. Plus:
+  lens re-prime on mid-run identity switch (journal rebase publishes the adopted snapshot; live
+  TableModel instances re-derive rows only on their next delta).
+- A8 (M5 seeder): mock-mode mirror feeding (`mirror::Seeder` through the same apply pipeline) +
+  deletion of the legacy IChatService fallback in the chat surfaces.
+- BR: `wire_delta` + auto-replay flip on api/39 — the gate stays OFF here and is asserted OFF;
+  `before_cursor` backward windows replace the v38 "cold-fill-only" requestOlder semantics.
