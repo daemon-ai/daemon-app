@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>एकीकरण जोड़ें</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>खाता सेटिंग्स</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>जारी रखें</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>सहेजें</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>वर्तमान मान बनाए रखने के लिए खाली छोड़ें</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -3534,6 +3561,72 @@ until it is re-registered.</source>
     <message>
         <source>image unavailable</source>
         <translation>छवि अनुपलब्ध</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>कनेक्ट करें</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>अक्षम करें</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>सक्षम करें</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>खाता सेटिंग्स</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>खाता हटाएँ</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>हटाएँ</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>इस खाते को हटाकर डिस्कनेक्ट करें? नोड इसे पूरी तरह हटा देता है।</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>एकीकरण</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>सभी संक्षिप्त करें</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>सभी विस्तृत करें</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>एकीकरण जोड़ें</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>व्यक्ति</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>चैनल</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>सीधे संदेश</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>ब्राउज़ करें</translation>
     </message>
 </context>
 <context>

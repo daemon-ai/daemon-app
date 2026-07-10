@@ -12,6 +12,8 @@ qt_add_qml_module(da_sidebar
     QML_FILES
         NewAgentDialog.qml
         Sidebar.qml
+        IntegrationsTree.qml
+        AccountFormDialog.qml
 )
 add_library(daemon-app::sidebar ALIAS da_sidebar)
 

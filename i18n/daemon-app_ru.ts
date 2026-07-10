@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Добавить интеграцию</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Настройки учётной записи</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Оставьте пустым, чтобы сохранить текущее значение</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -3536,6 +3563,72 @@ until it is re-registered.</source>
     <message>
         <source>image unavailable</source>
         <translation>изображение недоступно</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Подключить</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Отключить</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Включить</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Настройки учётной записи</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Удалить учётную запись</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>Удалить эту учётную запись и отключить её? Узел полностью её удалит.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Интеграции</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Свернуть всё</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Развернуть всё</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Добавить интеграцию</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Люди</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Каналы</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Личные сообщения</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Обзор</translation>
     </message>
 </context>
 <context>

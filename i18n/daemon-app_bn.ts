@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>ইন্টিগ্রেশন যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>অ্যাকাউন্ট সেটিংস</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>চালিয়ে যান</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>সংরক্ষণ করুন</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>বর্তমান মান রাখতে ফাঁকা রাখুন</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -3534,6 +3561,72 @@ until it is re-registered.</source>
     <message>
         <source>image unavailable</source>
         <translation>ছবি উপলব্ধ নেই</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>সংযোগ করুন</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>নিষ্ক্রিয় করুন</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>সক্রিয় করুন</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>অ্যাকাউন্ট সেটিংস</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>অ্যাকাউন্ট সরান</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>সরান</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>এই অ্যাকাউন্টটি সরিয়ে সংযোগ বিচ্ছিন্ন করবেন? নোড এটি সম্পূর্ণরূপে সরিয়ে দেয়।</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>ইন্টিগ্রেশন</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>সব সংকুচিত করুন</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>সব প্রসারিত করুন</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>ইন্টিগ্রেশন যোগ করুন</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>ব্যক্তিগণ</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>চ্যানেল</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>সরাসরি বার্তা</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>ব্রাউজ করুন</translation>
     </message>
 </context>
 <context>

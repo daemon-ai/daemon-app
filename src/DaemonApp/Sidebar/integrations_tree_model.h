@@ -143,6 +143,8 @@ private:
         // Stable fold key (a disjoint id namespace so accounts/spaces/sections share m_collapsed
         // safely). Empty for leaves.
         QString foldKey;
+        // Stable selection identity (survives rebuilds). Empty for non-selectable section rows.
+        QString selId;
     };
 
     void rebuild();

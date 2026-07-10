@@ -97,7 +97,7 @@ private:
     // The account_schema field descriptors for `family` from availableAdapters(), enriched with a
     // per-field `value` (defaults for add, blanks for edit until settingsChanged patches them).
     [[nodiscard]] QVariantList schemaFor(const QString& family) const;
-    void setFieldRows(const QVariantList& rows);
+    void setFieldRows(const QVariantList& schema);
     void onSettingsChanged(const QString& transport, const QVariantMap& values);
     // The key set of Password-kind fields in the current schema (for masked-field omission on
     // save).

@@ -25,6 +25,31 @@ target_link_libraries(tui_transcript_tests
 add_test(NAME tui_transcript_tests COMMAND tui_transcript_tests)
 set_tests_properties(tui_transcript_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_integrations_tree_view (A2 app/tree-ui): the GUI/TUI parity half - the SAME shared
+# IntegrationsTreeModel renders through the DisplayRoleAdapter's Integrations kind (custom roles ->
+# Qt::DisplayRole + Tui list decorations). Compiles the adapter + palette directly and links the
+# shared TUI view-model lib (which now carries the integrations models) + the transport seams.
+qt_add_executable(tui_integrations_tree_tests
+    tst_integrations_tree_view.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/display_role_adapter.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_palette.cpp
+)
+set_target_properties(tui_integrations_tree_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_integrations_tree_tests PRIVATE ${CMAKE_SOURCE_DIR}/src/tui)
+target_link_libraries(tui_integrations_tree_tests
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        PkgConfig::TUIWIDGETS
+        daemon-app::tui_viewmodels
+        daemon-app::transports
+        daemon-app::uimodels
+        daemon-app::presentation
+        daemon-app::theme_core
+)
+add_test(NAME tui_integrations_tree_tests COMMAND tui_integrations_tree_tests)
+set_tests_properties(tui_integrations_tree_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_transcript_view: drives the TranscriptView widget in an off-screen Tui
 # terminal with a focus-cycling root - asserts that an interactive block lets Tab
 # / Shift+Tab leave to the next pane while arrow keys walk the block's controls.

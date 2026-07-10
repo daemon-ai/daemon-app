@@ -28,6 +28,12 @@ pkg_check_modules(TERMPAINT REQUIRED IMPORTED_TARGET termpaint)
 add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Sidebar/sidebar_model.h
     ../DaemonApp/Sidebar/sidebar_model.cpp
+    # [integrations wire v38] The integrations tree + schema account controller (A2), shared
+    # verbatim with the GUI so the TUI renders the SAME model through a DisplayRoleAdapter.
+    ../DaemonApp/Sidebar/integrations_tree_model.h
+    ../DaemonApp/Sidebar/integrations_tree_model.cpp
+    ../DaemonApp/Sidebar/account_management_controller.h
+    ../DaemonApp/Sidebar/account_management_controller.cpp
     ../DaemonApp/SessionsList/sessions_list_model.h
     ../DaemonApp/SessionsList/sessions_list_model.cpp
     ../DaemonApp/Session/session_controller.h
@@ -99,6 +105,10 @@ target_link_libraries(da_tui_viewmodels
         daemon-app::editor_core
         # The memory view-models talk to the memory-inspection seam.
         daemon-app::memory
+        # [integrations wire v38] IntegrationsTreeModel / AccountManagementController bind the
+        # transport-adapter + person registry seams (ITransportRegistry / IPersonsService).
+        daemon-app::transports
+        daemon-app::uimodels
     PRIVATE
         daemon-app::warnings
 )

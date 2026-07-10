@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Integration hinzufügen</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Kontoeinstellungen</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Weiter</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Speichern</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Leer lassen, um den aktuellen Wert beizubehalten</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -3534,6 +3561,72 @@ bis er erneut registriert wird.</translation>
     <message>
         <source>image unavailable</source>
         <translation>Bild nicht verfügbar</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Verbinden</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Deaktivieren</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Aktivieren</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Kontoeinstellungen</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Konto entfernen</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>Dieses Konto entfernen und trennen? Der Node baut es vollständig ab.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Integrationen</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Alle einklappen</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Alle ausklappen</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Integration hinzufügen</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Personen</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Kanäle</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Direktnachrichten</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Durchsuchen</translation>
     </message>
 </context>
 <context>

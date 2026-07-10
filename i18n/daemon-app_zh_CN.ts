@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>添加集成</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>账户设置</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>继续</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>留空以保留当前值</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -3532,6 +3559,72 @@ until it is re-registered.</source>
     <message>
         <source>image unavailable</source>
         <translation>图片不可用</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>连接</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>禁用</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>启用</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>账户设置</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>移除账户</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>移除并断开此账户？节点将完全拆除它。</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>集成</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>全部折叠</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>全部展开</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>添加集成</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>人员</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>频道</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>私信</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>浏览</translation>
     </message>
 </context>
 <context>

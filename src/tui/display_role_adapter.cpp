@@ -4,6 +4,7 @@
 #include "display_role_adapter.h"
 
 #include "domain/sidebar_node.h"
+#include "integrations_tree_model.h"
 #include "presentation/display_presenter.h"
 #include "sessions_list_model.h"
 #include "sidebar_model.h"
@@ -38,7 +39,15 @@ QVariant DisplayRoleAdapter::data(const QModelIndex& index, int role) const {
         return {};
     }
     const QModelIndex src = mapToSource(index);
-    return m_kind == Kind::Sidebar ? sidebarData(src, role) : listData(src, role);
+    switch (m_kind) {
+    case Kind::Sidebar:
+        return sidebarData(src, role);
+    case Kind::Integrations:
+        return integrationsData(src, role);
+    case Kind::SessionList:
+        break;
+    }
+    return listData(src, role);
 }
 
 QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const {
@@ -128,6 +137,62 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
             case DisplayPresenter::StateTone::Neutral:
                 return QVariant::fromValue(tpal::warn());
             }
+        }
+        return {};
+    }
+    if (role == Tui::LeftDecorationSpaceRole) {
+        return 1;
+    }
+
+    return sourceModel()->data(src, role);
+}
+
+QVariant DisplayRoleAdapter::integrationsData(const QModelIndex& src, int role) const {
+    const auto srcData = [&](int r) { return sourceModel()->data(src, r); };
+
+    if (role == Qt::DisplayRole) {
+        const QString label = srcData(IntegrationsTreeModel::LabelRole).toString();
+        const QString rowKind = srcData(IntegrationsTreeModel::RowKindRole).toString();
+        const int depth = srcData(IntegrationsTreeModel::DepthRole).toInt();
+
+        // Section headers (Persons / Channels / Direct Messages) render as a foldable divider.
+        if (rowKind == QStringLiteral("section")) {
+            const QString tw = srcData(IntegrationsTreeModel::ExpandedRole).toBool()
+                                   ? QStringLiteral("\u25be ")
+                                   : QStringLiteral("\u25b8 ");
+            const QString indent(static_cast<qsizetype>(depth) * 2, QLatin1Char(' '));
+            return QStringLiteral("%1%2\u2500\u2500 %3").arg(indent, tw, label);
+        }
+
+        QString text(static_cast<qsizetype>(depth) * 2, QLatin1Char(' '));
+        if (srcData(IntegrationsTreeModel::HasChildrenRole).toBool()) {
+            text += srcData(IntegrationsTreeModel::ExpandedRole).toBool()
+                        ? QStringLiteral("\u25be ")
+                        : QStringLiteral("\u25b8 ");
+        }
+        text += label;
+        const int count = srcData(IntegrationsTreeModel::CountRole).toInt();
+        if (count >= 0) {
+            text += QStringLiteral("  (%1)").arg(count);
+        }
+        return text;
+    }
+
+    // A connection/presence dot on account roots (proving the model's connection role maps onto a
+    // Tui list decoration), coloured by the coarse connection token.
+    const QString rowKind = srcData(IntegrationsTreeModel::RowKindRole).toString();
+    if (role == Tui::LeftDecorationRole) {
+        if (rowKind == QStringLiteral("account") &&
+            !srcData(IntegrationsTreeModel::ConnectionRole).toString().isEmpty()) {
+            return QStringLiteral("\u25cf");
+        }
+        return {};
+    }
+    if (role == Tui::LeftDecorationFgRole) {
+        if (rowKind == QStringLiteral("account")) {
+            const QString conn = srcData(IntegrationsTreeModel::ConnectionRole).toString();
+            const bool up = conn == QStringLiteral("ready") || conn == QStringLiteral("connected");
+            return up ? QVariant::fromValue(tpal::statusOk()) : QVariant::fromValue(tpal::muted());
         }
         return {};
     }
