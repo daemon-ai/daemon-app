@@ -135,12 +135,16 @@ private:
     [[nodiscard]] qint64 now() const;
 
     LocalDatabase* m_db = nullptr;
-    QList<PendingOp> m_ops; // in-memory FIFO mirror of the durable rows
+    QList<PendingOp> m_ops; // in-memory FIFO mirror of the durable rows (by enqueued_ms)
     QSet<QString> m_pausedLanes;
-    QSet<QString> m_inflightLanes;
     // Per-op next-eligible time after a transient failure (in-memory: backoff need not survive a
     // restart — a booted op is immediately drain-eligible).
     QHash<QString, qint64> m_nextEligibleMs;
+    // Per-op acceptance timestamp, for the accepted-state expiry/orphan sweep (§6.6).
+    QHash<QString, qint64> m_acceptedAtMs;
+    // Monotonic enqueue stamp so a lane's FIFO order is total even when the wall clock collides or
+    // is injected as a constant (the on-disk order key is enqueued_ms).
+    qint64 m_lastEnqueueMs = 0;
     bool m_wirePaused = false; // Unauthenticated: pause all mutation lanes
     bool m_provenanceCapable = false;
     GatePredicate m_gate;
