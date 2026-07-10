@@ -192,3 +192,78 @@ add_test(NAME tst_downloads_panel COMMAND tst_downloads_panel)
 set_tests_properties(tst_downloads_panel PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
 )
+
+# [integrations wire v38] tst_integrations (work package AC): the REAL IntegrationsTree
+# (DaemonApp.Sidebar), driven by the in-repo mock Transports / Persons seams injected as the
+# app-global context properties + a serviceless AuthFlow (so the mounted AuthFlowSheet never binds
+# a redirect sink offscreen). Guards populate-from-seams, conversation activation reaching the
+# component signal, and the add-account -> AuthFlowSheet handoff. The Sidebar + Pages modules are
+# static, so their plugins (and transitive backing libs) link explicitly, like the GUI executable.
+qt_add_executable(tst_integrations tst_integrations_main.cpp)
+target_link_libraries(tst_integrations
+    PRIVATE
+        Qt6::QuickTest
+        Qt6::Qml
+        Qt6::Quick
+        Qt6::QuickControls2
+        da_theme
+        da_themeplugin
+        da_controls
+        da_controlsplugin
+        da_pages
+        da_pagesplugin
+        da_sidebar
+        da_sidebarplugin
+        daemon-app::transports
+        daemon-app::auth
+)
+target_compile_definitions(tst_integrations
+    PRIVATE
+        QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/integrations"
+        TEST_QML_IMPORT_PATH="$ENV{QML2_IMPORT_PATH}"
+)
+
+add_test(NAME tst_integrations COMMAND tst_integrations)
+set_tests_properties(tst_integrations PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+)
+
+# [integrations wire v38] tst_sidebar (work package AC): the REAL Sidebar.qml composition. Injects
+# the mock seams incl. a DEMO DaemonNet (non-empty transportsTree()) to prove the legacy transports
+# section is deliberately NOT re-composed, while the new IntegrationsTree is mounted + populated and
+# its conversation activation propagates to the Sidebar's conversationActivated signal.
+qt_add_executable(tst_sidebar tst_sidebar_main.cpp)
+target_link_libraries(tst_sidebar
+    PRIVATE
+        Qt6::QuickTest
+        Qt6::Qml
+        Qt6::Quick
+        Qt6::QuickControls2
+        da_theme
+        da_themeplugin
+        da_controls
+        da_controlsplugin
+        da_presentation
+        da_presentationplugin
+        da_pages
+        da_pagesplugin
+        da_sidebar
+        da_sidebarplugin
+        daemon-app::transports
+        daemon-app::auth
+        daemon-app::persistence
+        daemon-app::profiles
+        daemon-app::daemonnet
+        daemon-app::fleet
+        daemon-app::uimodels
+)
+target_compile_definitions(tst_sidebar
+    PRIVATE
+        QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/sidebar"
+        TEST_QML_IMPORT_PATH="$ENV{QML2_IMPORT_PATH}"
+)
+
+add_test(NAME tst_sidebar COMMAND tst_sidebar)
+set_tests_properties(tst_sidebar PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+)

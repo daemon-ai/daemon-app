@@ -403,6 +403,34 @@ target_link_libraries(tui_chat_activation_tests
 add_test(NAME tui_chat_activation_tests COMMAND tui_chat_activation_tests)
 set_tests_properties(tui_chat_activation_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_integrations_activation (AC sidebar composition; wire v38): the shared contract that
+# activating an IntegrationsTreeModel conversation row opens a native Chat tab for
+# (transport, conversation) via rwdetail::openConversationTab -> TabModel (the seam both shells
+# install when mounting the integrations tree). Links the shared TUI view-model lib (which carries
+# the integrations models) + the transport seams.
+# TabModel + IntegrationsTreeModel live in the shared TUI view-model lib; only the free-function
+# helper (rwdetail::openConversationTab) is compiled directly (it is not part of that lib).
+qt_add_executable(tui_integrations_activation_tests
+    tst_integrations_activation.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/root_widget_detail.cpp
+)
+set_target_properties(tui_integrations_activation_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_integrations_activation_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/tui
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs
+)
+target_link_libraries(tui_integrations_activation_tests
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        daemon-app::tui_viewmodels
+        daemon-app::transports
+        daemon-app::domain
+        daemon-app::persistence
+)
+add_test(NAME tui_integrations_activation_tests COMMAND tui_integrations_activation_tests)
+set_tests_properties(tui_integrations_activation_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_profile_editor: the W5 TUI profile editor - drives ProfileEditorDialog
 # (and its text-prompt / multi-line / checklist sub-flows, with real key
 # events) against the mock profile store + mock provider catalog in an
