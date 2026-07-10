@@ -15,6 +15,12 @@ qt_add_qml_module(da_composer_session
         completion_model.cpp
         composer_session_controller.h
         composer_session_controller.cpp
+        # [mirror A2] the turn-prompt lane storage adapter (spec 09 §6.7): binds ComposerQueueModel
+        # storage to the durable outbox. The composer reaches DOWN to the low-level outbox for
+        # crash-durability — hence composer_session links daemon-app::local (defined in src/core,
+        # configured before this module).
+        outbox_composer_queue_storage.h
+        outbox_composer_queue_storage.cpp
 )
 add_library(daemon-app::composer_session ALIAS da_composer_session)
 
@@ -24,6 +30,7 @@ target_link_libraries(da_composer_session
     PUBLIC
         Qt6::Qml
     PRIVATE
+        daemon-app::local
         daemon-app::models
         daemon-app::uimodels
         daemon-app::warnings
