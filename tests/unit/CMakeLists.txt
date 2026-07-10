@@ -1237,6 +1237,17 @@ if(TARGET daemon-app::mirror_ingestor)
         set_tests_properties(${_itst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endforeach()
 
+    # tst_mirror_e1_offline (mirror A5): the E1 cold-boot-offline scenario (spec 09 §12) spanning
+    # BOTH DBs — mirror-<id>.db (last-known node truth) + local-<id>.db (surviving pending ops), no
+    # connection, no auto-replay. Links the ingestor (MirrorService) + the local (outbox) module.
+    if(TARGET daemon-app::local)
+        qt_add_executable(tst_mirror_e1_offline tst_mirror_e1_offline.cpp)
+        target_link_libraries(tst_mirror_e1_offline
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::local)
+        add_test(NAME tst_mirror_e1_offline COMMAND tst_mirror_e1_offline)
+        set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
     # The daemon bridge translation (DecodedNodeEvent → mirror::NodeEvent): the second compile-time
     # exhaustiveness layer tying the app's generated wire enum to the policy table (spec §5.1/§12).
     # Needs the daemon codec facade (node_api_codec.h) + the ingestor's policy table.
