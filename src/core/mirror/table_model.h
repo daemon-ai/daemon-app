@@ -209,7 +209,12 @@ protected:
     // Construction-time (silent) (re)population: no reset signal, valid only before views attach.
     // Leaves that change the sort/source/scope re-derive by calling reprime() at ctor end.
     void primeFromSnapshot() {
-        // RED: initial population from the snapshot not yet implemented.
+        rows_ = presentRows(snapshot());
+        std::sort(rows_.begin(), rows_.end(),
+                  [this](const Entity& a, const Entity& b) { return orderBefore(a, b); });
+        for (const Entity& e : rows_) {
+            (void)interner().intern(rowIdentity(e));
+        }
         setWatermark(store().journal().headRev());
     }
     void reprime() {
@@ -219,7 +224,45 @@ protected:
 
     // ---- the delta -> row-op algorithm (§8.1) ----
     void applyCommit(quint64 /*revFrom*/, quint64 revTo) override {
-        // RED: delta -> row-op dispatch not yet implemented.
+        const std::vector<JournalRecord> deltas = store().journal().since(watermark(), kind());
+
+        std::vector<QString> touched;
+        QSet<QString> seen;
+        for (const JournalRecord& r : deltas) {
+            if (!matchesFilter(r) || seen.contains(r.key)) {
+                continue;
+            }
+            seen.insert(r.key);
+            touched.push_back(r.key);
+        }
+
+        if (!touched.empty() || sweepsAbsentRows()) {
+            // Final committed state, keyed by identity. Bounded by the collection size; the
+            // journal bounds the touched set. Windowed head-eviction is not journaled (§4.6), so
+            // WindowModel additionally sweeps rows no longer present (sweepsAbsentRows()).
+            QHash<QString, Entity> present;
+            for (const Entity& e : presentRows(snapshot())) {
+                present.insert(rowIdentity(e), e);
+            }
+            std::sort(touched.begin(), touched.end());
+            for (const QString& id : touched) {
+                auto it = present.constFind(id);
+                if (it != present.constEnd()) {
+                    upsertRow(id, it.value());
+                } else {
+                    removeRowByIdentity(id);
+                }
+            }
+            if (sweepsAbsentRows()) {
+                for (int i = static_cast<int>(rows_.size()) - 1; i >= 0; --i) {
+                    if (!present.contains(rowIdentity(rows_[static_cast<std::size_t>(i)]))) {
+                        beginRemoveRows(QModelIndex(), i, i);
+                        rows_.erase(rows_.begin() + i);
+                        endRemoveRows();
+                    }
+                }
+            }
+        }
         setWatermark(revTo);
     }
 
@@ -290,7 +333,7 @@ private:
     }
 
     void upsertRow(const QString& id, const Entity& e) {
-        interner().intern(id);
+        (void)interner().intern(id);
         const int old = indexOfIdentity(id);
         if (old < 0) {
             const int pos = sortedInsertPos(e);

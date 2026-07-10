@@ -35,8 +35,14 @@ public:
     StableIdInterner() = default;
 
     // Assign-or-return the stable id for a canonical key. Monotonic; never reused.
-    [[nodiscard]] qint64 intern(const QString& /*canonicalKey*/) {
-        return kInvalidId; // RED: monotonic interning not yet implemented
+    [[nodiscard]] qint64 intern(const QString& canonicalKey) {
+        auto it = ids_.constFind(canonicalKey);
+        if (it != ids_.constEnd()) {
+            return it.value();
+        }
+        const qint64 id = next_++;
+        ids_.insert(canonicalKey, id);
+        return id;
     }
 
     // The id for a key, or kInvalidId if this adapter never interned it. Does not assign.
