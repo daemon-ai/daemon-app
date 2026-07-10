@@ -85,7 +85,8 @@ signals:
     void pendingChanged();
     void pendingCountChanged();
     void lanePausedChanged();
-    // A ConvSend was durably enqueued (before any wire call). The surface focuses the pending strip.
+    // A ConvSend was durably enqueued (before any wire call). The surface focuses the pending
+    // strip.
     void enqueued(const QString& opId);
 
 private:

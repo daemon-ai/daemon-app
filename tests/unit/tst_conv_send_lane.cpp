@@ -4,7 +4,6 @@
 // clears the op; a rejection pauses the lane and surfaces retry/edit/discard.
 
 #include "conv_send_controller.h"
-
 #include "local_database.h"
 #include "outbox.h"
 #include "pending_ops_model.h"
@@ -60,7 +59,8 @@ private slots:
         QVERIFY(model != nullptr);
         QCOMPARE(model->rowCount(), 1);
         const QModelIndex idx = model->index(0, 0);
-        QCOMPARE(model->data(idx, PendingOpsModel::VerbRole).toString(), QStringLiteral("ConvSend"));
+        QCOMPARE(model->data(idx, PendingOpsModel::VerbRole).toString(),
+                 QStringLiteral("ConvSend"));
         QCOMPARE(model->data(idx, PendingOpsModel::StateRole).toInt(),
                  static_cast<int>(OpState::Pending));
         // The lane is the chat-send lane for this conversation's scope (§6.4).

@@ -98,7 +98,8 @@ QString ConvSendController::send(const QString& text) {
     args.insert(QStringLiteral("message"), trimmed);
     const QByteArray payload = QJsonDocument(args).toJson(QJsonDocument::Compact);
 
-    const QString opId = m_outbox->enqueue(QStringLiteral("ConvSend"), laneScope(), payload, trimmed);
+    const QString opId =
+        m_outbox->enqueue(QStringLiteral("ConvSend"), laneScope(), payload, trimmed);
     if (!opId.isEmpty()) {
         emit enqueued(opId);
     }
