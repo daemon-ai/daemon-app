@@ -90,10 +90,39 @@
       url = "github:Swordfish90/qmltermwidget";
       flake = false;
     };
+
+    # --- Mirror substrate (spec 09 §4, ADR-002/-008) -----------------------
+    # Value-oriented immutable data structures + the severable reactive-core
+    # header subset that back the client mirror store. All header-only and
+    # BSL-1.0/MIT (see THIRD-PARTY-NOTICES.md), pinned like the other vendored
+    # sources: `flake = false`, wired into the build via <DEP>_SOURCE_DIR by
+    # cmake/Dependencies.cmake (header-only INTERFACE targets). Revs match the
+    # references/ study clones so the ported behaviors track the audited code.
+    #
+    # immer 0.9.1+ (arximboldi/immer @ bd4fc74): normalized immer::table entity
+    # tables + immer::diff. lager 0.1.3+ (arximboldi/lager @ 276c55a): ONLY the
+    # reactive-core headers (state/commit/reader/cursor/writer/watch/setter +
+    # lenses + detail/nodes + extra/qt) are compiled — store/effects/debugger
+    # stay out (ADR-002). That subset needs zug (arximboldi/zug @ dd80433) and
+    # header-only boost::intrusive; it does NOT need boost::hana (verified
+    # references/architecture/lager/CMakeLists.txt: the INTERFACE `lager` target
+    # links neither Boost nor hana; only tests/examples do).
+    immer = {
+      url = "github:arximboldi/immer/bd4fc749b97dfa2b66a8f3de00bbf234db4856ef";
+      flake = false;
+    };
+    zug = {
+      url = "github:arximboldi/zug/dd80433152c9fa5b16a710c8b530fb6131749132";
+      flake = false;
+    };
+    lager = {
+      url = "github:arximboldi/lager/276c55a20c675bd5a9b1cb3dd09263cba5632fa4";
+      flake = false;
+    };
   };
 
   outputs =
-    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qrcodegen, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, ... }:
+    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qrcodegen, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, immer, zug, lager, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -230,6 +259,14 @@
           "-DQAUTOSTART_SOURCE_DIR=${qautostart}"
           "-DQXTGLOBALSHORTCUT_SOURCE_DIR=${qxtglobalshortcut}"
           "-DQMLTERMWIDGET_QML_DIR=${qmltermwidgetQmlDir}"
+          # Mirror substrate (header-only): immer + zug + the lager reactive-core
+          # subset. BOOST_INCLUDE_DIR feeds lager's boost::intrusive dependency
+          # (header-only; the only Boost the compiled subset needs). See
+          # cmake/Dependencies.cmake for the INTERFACE-target wiring.
+          "-DIMMER_SOURCE_DIR=${immer}"
+          "-DZUG_SOURCE_DIR=${zug}"
+          "-DLAGER_SOURCE_DIR=${lager}"
+          "-DBOOST_INCLUDE_DIR=${pkgs.boost.dev}/include"
           # Host Linguist tools (lupdate/lrelease for qt_add_translations),
           # pinned directly rather than listing qttools as an input: the qtbase
           # env hook folds every qttools input's plugin dir into the wrapped
@@ -1085,6 +1122,10 @@
             export QAUTOSTART_SOURCE_DIR="${qautostart}"
             export QXTGLOBALSHORTCUT_SOURCE_DIR="${qxtglobalshortcut}"
             export QMLTERMWIDGET_QML_DIR="${qmltermwidgetQmlDir}"
+            export IMMER_SOURCE_DIR="${immer}"
+            export ZUG_SOURCE_DIR="${zug}"
+            export LAGER_SOURCE_DIR="${lager}"
+            export BOOST_INCLUDE_DIR="${pkgs.boost.dev}/include"
           '';
         };
 
@@ -1100,6 +1141,16 @@
         # emscripten/Qt-wasm shellHook intact (an `inputsFrom` splice would drop it).
         devShells.wasm = qtWasmStack.devShell.overrideAttrs (old: {
           nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.chromium ];
+          # Surface the header-only mirror-substrate sources in the wasm shell too,
+          # so the A1 WASM smoke probe (immer + lager subset compiled under
+          # emscripten, spec 09 §11) can resolve them. Append to the existing
+          # emscripten/Qt-wasm shellHook rather than replacing it.
+          shellHook = (old.shellHook or "") + ''
+            export IMMER_SOURCE_DIR="${immer}"
+            export ZUG_SOURCE_DIR="${zug}"
+            export LAGER_SOURCE_DIR="${lager}"
+            export BOOST_INCLUDE_DIR="${pkgs.boost.dev}/include"
+          '';
         });
 
         # Android cross-development: SDK/NDK + the android Qt stack + host

@@ -39,6 +39,23 @@
         "type": "github"
       }
     },
+    "immer": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772018329,
+        "narHash": "sha256-i1pdp3Aw+2a8EBhM/Ad/1DhyVN2FwCBnyyLF4LALQWs=",
+        "owner": "arximboldi",
+        "repo": "immer",
+        "rev": "bd4fc749b97dfa2b66a8f3de00bbf234db4856ef",
+        "type": "github"
+      },
+      "original": {
+        "owner": "arximboldi",
+        "repo": "immer",
+        "rev": "bd4fc749b97dfa2b66a8f3de00bbf234db4856ef",
+        "type": "github"
+      }
+    },
     "ksyntaxhighlighting": {
       "flake": false,
       "locked": {
@@ -56,6 +73,23 @@
         "repo": "syntax-highlighting",
         "rev": "ccb31f722406d5b980ba57cf71a3ffab70a82847",
         "type": "gitlab"
+      }
+    },
+    "lager": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774091118,
+        "narHash": "sha256-LSPpqhv2nBJJCkobB4L6CEMTIu8l1Uh3IV2RsX+ewQk=",
+        "owner": "arximboldi",
+        "repo": "lager",
+        "rev": "276c55a20c675bd5a9b1cb3dd09263cba5632fa4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "arximboldi",
+        "repo": "lager",
+        "rev": "276c55a20c675bd5a9b1cb3dd09263cba5632fa4",
+        "type": "github"
       }
     },
     "md4qt": {
@@ -252,7 +286,9 @@
       "inputs": {
         "earcut": "earcut",
         "flake-utils": "flake-utils",
+        "immer": "immer",
         "ksyntaxhighlighting": "ksyntaxhighlighting",
+        "lager": "lager",
         "md4qt": "md4qt",
         "microtex": "microtex",
         "nixpkgs": "nixpkgs",
@@ -264,7 +300,8 @@
         "qsimpleupdater": "qsimpleupdater",
         "qwindowkit": "qwindowkit",
         "qxtglobalshortcut": "qxtglobalshortcut",
-        "tuiwidgets": "tuiwidgets"
+        "tuiwidgets": "tuiwidgets",
+        "zug": "zug"
       }
     },
     "systems": {
@@ -296,6 +333,23 @@
         "owner": "tuiwidgets",
         "repo": "tuiwidgets",
         "rev": "31ccc7af4ff47ec209e8e7b3508988fec5d2e2e9",
+        "type": "github"
+      }
+    },
+    "zug": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768322786,
+        "narHash": "sha256-0HrvCpbVnxEvwvG4btXu0hRzdcHsGwM/HUWES/fmxrs=",
+        "owner": "arximboldi",
+        "repo": "zug",
+        "rev": "dd80433152c9fa5b16a710c8b530fb6131749132",
+        "type": "github"
+      },
+      "original": {
+        "owner": "arximboldi",
+        "repo": "zug",
+        "rev": "dd80433152c9fa5b16a710c8b530fb6131749132",
         "type": "github"
       }
     }

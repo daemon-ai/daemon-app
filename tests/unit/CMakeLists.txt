@@ -1188,3 +1188,17 @@ target_link_libraries(tst_mirror_entities
 )
 add_test(NAME tst_mirror_entities COMMAND tst_mirror_entities)
 set_tests_properties(tst_mirror_entities PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# The A1 mirror-substrate suite (spec 09 §4, §11): the store apply/commit pipeline, the ACTIVE
+# degraded journal + watermarks/compaction, mirror-<id>.db persistence, and the ADR-008 observe
+# seam (both spike implementations). Gated on the vendored immer+zug+lager substrate being built
+# (daemon-app::mirror_substrate); platform stacks without those sources skip these tests. Ported
+# immer/lager behaviors are attributed in each source file's header.
+if(TARGET daemon-app::mirror_substrate)
+    foreach(_mtst tst_mirror_journal tst_mirror_store tst_mirror_persistence tst_mirror_observe)
+        qt_add_executable(${_mtst} ${_mtst}.cpp)
+        target_link_libraries(${_mtst} PRIVATE Qt6::Test daemon-app::mirror_substrate)
+        add_test(NAME ${_mtst} COMMAND ${_mtst})
+        set_tests_properties(${_mtst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endforeach()
+endif()
