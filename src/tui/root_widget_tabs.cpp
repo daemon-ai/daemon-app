@@ -3,6 +3,7 @@
 
 #include "app/code_editor_controller.h"
 #include "app/transcript_log.h"
+#include "chat_conversation_controller.h"
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
@@ -29,6 +30,7 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "transports/ichat_service.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
 #include "tui_page_hub.h"
@@ -67,6 +69,16 @@
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWidget.h>
 #include <Tui/ZWindow.h>
+
+// [integrations wire v38] Per-native-chat-tab state (A4): the shared conversation
+// view-model bound to the IChatService seam, plus the document the shared
+// TranscriptView renders. The controller re-projects on every MessagesChanged, so a
+// backgrounded chat tab keeps its transcript current.
+struct ChatTab {
+    int tabId = -1;
+    ChatConversationController* controller = nullptr;
+    be::DocumentStore doc;
+};
 
 void RootWidget::previewSessionTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
@@ -136,9 +148,94 @@ void RootWidget::activateTab(int tabId) {
         activateTranscriptTab(tabId);
     } else if (kind == TabModel::File) {
         activateFileTab(tabId);
+    } else if (kind == TabModel::Chat) {
+        activateChatTab(tabId);
     } else {
         activatePageTab(row);
     }
+}
+
+ChatTab* RootWidget::ensureChatTab(int tabId) {
+    auto it = m_chatTabs.find(tabId);
+    if (it != m_chatTabs.end()) {
+        return it.value();
+    }
+    const int row = m_tabModel->indexOfTabId(tabId);
+    if (row < 0) {
+        return nullptr;
+    }
+    auto* chat = new ChatTab;
+    chat->tabId = tabId;
+    chat->controller = new ChatConversationController(this);
+    chat->controller->setService(m_services.chat);
+    // Re-render this tab's document whenever the authoritative rows change (initial
+    // history load, a MessagesChanged refresh, or a send round-trip); repaint only
+    // when it is the foreground tab.
+    connect(chat->controller, &ChatConversationController::markdownChanged, this, [this, chat] {
+        chat->doc.loadMarkdown(chat->controller->markdown());
+        if (m_activeChat == chat->controller && m_transcript != nullptr) {
+            m_transcript->reload();
+        }
+    });
+    // A ConvSend failed: surface a non-blocking notice. The TUI has no in-terminal
+    // toast, so it uses the established desktop-notification path (reduced-form
+    // parity with the GUI toast) plus a terminal bell.
+    connect(chat->controller, &ChatConversationController::sendFailed, this,
+            [](const QString& message) {
+                rwdetail::emitDesktopNotification(
+                    RootWidget::tr("Message not sent"),
+                    message.isEmpty() ? RootWidget::tr("Couldn't send the message.") : message);
+            });
+    m_chatTabs.insert(tabId, chat);
+    chat->controller->open(m_tabModel->transportAt(row), m_tabModel->conversationAt(row));
+    return chat;
+}
+
+void RootWidget::activateChatTab(int tabId) {
+    ChatTab* chat = ensureChatTab(tabId);
+    if (chat == nullptr) {
+        return;
+    }
+    closeTranscriptSearch();
+    showEditor(false);
+    m_active = nullptr;
+    m_activeChat = chat->controller;
+    if (m_composerChrome != nullptr) {
+        m_composerChrome->setTurn(nullptr);
+    }
+    if (m_transcript != nullptr) {
+        m_transcript->setSearch(nullptr);
+        m_transcript->setFeedbackRatings(nullptr);
+        m_transcript->setDocument(&chat->doc);
+        m_transcript->reload();
+    }
+    // A chat-scoped composer session id so per-conversation drafts don't collide
+    // with real sessions; a chat conversation has no assistant turn, so never busy.
+    m_composerSession->setSessionId(
+        QStringLiteral("chat:%1:%2")
+            .arg(m_tabModel->transportAt(m_tabModel->indexOfTabId(tabId)),
+                 m_tabModel->conversationAt(m_tabModel->indexOfTabId(tabId))));
+    m_composerSession->setBusy(false);
+    m_status->setBusy(false);
+    updateTodos();
+    updateSubagents();
+}
+
+void RootWidget::destroyChatTab(int tabId) {
+    auto it = m_chatTabs.find(tabId);
+    if (it == m_chatTabs.end()) {
+        return;
+    }
+    ChatTab* chat = it.value();
+    if (m_activeChat == chat->controller) {
+        m_activeChat = nullptr;
+        if (m_transcript != nullptr) {
+            m_transcript->setDocument(&m_pageDoc);
+        }
+    }
+    delete chat->controller;
+    delete chat;
+    m_chatTabs.erase(it);
 }
 
 void RootWidget::activateTranscriptTab(int tabId) {
@@ -151,6 +248,7 @@ void RootWidget::activateTranscriptTab(int tabId) {
     closeTranscriptSearch();
     showEditor(false);
     m_active = s;
+    m_activeChat = nullptr;
     if (m_transcript != nullptr) {
         m_transcript->setDocument(&s->doc);
         m_transcript->setSearch(&s->search);
@@ -178,6 +276,7 @@ void RootWidget::activateFileTab(int tabId) {
     // read through the fs seam) and show it in place of the transcript stack.
     closeTranscriptSearch();
     m_active = nullptr;
+    m_activeChat = nullptr;
     editor::CodeEditorController* c =
         m_fileTabs != nullptr ? m_fileTabs->ensureFileSession(tabId) : nullptr;
     if (m_editorView != nullptr) {
@@ -196,6 +295,7 @@ void RootWidget::activatePageTab(int row) {
     closeTranscriptSearch();
     showEditor(false);
     m_active = nullptr;
+    m_activeChat = nullptr;
     const int kind = m_tabModel->kindAt(row);
     // Per-agent Memory tab: re-scope the shared memory models to this tab's
     // agent (profile == bank) before projecting. Switching between agents'
@@ -247,6 +347,11 @@ void RootWidget::showEditor(bool on) {
 }
 
 void RootWidget::destroySession(int tabId) {
+    // Chat tabs hold a ChatConversationController + document rather than a TabSession.
+    if (m_chatTabs.contains(tabId)) {
+        destroyChatTab(tabId);
+        return;
+    }
     // File tabs hold an editor controller rather than a TabSession.
     if (m_fileTabs != nullptr && m_fileTabs->destroySession(tabId, m_editorView)) {
         return;

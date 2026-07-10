@@ -12,6 +12,7 @@ import DaemonApp.Tabs
 import DaemonApp.Pages
 import DaemonApp.Memory
 import DaemonApp.Terminal
+import DaemonApp.Chat
 
 // The session pane host, built as two stacked containers with EXPLICIT
 // anchored geometry (no outer ColumnLayout): a fixed-height tab bar at the top
@@ -138,6 +139,17 @@ Rectangle {
             if (ld && ld.item && "section" in ld.item)
                 ld.item.section = section;
         }
+    }
+
+    // [integrations wire v38] Activating a room/DM opens (or focuses) a native chat
+    // tab for (transport, conversation) — the deliberate replacement for the old
+    // open-Channels fallback. Find-or-create keyed on the pair; the title falls back
+    // to the conversation id so the chip is never blank.
+    function openConversation(transport, conversation, title) {
+        if (!transport || !conversation)
+            return;
+        const label = (title && title.length > 0) ? title : conversation;
+        tabModel.openConversation(transport, conversation, label);
     }
 
     // Open (or re-activate) a per-agent surface keyed by the agent's ProfileRef.
@@ -271,6 +283,8 @@ Rectangle {
                 required property string filePath
                 required property string fileRoot
                 required property string profile
+                required property string transport
+                required property string conversation
 
                 anchors.fill: parent
                 visible: index === tabModel.currentIndex
@@ -296,6 +310,7 @@ Rectangle {
                     case TabModel.Memory:     return memoryComp;
                     case TabModel.Profile:    return agentProfileComp;
                     case TabModel.File:       return fileComp;
+                    case TabModel.Chat:       return chatComp;
                     default:                  return transcriptComp;
                     }
                 }
@@ -320,6 +335,14 @@ Rectangle {
                     if (pageLoader.kind === TabModel.Memory
                         || pageLoader.kind === TabModel.Profile) {
                         item.profile = Qt.binding(() => pageLoader.profile);
+                        return;
+                    }
+                    // Native chat tabs (A4) bind their (transport, conversation) so a
+                    // reassigned tab rebinds its ChatConversationController in place.
+                    if (pageLoader.kind === TabModel.Chat) {
+                        item.transport = Qt.binding(() => pageLoader.transport);
+                        item.conversation = Qt.binding(() => pageLoader.conversation);
+                        item.isActive = Qt.binding(() => pageLoader.index === tabModel.currentIndex);
                         return;
                     }
                     // Manager/settings pages are self-contained (they bind global
@@ -416,6 +439,7 @@ Rectangle {
     Component { id: memoryComp;    MemoryPage {} }
     Component { id: agentProfileComp; AgentProfilePage {} }
     Component { id: fileComp;      FilePage {} }
+    Component { id: chatComp;      ChatPage {} }
 
     // --- Session-action dialogs (rename + export) ---------------------------
     // Rename the session via the store. openFor(id) seeds the field with the

@@ -1343,6 +1343,17 @@ sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Tidak dapat mengirim pesan.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Belum ada pesan</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5711,6 +5722,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Sesi baru</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Pesan tidak terkirim</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Tidak dapat mengirim pesan.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Pengaturan sesi</translation>
     </message>
@@ -7169,6 +7188,10 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
     <message>
         <source>Agent</source>
         <translation>Agen</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Obrolan</translation>
     </message>
 </context>
 <context>

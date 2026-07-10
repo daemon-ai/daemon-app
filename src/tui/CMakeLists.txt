@@ -46,6 +46,10 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Session/subagent_model.cpp
     ../DaemonApp/Tabs/tab_model.h
     ../DaemonApp/Tabs/tab_model.cpp
+    # [integrations wire v38] Native-chat tab view-model, shared verbatim with the GUI
+    # (ChatPage.qml). Toolkit-agnostic: only QObject + the transports IChatService seam.
+    ../DaemonApp/Chat/chat_conversation_controller.h
+    ../DaemonApp/Chat/chat_conversation_controller.cpp
     ../DaemonApp/Command/command_registry.h
     ../DaemonApp/Command/command_registry.cpp
     # File tree + editor view-models, shared verbatim with the GUI.
@@ -82,6 +86,7 @@ target_include_directories(da_tui_viewmodels PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/SessionsList"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Session"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Tabs"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Chat"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Command"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Files"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Participants"
@@ -106,7 +111,8 @@ target_link_libraries(da_tui_viewmodels
         # The memory view-models talk to the memory-inspection seam.
         daemon-app::memory
         # [integrations wire v38] IntegrationsTreeModel / AccountManagementController bind the
-        # transport-adapter + person registry seams (ITransportRegistry / IPersonsService).
+        # transport-adapter + person registry seams (ITransportRegistry / IPersonsService);
+        # ChatConversationController binds the transports IChatService seam.
         daemon-app::transports
         daemon-app::uimodels
     PRIVATE

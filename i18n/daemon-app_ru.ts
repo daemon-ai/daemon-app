@@ -1343,6 +1343,17 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Не удалось отправить сообщение.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Пока нет сообщений</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5719,6 +5730,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Новая сессия</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Сообщение не отправлено</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Не удалось отправить сообщение.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Настройки сессии</translation>
     </message>
@@ -7185,6 +7204,10 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Agent</source>
         <translation>Агент</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Чат</translation>
     </message>
 </context>
 <context>

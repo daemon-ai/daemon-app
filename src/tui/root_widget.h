@@ -103,6 +103,7 @@ class TranscriptExporter;
 class DisplayRoleAdapter;
 class ParticipantsView;
 class TabModel;
+class ChatConversationController;
 class TuiFileTabController;
 class TuiOverlayHost;
 class TuiPageHub;
@@ -115,6 +116,13 @@ class TabSessionManager;
 // views always binds to the active session. Stored by pointer (never moved) so the
 // ingest's &doc back-pointer stays valid. Defined in root_widget.cpp.
 struct TabSession;
+
+// [integrations wire v38] Per-native-chat-tab backend state (A4): each Chat tab owns
+// an independent ChatConversationController (bound to the shared IChatService) + a
+// DocumentStore rendered by the shared TranscriptView, so a backgrounded chat tab
+// keeps its transcript current off the MessagesChanged feed. Defined in
+// root_widget_tabs.cpp.
+struct ChatTab;
 
 // The TUI shell: a single full-screen window holding the three-column layout
 // (Sidebar | SessionsList | Session), driven entirely by the app's
@@ -359,6 +367,13 @@ private:
     void activateTranscriptTab(int tabId);
     void activateFileTab(int tabId);
     void activatePageTab(int row);
+    // [integrations wire v38] Native chat tabs (A4). ensureChatTab lazily builds the
+    // per-tab controller + document (bound to the IChatService seam) and opens the
+    // conversation; activateChatTab binds the shared transcript/composer to it;
+    // destroyChatTab tears it down on close.
+    void activateChatTab(int tabId);
+    ChatTab* ensureChatTab(int tabId);
+    void destroyChatTab(int tabId);
 
     // --- overlay/theme helpers (root_widget_pages.cpp) -----------------------
     // Build the checkpoint overlay's display strings + parallel id list from the
@@ -433,6 +448,11 @@ private:
     std::unique_ptr<TabSessionManager> m_tabSessions;
     // The active transcript session (nullptr while a page tab is active).
     TabSession* m_active = nullptr;
+    // [integrations wire v38] Per-native-chat-tab state, keyed by tab id; plus the
+    // active chat controller (nullptr unless a Chat tab is foregrounded), which the
+    // composer submit routes to instead of a session orchestrator.
+    QHash<int, ChatTab*> m_chatTabs;
+    ChatConversationController* m_activeChat = nullptr;
 
     // TUI-only glue + widgets.
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;

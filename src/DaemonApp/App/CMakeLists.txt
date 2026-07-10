@@ -89,6 +89,7 @@ target_link_libraries(daemon-app
         daemon-app::sessionslist
         daemon-app::session_view
         daemon-app::tabs
+        daemon-app::chat_view
         daemon-app::terminal
         daemon-app::files
         daemon-app::participants
@@ -112,6 +113,7 @@ target_link_libraries(daemon-app
         da_sessionslistplugin
         da_session_viewplugin
         da_tabsplugin
+        da_chat_viewplugin
         da_terminalplugin
         da_filesplugin
         da_participantsplugin

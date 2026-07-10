@@ -11,6 +11,7 @@ QSet<int> routedKinds() {
     return {
         TabModel::Transcript, // per-session chat tab (root_widget_tabs.cpp)
         TabModel::File,       // code editor tab (root_widget_tabs.cpp)
+        TabModel::Chat,       // native chat tab: transcript + composer (root_widget_tabs.cpp)
         // Manager-hub / page tabs (TuiPageHub::pageMarkdownForKind).
         TabModel::Settings,
         TabModel::Models,

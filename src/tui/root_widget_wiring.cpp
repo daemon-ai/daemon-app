@@ -3,6 +3,7 @@
 
 #include "app/code_editor_controller.h"
 #include "app/transcript_log.h"
+#include "chat_conversation_controller.h"
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
@@ -642,6 +643,12 @@ void RootWidget::wireComposer() {
     // document). Background tabs keep their own orchestrators running independently.
     connect(m_composerSession, &ComposerSessionController::submitted, this,
             [this](const QString& text, const QString& refs) {
+                // [integrations wire v38] A native chat tab: send via ConvSend (no local
+                // echo — the node's MessagesChanged brings the line back authoritatively).
+                if (m_activeChat != nullptr) {
+                    m_activeChat->send(text);
+                    return;
+                }
                 if (m_active != nullptr) {
                     // Submitting commits to this session: a preview tab becomes
                     // permanent (VSCode-style) so the next preview opens elsewhere.

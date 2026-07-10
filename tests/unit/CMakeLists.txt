@@ -978,6 +978,29 @@ target_link_libraries(tst_tab_model
 add_test(NAME tst_tab_model COMMAND tst_tab_model)
 set_tests_properties(tst_tab_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_chat_conversation_controller (A4 app/chat-tabs; wire v38): the shared native-chat
+# view-model BOTH surfaces bind — history load on open, the oldest-first markdown projection
+# of ConvHistory rows, send-without-local-echo, authoritative MessagesChanged refresh (fg + bg),
+# per-conversation signal filtering, and sendFailed surfacing. Compiles the controller source
+# directly and links the transports seam (IChatService + MockChatService).
+qt_add_executable(tst_chat_conversation_controller
+    tst_chat_conversation_controller.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/chat_conversation_controller.cpp
+)
+set_target_properties(tst_chat_conversation_controller PROPERTIES AUTOMOC ON)
+target_include_directories(tst_chat_conversation_controller
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat"
+)
+target_link_libraries(tst_chat_conversation_controller
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        daemon-app::transports
+)
+add_test(NAME tst_chat_conversation_controller COMMAND tst_chat_conversation_controller)
+set_tests_properties(tst_chat_conversation_controller
+    PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_session_orchestrator: the shared submit pipeline - submit starts the
 # turn + populates todos (and clears them after the turn settles), cancel resets,
 # and slash "/new" is handled while other commands surface via commandRequested.

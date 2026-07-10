@@ -1343,6 +1343,17 @@ bis er erneut registriert wird.</translation>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Die Nachricht konnte nicht gesendet werden.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Noch keine Nachrichten</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5715,6 +5726,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Neue Sitzung</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Nachricht nicht gesendet</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Die Nachricht konnte nicht gesendet werden.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Sitzungseinstellungen</translation>
     </message>
@@ -7177,6 +7196,10 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
     <message>
         <source>Agent</source>
         <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
     </message>
 </context>
 <context>

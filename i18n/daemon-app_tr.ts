@@ -1343,6 +1343,17 @@ kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Mesaj gönderilemedi.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Henüz mesaj yok</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5711,6 +5722,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Yeni oturum</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Mesaj gönderilmedi</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Mesaj gönderilemedi.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Oturum ayarları</translation>
     </message>
@@ -7169,6 +7188,10 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
     <message>
         <source>Agent</source>
         <translation>Aracı</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Sohbet</translation>
     </message>
 </context>
 <context>
