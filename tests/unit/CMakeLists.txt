@@ -1146,6 +1146,36 @@ target_link_libraries(tst_composer_upload
 add_test(NAME tst_composer_upload COMMAND tst_composer_upload)
 set_tests_properties(tst_composer_upload PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_outbox (mirror A2): the durable outbox + local-<id>.db module (spec 09 §6, §3.4, §4.5) -
+# UUIDv7 op-ids, the versioned+migrated local db (never dropped), the outbox state machine
+# (lanes/FIFO/backoff/gates/rejection/confirm/bounds), crash-injection across enqueue|send|confirm +
+# boot reconciliation, the disabled auto-replay gate, and the PendingOpsModel lens. Ported behaviors
+# re-expressed from Sink/Akonadi (LGPL) - behaviors only, no source text.
+qt_add_executable(tst_outbox tst_outbox.cpp)
+target_link_libraries(tst_outbox
+    PRIVATE
+        Qt6::Test
+        Qt6::Sql
+        daemon-app::local
+)
+add_test(NAME tst_outbox COMMAND tst_outbox)
+set_tests_properties(tst_outbox PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_composer_outbox_queue (mirror A2): the composer turn-prompt lane storage swap (spec 09 §6.7
+# step 1) - queued prompts become crash-durable while ComposerQueueModel's roles/signals are
+# unchanged. The existing composer suites remain the untouched regression harness for the default
+# in-memory path.
+qt_add_executable(tst_composer_outbox_queue tst_composer_outbox_queue.cpp)
+target_link_libraries(tst_composer_outbox_queue
+    PRIVATE
+        Qt6::Test
+        Qt6::Sql
+        daemon-app::composer_session
+        daemon-app::local
+)
+add_test(NAME tst_composer_outbox_queue COMMAND tst_composer_outbox_queue)
+set_tests_properties(tst_composer_outbox_queue PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_mirror_entities: the generated mirror entity layer (spec 09 §3). Linking daemon-app::mirror
 # IS the "generated headers compile in the app build" gate (moc-processed Q_GADGET structs + typed
 # keys + provenance table); the asserts cover §3.1 census completeness, provenance completeness,

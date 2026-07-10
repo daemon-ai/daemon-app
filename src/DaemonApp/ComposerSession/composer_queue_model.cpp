@@ -36,6 +36,7 @@ void ComposerQueueModel::append(const QString& text, const QString& refs) {
     beginInsertRows({}, row, row);
     m_entries.push_back({text, refs});
     endInsertRows();
+    persist();
     emit countChanged();
 }
 
@@ -44,6 +45,7 @@ void ComposerQueueModel::setEntry(int index, const QString& text, const QString&
         return;
     }
     m_entries[index] = {text, refs};
+    persist();
     const QModelIndex idx = this->index(index);
     emit dataChanged(idx, idx, {TextRole, RefsRole});
 }
@@ -55,6 +57,7 @@ void ComposerQueueModel::insertAt(int index, const QString& text, const QString&
     beginInsertRows({}, index, index);
     m_entries.insert(index, {text, refs});
     endInsertRows();
+    persist();
     emit countChanged();
 }
 
@@ -65,6 +68,7 @@ void ComposerQueueModel::removeAt(int index) {
     beginRemoveRows({}, index, index);
     m_entries.removeAt(index);
     endRemoveRows();
+    persist();
     emit countChanged();
 }
 
@@ -75,6 +79,7 @@ void ComposerQueueModel::clear() {
     beginResetModel();
     m_entries.clear();
     endResetModel();
+    persist();
     emit countChanged();
 }
 
@@ -90,5 +95,28 @@ void ComposerQueueModel::setEntries(const QList<Entry>& entries) {
     beginResetModel();
     m_entries = entries;
     endResetModel();
+    persist();
     emit countChanged();
+}
+
+void ComposerQueueModel::setStorage(ComposerQueueStorage* storage) {
+    if (m_storage == storage) {
+        return;
+    }
+    m_storage = storage;
+    if (m_storage == nullptr) {
+        return;
+    }
+    // Hydrate the model from the durable backend (initial population -> a single reset). The
+    // presented rows/roles are unchanged; only their durable home moved.
+    beginResetModel();
+    m_entries = m_storage->loadEntries();
+    endResetModel();
+    emit countChanged();
+}
+
+void ComposerQueueModel::persist() {
+    if (m_storage != nullptr) {
+        m_storage->persistEntries(m_entries);
+    }
 }
