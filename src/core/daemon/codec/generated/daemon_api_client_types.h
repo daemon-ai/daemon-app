@@ -2458,10 +2458,56 @@ struct create_conversation_details_participants_r {
 	size_t create_conversation_details_participants_contact_info_m_count;
 };
 
+struct auth_field_kind_r {
+	enum {
+		auth_field_kind_Text_tstr_c,
+		auth_field_kind_Password_tstr_c,
+		auth_field_kind_Number_tstr_c,
+		auth_field_kind_Choice_tstr_c,
+	} auth_field_kind_choice;
+};
+
+struct auth_param_field_kind {
+	struct auth_field_kind_r auth_param_field_kind;
+};
+
+struct auth_param_field_default_r {
+	union {
+		struct zcbor_string auth_param_field_default_tstr;
+	};
+	enum {
+		auth_param_field_default_tstr_c,
+		auth_param_field_default_null_m_c,
+	} auth_param_field_default_choice;
+};
+
+struct auth_param_field_placeholder_r {
+	union {
+		struct zcbor_string auth_param_field_placeholder_tstr;
+	};
+	enum {
+		auth_param_field_placeholder_tstr_c,
+		auth_param_field_placeholder_null_m_c,
+	} auth_param_field_placeholder_choice;
+};
+
+struct auth_param_field_choices_r {
+	struct zcbor_string auth_param_field_choices_tstr[64];
+	size_t auth_param_field_choices_tstr_count;
+};
+
 struct auth_param_field {
 	struct zcbor_string auth_param_field_key;
 	struct zcbor_string auth_param_field_label;
 	bool auth_param_field_required;
+	struct auth_param_field_kind auth_param_field_kind;
+	bool auth_param_field_kind_present;
+	struct auth_param_field_default_r auth_param_field_default;
+	bool auth_param_field_default_present;
+	struct auth_param_field_placeholder_r auth_param_field_placeholder;
+	bool auth_param_field_placeholder_present;
+	struct auth_param_field_choices_r auth_param_field_choices;
+	bool auth_param_field_choices_present;
 };
 
 struct account_settings_schema_fields_r {
@@ -3449,6 +3495,15 @@ struct request_ft_receive {
 	struct file_transfer FtReceive_transfer;
 };
 
+struct request_transport_settings {
+	struct zcbor_string TransportSettings_transport;
+};
+
+struct request_transport_configure {
+	struct zcbor_string TransportConfigure_transport;
+	struct account_settings_values TransportConfigure_settings;
+};
+
 struct api_request_r {
 	union {
 		struct request_submit api_request_request_submit_m;
@@ -3612,6 +3667,8 @@ struct api_request_r {
 		struct request_presence_set_active api_request_request_presence_set_active_m;
 		struct request_ft_send api_request_request_ft_send_m;
 		struct request_ft_receive api_request_request_ft_receive_m;
+		struct request_transport_settings api_request_request_transport_settings_m;
+		struct request_transport_configure api_request_request_transport_configure_m;
 	};
 	enum {
 		api_request_request_submit_m_c,
@@ -3809,6 +3866,8 @@ struct api_request_r {
 		api_request_request_ft_send_m_c,
 		api_request_request_ft_receive_m_c,
 		api_request_request_person_list_m_c,
+		api_request_request_transport_settings_m_c,
+		api_request_request_transport_configure_m_c,
 	} api_request_choice;
 };
 
@@ -5297,6 +5356,11 @@ struct node_event_resync_needed {
 	struct zcbor_string ResyncNeeded_scope;
 };
 
+struct node_event_messages_changed {
+	struct zcbor_string MessagesChanged_transport;
+	struct zcbor_string MessagesChanged_conv;
+};
+
 struct node_event_r {
 	union {
 		struct node_event_session_advanced node_event_session_advanced_m;
@@ -5311,6 +5375,7 @@ struct node_event_r {
 		struct node_event_membership_changed node_event_membership_changed_m;
 		struct node_event_contacts_changed node_event_contacts_changed_m;
 		struct node_event_resync_needed node_event_resync_needed_m;
+		struct node_event_messages_changed node_event_messages_changed_m;
 	};
 	enum {
 		node_event_session_advanced_m_c,
@@ -5328,6 +5393,7 @@ struct node_event_r {
 		node_event_resync_needed_m_c,
 		node_event_notifications_changed_m_c,
 		node_event_persons_changed_m_c,
+		node_event_messages_changed_m_c,
 	} node_event_choice;
 };
 
@@ -6155,6 +6221,7 @@ struct auth_flow_kind_r {
 		auth_flow_kind_UserToken_tstr_c,
 		auth_flow_kind_PhoneOtp_tstr_c,
 		auth_flow_kind_QrPairing_tstr_c,
+		auth_flow_kind_UserPassword_tstr_c,
 	} auth_flow_kind_choice;
 };
 
@@ -6986,6 +7053,7 @@ struct conversation_type_r {
 		conversation_type_GroupDm_tstr_c,
 		conversation_type_Channel_tstr_c,
 		conversation_type_Thread_tstr_c,
+		conversation_type_Space_tstr_c,
 	} conversation_type_choice;
 };
 
@@ -7084,6 +7152,16 @@ struct conversation_info_members_r {
 	size_t conversation_info_members_conversation_member_m_count;
 };
 
+struct conversation_info_parent_r {
+	union {
+		struct zcbor_string conversation_info_parent_tstr;
+	};
+	enum {
+		conversation_info_parent_tstr_c,
+		conversation_info_parent_null_m_c,
+	} conversation_info_parent_choice;
+};
+
 struct conversation_info {
 	struct zcbor_string conversation_info_transport;
 	struct zcbor_string conversation_info_id;
@@ -7096,6 +7174,8 @@ struct conversation_info {
 	bool conversation_info_description_present;
 	struct conversation_info_members_r conversation_info_members;
 	bool conversation_info_members_present;
+	struct conversation_info_parent_r conversation_info_parent;
+	bool conversation_info_parent_present;
 };
 
 struct conv_page_next_r {
@@ -7693,6 +7773,10 @@ struct response_persons {
 	size_t response_persons_Persons_person_m_count;
 };
 
+struct response_transport_settings {
+	struct account_settings_values response_transport_settings_TransportSettings;
+};
+
 struct api_response_r {
 	union {
 		struct response_routed api_response_response_routed_m;
@@ -7792,6 +7876,7 @@ struct api_response_r {
 		struct response_saved_presences api_response_response_saved_presences_m;
 		struct response_notifications api_response_response_notifications_m;
 		struct response_persons api_response_response_persons_m;
+		struct response_transport_settings api_response_response_transport_settings_m;
 	};
 	enum {
 		api_response_response_ok_m_c,
@@ -7892,6 +7977,7 @@ struct api_response_r {
 		api_response_response_saved_presences_m_c,
 		api_response_response_notifications_m_c,
 		api_response_response_persons_m_c,
+		api_response_response_transport_settings_m_c,
 	} api_response_choice;
 };
 
