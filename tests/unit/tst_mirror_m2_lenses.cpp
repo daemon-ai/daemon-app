@@ -57,7 +57,8 @@ private slots:
             .commit();
 
         ChatWindowModel model(store, ChatMessageScope{QStringLiteral("m"), QStringLiteral("!r")});
-        QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Fatal);
+        QAbstractItemModelTester tester(&model,
+                                        QAbstractItemModelTester::FailureReportingMode::Fatal);
         QCOMPARE(model.rowCount(), 2);
         QCOMPARE(model.data(model.index(0, 0), ChatWindowModel::TextRole).toString(),
                  QStringLiteral("first"));
@@ -93,7 +94,8 @@ private slots:
         Store store(obs);
         store.beginBatch().upsert(person("p2", "Zoe")).upsert(person("p1", "Amy")).commit();
         PersonListModel model(store);
-        QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Fatal);
+        QAbstractItemModelTester tester(&model,
+                                        QAbstractItemModelTester::FailureReportingMode::Fatal);
         QCOMPARE(model.rowCount(), 2);
         QCOMPARE(model.data(model.index(0, 0), PersonListModel::AliasRole).toString(),
                  QStringLiteral("Amy"));
@@ -110,7 +112,8 @@ private slots:
             .upsert(contact("x", "@z", "Zoe")) // other transport
             .commit();
         ContactListModel model(store, QStringLiteral("m"));
-        QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Fatal);
+        QAbstractItemModelTester tester(&model,
+                                        QAbstractItemModelTester::FailureReportingMode::Fatal);
         QCOMPARE(model.rowCount(), 2); // only transport 'm'
         QCOMPARE(model.data(model.index(0, 0), ContactListModel::DisplayNameRole).toString(),
                  QStringLiteral("Alice"));
