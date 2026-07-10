@@ -24,6 +24,7 @@
 #include "participants_model.h"
 #include "participants_view.h"
 #include "persistence/isession_store.h"
+#include "root_widget_detail.h"
 #include "session_controller.h"
 #include "session_orchestrator.h"
 #include "sessions_list_model.h"
@@ -181,11 +182,17 @@ RootWidget::RootWidget()
     // An Integrations-tree session leaf opens its transcript in a pinned tab.
     connect(m_sidebar, &SidebarModel::sessionActivated, this,
             [this](const QString& sessionId) { openSessionPinnedTab(sessionId); });
-    // An UNPINNED external conversation is browse-only (B4): open the Channels page (GUI
-    // parity: Main.qml routes conversationActivated to Nav.open("channels")).
-    connect(
-        m_sidebar, &SidebarModel::conversationActivated, this,
-        [this](const QString&, const QString&) { openManagerPage(QStringLiteral("channels")); });
+    // [integrations wire v38] Activating a room/DM opens (or focuses) a native chat tab
+    // for (transport, conversation) — the deliberate replacement for the old open-Channels
+    // fallback (GUI parity: Main.qml routes conversationActivated to
+    // sessionExpanded.openConversation). Routing pins to agent sessions stay an orthogonal
+    // overlay, unchanged.
+    connect(m_sidebar, &SidebarModel::conversationActivated, this,
+            [this](const QString& transport, const QString& conversation) {
+                // Find-or-create + activate; currentTabChanged above binds the views
+                // (activateChatTab) exactly like the session-leaf path.
+                rwdetail::openConversationTab(m_tabModel, transport, conversation);
+            });
 
     m_fileTree = new files::FsExplorerModel(this);
     m_fileTree->setService(m_services.fs);

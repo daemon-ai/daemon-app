@@ -1316,6 +1316,17 @@ hasta que se vuelva a registrar.</translation>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>No se pudo enviar el mensaje.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Aún no hay mensajes</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5622,6 +5633,14 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>Nueva sesión</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Mensaje no enviado</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>No se pudo enviar el mensaje.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Ajustes de la sesión</translation>
     </message>
@@ -7084,6 +7103,10 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
     <message>
         <source>Agent</source>
         <translation>Agente</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
     </message>
 </context>
 <context>

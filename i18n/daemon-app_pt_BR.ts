@@ -1316,6 +1316,17 @@ até que seja registrado novamente.</translation>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Não foi possível enviar a mensagem.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Ainda não há mensagens</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5622,6 +5633,14 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
         <translation>Nova sessão</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Mensagem não enviada</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Não foi possível enviar a mensagem.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Configurações da sessão</translation>
     </message>
@@ -6564,7 +6583,7 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
     </message>
     <message>
         <source>Chat</source>
-        <translation>Conversa</translation>
+        <translation>Chat</translation>
     </message>
     <message>
         <source>Tools</source>
@@ -7084,6 +7103,10 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
     <message>
         <source>Agent</source>
         <translation>Agente</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
     </message>
 </context>
 <context>
@@ -7630,7 +7653,7 @@ Obrigado — prosseguindo com: %1
     </message>
     <message>
         <source>Chat</source>
-        <translation>Conversa</translation>
+        <translation>Chat</translation>
     </message>
     <message>
         <source>Stream responses</source>

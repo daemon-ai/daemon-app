@@ -44,6 +44,7 @@
 #include "status_bar_model.h"
 #include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2
 #include "transcript_exporter.h"
+#include "transports/ichat_service.h"
 #include "transports/icontacts_service.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
@@ -361,6 +362,9 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // [acct-mgmt] Transport contacts / roster (Phase D, wire v34): the per-account Contacts section
     // in ChannelsPage binds this seam (RosterList + contact ops).
     engine.rootContext()->setContextProperty(QStringLiteral("Contacts"), m_services.contacts);
+    // [integrations wire v38] Native chat (A4): ChatPage's ChatConversationController binds this
+    // IChatService seam (ConvHistory transcript + ConvSend + MessagesChanged refresh).
+    engine.rootContext()->setContextProperty(QStringLiteral("Chat"), m_services.chat);
 
     // The unified mock DaemonNet (actors/places + sessions-as-nodes); surfaces project from it. See
     // multi-protocol-client-surface.md §1 + the DaemonNet meta-plan.

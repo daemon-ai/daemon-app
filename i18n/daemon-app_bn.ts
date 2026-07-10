@@ -1316,6 +1316,17 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>বার্তাটি পাঠানো যায়নি।</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>এখনও কোনো বার্তা নেই</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5622,6 +5633,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>নতুন সেশন</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>বার্তা পাঠানো হয়নি</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>বার্তাটি পাঠানো যায়নি।</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>সেশন সেটিংস</translation>
     </message>
@@ -7084,6 +7103,10 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Agent</source>
         <translation>এজেন্ট</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>চ্যাট</translation>
     </message>
 </context>
 <context>

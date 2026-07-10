@@ -1316,6 +1316,17 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>メッセージを送信できませんでした。</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>メッセージはまだありません</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5618,6 +5629,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>新しいセッション</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>メッセージは送信されませんでした</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>メッセージを送信できませんでした。</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>セッション設定</translation>
     </message>
@@ -7076,6 +7095,10 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Agent</source>
         <translation>エージェント</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>チャット</translation>
     </message>
 </context>
 <context>

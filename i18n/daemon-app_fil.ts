@@ -1316,6 +1316,17 @@ hanggang muli itong mairehistro.</translation>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Hindi naipadala ang mensahe.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Wala pang mga mensahe</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5622,6 +5633,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Bagong session</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Hindi naipadala ang mensahe</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Hindi naipadala ang mensahe.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Mga setting ng session</translation>
     </message>
@@ -7084,6 +7103,10 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     <message>
         <source>Agent</source>
         <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
     </message>
 </context>
 <context>

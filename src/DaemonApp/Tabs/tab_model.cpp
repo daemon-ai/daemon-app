@@ -246,28 +246,55 @@ QString TabModel::agentRefAt(int index) const {
     return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).profile : QString();
 }
 
-// ===== STUB (red) — implemented in the green commit =====
 int TabModel::openConversation(const QString& transport, const QString& conversation,
                                const QString& title) {
-    Q_UNUSED(transport)
-    Q_UNUSED(conversation)
-    Q_UNUSED(title)
-    return -1;
+    const int existing = findConversationRow(transport, conversation);
+    if (existing >= 0) {
+        // Reuse the open chat tab; refresh its title if the caller supplies a new one.
+        if (!title.isEmpty() && m_tabs.at(existing).title != title) {
+            m_tabs[existing].title = title;
+            const QModelIndex idx = index(existing, 0);
+            emit dataChanged(idx, idx, {TitleRole, Qt::DisplayRole});
+        }
+        activate(existing);
+        return m_tabs.at(existing).id;
+    }
+
+    const int row = static_cast<int>(m_tabs.size());
+    beginInsertRows({}, row, row);
+    Tab tab;
+    tab.id = m_nextId++;
+    tab.kind = Chat;
+    tab.title = title.isEmpty() ? tr("Chat") : title;
+    tab.closable = true;
+    tab.transport = transport;
+    tab.conversation = conversation;
+    m_tabs.append(tab);
+    endInsertRows();
+    emit countChanged();
+
+    setCurrentInternal(row);
+    return tab.id;
 }
 
 QString TabModel::transportAt(int index) const {
-    Q_UNUSED(index)
-    return {};
+    return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).transport : QString();
 }
 
 QString TabModel::conversationAt(int index) const {
-    Q_UNUSED(index)
-    return {};
+    return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).conversation : QString();
 }
 
 int TabModel::findConversationRow(const QString& transport, const QString& conversation) const {
-    Q_UNUSED(transport)
-    Q_UNUSED(conversation)
+    if (transport.isEmpty() && conversation.isEmpty()) {
+        return -1;
+    }
+    for (int i = 0; i < m_tabs.size(); ++i) {
+        const Tab& tab = m_tabs.at(i);
+        if (tab.kind == Chat && tab.transport == transport && tab.conversation == conversation) {
+            return i;
+        }
+    }
     return -1;
 }
 

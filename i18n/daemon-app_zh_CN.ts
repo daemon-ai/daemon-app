@@ -1316,6 +1316,17 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>无法发送消息。</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>暂无消息</translation>
+    </message>
+</context>
+<context>
     <name>ChatRepository</name>
     <message>
         <source>Failed to send the message</source>
@@ -5618,6 +5629,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>新建会话</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>消息未发送</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>无法发送消息。</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>会话设置</translation>
     </message>
@@ -7076,6 +7095,10 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Agent</source>
         <translation>智能体</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>聊天</translation>
     </message>
 </context>
 <context>
