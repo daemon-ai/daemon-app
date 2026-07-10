@@ -349,6 +349,15 @@ void Ingestor::onBootstrap(quint64 cursor, quint64 epoch, const QHash<QString, q
 // ---------------------------------------------------------------------------
 void Ingestor::beginObserving(const QString& collection, const QString& scope) {
     observing_.insert(obsKey(collection, scope));
+    // A visible chat scope tops up its window FORWARD from the stored per-conv cursor (cold
+    // window ⇒ full fill from 0 — §4.6 interim; otherwise a tail read, the §13 M1 cursor fix).
+    // The scheduler's (op,scope) dedup absorbs re-opens; delivery advances the cursor.
+    if (collection == QStringLiteral("chat") && !scope.isEmpty()) {
+        enqueueFetch(FetchOp::ConvHistory, scope, Priority::VisibleSurface,
+                     state_.convCursor(scope));
+        state_.markSyncing(collection);
+        return;
+    }
     // The ingestor decides whether observation triggers a fetch — freshness is store-metadata +
     // declared policy, never a lens callsite (00-B1). Fetch if stale, or stale-by-age.
     const SyncState::Collection cs = state_.collection(collection);
@@ -370,6 +379,23 @@ void Ingestor::beginObserving(const QString& collection, const QString& scope) {
 
 void Ingestor::endObserving(const QString& collection, const QString& scope) {
     observing_.remove(obsKey(collection, scope));
+}
+
+bool Ingestor::requestOlder(const QString& scopeKey, int count) {
+    Q_UNUSED(count); // v38 pages by the wire page bound; BR's before_cursor honors it (§10.2)
+    const QStringList sp = scopeKey.split(kSep);
+    const ChatMessageScope scope{sp.value(0), sp.value(1)};
+    const auto& windows = store_.snapshot().chat;
+    const bool windowEmpty = windows.count(scope) == 0U || windows[scope].items.empty();
+    if (windowEmpty && state_.convCursor(scopeKey) == 0) {
+        // Cold window: the v38 fill is forward from cursor 0 (§4.6 interim).
+        enqueueFetch(FetchOp::ConvHistory, scopeKey, Priority::VisibleSurface, 0);
+        state_.markSyncing(QStringLiteral("chat"));
+        return true;
+    }
+    // Older-than-window history is not expressible against v38 (no before_cursor until BR): the
+    // persisted/filled contiguous tail IS the reachable window; report end-of-history.
+    return false;
 }
 
 void Ingestor::setObservationMaxAgeMs(const QString& collection, qint64 maxAgeMs) {

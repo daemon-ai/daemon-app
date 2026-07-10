@@ -131,6 +131,48 @@ private slots:
         QCOMPARE(exec.last(FetchOp::ConvHistory).afterCursor, quint64(5));
     }
 
+    void beginObservingChatTopsUpFromStoredCursor() {
+        // §5.8 + §4.6: a visible chat scope declares itself and the INGESTOR issues the top-up —
+        // forward from the stored per-conv cursor (never a lens-driven refetch, never from 0 once
+        // a cursor exists).
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        ing.beginObserving(QStringLiteral("chat"), QStringLiteral("m\x1f!r"));
+        QVERIFY(exec.has(FetchOp::ConvHistory, QStringLiteral("m\x1f!r")));
+        QCOMPARE(exec.last(FetchOp::ConvHistory).afterCursor, quint64(0)); // cold scope
+
+        std::vector<ChatMessage> page = {chat("m", "!r", 1, "x"), chat("m", "!r", 2, "y")};
+        ing.deliverChatPage(QStringLiteral("m"), QStringLiteral("!r"), page, 2, 2);
+        ing.fetchCompleted(exec.last(FetchOp::ConvHistory));
+
+        ing.endObserving(QStringLiteral("chat"), QStringLiteral("m\x1f!r"));
+        ing.beginObserving(QStringLiteral("chat"), QStringLiteral("m\x1f!r"));
+        QCOMPARE(exec.last(FetchOp::ConvHistory).afterCursor, quint64(2)); // tail read, not 0
+    }
+
+    void requestOlderColdWindowFillsForwardThenEnds() {
+        // §4.6 demand paging against v38: a COLD window forward-fills from 0 (true); once the
+        // window holds the reachable tail, older history is not expressible (false) until BR's
+        // before_cursor — the mediator surfaces end-of-history.
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        QVERIFY(ing.requestOlder(QStringLiteral("m\x1f!r"), 64)); // cold: a fill is coming
+        QVERIFY(exec.has(FetchOp::ConvHistory, QStringLiteral("m\x1f!r")));
+        QCOMPARE(exec.last(FetchOp::ConvHistory).afterCursor, quint64(0));
+
+        std::vector<ChatMessage> page = {chat("m", "!r", 1, "x")};
+        ing.deliverChatPage(QStringLiteral("m"), QStringLiteral("!r"), page, 1, 1);
+        QVERIFY(!ing.requestOlder(QStringLiteral("m\x1f!r"), 64)); // tail held: end-of-history
+    }
+
     void chatWindowAppendsWithMeta() {
         // Windows v1 (§4.6): window items + window_meta accounting.
         CoarseObserve obs;

@@ -52,6 +52,13 @@ public:
     void endObserving(const QString& collection, const QString& scope = QString());
     void setObservationMaxAgeMs(const QString& collection, qint64 maxAgeMs);
 
+    // --- demand paging (§4.6): fulfils the WindowModel olderRequested seam ---
+    // Returns true when a fill was scheduled: a COLD chat window forward-fills from cursor 0 (the
+    // v38 posture — backward windows are not expressible until BR's before_cursor, §10.2). Returns
+    // false when no older history is reachable on this connection: the persisted/filled tail IS
+    // the window, and the mediator should surface end-of-history (setHasMoreOlder(false)).
+    bool requestOlder(const QString& scopeKey, int count);
+
     // --- delivery of decoded (already-mapped) fetch results (called by the bridge / tests) ---
     // ConvList page for a transport: full-list replace-and-prune (PageLoop semantics, §5.3). The
     // final page passes isFinalPage=true so the prune runs over the accumulated union.
