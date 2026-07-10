@@ -39,9 +39,7 @@ void Journal::advanceWatermark(const QString& name, quint64 rev) {
         return;
     }
     // Watermarks are monotonic: a consumer never rewinds its cursor (§4.4).
-    if (rev > it.value()) {
-        it.value() = rev;
-    }
+    it.value() = std::max(rev, it.value());
 }
 
 bool Journal::hasConsumer(const QString& name) const noexcept {
