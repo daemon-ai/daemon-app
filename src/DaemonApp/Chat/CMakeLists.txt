@@ -9,6 +9,8 @@ qt_add_qml_module(da_chat_view
     SOURCES
         chat_conversation_controller.h
         chat_conversation_controller.cpp
+        conv_send_controller.h
+        conv_send_controller.cpp
     QML_FILES
         ChatPage.qml
 )
@@ -23,5 +25,6 @@ target_link_libraries(da_chat_view
         daemon-app::settings
         daemon-app::blockeditor
         daemon-app::composer
+        daemon-app::local
         daemon-app::warnings
 )

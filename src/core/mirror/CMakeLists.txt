@@ -84,10 +84,16 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     add_library(da_mirror_lens STATIC
         table_model.cpp
         conversation_list_model.cpp
+        chat_window_model.cpp
+        person_list_model.cpp
+        contact_list_model.cpp
         table_model.h
         window_model.h
         stable_id.h
         conversation_list_model.h
+        chat_window_model.h
+        person_list_model.h
+        contact_list_model.h
     )
     add_library(daemon-app::mirror_lens ALIAS da_mirror_lens)
 
@@ -117,6 +123,7 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         ingestor.cpp
         write_behind.cpp
         parity.cpp
+        mirror_service.cpp
         node_event.h
         policy_table.h
         fetch_job.h
@@ -125,6 +132,7 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         ingestor.h
         write_behind.h
         parity.h
+        mirror_service.h
     )
     add_library(daemon-app::mirror_ingestor ALIAS da_mirror_ingestor)
 

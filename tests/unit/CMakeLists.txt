@@ -1001,6 +1001,27 @@ add_test(NAME tst_chat_conversation_controller COMMAND tst_chat_conversation_con
 set_tests_properties(tst_chat_conversation_controller
     PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_conv_send_lane (mirror A5): ConvSend routed through the durable outbox lane (spec 09 §7,
+# §6.4/§6.5/§6.8, §8.4) — the ConvSendController shared VM + the per-conversation PendingOpsModel
+# strip. Compiles the controller source directly and links the local (outbox) module.
+qt_add_executable(tst_conv_send_lane
+    tst_conv_send_lane.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/conv_send_controller.cpp
+)
+set_target_properties(tst_conv_send_lane PROPERTIES AUTOMOC ON)
+target_include_directories(tst_conv_send_lane
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat"
+)
+target_link_libraries(tst_conv_send_lane
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        Qt6::Sql
+        daemon-app::local
+)
+add_test(NAME tst_conv_send_lane COMMAND tst_conv_send_lane)
+set_tests_properties(tst_conv_send_lane PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_session_orchestrator: the shared submit pipeline - submit starts the
 # turn + populates todos (and clears them after the turn settles), cancel resets,
 # and slash "/new" is handled while other commands surface via commandRequested.
@@ -1209,7 +1230,7 @@ endif()
 # and dual-write parity. Gated on the ingestor library (which is gated on the vendored substrate).
 if(TARGET daemon-app::mirror_ingestor)
     foreach(_itst tst_mirror_policy_table tst_mirror_fetch_scheduler tst_mirror_ingestor
-                  tst_mirror_write_behind tst_mirror_parity)
+                  tst_mirror_write_behind tst_mirror_parity tst_mirror_service)
         qt_add_executable(${_itst} ${_itst}.cpp)
         target_link_libraries(${_itst} PRIVATE Qt6::Test daemon-app::mirror_ingestor)
         add_test(NAME ${_itst} COMMAND ${_itst})
@@ -1233,7 +1254,8 @@ endif()
 # ConversationListModel role-map demonstrator. Every model instantiation runs under
 # QAbstractItemModelTester (§12). Gated on the lens target being built (needs the substrate).
 if(TARGET daemon-app::mirror_lens)
-    foreach(_ltst tst_mirror_stable_id tst_mirror_table_model tst_mirror_window_model)
+    foreach(_ltst tst_mirror_stable_id tst_mirror_table_model tst_mirror_window_model
+                  tst_mirror_m2_lenses)
         qt_add_executable(${_ltst} ${_ltst}.cpp)
         target_link_libraries(${_ltst} PRIVATE Qt6::Test daemon-app::mirror_lens)
         add_test(NAME ${_ltst} COMMAND ${_ltst})

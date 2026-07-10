@@ -125,6 +125,11 @@ add_library(da_daemon_client STATIC
     seam_migration.h
     integration_slice.h
     cache_consolidation_policy.h
+    # mirror A5: the decode-to-mirror bridge (CBOR reply -> mirror entities via the G1 mappers).
+    # Always built (needs only the generated entities/mappers); the codec stays confined here.
+    mirror_decode.h
+    mirror_decode.cpp
+    ingestor_bridge.h
 )
 add_library(daemon-app::daemon_client ALIAS da_daemon_client)
 
@@ -163,6 +168,9 @@ target_link_libraries(da_daemon_client
         # exposes QtWebSockets types.
         Qt6::WebSockets
         daemon-app::daemon_codec
+        # mirror A5: the generated entities + human-owned mappers (decode-to-mirror bridge). Always
+        # available (built everywhere); the codec + mappers are confined to this lib (07§10).
+        daemon-app::mirror
         # Browser-persistence + network-wakeup seams (all no-ops off wasm, private - no public
         # daemon_client header exposes platform types):
         #  - DaemonCacheStore calls platform::scheduleIdbfsSync() / installUnloadFlush() (W1/W2).
@@ -170,3 +178,20 @@ target_link_libraries(da_daemon_client
         daemon-app::platform
         daemon-app::warnings
 )
+
+# mirror A5: live-wire the ingestor over NodeApiClient (spec 09 §5, wave M2). The DaemonFetchExecutor
+# + MirrorService graph wiring + the outbox (local-<id>.db) are built only when the immer substrate
+# is vendored (the ingestor/lens/outbox targets exist). A substrate-less stack (bare platform port)
+# still builds daemon_client without the live mirror path.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    target_sources(da_daemon_client PRIVATE
+        daemon_fetch_executor.h
+        daemon_fetch_executor.cpp
+    )
+    target_link_libraries(da_daemon_client PUBLIC
+        daemon-app::mirror_ingestor
+        daemon-app::mirror_lens
+        daemon-app::local
+    )
+    target_compile_definitions(da_daemon_client PRIVATE DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1)
+endif()
