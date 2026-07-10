@@ -401,9 +401,20 @@ struct request_unit_outbound {
 	uint32_t UnitOutbound_max;
 };
 
+struct SessionHistory_after_cursor {
+	uint64_t SessionHistory_after_cursor;
+};
+
+struct SessionHistory_before_cursor {
+	uint64_t SessionHistory_before_cursor;
+};
+
 struct request_session_history {
 	struct zcbor_string SessionHistory_session;
-	uint64_t SessionHistory_after_cursor;
+	struct SessionHistory_after_cursor SessionHistory_after_cursor;
+	bool SessionHistory_after_cursor_present;
+	struct SessionHistory_before_cursor SessionHistory_before_cursor;
+	bool SessionHistory_before_cursor_present;
 	uint32_t SessionHistory_max;
 };
 
@@ -478,9 +489,20 @@ struct request_record_meta {
 	struct record_meta_args request_record_meta_RecordMeta;
 };
 
+struct UnitHistory_after_cursor {
+	uint64_t UnitHistory_after_cursor;
+};
+
+struct UnitHistory_before_cursor {
+	uint64_t UnitHistory_before_cursor;
+};
+
 struct request_unit_history {
 	struct zcbor_string UnitHistory_unit;
-	uint64_t UnitHistory_after_cursor;
+	struct UnitHistory_after_cursor UnitHistory_after_cursor;
+	bool UnitHistory_after_cursor_present;
+	struct UnitHistory_before_cursor UnitHistory_before_cursor;
+	bool UnitHistory_before_cursor_present;
 	uint32_t UnitHistory_max;
 };
 
@@ -1710,9 +1732,21 @@ struct session_meta_patch {
 	bool session_meta_patch_archived_present;
 };
 
+struct SessionUpdateMeta_op_id_r {
+	union {
+		struct zcbor_string SessionUpdateMeta_op_id_tstr;
+	};
+	enum {
+		SessionUpdateMeta_op_id_tstr_c,
+		SessionUpdateMeta_op_id_null_m_c,
+	} SessionUpdateMeta_op_id_choice;
+};
+
 struct request_session_update_meta {
 	struct zcbor_string SessionUpdateMeta_session;
 	struct session_meta_patch SessionUpdateMeta_patch;
+	struct SessionUpdateMeta_op_id_r SessionUpdateMeta_op_id;
+	bool SessionUpdateMeta_op_id_present;
 };
 
 struct rewind_point_restore_workspace {
@@ -2339,10 +2373,22 @@ struct ConvList_after_r {
 	} ConvList_after_choice;
 };
 
+struct ConvList_since_rev_r {
+	union {
+		uint64_t ConvList_since_rev_uint64_m;
+	};
+	enum {
+		ConvList_since_rev_uint64_m_c,
+		ConvList_since_rev_null_m_c,
+	} ConvList_since_rev_choice;
+};
+
 struct request_conv_list {
 	struct zcbor_string ConvList_transport;
 	struct ConvList_after_r ConvList_after;
 	bool ConvList_after_present;
+	struct ConvList_since_rev_r ConvList_since_rev;
+	bool ConvList_since_rev_present;
 };
 
 struct request_conv_get {
@@ -2554,9 +2600,21 @@ struct create_conversation_details {
 	bool create_conversation_details_extras_present;
 };
 
+struct ConvCreate_op_id_r {
+	union {
+		struct zcbor_string ConvCreate_op_id_tstr;
+	};
+	enum {
+		ConvCreate_op_id_tstr_c,
+		ConvCreate_op_id_null_m_c,
+	} ConvCreate_op_id_choice;
+};
+
 struct request_conv_create {
 	struct zcbor_string ConvCreate_transport;
 	struct create_conversation_details ConvCreate_details;
+	struct ConvCreate_op_id_r ConvCreate_op_id;
+	bool ConvCreate_op_id_present;
 };
 
 struct request_conv_join_details {
@@ -2644,9 +2702,21 @@ struct channel_join_details {
 	bool channel_join_details_extras_present;
 };
 
+struct ConvJoin_op_id_r {
+	union {
+		struct zcbor_string ConvJoin_op_id_tstr;
+	};
+	enum {
+		ConvJoin_op_id_tstr_c,
+		ConvJoin_op_id_null_m_c,
+	} ConvJoin_op_id_choice;
+};
+
 struct request_conv_join {
 	struct zcbor_string ConvJoin_transport;
 	struct channel_join_details ConvJoin_details;
+	struct ConvJoin_op_id_r ConvJoin_op_id;
+	bool ConvJoin_op_id_present;
 };
 
 struct request_conv_leave {
@@ -2684,12 +2754,24 @@ struct conv_send_args_from_r {
 	} conv_send_args_from_choice;
 };
 
+struct conv_send_args_op_id_r {
+	union {
+		struct zcbor_string conv_send_args_op_id_tstr;
+	};
+	enum {
+		conv_send_args_op_id_tstr_c,
+		conv_send_args_op_id_null_m_c,
+	} conv_send_args_op_id_choice;
+};
+
 struct conv_send_args {
 	struct zcbor_string conv_send_args_transport;
 	struct zcbor_string conv_send_args_conv;
 	struct conv_send_args_from_r conv_send_args_from;
 	bool conv_send_args_from_present;
 	struct user_msg conv_send_args_message;
+	struct conv_send_args_op_id_r conv_send_args_op_id;
+	bool conv_send_args_op_id_present;
 };
 
 struct request_conv_send {
@@ -2706,11 +2788,23 @@ struct ConvSetTopic_topic_r {
 	} ConvSetTopic_topic_choice;
 };
 
+struct ConvSetTopic_op_id_r {
+	union {
+		struct zcbor_string ConvSetTopic_op_id_tstr;
+	};
+	enum {
+		ConvSetTopic_op_id_tstr_c,
+		ConvSetTopic_op_id_null_m_c,
+	} ConvSetTopic_op_id_choice;
+};
+
 struct request_conv_set_topic {
 	struct zcbor_string ConvSetTopic_transport;
 	struct zcbor_string ConvSetTopic_conv;
 	struct ConvSetTopic_topic_r ConvSetTopic_topic;
 	bool ConvSetTopic_topic_present;
+	struct ConvSetTopic_op_id_r ConvSetTopic_op_id;
+	bool ConvSetTopic_op_id_present;
 };
 
 struct ConvSetTitle_title_r {
@@ -2723,11 +2817,23 @@ struct ConvSetTitle_title_r {
 	} ConvSetTitle_title_choice;
 };
 
+struct ConvSetTitle_op_id_r {
+	union {
+		struct zcbor_string ConvSetTitle_op_id_tstr;
+	};
+	enum {
+		ConvSetTitle_op_id_tstr_c,
+		ConvSetTitle_op_id_null_m_c,
+	} ConvSetTitle_op_id_choice;
+};
+
 struct request_conv_set_title {
 	struct zcbor_string ConvSetTitle_transport;
 	struct zcbor_string ConvSetTitle_conv;
 	struct ConvSetTitle_title_r ConvSetTitle_title;
 	bool ConvSetTitle_title_present;
+	struct ConvSetTitle_op_id_r ConvSetTitle_op_id;
+	bool ConvSetTitle_op_id_present;
 };
 
 struct ConvSetDescription_description_r {
@@ -2740,11 +2846,23 @@ struct ConvSetDescription_description_r {
 	} ConvSetDescription_description_choice;
 };
 
+struct ConvSetDescription_op_id_r {
+	union {
+		struct zcbor_string ConvSetDescription_op_id_tstr;
+	};
+	enum {
+		ConvSetDescription_op_id_tstr_c,
+		ConvSetDescription_op_id_null_m_c,
+	} ConvSetDescription_op_id_choice;
+};
+
 struct request_conv_set_description {
 	struct zcbor_string ConvSetDescription_transport;
 	struct zcbor_string ConvSetDescription_conv;
 	struct ConvSetDescription_description_r ConvSetDescription_description;
 	bool ConvSetDescription_description_present;
+	struct ConvSetDescription_op_id_r ConvSetDescription_op_id;
+	bool ConvSetDescription_op_id_present;
 };
 
 struct request_conv_delete {
@@ -2756,6 +2874,10 @@ struct conv_history_args_after_cursor {
 	uint64_t conv_history_args_after_cursor;
 };
 
+struct conv_history_args_before_cursor {
+	uint64_t conv_history_args_before_cursor;
+};
+
 struct conv_history_args_max {
 	uint32_t conv_history_args_max;
 };
@@ -2765,6 +2887,8 @@ struct conv_history_args {
 	struct zcbor_string conv_history_args_conv;
 	struct conv_history_args_after_cursor conv_history_args_after_cursor;
 	bool conv_history_args_after_cursor_present;
+	struct conv_history_args_before_cursor conv_history_args_before_cursor;
+	bool conv_history_args_before_cursor_present;
 	struct conv_history_args_max conv_history_args_max;
 	bool conv_history_args_max_present;
 };
@@ -2783,12 +2907,24 @@ struct member_invite_args_message_r {
 	} member_invite_args_message_choice;
 };
 
+struct member_invite_args_op_id_r {
+	union {
+		struct zcbor_string member_invite_args_op_id_tstr;
+	};
+	enum {
+		member_invite_args_op_id_tstr_c,
+		member_invite_args_op_id_null_m_c,
+	} member_invite_args_op_id_choice;
+};
+
 struct member_invite_args {
 	struct zcbor_string member_invite_args_transport;
 	struct zcbor_string member_invite_args_conv;
 	struct participant_r member_invite_args_who;
 	struct member_invite_args_message_r member_invite_args_message;
 	bool member_invite_args_message_present;
+	struct member_invite_args_op_id_r member_invite_args_op_id;
+	bool member_invite_args_op_id_present;
 };
 
 struct request_member_invite {
@@ -2805,12 +2941,24 @@ struct member_remove_args_reason_r {
 	} member_remove_args_reason_choice;
 };
 
+struct member_remove_args_op_id_r {
+	union {
+		struct zcbor_string member_remove_args_op_id_tstr;
+	};
+	enum {
+		member_remove_args_op_id_tstr_c,
+		member_remove_args_op_id_null_m_c,
+	} member_remove_args_op_id_choice;
+};
+
 struct member_remove_args {
 	struct zcbor_string member_remove_args_transport;
 	struct zcbor_string member_remove_args_conv;
 	struct participant_r member_remove_args_who;
 	struct member_remove_args_reason_r member_remove_args_reason;
 	bool member_remove_args_reason_present;
+	struct member_remove_args_op_id_r member_remove_args_op_id;
+	bool member_remove_args_op_id_present;
 };
 
 struct request_member_remove {
@@ -2827,12 +2975,24 @@ struct member_ban_args_reason_r {
 	} member_ban_args_reason_choice;
 };
 
+struct member_ban_args_op_id_r {
+	union {
+		struct zcbor_string member_ban_args_op_id_tstr;
+	};
+	enum {
+		member_ban_args_op_id_tstr_c,
+		member_ban_args_op_id_null_m_c,
+	} member_ban_args_op_id_choice;
+};
+
 struct member_ban_args {
 	struct zcbor_string member_ban_args_transport;
 	struct zcbor_string member_ban_args_conv;
 	struct participant_r member_ban_args_who;
 	struct member_ban_args_reason_r member_ban_args_reason;
 	bool member_ban_args_reason_present;
+	struct member_ban_args_op_id_r member_ban_args_op_id;
+	bool member_ban_args_op_id_present;
 };
 
 struct request_member_ban {
@@ -2849,11 +3009,23 @@ struct member_role_r {
 	} member_role_choice;
 };
 
+struct member_set_role_args_op_id_r {
+	union {
+		struct zcbor_string member_set_role_args_op_id_tstr;
+	};
+	enum {
+		member_set_role_args_op_id_tstr_c,
+		member_set_role_args_op_id_null_m_c,
+	} member_set_role_args_op_id_choice;
+};
+
 struct member_set_role_args {
 	struct zcbor_string member_set_role_args_transport;
 	struct zcbor_string member_set_role_args_conv;
 	struct participant_r member_set_role_args_who;
 	struct member_role_r member_set_role_args_role;
+	struct member_set_role_args_op_id_r member_set_role_args_op_id;
+	bool member_set_role_args_op_id_present;
 };
 
 struct request_member_set_role {
@@ -2875,11 +3047,23 @@ struct ContactSetAlias_alias_r {
 	} ContactSetAlias_alias_choice;
 };
 
+struct ContactSetAlias_op_id_r {
+	union {
+		struct zcbor_string ContactSetAlias_op_id_tstr;
+	};
+	enum {
+		ContactSetAlias_op_id_tstr_c,
+		ContactSetAlias_op_id_null_m_c,
+	} ContactSetAlias_op_id_choice;
+};
+
 struct request_contact_set_alias {
 	struct zcbor_string ContactSetAlias_transport;
 	struct contact_info ContactSetAlias_contact;
 	struct ContactSetAlias_alias_r ContactSetAlias_alias;
 	bool ContactSetAlias_alias_present;
+	struct ContactSetAlias_op_id_r ContactSetAlias_op_id;
+	bool ContactSetAlias_op_id_present;
 };
 
 struct request_contact_action_menu {
@@ -2913,25 +3097,73 @@ struct RosterList_after_r {
 	} RosterList_after_choice;
 };
 
+struct RosterList_since_rev_r {
+	union {
+		uint64_t RosterList_since_rev_uint64_m;
+	};
+	enum {
+		RosterList_since_rev_uint64_m_c,
+		RosterList_since_rev_null_m_c,
+	} RosterList_since_rev_choice;
+};
+
 struct request_roster_list {
 	struct zcbor_string RosterList_transport;
 	struct RosterList_after_r RosterList_after;
 	bool RosterList_after_present;
+	struct RosterList_since_rev_r RosterList_since_rev;
+	bool RosterList_since_rev_present;
+};
+
+struct RosterAdd_op_id_r {
+	union {
+		struct zcbor_string RosterAdd_op_id_tstr;
+	};
+	enum {
+		RosterAdd_op_id_tstr_c,
+		RosterAdd_op_id_null_m_c,
+	} RosterAdd_op_id_choice;
 };
 
 struct request_roster_add {
 	struct zcbor_string RosterAdd_transport;
 	struct contact_info RosterAdd_contact;
+	struct RosterAdd_op_id_r RosterAdd_op_id;
+	bool RosterAdd_op_id_present;
+};
+
+struct RosterUpdate_op_id_r {
+	union {
+		struct zcbor_string RosterUpdate_op_id_tstr;
+	};
+	enum {
+		RosterUpdate_op_id_tstr_c,
+		RosterUpdate_op_id_null_m_c,
+	} RosterUpdate_op_id_choice;
 };
 
 struct request_roster_update {
 	struct zcbor_string RosterUpdate_transport;
 	struct contact_info RosterUpdate_contact;
+	struct RosterUpdate_op_id_r RosterUpdate_op_id;
+	bool RosterUpdate_op_id_present;
+};
+
+struct RosterRemove_op_id_r {
+	union {
+		struct zcbor_string RosterRemove_op_id_tstr;
+	};
+	enum {
+		RosterRemove_op_id_tstr_c,
+		RosterRemove_op_id_null_m_c,
+	} RosterRemove_op_id_choice;
 };
 
 struct request_roster_remove {
 	struct zcbor_string RosterRemove_transport;
 	struct contact_info RosterRemove_contact;
+	struct RosterRemove_op_id_r RosterRemove_op_id;
+	bool RosterRemove_op_id_present;
 };
 
 struct fs_root_id_host {
@@ -3485,9 +3717,21 @@ struct file_transfer {
 	bool file_transfer_source_present;
 };
 
+struct FtSend_op_id_r {
+	union {
+		struct zcbor_string FtSend_op_id_tstr;
+	};
+	enum {
+		FtSend_op_id_tstr_c,
+		FtSend_op_id_null_m_c,
+	} FtSend_op_id_choice;
+};
+
 struct request_ft_send {
 	struct zcbor_string FtSend_transport;
 	struct file_transfer FtSend_transfer;
+	struct FtSend_op_id_r FtSend_op_id;
+	bool FtSend_op_id_present;
 };
 
 struct request_ft_receive {
@@ -3495,13 +3739,40 @@ struct request_ft_receive {
 	struct file_transfer FtReceive_transfer;
 };
 
+struct PersonList_since_rev_r {
+	union {
+		uint64_t PersonList_since_rev_uint64_m;
+	};
+	enum {
+		PersonList_since_rev_uint64_m_c,
+		PersonList_since_rev_null_m_c,
+	} PersonList_since_rev_choice;
+};
+
+struct request_person_list {
+	struct PersonList_since_rev_r PersonList_since_rev;
+	bool PersonList_since_rev_present;
+};
+
 struct request_transport_settings {
 	struct zcbor_string TransportSettings_transport;
+};
+
+struct TransportConfigure_op_id_r {
+	union {
+		struct zcbor_string TransportConfigure_op_id_tstr;
+	};
+	enum {
+		TransportConfigure_op_id_tstr_c,
+		TransportConfigure_op_id_null_m_c,
+	} TransportConfigure_op_id_choice;
 };
 
 struct request_transport_configure {
 	struct zcbor_string TransportConfigure_transport;
 	struct account_settings_values TransportConfigure_settings;
+	struct TransportConfigure_op_id_r TransportConfigure_op_id;
+	bool TransportConfigure_op_id_present;
 };
 
 struct api_request_r {
@@ -3667,6 +3938,7 @@ struct api_request_r {
 		struct request_presence_set_active api_request_request_presence_set_active_m;
 		struct request_ft_send api_request_request_ft_send_m;
 		struct request_ft_receive api_request_request_ft_receive_m;
+		struct request_person_list api_request_request_person_list_m;
 		struct request_transport_settings api_request_request_transport_settings_m;
 		struct request_transport_configure api_request_request_transport_configure_m;
 	};
@@ -3868,6 +4140,7 @@ struct api_request_r {
 		api_request_request_person_list_m_c,
 		api_request_request_transport_settings_m_c,
 		api_request_request_transport_configure_m_c,
+		api_request_request_bootstrap_m_c,
 	} api_request_choice;
 };
 
@@ -4687,6 +4960,7 @@ struct tree_report {
 	size_t tree_report_nodes_unit_node_m_count;
 	struct tree_report_next_r tree_report_next;
 	bool tree_report_next_present;
+	uint64_t tree_report_rev;
 };
 
 struct response_tree {
@@ -4777,6 +5051,16 @@ struct manage_event_view_r {
 struct response_unit_events {
 	struct manage_event_view_r response_unit_events_UnitEvents_manage_event_view_m[64];
 	size_t response_unit_events_UnitEvents_manage_event_view_m_count;
+};
+
+struct journal_record_origin_op_r {
+	union {
+		struct zcbor_string journal_record_origin_op_origin_op_m;
+	};
+	enum {
+		journal_record_origin_op_origin_op_m_c,
+		journal_record_origin_op_null_m_c,
+	} journal_record_origin_op_choice;
 };
 
 struct journal_record_payload_management {
@@ -5090,6 +5374,8 @@ struct journal_record {
 	struct zcbor_string journal_record_kind;
 	uint64_t journal_record_timestamp_ms;
 	bool journal_record_verified;
+	struct journal_record_origin_op_r journal_record_origin_op;
+	bool journal_record_origin_op_present;
 	struct journal_record_payload_t_r journal_record_payload;
 };
 
@@ -5189,9 +5475,21 @@ struct node_event_session_advanced {
 	uint64_t SessionAdvanced_head_seq;
 };
 
+struct SessionMetaChanged_origin_op_r {
+	union {
+		struct zcbor_string SessionMetaChanged_origin_op_origin_op_m;
+	};
+	enum {
+		SessionMetaChanged_origin_op_origin_op_m_c,
+		SessionMetaChanged_origin_op_null_m_c,
+	} SessionMetaChanged_origin_op_choice;
+};
+
 struct node_event_session_meta_changed {
 	struct zcbor_string SessionMetaChanged_session;
 	uint64_t SessionMetaChanged_rev;
+	struct SessionMetaChanged_origin_op_r SessionMetaChanged_origin_op;
+	bool SessionMetaChanged_origin_op_present;
 };
 
 struct node_event_roster_changed {
@@ -5217,6 +5515,10 @@ struct node_event_download_progress {
 	struct zcbor_string DownloadProgress_state;
 	uint64_t DownloadProgress_downloaded_bytes;
 	uint64_t DownloadProgress_total_bytes;
+};
+
+struct node_event_catalog_changed {
+	uint64_t CatalogChanged_rev;
 };
 
 struct connection_state_r {
@@ -5280,6 +5582,16 @@ struct TransportChanged_fatal {
 	bool TransportChanged_fatal;
 };
 
+struct TransportChanged_origin_op_r {
+	union {
+		struct zcbor_string TransportChanged_origin_op_origin_op_m;
+	};
+	enum {
+		TransportChanged_origin_op_origin_op_m_c,
+		TransportChanged_origin_op_null_m_c,
+	} TransportChanged_origin_op_choice;
+};
+
 struct node_event_transport_changed {
 	struct zcbor_string TransportChanged_transport;
 	struct connection_state_r TransportChanged_connection;
@@ -5291,6 +5603,8 @@ struct node_event_transport_changed {
 	bool TransportChanged_message_present;
 	struct TransportChanged_fatal TransportChanged_fatal;
 	bool TransportChanged_fatal_present;
+	struct TransportChanged_origin_op_r TransportChanged_origin_op;
+	bool TransportChanged_origin_op_present;
 };
 
 struct conv_change_r {
@@ -5300,10 +5614,23 @@ struct conv_change_r {
 	} conv_change_choice;
 };
 
+struct ConversationsChanged_origin_op_r {
+	union {
+		struct zcbor_string ConversationsChanged_origin_op_origin_op_m;
+	};
+	enum {
+		ConversationsChanged_origin_op_origin_op_m_c,
+		ConversationsChanged_origin_op_null_m_c,
+	} ConversationsChanged_origin_op_choice;
+};
+
 struct node_event_conversations_changed {
 	struct zcbor_string ConversationsChanged_transport;
 	struct zcbor_string ConversationsChanged_conv;
 	struct conv_change_r ConversationsChanged_change;
+	uint64_t ConversationsChanged_rev;
+	struct ConversationsChanged_origin_op_r ConversationsChanged_origin_op;
+	bool ConversationsChanged_origin_op_present;
 };
 
 struct membership_change_r {
@@ -5336,6 +5663,16 @@ struct MembershipChanged_reason_r {
 	} MembershipChanged_reason_choice;
 };
 
+struct MembershipChanged_origin_op_r {
+	union {
+		struct zcbor_string MembershipChanged_origin_op_origin_op_m;
+	};
+	enum {
+		MembershipChanged_origin_op_origin_op_m_c,
+		MembershipChanged_origin_op_null_m_c,
+	} MembershipChanged_origin_op_choice;
+};
+
 struct node_event_membership_changed {
 	struct zcbor_string MembershipChanged_transport;
 	struct zcbor_string MembershipChanged_conv;
@@ -5346,19 +5683,42 @@ struct node_event_membership_changed {
 	struct MembershipChanged_reason_r MembershipChanged_reason;
 	bool MembershipChanged_reason_present;
 	bool MembershipChanged_is_self;
+	struct MembershipChanged_origin_op_r MembershipChanged_origin_op;
+	bool MembershipChanged_origin_op_present;
 };
 
 struct node_event_contacts_changed {
 	struct zcbor_string ContactsChanged_transport;
+	uint64_t ContactsChanged_rev;
 };
 
 struct node_event_resync_needed {
 	struct zcbor_string ResyncNeeded_scope;
 };
 
+struct node_event_notifications_changed {
+	uint64_t NotificationsChanged_rev;
+};
+
+struct node_event_persons_changed {
+	uint64_t PersonsChanged_rev;
+};
+
+struct MessagesChanged_origin_op_r {
+	union {
+		struct zcbor_string MessagesChanged_origin_op_origin_op_m;
+	};
+	enum {
+		MessagesChanged_origin_op_origin_op_m_c,
+		MessagesChanged_origin_op_null_m_c,
+	} MessagesChanged_origin_op_choice;
+};
+
 struct node_event_messages_changed {
 	struct zcbor_string MessagesChanged_transport;
 	struct zcbor_string MessagesChanged_conv;
+	struct MessagesChanged_origin_op_r MessagesChanged_origin_op;
+	bool MessagesChanged_origin_op_present;
 };
 
 struct node_event_r {
@@ -5370,11 +5730,14 @@ struct node_event_r {
 		struct node_event_profiles_changed node_event_profiles_changed_m;
 		struct node_event_approval_pending node_event_approval_pending_m;
 		struct node_event_download_progress node_event_download_progress_m;
+		struct node_event_catalog_changed node_event_catalog_changed_m;
 		struct node_event_transport_changed node_event_transport_changed_m;
 		struct node_event_conversations_changed node_event_conversations_changed_m;
 		struct node_event_membership_changed node_event_membership_changed_m;
 		struct node_event_contacts_changed node_event_contacts_changed_m;
 		struct node_event_resync_needed node_event_resync_needed_m;
+		struct node_event_notifications_changed node_event_notifications_changed_m;
+		struct node_event_persons_changed node_event_persons_changed_m;
 		struct node_event_messages_changed node_event_messages_changed_m;
 	};
 	enum {
@@ -5397,11 +5760,17 @@ struct node_event_r {
 	} node_event_choice;
 };
 
+struct events_page_epoch {
+	uint64_t events_page_epoch;
+};
+
 struct events_page {
 	struct node_event_r events_page_events_node_event_m[64];
 	size_t events_page_events_node_event_m_count;
 	uint64_t events_page_next_cursor;
 	uint64_t events_page_head_cursor;
+	struct events_page_epoch events_page_epoch;
+	bool events_page_epoch_present;
 };
 
 struct response_events_page {
@@ -6305,6 +6674,20 @@ struct session_page_removed_r {
 	size_t session_page_removed_session_id_m_count;
 };
 
+struct origin_ops_origin_op_m {
+	struct zcbor_string origin_ops_origin_op_m_key;
+	struct zcbor_string origin_ops_origin_op_m;
+};
+
+struct origin_ops {
+	struct origin_ops_origin_op_m origin_ops_origin_op_m[64];
+	size_t origin_ops_origin_op_m_count;
+};
+
+struct session_page_origin_ops {
+	struct origin_ops session_page_origin_ops;
+};
+
 struct session_page {
 	struct session_info session_page_sessions_session_info_m[64];
 	size_t session_page_sessions_session_info_m_count;
@@ -6313,6 +6696,8 @@ struct session_page {
 	uint64_t session_page_rev;
 	struct session_page_removed_r session_page_removed;
 	bool session_page_removed_present;
+	struct session_page_origin_ops session_page_origin_ops;
+	bool session_page_origin_ops_present;
 };
 
 struct response_session_page {
@@ -7188,11 +7573,25 @@ struct conv_page_next_r {
 	} conv_page_next_choice;
 };
 
+struct conv_page_removed_r {
+	struct zcbor_string conv_page_removed_tstr[64];
+	size_t conv_page_removed_tstr_count;
+};
+
+struct conv_page_origin_ops {
+	struct origin_ops conv_page_origin_ops;
+};
+
 struct conv_page {
 	struct conversation_info conv_page_items_conversation_info_m[64];
 	size_t conv_page_items_conversation_info_m_count;
 	struct conv_page_next_r conv_page_next;
 	bool conv_page_next_present;
+	uint64_t conv_page_rev;
+	struct conv_page_removed_r conv_page_removed;
+	bool conv_page_removed_present;
+	struct conv_page_origin_ops conv_page_origin_ops;
+	bool conv_page_origin_ops_present;
 };
 
 struct response_conversations {
@@ -7236,11 +7635,25 @@ struct contact_page_next_r {
 	} contact_page_next_choice;
 };
 
+struct contact_page_removed_r {
+	struct zcbor_string contact_page_removed_tstr[64];
+	size_t contact_page_removed_tstr_count;
+};
+
+struct contact_page_origin_ops {
+	struct origin_ops contact_page_origin_ops;
+};
+
 struct contact_page {
 	struct contact_info contact_page_items_contact_info_m[64];
 	size_t contact_page_items_contact_info_m_count;
 	struct contact_page_next_r contact_page_next;
 	bool contact_page_next_present;
+	uint64_t contact_page_rev;
+	struct contact_page_removed_r contact_page_removed;
+	bool contact_page_removed_present;
+	struct contact_page_origin_ops contact_page_origin_ops;
+	bool contact_page_origin_ops_present;
 };
 
 struct response_contact_page {
@@ -7720,8 +8133,9 @@ struct notification_info {
 };
 
 struct response_notifications {
-	struct notification_info response_notifications_Notifications_notification_info_m[64];
-	size_t response_notifications_Notifications_notification_info_m_count;
+	uint64_t Notifications_rev;
+	struct notification_info Notifications_items_notification_info_m[64];
+	size_t Notifications_items_notification_info_m_count;
 };
 
 struct person_alias_r {
@@ -7768,13 +8182,39 @@ struct person {
 	bool person_endpoints_present;
 };
 
+struct Persons_removed_r {
+	struct zcbor_string Persons_removed_tstr[64];
+	size_t Persons_removed_tstr_count;
+};
+
+struct Persons_origin_ops {
+	struct origin_ops Persons_origin_ops;
+};
+
 struct response_persons {
-	struct person response_persons_Persons_person_m[64];
-	size_t response_persons_Persons_person_m_count;
+	uint64_t Persons_rev;
+	struct person Persons_items_person_m[64];
+	size_t Persons_items_person_m_count;
+	struct Persons_removed_r Persons_removed;
+	bool Persons_removed_present;
+	struct Persons_origin_ops Persons_origin_ops;
+	bool Persons_origin_ops_present;
 };
 
 struct response_transport_settings {
 	struct account_settings_values response_transport_settings_TransportSettings;
+};
+
+struct revs_uint64_m {
+	struct zcbor_string response_bootstrap_revs_uint64_m_key;
+	uint64_t revs_uint64_m;
+};
+
+struct response_bootstrap {
+	uint64_t Bootstrap_cursor;
+	uint64_t Bootstrap_epoch;
+	struct revs_uint64_m revs_uint64_m[64];
+	size_t revs_uint64_m_count;
 };
 
 struct api_response_r {
@@ -7877,6 +8317,7 @@ struct api_response_r {
 		struct response_notifications api_response_response_notifications_m;
 		struct response_persons api_response_response_persons_m;
 		struct response_transport_settings api_response_response_transport_settings_m;
+		struct response_bootstrap api_response_response_bootstrap_m;
 	};
 	enum {
 		api_response_response_ok_m_c,
@@ -7978,6 +8419,7 @@ struct api_response_r {
 		api_response_response_notifications_m_c,
 		api_response_response_persons_m_c,
 		api_response_response_transport_settings_m_c,
+		api_response_response_bootstrap_m_c,
 	} api_response_choice;
 };
 
