@@ -5,12 +5,8 @@
 namespace mirror {
 
 bool FetchScheduler::isQueued(const QString& coalesceKey) const noexcept {
-    for (const Slot& s : queue_) {
-        if (s.job.coalesceKey() == coalesceKey) {
-            return true;
-        }
-    }
-    return false;
+    return std::ranges::any_of(queue_,
+                               [&](const Slot& s) { return s.job.coalesceKey() == coalesceKey; });
 }
 
 void FetchScheduler::enqueue(const FetchJob& job) {
@@ -50,9 +46,8 @@ void FetchScheduler::complete(const QString& coalesceKey) {
     inflight_.remove(coalesceKey);
     // Honor a pending re-request (newer reason that arrived while the job was in flight).
     if (auto it = requeue_.constFind(coalesceKey); it != requeue_.constEnd()) {
-        const FetchJob again = it.value();
+        queue_.push_back(Slot{it.value(), seq_counter_++});
         requeue_.remove(coalesceKey);
-        queue_.push_back(Slot{again, seq_counter_++});
     }
     pump();
 }

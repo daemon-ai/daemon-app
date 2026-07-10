@@ -12,7 +12,7 @@ constexpr QChar kSep = QChar(0x1f);
 QString laneName(CoalesceLane lane) {
     switch (lane) {
     case CoalesceLane::None:
-        return QString();
+        return {};
     case CoalesceLane::Roster:
         return QStringLiteral("roster");
     case CoalesceLane::Fleet:
@@ -22,7 +22,7 @@ QString laneName(CoalesceLane lane) {
     case CoalesceLane::PerTransportContact:
         return QStringLiteral("contact");
     }
-    return QString();
+    return {};
 }
 
 QString obsKey(const QString& collection, const QString& scope) {
@@ -80,7 +80,7 @@ QString Ingestor::fetchScopeFor(const NodeEvent& e) const {
     case NodeEventKind::SessionMetaChanged:
         return e.session;
     default:
-        return QString(); // global lists
+        return {}; // global lists
     }
 }
 

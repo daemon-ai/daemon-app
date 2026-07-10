@@ -16,7 +16,7 @@ namespace {
 // (the single wire→canonical point, §3.6 SPEC-DECISION QString-in-entities).
 QString qstr(const zcbor_string& s) {
     if (s.value == nullptr || s.len == 0) {
-        return QString();
+        return {};
     }
     return QString::fromUtf8(reinterpret_cast<const char*>(s.value), static_cast<int>(s.len));
 }
@@ -35,9 +35,9 @@ QString conversationKind(const ::conversation_type_r& k) {
     case ::conversation_type_r::conversation_type_Space_tstr_c:
         return QStringLiteral("space");
     case ::conversation_type_r::conversation_type_Unset_tstr_c:
-        return QString();
+        return {};
     }
-    return QString();
+    return {};
 }
 
 // contact-permission enum → canonical string.
@@ -48,9 +48,9 @@ QString contactPermission(const ::contact_permission_r& p) {
     case ::contact_permission_r::contact_permission_Deny_tstr_c:
         return QStringLiteral("deny");
     case ::contact_permission_r::contact_permission_Unset_tstr_c:
-        return QString();
+        return {};
     }
-    return QString();
+    return {};
 }
 
 // presence.primitive enum → canonical string.
@@ -73,13 +73,13 @@ QString presencePrimitive(const ::presence_primitive_t_r& p) {
     case ::presence_primitive_t_r::presence_primitive_t_OutOfOffice_tstr_c:
         return QStringLiteral("out_of_office");
     }
-    return QString();
+    return {};
 }
 
 // content-hash ([* uint] byte list) → lowercase hex string (the #blob_hash derivation, §3.3).
 QString contentHashHex(const ::content_hash& h) {
     QString out;
-    out.reserve(static_cast<int>(h.content_hash_uint_count) * 2);
+    out.reserve(static_cast<qsizetype>(h.content_hash_uint_count) * 2);
     for (size_t i = 0; i < h.content_hash_uint_count; ++i) {
         out += QString::asprintf("%02x", static_cast<unsigned>(h.content_hash_uint[i]) & 0xFFu);
     }
@@ -95,7 +95,7 @@ QString participantDisplay(const ::participant_r& p) {
     if (p.participant_choice == ::participant_r::participant_agent_m_c) {
         return qstr(p.participant_agent_m.Agent_profile);
     }
-    return QString();
+    return {};
 }
 
 } // namespace

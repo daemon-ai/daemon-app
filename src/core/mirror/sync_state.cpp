@@ -1,5 +1,7 @@
 #include "mirror/sync_state.h"
 
+#include <algorithm>
+
 namespace mirror {
 
 void SyncState::markStale(const QString& name) {
@@ -16,9 +18,7 @@ void SyncState::markFresh(const QString& name, quint64 nodeRev, qint64 atMs) {
     Collection& c = collections_[name];
     c.state = CollectionState::Fresh;
     c.fetchedAtMs = atMs;
-    if (nodeRev > c.nodeRev) {
-        c.nodeRev = nodeRev;
-    }
+    c.nodeRev = std::max(c.nodeRev, nodeRev);
     c.lastError.clear();
 }
 
