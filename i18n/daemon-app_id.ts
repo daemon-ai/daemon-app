@@ -872,8 +872,8 @@ sampai didaftarkan ulang.</translation>
         <translation>Pindai payload di bawah dengan perangkat Anda yang lain. Menunggu persetujuan…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Pindai payload ini dengan perangkat Anda yang lain (tanpa gambar di terminal):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Pindai kode dengan perangkat Anda yang lain, atau salin payload:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

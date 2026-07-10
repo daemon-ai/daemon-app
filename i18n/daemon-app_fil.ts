@@ -872,8 +872,8 @@ hanggang muli itong mairehistro.</translation>
         <translation>I-scan ang payload sa ibaba gamit ang iyong ibang device. Naghihintay ng pag-apruba…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>I-scan ang payload na ito gamit ang iyong ibang device (walang larawan sa terminal):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>I-scan ang code gamit ang iyong ibang device, o kopyahin ang payload:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

@@ -872,8 +872,8 @@ hasta que se vuelva a registrar.</translation>
         <translation>Escanee el contenido de abajo con su otro dispositivo. Esperando aprobación…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Escanee este contenido con su otro dispositivo (sin imagen en la terminal):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Escanee el código con su otro dispositivo o copie el contenido:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

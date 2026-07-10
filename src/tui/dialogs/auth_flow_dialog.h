@@ -9,8 +9,10 @@
 //   - Redirect: the authorization URL in a selectable input for copying; completion arrives via the
 //     loopback redirect sink (when it could bind) or by PASTING the redirect URL into the callback.
 //   - Form: collected in-flow via one TextPromptDialog per field, then submitFields().
-//   - Qr: the payload shown in a selectable input (stated degradation: a terminal cannot render the
-//     image — the scannable payload text stands in); the controller auto-polls until completion.
+//   - Qr: the module matrix rendered as unicode half-blocks (QrCodeWidget over the shared
+//     qr::QrMatrix — the SAME matrix the GUI Kit.QrCode paints), plus the copyable payload text;
+//     the controller auto-polls until completion. If the payload cannot encode (too long), the
+//     widget hides and the copyable payload text stands in (stated degradation).
 //   - Message: the informational text; the controller auto-polls until completion.
 //
 // AuthFlowLauncher is the flow driver (the AddAccountFlow precedent): family pick (palette over
@@ -19,18 +21,46 @@
 // focused file.
 
 #include <QObject>
+#include <QSize>
 #include <QString>
+#include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
 #include <Tui/ZButton.h>
 #include <Tui/ZDialog.h>
+#include <Tui/ZEvent.h>
 #include <Tui/ZInputBox.h>
 #include <Tui/ZLabel.h>
+#include <Tui/ZWidget.h>
 
 class PaletteDialog;
 namespace auth {
 class AuthFlowController;
 }
+
+// [integrations wire v38] The TUI QR surface: paints a qr::QrMatrix as unicode half-blocks (two
+// modules per character cell) with a scanner-safe black-on-white palette — the terminal counterpart
+// of the GUI Kit.QrCode, rendering from the SAME shared matrix. An un-encodable payload leaves it
+// empty (zero-sized) so the dialog falls back to the copyable payload text.
+class QrCodeWidget : public Tui::ZWidget {
+    Q_OBJECT
+
+public:
+    explicit QrCodeWidget(Tui::ZWidget* parent = nullptr);
+
+    // Encode `payload` and cache the half-block rows; resizes to the rendered grid. An empty result
+    // (invalid payload) reports a zero size hint so the dialog can hide it.
+    void setPayload(const QString& payload);
+    [[nodiscard]] bool hasCode() const { return !m_rows.isEmpty(); }
+
+    [[nodiscard]] QSize sizeHint() const override;
+
+protected:
+    void paintEvent(Tui::ZPaintEvent* event) override;
+
+private:
+    QStringList m_rows;
+};
 
 // The challenge panel: a phase/kind-driven status line, a copyable value box (the Redirect URL or
 // the Qr payload), the Redirect manual-callback paste box, and Cancel/Close. Opens on start();
@@ -52,6 +82,7 @@ private:
     Tui::ZLabel* m_status = nullptr;
     Tui::ZLabel* m_valueLabel = nullptr;
     Tui::ZInputBox* m_value = nullptr; // selectable/copyable Redirect URL or Qr payload
+    QrCodeWidget* m_qr = nullptr;      // half-block QR render (Qr challenge)
     Tui::ZLabel* m_pasteLabel = nullptr;
     Tui::ZInputBox* m_callback = nullptr; // manual redirect paste (the no-loopback path)
     Tui::ZButton* m_complete = nullptr;

@@ -5,14 +5,50 @@
 
 #include "auth/auth_flow_controller.h"
 #include "palette_dialog.h"
+#include "qr/qr_matrix.h"
 #include "tui_dialogs.h"
 
 #include <QRect>
 #include <QVariantMap>
 #include <QVector>
+#include <Tui/ZColor.h>
 #include <Tui/ZHBoxLayout.h>
+#include <Tui/ZPainter.h>
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWindow.h>
+
+// The half-block QR widget: encode the payload once per challenge and paint the cached rows with a
+// fixed scanner-safe palette (black modules on a white quiet zone) — identical in every theme,
+// since a QR scanner needs the dark modules unambiguously darker than the light ones.
+QrCodeWidget::QrCodeWidget(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
+    setFocusPolicy(Tui::NoFocus);
+    setSizePolicyH(Tui::SizePolicy::Fixed);
+    setSizePolicyV(Tui::SizePolicy::Fixed);
+}
+
+void QrCodeWidget::setPayload(const QString& payload) {
+    const qr::QrMatrix matrix = qr::QrMatrix::encode(payload);
+    m_rows = qr::renderHalfBlocks(matrix, /*quietZone=*/4);
+    const int w = m_rows.isEmpty() ? 0 : static_cast<int>(m_rows.first().size());
+    const int h = static_cast<int>(m_rows.size());
+    setMinimumSize(w, h);
+    setMaximumSize(w, h);
+    update();
+}
+
+QSize QrCodeWidget::sizeHint() const {
+    const int w = m_rows.isEmpty() ? 0 : static_cast<int>(m_rows.first().size());
+    return {w, static_cast<int>(m_rows.size())};
+}
+
+void QrCodeWidget::paintEvent(Tui::ZPaintEvent* event) {
+    Tui::ZPainter* painter = event->painter();
+    const Tui::ZColor dark = Tui::ZColor::fromRgb(0, 0, 0);
+    const Tui::ZColor light = Tui::ZColor::fromRgb(255, 255, 255);
+    for (int i = 0; i < m_rows.size(); ++i) {
+        painter->writeWithColors(0, i, m_rows.at(i), dark, light);
+    }
+}
 
 AuthFlowDialog::AuthFlowDialog(auth::AuthFlowController* flow, Tui::ZWidget* parent)
     : Tui::ZDialog(parent), m_flow(flow), m_host(parent) {
@@ -32,6 +68,17 @@ AuthFlowDialog::AuthFlowDialog(auth::AuthFlowController* flow, Tui::ZWidget* par
     // A selectable input (not a label) so the terminal user can copy the URL / QR payload.
     m_value = new Tui::ZInputBox(QString(), this);
     layout->addWidget(m_value);
+
+    // The half-block QR render (shown only for a Qr challenge, above the copyable payload).
+    m_qr = new QrCodeWidget(this);
+    m_qr->setVisible(false);
+    {
+        auto* qrRow = new Tui::ZHBoxLayout();
+        layout->add(qrRow);
+        qrRow->addStretch();
+        qrRow->addWidget(m_qr);
+        qrRow->addStretch();
+    }
     layout->addSpacing(1);
 
     m_pasteLabel = new Tui::ZLabel(tr("Then paste the redirect URL here:"), this);
@@ -115,20 +162,40 @@ void AuthFlowDialog::syncToPhase() {
         m_status->setText(QString());
     }
 
-    // The value box carries the Redirect URL or (stated degradation: no terminal image) the Qr
-    // payload text; nothing for Form/Message.
+    // The value box carries the Redirect URL or the (copyable) Qr payload; nothing for
+    // Form/Message.
     const QString value =
         redirect ? m_flow->authorizationUrl() : (qr ? m_flow->qrPayload() : QString());
     m_value->setText(value);
-    m_valueLabel->setText(
-        redirect ? tr("Open this link in your browser (copy it):")
-                 : tr("Scan this payload with your other device (no image in the terminal):"));
-    m_valueLabel->setVisible(!value.isEmpty());
     m_value->setVisible(!value.isEmpty());
+
+    // A Qr challenge renders the payload as half-blocks (the SAME matrix the GUI Kit.QrCode paints)
+    // above the copyable payload text. If the payload cannot encode, the widget stays hidden and
+    // the text stands in (stated degradation).
+    if (qr) {
+        m_qr->setPayload(m_flow->qrPayload());
+    }
+    m_qr->setVisible(qr && m_qr->hasCode());
+
+    if (redirect) {
+        m_valueLabel->setText(tr("Open this link in your browser (copy it):"));
+    } else if (qr) {
+        m_valueLabel->setText(tr("Scan the code with your other device, or copy the payload:"));
+    }
+    m_valueLabel->setVisible(!value.isEmpty());
     m_pasteLabel->setVisible(redirect);
     m_callback->setVisible(redirect);
     m_complete->setVisible(redirect);
     m_complete->setEnabled(redirect);
+
+    // Grow the panel to fit the QR (a device-link code can be ~30+ terminal rows); otherwise keep
+    // the compact sign-in size.
+    if (qr && m_qr->hasCode()) {
+        const QSize hint = m_qr->sizeHint();
+        setGeometry(QRect(0, 0, qMax(76, hint.width() + 6), hint.height() + 12));
+    } else {
+        setGeometry(QRect(0, 0, 76, 14));
+    }
 
     // A Form challenge is collected in-flow via prompts; kick the chain once per challenge.
     if (form && !m_formActive) {
@@ -155,7 +222,12 @@ void AuthFlowDialog::promptFormFields(const QVariantList& fields, int index,
     if (label.isEmpty()) {
         label = key;
     }
-    auto* prompt = new TextPromptDialog(label, QString(), /*masked=*/false, m_host);
+    // Enriched field shape: mask secrets (kind == "Password") and prefill the node-supplied
+    // default, matching the GUI's generic form.
+    const bool masked =
+        field.value(QStringLiteral("kind")).toString() == QStringLiteral("Password");
+    const QString prefill = field.value(QStringLiteral("default")).toString();
+    auto* prompt = new TextPromptDialog(label, prefill, masked, m_host);
     connect(prompt, &TextPromptDialog::submitted, this,
             [this, fields, index, collected, key](const QString& text) {
                 QVariantMap next = collected;
@@ -257,7 +329,12 @@ void AuthFlowLauncher::promptNextParam(const QString& family, const QVariantList
     if (label.isEmpty()) {
         label = key;
     }
-    auto* prompt = new TextPromptDialog(label, QString(), /*masked=*/false, m_host);
+    // Enriched begin-schema field: mask secrets and prefill the node-supplied default (parity with
+    // the GUI picker's schema-driven param fields).
+    const bool masked =
+        field.value(QStringLiteral("kind")).toString() == QStringLiteral("Password");
+    const QString prefill = field.value(QStringLiteral("default")).toString();
+    auto* prompt = new TextPromptDialog(label, prefill, masked, m_host);
     connect(prompt, &TextPromptDialog::submitted, this,
             [this, family, fields, index, collected, key](const QString& text) {
                 QVariantMap next = collected;

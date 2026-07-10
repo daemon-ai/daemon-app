@@ -872,8 +872,8 @@ until it is re-registered.</source>
         <translation>用你的另一台设备扫描下方的数据。等待批准…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>用你的另一台设备扫描此数据（终端中没有图像）：</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>用你的另一台设备扫描此二维码，或复制数据：</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

@@ -872,8 +872,8 @@ until it is re-registered.</source>
         <translation>以下のペイロードを別のデバイスでスキャンしてください。承認を待っています…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>このペイロードを別のデバイスでスキャンしてください（ターミナルには画像はありません）：</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>別のデバイスでコードをスキャンするか、ペイロードをコピーしてください：</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

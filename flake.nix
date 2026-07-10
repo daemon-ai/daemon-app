@@ -41,6 +41,17 @@
       flake = false;
     };
 
+    # QR module-matrix encoder for the generic auth component (Kit.QrCode + the
+    # TUI half-block rendering). Nayuki's canonical upstream (MIT): two
+    # dependency-free C++ files (cpp/qrcodegen.{hpp,cpp}) exposing the raw module
+    # matrix via QrCode::getModule(x,y) - exactly what BOTH surfaces need. No C++
+    # releases upstream, so pin a rev like the other vendored sources; built out
+    # of the input by Dependencies.cmake (never committed into the repo).
+    qrcodegen = {
+      url = "github:nayuki/QR-Code-generator/2c9044de6b049ca25cb3cd1649ed7e27aa055138";
+      flake = false;
+    };
+
     # --- TUI frontend dependencies (Tui Widgets, Meson-built, consumed by the
     #     CMake build via pkg-config; see src/tui/CMakeLists.txt). termpaint
     #     itself is taken from nixpkgs; these two are not packaged there. ---
@@ -82,7 +93,7 @@
   };
 
   outputs =
-    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, ... }:
+    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qrcodegen, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -213,6 +224,7 @@
           "-DEARCUT_SOURCE_DIR=${earcut}"
           "-DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${ksyntaxhighlighting}"
           "-DMICROTEX_SOURCE_DIR=${microtex}"
+          "-DQRCODEGEN_SOURCE_DIR=${qrcodegen}"
           "-DQWINDOWKIT_SOURCE_DIR=${qwindowkit}"
           "-DQSIMPLEUPDATER_SOURCE_DIR=${qsimpleupdater}"
           "-DQAUTOSTART_SOURCE_DIR=${qautostart}"
@@ -286,7 +298,7 @@
           inherit pkgs versionStr baseVersion;
           pkgsEmscripten = import nixpkgs-emscripten { inherit system; };
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
         };
 
         # --- Portable Linux desktop (static Qt) ------------------------------
@@ -297,7 +309,7 @@
         portableStack = import ./nix/portable.nix {
           inherit pkgs versionStr baseVersion;
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
           # TUI + embedded-terminal sources for the static TUI / GUI builds
           # (mirrors the dynamic tuiwidgets/qmltermwidget derivations above).
           tuiSources = { inherit tuiwidgets posixsignalmanager qmltermwidget; };
@@ -312,7 +324,7 @@
           import ./nix/macos.nix {
             inherit pkgs versionStr baseVersion;
             appSrc = ./.;
-            depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+            depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
             tuiSources = { inherit tuiwidgets posixsignalmanager qmltermwidget; };
           }
         );
@@ -326,7 +338,7 @@
         windowsStack = import ./nix/windows.nix {
           inherit pkgs versionStr baseVersion;
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
         };
 
         # --- Qt for Android (arm64-v8a) ---------------------------------------
@@ -346,7 +358,7 @@
         qtAndroidStack = import ./nix/android.nix {
           inherit pkgs pkgsAndroid versionStr baseVersion;
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
         };
 
         # --- Qt for iOS simulator (arm64, static) -----------------------------
@@ -359,7 +371,7 @@
         qtIosStack = import ./nix/ios.nix {
           inherit pkgs versionStr baseVersion;
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
         };
 
         # --- Linux packaging artifacts (CPack: DEB / RPM / AppImage) --------
@@ -1067,6 +1079,7 @@
             export EARCUT_SOURCE_DIR="${earcut}"
             export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${ksyntaxhighlighting}"
             export MICROTEX_SOURCE_DIR="${microtex}"
+            export QRCODEGEN_SOURCE_DIR="${qrcodegen}"
             export QWINDOWKIT_SOURCE_DIR="${qwindowkit}"
             export QSIMPLEUPDATER_SOURCE_DIR="${qsimpleupdater}"
             export QAUTOSTART_SOURCE_DIR="${qautostart}"

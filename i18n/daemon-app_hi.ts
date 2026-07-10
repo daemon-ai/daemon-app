@@ -872,8 +872,8 @@ until it is re-registered.</source>
         <translation>नीचे दिए पेलोड को अपने दूसरे डिवाइस से स्कैन करें। अनुमोदन की प्रतीक्षा है…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>इस पेलोड को अपने दूसरे डिवाइस से स्कैन करें (टर्मिनल में कोई छवि नहीं):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>अपने दूसरे डिवाइस से कोड स्कैन करें, या पेलोड कॉपी करें:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

@@ -14,5 +14,6 @@ target_link_libraries(da_qr
     PUBLIC
         Qt6::Core
     PRIVATE
+        qrcodegen::qrcodegen
         daemon-app::warnings
 )

@@ -315,6 +315,7 @@ let
     "-DEARCUT_SOURCE_DIR=${depSources.earcut}"
     "-DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${depSources.ksyntaxhighlighting}"
     "-DMICROTEX_SOURCE_DIR=${depSources.microtex}"
+    "-DQRCODEGEN_SOURCE_DIR=${depSources.qrcodegen}"
   ];
 
   # KSyntaxHighlighting's find_package(ECM) cannot see host prefixes under the
@@ -485,6 +486,7 @@ let
       export EARCUT_SOURCE_DIR="${depSources.earcut}"
       export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${depSources.ksyntaxhighlighting}"
       export MICROTEX_SOURCE_DIR="${depSources.microtex}"
+      export QRCODEGEN_SOURCE_DIR="${depSources.qrcodegen}"
     '';
   };
 in

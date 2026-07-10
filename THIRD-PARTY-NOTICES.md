@@ -25,6 +25,7 @@ must carry the corresponding attributions and license texts.
 | earcut.hpp | `64530ea` | ISC | (c) 2015 Mapbox | github.com/mapbox/earcut.hpp |
 | KSyntaxHighlighting | `ccb31f7` | MIT (1) | The KDE community | invent.kde.org/frameworks/syntax-highlighting |
 | MicroTeX | `0e3707f` | MIT | (c) 2020 Nano Michael and contributors | github.com/NanoMichael/MicroTeX |
+| QR-Code-generator (qrcodegen) | `2c9044d` | MIT | (c) Project Nayuki | github.com/nayuki/QR-Code-generator |
 | tinyxml2 | nixpkgs | Zlib | (c) Lee Thomason | github.com/leethomason/tinyxml2 |
 | QSimpleUpdater | `6c78600` | MIT | (c) Alex Spataru | github.com/alex-spataru/QSimpleUpdater |
 | QAutoStart | `a27a028` | BSD-3-Clause | (c) Skycoder42 | github.com/Skycoder42/QAutoStart |

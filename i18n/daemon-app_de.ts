@@ -872,8 +872,8 @@ bis er erneut registriert wird.</translation>
         <translation>Scannen Sie die untenstehenden Daten mit Ihrem anderen Gerät. Warten auf Genehmigung…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Scannen Sie diese Daten mit Ihrem anderen Gerät (kein Bild im Terminal):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Scannen Sie den Code mit Ihrem anderen Gerät oder kopieren Sie die Daten:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

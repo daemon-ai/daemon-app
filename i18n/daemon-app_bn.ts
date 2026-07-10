@@ -872,8 +872,8 @@ until it is re-registered.</source>
         <translation>নিচের পেলোডটি আপনার অন্য ডিভাইস দিয়ে স্ক্যান করুন। অনুমোদনের অপেক্ষায়…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>এই পেলোডটি আপনার অন্য ডিভাইস দিয়ে স্ক্যান করুন (টার্মিনালে কোনো ছবি নেই):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>আপনার অন্য ডিভাইস দিয়ে কোডটি স্ক্যান করুন, অথবা পেলোডটি কপি করুন:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

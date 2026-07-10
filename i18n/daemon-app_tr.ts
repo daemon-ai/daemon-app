@@ -872,8 +872,8 @@ kadar başlatılamaz.</translation>
         <translation>Aşağıdaki veriyi diğer cihazınızla tarayın. Onay bekleniyor…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Bu veriyi diğer cihazınızla tarayın (terminalde görsel yok):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Kodu diğer cihazınızla tarayın veya veriyi kopyalayın:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

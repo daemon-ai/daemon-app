@@ -337,6 +337,7 @@ let
         -DEARCUT_SOURCE_DIR=${depSources.earcut} \
         -DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${depSources.ksyntaxhighlighting} \
         -DMICROTEX_SOURCE_DIR=${depSources.microtex} \
+        -DQRCODEGEN_SOURCE_DIR=${depSources.qrcodegen} \
         -DDAEMON_APP_VERSION_STR=${versionStr} \
         -DDAEMON_APP_UPDATE_CAPABILITY=SelfApply \
         -DDAEMON_APP_UPDATE_FEED_URL=https://github.com/daemon-ai/daemon/releases/latest/download/manifest.json \

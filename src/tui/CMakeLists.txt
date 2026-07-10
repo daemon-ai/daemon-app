@@ -275,6 +275,8 @@ target_link_libraries(daemon-tui
         daemon-app::models
         daemon-app::accounts
         daemon-app::auth
+        # [integrations wire v38] the shared QR module-matrix seam (half-block auth panel render).
+        daemon-app::qr
         daemon-app::profiles
         daemon-app::fleet
         daemon-app::automation

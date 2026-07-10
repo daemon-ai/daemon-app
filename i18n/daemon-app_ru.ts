@@ -872,8 +872,8 @@ until it is re-registered.</source>
         <translation>Отсканируйте данные ниже другим устройством. Ожидание подтверждения…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Отсканируйте эти данные другим устройством (изображения в терминале нет):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Отсканируйте код другим устройством или скопируйте данные:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>

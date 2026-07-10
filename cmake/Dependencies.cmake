@@ -93,6 +93,25 @@ if(NOT TARGET earcut::earcut)
 endif()
 
 # ---------------------------------------------------------------------------
+# qrcodegen - Nayuki's QR-Code-generator (MIT), all platforms. The two
+# dependency-free C++ files (cpp/qrcodegen.{hpp,cpp}) are built out of the
+# pinned flake input; NOT committed into the repo and never hand-edited. Used
+# by daemon-app::qr (QrMatrix) for the generic auth component's Kit.QrCode +
+# TUI half-block rendering. Project warning flags are intentionally NOT applied
+# to this vendored upstream source.
+# ---------------------------------------------------------------------------
+_daemon_app_resolve_dir(_qrcodegen_dir QRCODEGEN_SOURCE_DIR)
+if(NOT EXISTS "${_qrcodegen_dir}/cpp/qrcodegen.hpp")
+    message(FATAL_ERROR "QRCODEGEN_SOURCE_DIR must point to a nayuki/QR-Code-generator source tree (got '${_qrcodegen_dir}')")
+endif()
+if(NOT TARGET qrcodegen)
+    add_library(qrcodegen STATIC "${_qrcodegen_dir}/cpp/qrcodegen.cpp")
+    add_library(qrcodegen::qrcodegen ALIAS qrcodegen)
+    target_include_directories(qrcodegen PUBLIC "${_qrcodegen_dir}/cpp")
+    set_target_properties(qrcodegen PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
+# ---------------------------------------------------------------------------
 # KSyntaxHighlighting - KDE syntax highlighting engine + its QML module
 # (org.kde.syntaxhighlighting). Built from the pinned source tree; produces the
 # C++ target KF6SyntaxHighlighting and the QML plugin kquicksyntaxhighlightingplugin.
