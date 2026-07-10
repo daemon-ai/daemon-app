@@ -400,8 +400,9 @@ void RootWidget::setDistractionFree(bool on) {
     // leaving the tab strip, transcript, composer and status footer (the pane
     // set the GUI hides on UiSettings.distractionFree in Main.qml). Hiding the
     // COLUMNS preserves the explorer's own open/closed state for when zen ends.
-    if (m_sidebarView != nullptr) {
-        m_sidebarView->setVisible(!on);
+    if (m_sidebarColumn != nullptr) {
+        // The whole left column (Fleet/Tags tree + the co-equal Integrations tree) hides as a unit.
+        m_sidebarColumn->setVisible(!on);
     }
     if (m_listColumn != nullptr) {
         m_listColumn->setVisible(!on);

@@ -455,6 +455,16 @@ private slots:
     }
 
     // --- The co-equal Integrations section (events-IO axis) -----------------
+    //
+    // [integrations wire v38] Work package AC decided the sidebar composition: the finished
+    // IntegrationsTree (its own shared IntegrationsTreeModel over the transport registry + persons
+    // seams) now owns the integrations surface, and the shell no longer binds a DaemonNet to the
+    // fleet SidebarModel — so this transportsTree()-driven section is NOT composed into the real
+    // GUI/TUI sidebar anymore (guarded by the QML tst_sidebar composition test + the TUI mount).
+    // The model's transport-section support below is RETAINED (still bindable, still unit-tested):
+    // the transportsTree() projection it consumes stays live on IDaemonNet for its other consumer,
+    // the routing manager (RoutingManagerController). These tests therefore continue to exercise
+    // the model in isolation with an explicit setDaemonNet(), independent of the shell placement.
 
     // With a DaemonNet source, an "Integrations" header + the capability-driven tree
     // appear alongside the Fleet/Tags sections, each instance expanded to its taxonomy.
@@ -544,10 +554,11 @@ private slots:
         QCOMPARE(opened.count(), 0);
     }
 
-    // Daemon-mode honesty (W3, plan 2d): a DaemonNet whose transports tree seeds empty (what the
-    // daemon service graph constructs until the live projection lands) renders NO Integrations
+    // Empty-tree honesty: a DaemonNet whose transports tree is empty renders NO Integrations
     // section at all — no header, no rows, nothing foldable — while the co-equal sections render
-    // as usual.
+    // as usual. (The daemon graph now projects a live DaemonDaemonNet rather than an empty seed;
+    // this remains the model's contract for the genuinely-empty case, e.g. a node with no
+    // configured transports.)
     void emptyTransportsTreeRendersNoIntegrationsSection() {
         InMemorySessionStore store;
         MockDaemonNet net(daemonnet::TransportsSeed::Empty);

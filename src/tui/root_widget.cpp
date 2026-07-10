@@ -16,6 +16,7 @@
 #include "file_finder_model.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
+#include "integrations_tree_model.h"
 #include "memory/imemory_service.h"
 #include "memory_graph_model.h"
 #include "memory_list_model.h"
@@ -35,6 +36,8 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "transports/ipersons_service.h"
+#include "transports/itransport_registry.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
 #include "tui_page_hub.h"
@@ -100,8 +103,17 @@ RootWidget::RootWidget()
     // of this depends on Tui Widgets - the same objects back the QML frontend.
     m_sidebar = new SidebarModel(this);
     m_sidebar->setStore(m_services.store);
-    // The same co-equal Integrations section as the GUI (events-IO axis).
-    m_sidebar->setDaemonNet(m_services.daemonNet);
+    // [integrations wire v38] Work package AC: the legacy transportsTree() Integrations section is
+    // no longer composed into the fleet sidebar model — the dedicated IntegrationsTree below now
+    // owns the integrations surface (GUI parity). transportsTree() itself stays on IDaemonNet for
+    // its other consumer (the routing manager); only this fleet-sidebar rendering of it is retired.
+
+    // The co-equal Integrations tree: the SAME shared IntegrationsTreeModel the GUI binds, composed
+    // from the transport registry (accounts/adapters/conversations) + the cross-transport persons
+    // seam. Rendered through the Integrations display adapter in its own sidebar TreeListView.
+    m_integrationsTree = new IntegrationsTreeModel(this);
+    m_integrationsTree->setRegistry(m_services.transportRegistry);
+    m_integrationsTree->setPersons(m_services.persons);
 
     m_list = new SessionsListModel(this);
     m_list->setStore(m_services.store);
@@ -464,7 +476,9 @@ void RootWidget::buildUi() {
         TuiShellLayout::build(this, terminal(), QRect(QPoint(0, 0), geometry().size()), m_tabModel,
                               m_fileTree, m_participants, &m_pageDoc);
     m_window = shell.window;
+    m_sidebarColumn = shell.sidebarColumn;
     m_sidebarView = shell.sidebarView;
+    m_integrationsView = shell.integrationsView;
     m_listColumn = shell.listColumn;
     m_search = shell.search;
     m_listView = shell.listView;

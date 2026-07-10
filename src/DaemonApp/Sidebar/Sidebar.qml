@@ -92,8 +92,14 @@ Rectangle {
 
     SidebarModel {
         id: sidebarModel
+        objectName: "fleetSidebarModel"
         store: SessionStore
-        daemonNet: DaemonNet
+        // [integrations wire v38] Work package AC: the legacy transportsTree() "Integrations"
+        // section is deliberately NOT bound here anymore — the dedicated IntegrationsTree below
+        // now owns the integrations surface (richer: persons/spaces/browse + account add/edit/
+        // remove + interactive auth), so binding both would render a duplicate "Integrations"
+        // section. The transportsTree() projection itself stays on IDaemonNet for its other
+        // consumer (the routing manager); only this fleet-sidebar rendering of it is retired.
         // Agents == profiles (§0): the FLEET section renders one agent row per ProfileInfo.
         profiles: Profiles
         // The node/connection ROOT label: the connection target for a remote node, else a generic
@@ -136,11 +142,26 @@ Rectangle {
         }
 
         // --- Rows -----------------------------------------------------------
-        QQC.ScrollView {
+        // A vertical split: the Fleet/Tags supervision tree on top, the co-equal Integrations
+        // surface (work package AC) below. The Integrations section moved out of the fleet
+        // SidebarModel into the dedicated IntegrationsTree (persons/spaces/browse + account
+        // management + interactive auth); mounting it here is what makes that surface reachable.
+        QQC.SplitView {
+            orientation: Qt.Vertical
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
-            QQC.ScrollBar.vertical: Kit.ScrollBar {}
+
+            handle: Rectangle {
+                implicitHeight: 1
+                color: QQC.SplitHandle.pressed || QQC.SplitHandle.hovered ? Theme.accent
+                                                                          : Theme.splitter
+            }
+
+            QQC.ScrollView {
+                QQC.SplitView.fillHeight: true
+                QQC.SplitView.minimumHeight: 120
+                clip: true
+                QQC.ScrollBar.vertical: Kit.ScrollBar {}
 
             ListView {
                 id: list
@@ -528,6 +549,20 @@ Rectangle {
                                 sidebarModel.toggleExpand(del.index);
                         }
                     }
+                }
+            }
+            }
+
+            // The co-equal Integrations surface (work package AC): the finished IntegrationsTree,
+            // now placed into the sidebar. Activating a room/DM opens a native chat tab through the
+            // shell's conversation-activation dispatch (A4); the account menu / add-edit-remove +
+            // interactive auth are self-contained in the tree.
+            IntegrationsTree {
+                id: integrationsTree
+                QQC.SplitView.preferredHeight: root.height * 0.42
+                QQC.SplitView.minimumHeight: 90
+                onConversationActivated: function(transport, conversation) {
+                    root.conversationActivated(transport, conversation);
                 }
             }
         }

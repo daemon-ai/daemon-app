@@ -590,6 +590,18 @@ ApplicationWindow {
                         sidebarDrawerCompact.close();
                         compactStack.push(sessionPage);
                     }
+                    // [integrations wire v38] An integrations room/DM opens a native chat tab in
+                    // the session pane (parity with the expanded shell), pushing it first when the
+                    // phone has no pane mounted yet.
+                    onConversationActivated: function(transport, conversation) {
+                        sidebarDrawerCompact.close();
+                        if (!root.activeSessionPane)
+                            compactStack.push(sessionPage);
+                        Qt.callLater(function() {
+                            if (root.activeSessionPane)
+                                root.activeSessionPane.openConversation(transport, conversation, "");
+                        });
+                    }
                     // "+ New agent/node" opens a fresh chat via the shared open-a-chat path.
                     onNewChatRequested: {
                         sidebarDrawerCompact.close();

@@ -91,6 +91,7 @@ class AddAccountFlow;
 class RoomFlow;    // [acct-mgmt] Channels room lifecycle + member flows
 class ContactFlow; // [acct-mgmt] Channels transport-contacts flows (wire v34)
 class AuthFlowLauncher;
+class IntegrationsTreeModel;
 class SidebarModel;
 class SessionsListModel;
 class SessionController;
@@ -328,6 +329,7 @@ private:
     void wirePageLiveRefresh();    // re-render an active hub page on seam churn
     void wireSearchBox();          // type-ahead session-list filter
     void wireSidebarTree();        // sidebar selection + collapse/expand
+    void wireIntegrationsTree();   // integrations tree nav + conversation/account activation
     void wireSessionList();        // row open + per-row session actions
     void wireTranscriptControls(); // approval/clarify/rewind from the transcript
     void wireComposer();           // composer <-> session controller + completion
@@ -457,7 +459,16 @@ private:
     // TUI-only glue + widgets.
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
     Tui::ZWindow* m_window = nullptr;
+    // The left column container (Fleet/Tags tree above the Integrations tree), hidden as a unit by
+    // distraction-free mode.
+    Tui::ZWidget* m_sidebarColumn = nullptr;
     TreeListView* m_sidebarView = nullptr;
+    // [integrations wire v38] Work package AC: the co-equal Integrations surface mounted in the
+    // sidebar — the SAME shared IntegrationsTreeModel the GUI binds, rendered through the
+    // Integrations display adapter, navigable via its own TreeListView.
+    IntegrationsTreeModel* m_integrationsTree = nullptr;
+    DisplayRoleAdapter* m_integrationsAdapter = nullptr;
+    TreeListView* m_integrationsView = nullptr;
     // The middle column wrapping the search box + session list; hidden as one
     // unit by distraction-free mode.
     Tui::ZWidget* m_listColumn = nullptr;

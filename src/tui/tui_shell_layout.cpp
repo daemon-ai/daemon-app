@@ -48,11 +48,26 @@ TuiShellWidgets TuiShellLayout::build(Tui::ZRoot* root, Tui::ZTerminal* terminal
     auto* columns = new Tui::ZHBoxLayout();
     outer->add(columns);
 
-    w.sidebarView = new TreeListView(w.window);
+    // The left column stacks the Fleet/Tags supervision tree above the co-equal Integrations tree
+    // (work package AC): both are TreeListViews over their own shared C++ model + display adapter.
+    w.sidebarColumn = new Tui::ZWidget(w.window);
+    w.sidebarColumn->setMinimumSize(26, 3);
+    w.sidebarColumn->setSizePolicyH(Tui::SizePolicy::Preferred);
+    w.sidebarColumn->setSizePolicyV(Tui::SizePolicy::Expanding);
+    auto* sidebarColLayout = new Tui::ZVBoxLayout();
+    w.sidebarColumn->setLayout(sidebarColLayout);
+
+    w.sidebarView = new TreeListView(w.sidebarColumn);
     w.sidebarView->setMinimumSize(26, 3);
-    w.sidebarView->setSizePolicyH(Tui::SizePolicy::Preferred);
     w.sidebarView->setSizePolicyV(Tui::SizePolicy::Expanding);
-    columns->addWidget(w.sidebarView);
+    sidebarColLayout->addWidget(w.sidebarView);
+
+    w.integrationsView = new TreeListView(w.sidebarColumn);
+    w.integrationsView->setMinimumSize(26, 3);
+    w.integrationsView->setSizePolicyV(Tui::SizePolicy::Expanding);
+    sidebarColLayout->addWidget(w.integrationsView);
+
+    columns->addWidget(w.sidebarColumn);
 
     w.listColumn = new Tui::ZWidget(w.window);
     w.listColumn->setMinimumSize(34, 3);

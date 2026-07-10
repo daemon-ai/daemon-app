@@ -7,6 +7,7 @@ import QtQuick
 import QtQuick.Controls as QQC
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Pages
 
 // [integrations wire v38] The integrations tree (work package A2): each configured account is a
 // ROOT node whose protocol governs its subtree (Persons, Servers/Spaces -> rooms, standalone
@@ -50,18 +51,36 @@ Rectangle {
 
     IntegrationsTreeModel {
         id: treeModel
+        objectName: "integrationsTreeModel"
         registry: (typeof Transports !== "undefined") ? Transports : null
         persons: (typeof Persons !== "undefined") ? Persons : null
     }
 
     AccountManagementController {
         id: accountCtrl
+        objectName: "accountManagementController"
         registry: (typeof Transports !== "undefined") ? Transports : null
     }
 
     AccountFormDialog {
         id: accountForm
         controller: accountCtrl
+    }
+
+    // [integrations wire v38] The add-account handoff (A3): a fresh sign-in is interactive, so the
+    // schema form's Continue does NOT configure directly — the controller emits authFlowRequested,
+    // and we open the shared AuthFlowSheet to run the begin -> browser/challenge -> complete flow
+    // (the same generic auth surface the Accounts/Channels pages bind). Edit/remove stay direct.
+    AuthFlowSheet {
+        id: authSheet
+        objectName: "integrationsAuthSheet"
+    }
+
+    Connections {
+        target: accountCtrl
+        function onAuthFlowRequested(family, values) {
+            authSheet.openFlow(family, values, "");
+        }
     }
 
     Connections {
