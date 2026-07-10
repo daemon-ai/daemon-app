@@ -18,12 +18,18 @@ QVariantMap redirectChallenge(const QString& host, const QString& family) {
     return challenge;
 }
 
-// Build a Form challenge asking for a single `token` field.
+// Build a Form challenge asking for a single `token` field. [integrations wire v38] The field
+// carries the enriched metadata (kind == "Password" masks it; placeholder hints; empty
+// default/choices) so the schema-driven form renders the full field shape offline.
 QVariantMap formChallenge() {
     QVariantMap field;
     field[QStringLiteral("key")] = QStringLiteral("token");
     field[QStringLiteral("label")] = QStringLiteral("Access token");
     field[QStringLiteral("required")] = true;
+    field[QStringLiteral("kind")] = QStringLiteral("Password");
+    field[QStringLiteral("default")] = QString();
+    field[QStringLiteral("placeholder")] = QStringLiteral("xoxb-…");
+    field[QStringLiteral("choices")] = QStringList();
     QVariantMap challenge;
     challenge[QStringLiteral("kind")] = QStringLiteral("form");
     challenge[QStringLiteral("title")] = QStringLiteral("Enter your access token");
@@ -38,15 +44,31 @@ QVariantMap messageChallenge() {
     challenge[QStringLiteral("text")] = QStringLiteral("Approve the sign-in on your other device…");
     return challenge;
 }
+
+// [integrations wire v38] Build a Qr challenge (device-pairing analogue): a scannable payload, no
+// pre-rendered image (the client renders the payload), and a poll cadence the auto-poll follows.
+QVariantMap qrChallenge() {
+    QVariantMap challenge;
+    challenge[QStringLiteral("kind")] = QStringLiteral("qr");
+    challenge[QStringLiteral("payload")] = QStringLiteral("MOCK-QR-PAIRING/mock-flow");
+    challenge[QStringLiteral("image")] = QByteArray();
+    challenge[QStringLiteral("pollIntervalMs")] = 1500;
+    return challenge;
+}
 } // namespace
 
 MockAuthFlowService::MockAuthFlowService(QObject* parent) : IAuthFlowService(parent) {
     // One SSO-shaped Redirect family (the Matrix analogue) so the begin form has a params schema to
-    // render, mirroring what a live AuthProviders returns.
+    // render, mirroring what a live AuthProviders returns. [integrations wire v38] The param
+    // carries the enriched field shape (kind/default/placeholder/choices) the seam now documents.
     QVariantMap homeserver;
     homeserver[QStringLiteral("key")] = QStringLiteral("homeserver");
     homeserver[QStringLiteral("label")] = QStringLiteral("Homeserver");
     homeserver[QStringLiteral("required")] = true;
+    homeserver[QStringLiteral("kind")] = QStringLiteral("Text");
+    homeserver[QStringLiteral("default")] = QStringLiteral("https://matrix.org");
+    homeserver[QStringLiteral("placeholder")] = QStringLiteral("https://example.org");
+    homeserver[QStringLiteral("choices")] = QStringList();
     QVariantMap matrix;
     matrix[QStringLiteral("family")] = QStringLiteral("matrix");
     matrix[QStringLiteral("flowKind")] = QStringLiteral("MatrixSso");
@@ -62,6 +84,16 @@ MockAuthFlowService::MockAuthFlowService(QObject* parent) : IAuthFlowService(par
     token[QStringLiteral("name")] = QStringLiteral("Access token");
     token[QStringLiteral("params")] = QVariantList{};
     m_providers.append(token);
+
+    // [integrations wire v38] One QR-pairing family completing the challenge matrix (redirect /
+    // form / message / qr): begin -> Qr challenge, and the first Poll step completes the flow — so
+    // A3 builds the GUI Kit.QrCode + TUI half-block surfaces against canned data.
+    QVariantMap qr;
+    qr[QStringLiteral("family")] = QStringLiteral("qr");
+    qr[QStringLiteral("flowKind")] = QStringLiteral("QrPairing");
+    qr[QStringLiteral("name")] = QStringLiteral("Pair by QR code");
+    qr[QStringLiteral("params")] = QVariantList{};
+    m_providers.append(qr);
 }
 
 void MockAuthFlowService::refreshProviders() {
@@ -84,8 +116,16 @@ void MockAuthFlowService::begin(const QString& family, const QVariantMap& params
         }
         const QString flowId = QStringLiteral("mock-flow-%1").arg(flowSerial);
         m_flows.insert(flowId, FlowState{family, bindProfile, 0});
-        const QVariantMap challenge =
-            family == QStringLiteral("matrix") ? redirectChallenge(host, family) : formChallenge();
+        // [integrations wire v38] Per-family initial challenge: matrix -> Redirect, qr -> Qr,
+        // everything else -> Form (the token analogue).
+        QVariantMap challenge;
+        if (family == QStringLiteral("matrix")) {
+            challenge = redirectChallenge(host, family);
+        } else if (family == QStringLiteral("qr")) {
+            challenge = qrChallenge();
+        } else {
+            challenge = formChallenge();
+        }
         emit begun(flowId, challenge, expiresAt);
     });
 }
@@ -105,9 +145,12 @@ void MockAuthFlowService::step(const QString& flowId, const StepInput& input) {
             return;
         }
         it->stepsTaken += 1;
-        // The Redirect (matrix) flow completes in one step; the Form (token) flow advances through
-        // a Message challenge before completing on the second step.
-        const bool completeNow = it->family == QStringLiteral("matrix") || it->stepsTaken >= 2;
+        // The Redirect (matrix) flow completes in one step; the Qr flow completes on the first
+        // Poll ([integrations wire v38]: the pairing "lands" immediately, so the QR surface
+        // exercises render -> poll -> complete without a scripted delay); the Form (token) flow
+        // advances through a Message challenge before completing on the second step.
+        const bool completeNow = it->family == QStringLiteral("matrix") ||
+                                 it->family == QStringLiteral("qr") || it->stepsTaken >= 2;
         if (!completeNow) {
             emit challenged(messageChallenge());
             return;

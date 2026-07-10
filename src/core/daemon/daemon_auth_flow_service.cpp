@@ -18,6 +18,23 @@ using daemonapp::daemon::DecodedAuthProviderInfo;
 using daemonapp::daemon::DecodedAuthStepResult;
 
 namespace {
+// [integrations wire v38] Project one enriched auth-param-field into the plain field map the seam
+// carries (see the shape doc in iauth_flow_service.h). Shared by the provider params and the Form
+// challenge fields — the render metadata (kind/default/placeholder/choices) is what lets A3's
+// generic form mask secrets (kind == "Password"), prefill, hint, and offer choices without ever
+// seeing a wire type. Absent optionals project as empty ("" / []), kind defaults to "Text".
+QVariantMap fieldToVariant(const DecodedAuthParamField& f) {
+    QVariantMap field;
+    field[QStringLiteral("key")] = f.key;
+    field[QStringLiteral("label")] = f.label;
+    field[QStringLiteral("required")] = f.required;
+    field[QStringLiteral("kind")] = f.kind;
+    field[QStringLiteral("default")] = f.hasDefault ? f.defaultValue : QString();
+    field[QStringLiteral("placeholder")] = f.hasPlaceholder ? f.placeholder : QString();
+    field[QStringLiteral("choices")] = QVariant(f.choices);
+    return field;
+}
+
 // Project a decoded (wire-derived) challenge into the plain challenge map the seam carries (keeping
 // the wire types confined to the codec/repository layer). See the shape doc in
 // iauth_flow_service.h.
@@ -33,11 +50,7 @@ QVariantMap challengeToVariant(const DecodedAuthChallenge& c) {
         map[QStringLiteral("title")] = c.formTitle;
         QVariantList fields;
         for (const DecodedAuthParamField& f : c.formFields) {
-            QVariantMap field;
-            field[QStringLiteral("key")] = f.key;
-            field[QStringLiteral("label")] = f.label;
-            field[QStringLiteral("required")] = f.required;
-            fields.append(field);
+            fields.append(fieldToVariant(f));
         }
         map[QStringLiteral("fields")] = fields;
         break;
@@ -87,11 +100,7 @@ QVariantList DaemonAuthFlowService::providers() const {
     for (const DecodedAuthProviderInfo& p : m_repository->providers()) {
         QVariantList params;
         for (const DecodedAuthParamField& f : p.paramsSchema) {
-            QVariantMap field;
-            field[QStringLiteral("key")] = f.key;
-            field[QStringLiteral("label")] = f.label;
-            field[QStringLiteral("required")] = f.required;
-            params.append(field);
+            params.append(fieldToVariant(f));
         }
         QVariantMap row;
         row[QStringLiteral("family")] = p.family;

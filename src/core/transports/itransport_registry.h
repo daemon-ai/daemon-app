@@ -73,10 +73,14 @@ public:
     }
 
     // Live conversations/rooms for a transport (EIO-8). Each entry is a map:
-    //   transport, id, kind, title, topic. `conversations()` returns the last-known (cached) set;
-    //   `refreshConversations()` triggers a live enumeration (ConvList) and fires
+    //   transport, id, kind, title, topic, parent. `conversations()` returns the last-known
+    //   (cached) set; `refreshConversations()` triggers a live enumeration (ConvList) and fires
     //   conversationsChanged when it lands. Default no-ops so the mock + non-daemon seams need not
     //   implement them.
+    //   [integrations wire v38] `kind` may be "space" (a server/space container row; flat protocols
+    //   never emit it) and `parent` is the containing space's conversation id ("" = a root) — the
+    //   hierarchy the integrations tree groups by. Consumers treat an unknown/cyclic parent as a
+    //   root.
     [[nodiscard]] Q_INVOKABLE virtual QVariantList conversations(const QString& transport) const {
         Q_UNUSED(transport)
         return {};

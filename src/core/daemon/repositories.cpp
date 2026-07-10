@@ -2527,6 +2527,9 @@ void TransportRepository::syncConversations(const QString& transport,
         row.kind = c.kind;
         row.title = c.title;
         row.topic = c.topic;
+        // [integrations wire v38] persist the containing space id (empty = a root) so the
+        // integrations tree's hierarchy renders offline-first.
+        row.parent = c.hasParent ? c.parent : QString();
         row.updatedAtMs = now;
         cache()->upsertConversation(row);
         keep.insert(c.id);

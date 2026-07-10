@@ -78,6 +78,9 @@ QVariantMap roomRow(const QString& transport, const QString& id, const QString& 
     m.insert(QStringLiteral("title"), title);
     m.insert(QStringLiteral("topic"), QString());
     m.insert(QStringLiteral("kind"), kind);
+    // [integrations wire v38] shape parity with the daemon seam: the containing space id ("" = a
+    // root; the canned rooms are flat).
+    m.insert(QStringLiteral("parent"), QString());
     return m;
 }
 

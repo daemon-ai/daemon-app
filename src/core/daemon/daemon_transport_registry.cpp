@@ -141,9 +141,11 @@ QVariantList DaemonTransportRegistry::conversations(const QString& transport) co
         QVariantMap row;
         row[QStringLiteral("transport")] = c.transport;
         row[QStringLiteral("id")] = c.convId;
-        row[QStringLiteral("kind")] = c.kind;
+        row[QStringLiteral("kind")] = c.kind; // [integrations wire v38] may be "space" (container)
         row[QStringLiteral("title")] = c.title;
         row[QStringLiteral("topic")] = c.topic;
+        // [integrations wire v38] the containing space id ("" = a root) — the tree groups by it.
+        row[QStringLiteral("parent")] = c.parent;
         out.append(row);
     }
     return out;
