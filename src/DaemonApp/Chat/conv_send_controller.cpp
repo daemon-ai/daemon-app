@@ -55,10 +55,23 @@ void ConvSendController::setOutbox(mirror::Outbox* outbox) {
     }
     rebindPendingFilter();
     emit pendingChanged();
+    emit outboxChanged();
 }
 
 mirror::Outbox* ConvSendController::outbox() const {
     return m_outbox.data();
+}
+
+QObject* ConvSendController::outboxObject() const {
+    return m_outbox.data();
+}
+
+void ConvSendController::setOutboxObject(QObject* outbox) {
+    setOutbox(qobject_cast<mirror::Outbox*>(outbox));
+}
+
+bool ConvSendController::laneActive() const {
+    return m_outbox != nullptr;
 }
 
 QObject* ConvSendController::pending() const {

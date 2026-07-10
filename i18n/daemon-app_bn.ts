@@ -1349,8 +1349,52 @@ until it is re-registered.</source>
         <translation>বার্তাটি পাঠানো যায়নি।</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>আগের বার্তাগুলি লোড করুন</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>এখনও কোনো বার্তা নেই</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>অপ্রেরিত (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>পাঠান</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>বাকিগুলি তবুও পাঠান</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>ব্যর্থ</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>পাঠানো হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>পাঠানো হয়েছে</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>সারিবদ্ধ</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>পুনরায় চেষ্টা করুন</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>সম্পাদনা</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>বাতিল করুন</translation>
     </message>
 </context>
 <context>

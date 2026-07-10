@@ -6,6 +6,7 @@
 #include "chat_conversation_controller.h"
 #include "command_registry.h"
 #include "composer_session_controller.h"
+#include "conv_send_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // live refresh of the Users & Access page
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
@@ -695,10 +696,17 @@ void RootWidget::wireComposer() {
     // document). Background tabs keep their own orchestrators running independently.
     connect(m_composerSession, &ComposerSessionController::submitted, this,
             [this](const QString& text, const QString& refs) {
-                // [integrations wire v38] A native chat tab: send via ConvSend (no local
-                // echo — the node's MessagesChanged brings the line back authoritatively).
+                // [integrations wire v38 → mirror M2] A native chat tab: with the durable
+                // ConvSend lane live (daemon mode), enqueue THEN drain on this explicit user
+                // action (§6.8 manual drain — anything held back shows in the pending strip;
+                // no local echo ever, R2). Mock/fallback keeps the legacy direct send.
                 if (m_activeChat != nullptr) {
-                    m_activeChat->send(text);
+                    if (m_activeChatSend != nullptr && m_activeChatSend->laneActive()) {
+                        m_activeChatSend->send(text);
+                        m_activeChatSend->drain();
+                    } else {
+                        m_activeChat->send(text);
+                    }
                     return;
                 }
                 if (m_active != nullptr) {
@@ -753,6 +761,19 @@ void RootWidget::wireComposer() {
             m_composer->setFocus();
         }
     });
+
+    // [mirror M2] Chat pending strip (§6.5 edit affordance): 'e' on a rejected entry reopens its
+    // text in the composer — the re-send mints a NEW op-id (the old one was discarded).
+    if (m_chatPending != nullptr) {
+        connect(m_chatPending, &ChatPendingStripView::editRequested, this,
+                [this](const QString& text) {
+                    if (m_composer != nullptr) {
+                        m_composer->setText(text);
+                        m_composer->moveCursorToEnd();
+                        m_composer->setFocus();
+                    }
+                });
+    }
 
     // Attachment chips bind to the shared session; Ctrl+O on the composer opens
     // the workspace attach picker (the GUI's "+" menu -> Files flow, served by

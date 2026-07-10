@@ -1349,8 +1349,52 @@ until it is re-registered.</source>
         <translation>संदेश नहीं भेजा जा सका।</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>पिछले संदेश लोड करें</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>अभी तक कोई संदेश नहीं</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>अप्रेषित (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>भेजें</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>शेष फिर भी भेजें</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>विफल</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>भेजा जा रहा है…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>भेजा गया</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>कतार में</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>पुनः प्रयास करें</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>संपादित करें</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>छोड़ें</translation>
     </message>
 </context>
 <context>

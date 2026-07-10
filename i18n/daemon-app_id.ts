@@ -1349,8 +1349,52 @@ sampai didaftarkan ulang.</translation>
         <translation>Tidak dapat mengirim pesan.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>Muat pesan sebelumnya</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Belum ada pesan</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Belum terkirim (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Kirim</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Tetap kirim sisanya</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Gagal</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Mengirim…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Terkirim</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Dalam antrean</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Coba lagi</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Edit</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>Buang</translation>
     </message>
 </context>
 <context>

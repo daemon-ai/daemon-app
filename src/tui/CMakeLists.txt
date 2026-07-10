@@ -234,6 +234,9 @@ qt_add_executable(daemon-tui
     session_list_view.cpp
     queue_strip_view.h
     queue_strip_view.cpp
+    # [mirror M2] Chat pending strip: the ConvSend outbox lens beside the timeline (§8.4).
+    chat_pending_strip_view.h
+    chat_pending_strip_view.cpp
     attachment_bar_view.h
     attachment_bar_view.cpp
     status_bar_view.h

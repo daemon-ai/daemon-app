@@ -1349,8 +1349,52 @@ hanggang muli itong mairehistro.</translation>
         <translation>Hindi naipadala ang mensahe.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>I-load ang mga naunang mensahe</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Wala pang mga mensahe</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Hindi naipadala (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ipadala</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Ipadala pa rin ang natitira</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Nabigo</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Ipinapadala…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Naipadala</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Nakapila</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Subukang muli</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>I-edit</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>Itapon</translation>
     </message>
 </context>
 <context>

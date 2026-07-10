@@ -4,6 +4,7 @@
 #include "tui_shell_layout.h"
 
 #include "attachment_bar_view.h"
+#include "chat_pending_strip_view.h"
 #include "code_editor_view.h"
 #include "completion_view.h"
 #include "composer_chrome.h"
@@ -132,6 +133,11 @@ TuiShellWidgets TuiShellLayout::build(Tui::ZRoot* root, Tui::ZTerminal* terminal
 
     w.queue = new QueueStripView(right);
     rightCol->addWidget(w.queue);
+
+    // [mirror M2] Chat pending strip (ConvSend outbox lens): rendered beside the timeline in the
+    // same dock as the queued-prompt strip; collapses to 0 height when empty / not a chat tab.
+    w.chatPending = new ChatPendingStripView(right);
+    rightCol->addWidget(w.chatPending);
 
     w.subagents = new Tui::ZLabel(right);
     w.subagents->setMaximumSize(Tui::tuiMaxSize, 1);

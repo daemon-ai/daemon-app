@@ -1349,8 +1349,52 @@ until it is re-registered.</source>
         <translation>Не удалось отправить сообщение.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>Загрузить более ранние сообщения</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Пока нет сообщений</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Не отправлено (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Отправить</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Всё равно отправить остальные</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Не удалось</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Отправка…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Отправлено</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>В очереди</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Повторить</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Изменить</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>Отбросить</translation>
     </message>
 </context>
 <context>

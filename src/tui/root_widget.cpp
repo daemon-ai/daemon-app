@@ -5,6 +5,7 @@
 
 #include "app/code_editor_controller.h"
 #include "app/transcript_log.h"
+#include "chat_conversation_controller.h" // [mirror M2] loadEarlier on the Ctrl+PgUp shortcut
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
@@ -442,6 +443,17 @@ void RootWidget::buildUi() {
         new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F8), this, Qt::ApplicationShortcut);
     connect(themeShortcut, &Tui::ZShortcut::activated, this, &RootWidget::cycleTheme);
 
+    // [mirror M2] Ctrl+PgUp on a chat tab demand-pages older history (§4.6) — the TUI analog of
+    // the GUI's "Load earlier messages" button. No-op on non-chat tabs / at end-of-history.
+    auto* earlierShortcut =
+        new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_PageUp, Qt::ControlModifier), this,
+                           Qt::ApplicationShortcut);
+    connect(earlierShortcut, &Tui::ZShortcut::activated, this, [this] {
+        if (m_activeChat != nullptr) {
+            m_activeChat->loadEarlier();
+        }
+    });
+
     // Ctrl+P opens the command palette (the TUI analog of the GUI's Mod+K),
     // filterable over the shared CommandRegistry.
     auto* paletteShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forShortcut(QStringLiteral("p")),
@@ -491,6 +503,7 @@ void RootWidget::buildUi() {
     m_fileStatus = shell.fileStatus;
     m_composerChrome = shell.composerChrome;
     m_queue = shell.queue;
+    m_chatPending = shell.chatPending;
     m_subagents = shell.subagents;
     m_todos = shell.todos;
     m_attachments = shell.attachments;

@@ -34,6 +34,11 @@ class ConvSendController : public QObject {
     Q_OBJECT
     QML_ELEMENT
 
+    // The shared outbox (`Outbox` context property; null in mock mode at M2 — surfaces fall back
+    // to the legacy direct send until A8's seeder). Opaque QObject* for QML; qobject_cast inside.
+    Q_PROPERTY(QObject* outbox READ outboxObject WRITE setOutboxObject NOTIFY outboxChanged)
+    // True when the durable lane is available (outbox bound): the surface routes sends here.
+    Q_PROPERTY(bool laneActive READ laneActive NOTIFY outboxChanged)
     Q_PROPERTY(QString transport READ transport NOTIFY conversationChanged)
     Q_PROPERTY(QString conversation READ conversation NOTIFY conversationChanged)
     // The per-conversation pending strip (filtered outbox lens). GUI/TUI render it beside the
@@ -48,6 +53,9 @@ public:
     // Bind the shared outbox (owned by the app graph). Safe to call once.
     void setOutbox(mirror::Outbox* outbox);
     [[nodiscard]] mirror::Outbox* outbox() const;
+    [[nodiscard]] QObject* outboxObject() const;
+    void setOutboxObject(QObject* outbox);
+    [[nodiscard]] bool laneActive() const;
 
     [[nodiscard]] QString transport() const { return m_transport; }
     [[nodiscard]] QString conversation() const { return m_conversation; }
@@ -81,6 +89,7 @@ public:
     [[nodiscard]] QString laneScope() const;
 
 signals:
+    void outboxChanged();
     void conversationChanged();
     void pendingChanged();
     void pendingCountChanged();
