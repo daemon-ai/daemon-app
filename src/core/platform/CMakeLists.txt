@@ -37,7 +37,11 @@ else()
     target_sources(da_platform PRIVATE
         desktop/desktop_platform_services.h
         desktop/desktop_platform_services.cpp
+        # GUI single-instance guard (autostarted hidden instance + manual
+        # launch must not duplicate). QLocalServer/-Socket live in QtNetwork.
+        single_instance.h
+        single_instance.cpp
     )
     # QSystemTrayIcon / QMenu / QAction live in QtWidgets (desktop only).
-    target_link_libraries(da_platform PUBLIC Qt6::Widgets)
+    target_link_libraries(da_platform PUBLIC Qt6::Widgets PRIVATE Qt6::Network)
 endif()

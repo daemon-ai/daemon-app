@@ -168,6 +168,18 @@
 <context>
     <name>AdvancedSection</name>
     <message>
+        <source>Startup</source>
+        <translation>Inicialização</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Iniciar ao fazer login (minimizado na bandeja do sistema)</translation>
+    </message>
+    <message>
+        <source>Open Login Items…</source>
+        <translation>Abrir Itens de Início…</translation>
+    </message>
+    <message>
         <source>Diagnostics</source>
         <translation>Diagnósticos</translation>
     </message>
@@ -995,6 +1007,37 @@ até que seja registrado novamente.</translation>
     <message>
         <source>The sign-in could not be completed</source>
         <translation>Não foi possível concluir a entrada</translation>
+    </message>
+</context>
+<context>
+    <name>AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Aguardando sua aprovação em Ajustes do Sistema › Itens de Início.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>O app Daemon para desktop não foi encontrado ao lado deste cliente.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Iniciar ao fazer login requer o pacote do app Daemon instalado.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Mova o Daemon para a pasta Aplicativos primeiro e depois abra-o de lá.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Gerenciado pelas permissões Flatpak do seu sistema, não pelo Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>O sistema recusou o item de início de sessão.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>O sistema recusou o item de início de sessão: %1</translation>
     </message>
 </context>
 <context>
@@ -7586,6 +7629,14 @@ Obrigado — prosseguindo com: %1
         <translation>Parar o daemon gerenciado ao fechar o aplicativo</translation>
     </message>
     <message>
+        <source>Startup</source>
+        <translation>Inicialização</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Iniciar ao fazer login (minimizado na bandeja do sistema)</translation>
+    </message>
+    <message>
         <source>Gateway</source>
         <translation>Gateway</translation>
     </message>
@@ -8909,6 +8960,37 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
     <message>
         <source>Sign-in is not available in this build.</source>
         <translation>A entrada não está disponível nesta compilação.</translation>
+    </message>
+</context>
+<context>
+    <name>autostart::AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Aguardando sua aprovação em Ajustes do Sistema › Itens de Início.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>O app Daemon para desktop não foi encontrado ao lado deste cliente.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Iniciar ao fazer login requer o pacote do app Daemon instalado.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Mova o Daemon para a pasta Aplicativos primeiro e depois abra-o de lá.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Gerenciado pelas permissões Flatpak do seu sistema, não pelo Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>O sistema recusou o item de início de sessão.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>O sistema recusou o item de início de sessão: %1</translation>
     </message>
 </context>
 <context>

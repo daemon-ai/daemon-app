@@ -168,6 +168,18 @@
 <context>
     <name>AdvancedSection</name>
     <message>
+        <source>Startup</source>
+        <translation>स्टार्टअप</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>लॉगिन पर शुरू करें (सिस्टम ट्रे में छोटा करके)</translation>
+    </message>
+    <message>
+        <source>Open Login Items…</source>
+        <translation>लॉगिन आइटम खोलें…</translation>
+    </message>
+    <message>
         <source>Diagnostics</source>
         <translation>डायग्नोस्टिक्स</translation>
     </message>
@@ -995,6 +1007,37 @@ until it is re-registered.</source>
     <message>
         <source>The sign-in could not be completed</source>
         <translation>साइन-इन पूरा नहीं किया जा सका</translation>
+    </message>
+</context>
+<context>
+    <name>AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>सिस्टम सेटिंग्ज़ › लॉगिन आइटम में आपकी स्वीकृति की प्रतीक्षा है।</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>इस क्लाइंट के साथ Daemon डेस्कटॉप ऐप नहीं मिला।</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>लॉगिन पर शुरू करने के लिए इंस्टॉल किया हुआ Daemon ऐप बंडल चाहिए।</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>पहले Daemon को एप्लिकेशन्स फ़ोल्डर में ले जाएँ, फिर उसे वहीं से दोबारा शुरू करें।</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>यह आपके सिस्टम की Flatpak अनुमतियों द्वारा प्रबंधित होता है, Daemon द्वारा नहीं।</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>सिस्टम ने लॉगिन आइटम अस्वीकार कर दिया।</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>सिस्टम ने लॉगिन आइटम अस्वीकार कर दिया: %1</translation>
     </message>
 </context>
 <context>
@@ -7586,6 +7629,14 @@ Thanks — proceeding with: %1
         <translation>ऐप बंद करने पर प्रबंधित daemon रोकें</translation>
     </message>
     <message>
+        <source>Startup</source>
+        <translation>स्टार्टअप</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>लॉगिन पर शुरू करें (सिस्टम ट्रे में छोटा करके)</translation>
+    </message>
+    <message>
         <source>Gateway</source>
         <translation>गेटवे</translation>
     </message>
@@ -8909,6 +8960,37 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Sign-in is not available in this build.</source>
         <translation>इस बिल्ड में साइन-इन उपलब्ध नहीं है।</translation>
+    </message>
+</context>
+<context>
+    <name>autostart::AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>सिस्टम सेटिंग्ज़ › लॉगिन आइटम में आपकी स्वीकृति की प्रतीक्षा है।</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>इस क्लाइंट के साथ Daemon डेस्कटॉप ऐप नहीं मिला।</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>लॉगिन पर शुरू करने के लिए इंस्टॉल किया हुआ Daemon ऐप बंडल चाहिए।</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>पहले Daemon को एप्लिकेशन्स फ़ोल्डर में ले जाएँ, फिर उसे वहीं से दोबारा शुरू करें।</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>यह आपके सिस्टम की Flatpak अनुमतियों द्वारा प्रबंधित होता है, Daemon द्वारा नहीं।</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>सिस्टम ने लॉगिन आइटम अस्वीकार कर दिया।</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>सिस्टम ने लॉगिन आइटम अस्वीकार कर दिया: %1</translation>
     </message>
 </context>
 <context>

@@ -33,6 +33,8 @@
 #include "models/iprovider_catalog.h"
 #include "nav/nav_controller.h"
 #include "persistence/isession_store.h"
+#include "platform/autostart/autostart_command.h"
+#include "platform/autostart/autostart_controller.h"
 #include "platform/iplatform_services.h"
 #include "platform/platform_services_factory.h"
 #include "platform/wasm_contracts.h"
@@ -198,6 +200,12 @@ Application::Application(QObject* parent)
         m_turnEngines = new MockTurnEngineFactory(this);
     }
 
+    // Launch-at-login seam (Settings > Advanced > Startup). The entry launches
+    // this executable ($APPIMAGE-aware); the OS registration is the source of
+    // truth the controller re-queries, never a cached preference.
+    m_autostart = new autostart::AutostartController(autostart::resolveProgramForCurrentApp(),
+                                                     m_services.settings, this);
+
     // MicroTeX loads its fonts/XML resources once, from the directory resolved
     // at startup (see microtexResDir above). Done here so the "math" image
     // provider can parse formulas as soon as the scene requests them.
@@ -292,7 +300,20 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // shell. The shell (Main.qml) handles openChatRequested by opening a transcript tab.
     connect(m_services.firstRun, &firstrun::FirstRunModel::finished, this,
             &Application::openFirstChat);
+    // Launch-at-login defaults ON for a freshly onboarded install - applied
+    // exactly once (the app/autostartConfigured marker), so a user who later
+    // disables it anywhere is never overridden.
+    connect(m_services.firstRun, &firstrun::FirstRunModel::finished, m_autostart,
+            [this] { m_autostart->applyFirstRunDefault(); });
     m_services.firstRun->begin();
+
+    // Launch-at-login seam: the Settings Startup group binds state + toggle.
+    engine.rootContext()->setContextProperty(QStringLiteral("Autostart"), m_autostart);
+
+    // --hidden launch (the autostart entry): the root window binds
+    // `visible: !AppStartHidden` so a tray-bound start never flashes a frame.
+    // completeWiring() shows the window anyway if no tray materializes.
+    engine.rootContext()->setContextProperty(QStringLiteral("AppStartHidden"), m_startHidden);
 
     // Daemon-authoritative config facade (mock) backing the settings sections.
     engine.rootContext()->setContextProperty(QStringLiteral("DaemonConfig"),
@@ -1081,6 +1102,8 @@ void Application::completeWiring(QQmlApplicationEngine& engine) {
         connect(m_uiSettings, SIGNAL(languageChanged()), this, SLOT(onLanguageChanged()));
     }
 
+    m_window = window;
+
     const bool trayInstalled = m_platform->installTray(QCoreApplication::applicationName());
 
     // Close-to-tray: only when a tray is actually present, so a desktop without a
@@ -1088,10 +1111,40 @@ void Application::completeWiring(QQmlApplicationEngine& engine) {
     // never stranded with a hidden window and no way back. The tray's Quit action
     // (quitRequested) remains the explicit exit.
     if (window && trayInstalled) {
-        m_window = window;
+        m_trayActive = true;
         QGuiApplication::setQuitOnLastWindowClosed(false);
         window->installEventFilter(this);
     }
+
+    if (window && !trayInstalled) {
+        // Login race: an autostarted app usually beats the DE's tray host (the
+        // Linux StatusNotifier watcher), so retry for a bounded window. A late
+        // success installs the tray, arms close-to-tray, and - on a --hidden
+        // start - lets the window stay hidden.
+        connect(m_platform, &platform::IPlatformServices::trayAvailable, this, [this, window] {
+            m_trayActive = true;
+            QGuiApplication::setQuitOnLastWindowClosed(false);
+            window->installEventFilter(this);
+        });
+        m_platform->watchForTray(QCoreApplication::applicationName());
+        if (m_startHidden) {
+            // Hidden start is honored only with a tray to come back through.
+            // If none materializes within the retry window (~20 s; stock GNOME
+            // without the AppIndicator extension), show the window - never an
+            // invisible, unreachable app.
+            constexpr int kHiddenStartTrayGraceMs = 22000;
+            QTimer::singleShot(kHiddenStartTrayGraceMs, this, [this] {
+                if (!m_trayActive && m_window != nullptr && !m_window->isVisible()) {
+                    m_window->show();
+                }
+            });
+        }
+    }
+
+    // Startup self-heal for the login entry: rewrite a stale command (AppImage
+    // self-update, nix store churn, moved install) and re-register the macOS
+    // agent once after an app update.
+    m_autostart->repairOnBoot();
 
     // Returning users (setup already complete) auto-open the saved connection so
     // the footer gateway indicator reflects liveness. On first launch the
@@ -1100,6 +1153,15 @@ void Application::completeWiring(QQmlApplicationEngine& engine) {
         m_services.connection->connectTo(m_services.settings->lastConnectionMode(),
                                          m_services.settings->resolvedConnectionTarget());
     }
+}
+
+void Application::raiseWindow() {
+    if (m_window == nullptr) {
+        return;
+    }
+    m_window->show();
+    m_window->raise();
+    m_window->requestActivate();
 }
 
 void Application::clearLocalData() const {

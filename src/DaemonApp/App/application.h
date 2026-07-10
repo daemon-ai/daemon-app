@@ -19,6 +19,9 @@ class CommandRegistry;
 class TranscriptExporter;
 class ITurnEngineFactory;
 
+namespace autostart {
+class AutostartController;
+}
 namespace persistence {
 class ISessionStore;
 }
@@ -84,6 +87,16 @@ public:
 
     // Connect platform services to the loaded root window and install the tray.
     void completeWiring(QQmlApplicationEngine& engine);
+
+    // --hidden (the autostart entry's argument): the root window starts
+    // invisible, gated on the tray actually materializing (completeWiring).
+    // Must be set before registerContext so the AppStartHidden context property
+    // is in place when Main.qml binds `visible`.
+    void setStartHidden(bool hidden) { m_startHidden = hidden; }
+
+    // Surface the main window (single-instance "raise" from a second manual
+    // launch, or any other external activation).
+    Q_INVOKABLE void raiseWindow();
 
     // Raise a native OS notification for a turn that hit an approval/clarify/host
     // gate, but only while the window is hidden or not active (an on-screen window
@@ -270,6 +283,13 @@ private:
     daemonapp::daemon::AppServiceGraph m_services;
     // GUI-local services that are not part of the shared graph.
     platform::IPlatformServices* m_platform = nullptr;
+    // Launch-at-login seam (platform/autostart), exposed to QML as `Autostart`.
+    autostart::AutostartController* m_autostart = nullptr;
+    // --hidden launch (see setStartHidden) + whether a tray icon is live (set
+    // at boot or by a late watchForTray success) - together they decide when a
+    // hidden start may stay hidden and when close hides instead of quitting.
+    bool m_startHidden = false;
+    bool m_trayActive = false;
     // The shared footer status model, exposed to QML as the `Status` context
     // property so the footer StatusBar and the active session's turn feed a
     // single instance (the TUI builds its own equivalent in RootWidget).

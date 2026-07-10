@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-License-Identifier: MPL-2.0
+SPDX-FileCopyrightText: 2026 Jarrad Hope
+
+Launch-at-login agent definition consumed by SMAppService (macOS 13+). Staged
+into the bundle at Contents/Library/LaunchAgents/ by
+src/DaemonApp/App/CMakeLists.txt and INERT until the app registers it at
+runtime (src/core/platform/autostart/autostart_backend_mac.mm) - packaging
+never enables anything. BundleProgram is bundle-relative so the entry survives
+the user moving the app; the entry appears under the app's own name in
+System Settings > General > Login Items. The `--hidden` argument starts the
+app minimized to the tray.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>io.daemon.app.autostart</string>
+    <key>BundleProgram</key>
+    <string>Contents/MacOS/daemon-app</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>daemon-app</string>
+        <string>--hidden</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>AssociatedBundleIdentifiers</key>
+    <array>
+        <string>io.daemon.app</string>
+    </array>
+</dict>
+</plist>

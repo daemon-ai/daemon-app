@@ -18,6 +18,7 @@
 #include "feedback/ifeedback.h"
 #include "i18n/localization.h"
 #include "models/imodel_catalog.h"
+#include "platform/autostart/autostart_controller.h"
 #include "settings/isettings_store.h"
 #include "theme/theme_palette.h"
 #include "tools/itool_inventory.h" // [waveB:app-v30] D4: tool toggle rows
@@ -144,6 +145,25 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
                         tr("Stop the managed daemon when I close the app"),
                         QStringLiteral("toggle"), QStringLiteral("settings"),
                         m_deps.settings->managedDaemonShutdownOnExit());
+    }
+
+    // Startup - the GUI AdvancedSection Startup group's launch-at-login toggle
+    // (platform/autostart, seam "autostart"; the TUI registers the GUI sibling
+    // binary). Hidden when Unsupported, like the GUI. A Blocked state renders
+    // the reason as the note; the toggle then declines (available() is false).
+    // OS state is the source of truth: value() is the live backend query, and
+    // RequiresApproval reads as on with the approval hint in the note.
+    if (m_deps.autostart != nullptr && m_deps.autostart->supported()) {
+        QVariantMap row =
+            makeRow(QStringLiteral("startup"), tr("Startup"), QStringLiteral("app/autostart"),
+                    tr("Launch at login (minimized to tray)"), QStringLiteral("toggle"),
+                    QStringLiteral("autostart"),
+                    m_deps.autostart->enabled() || m_deps.autostart->requiresApproval());
+        const QString reason = m_deps.autostart->reason();
+        if (!reason.isEmpty()) {
+            row.insert(QStringLiteral("note"), reason);
+        }
+        rows << row;
     }
 
     // Gateway - GatewaySection.qml's node OpenAI-compatible gateway (Phase F). The enable toggle
@@ -357,6 +377,13 @@ bool TuiPageHub::applySettingsValue(const QVariantMap& row, const QVariant& valu
     // node's own bind here (the GUI section owns the addr field).
     if (seam == QLatin1String("gateway") && m_deps.gateway != nullptr) {
         m_deps.gateway->setEnabled(value.toBool());
+        return true;
+    }
+    // Launch-at-login -> the shared AutostartController (the exact call the GUI
+    // Startup toggle makes). setEnabled re-queries the OS and no-ops when the
+    // state is Blocked/Unsupported, so a note-only row stays read-only.
+    if (seam == QLatin1String("autostart") && m_deps.autostart != nullptr) {
+        m_deps.autostart->setEnabled(value.toBool());
         return true;
     }
     // "language" persists like any app pref (the shared ui/language key); the

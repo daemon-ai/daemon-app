@@ -8,6 +8,7 @@
 QT_BEGIN_NAMESPACE
 class QSystemTrayIcon;
 class QMenu;
+class QTimer;
 QT_END_NAMESPACE
 
 namespace platform {
@@ -22,11 +23,18 @@ public:
     ~DesktopPlatformServices() override;
 
     bool installTray(const QString& appName) override;
+    void watchForTray(const QString& appName) override;
     bool notify(const QString& title, const QString& body) override;
 
 private:
     QSystemTrayIcon* m_tray = nullptr;
     QMenu* m_menu = nullptr;
+    // Bounded post-login retry (watchForTray): poll isSystemTrayAvailable()
+    // until the DE's tray host appears or the window elapses. Polling (rather
+    // than a DBus service watch) covers every backend Qt itself supports -
+    // StatusNotifier AND legacy XEmbed - with no extra Qt module.
+    QTimer* m_trayWatch = nullptr;
+    int m_trayWatchAttempts = 0;
 };
 
 } // namespace platform

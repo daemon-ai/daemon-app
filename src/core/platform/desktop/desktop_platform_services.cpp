@@ -9,10 +9,17 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QSystemTrayIcon>
+#include <QTimer>
 
 namespace platform {
 
 namespace {
+
+// watchForTray cadence: the StatusNotifier host typically appears within a few
+// seconds of login; give it 20 s before the caller falls back to showing the
+// window (never an unreachable, invisible app).
+constexpr int kTrayWatchIntervalMs = 2000;
+constexpr int kTrayWatchMaxAttempts = 10;
 
 // A tray needs an icon to be shown on most platforms; synthesize a simple one
 // so the foundation has no asset dependency yet.
@@ -66,6 +73,31 @@ bool DesktopPlatformServices::installTray(const QString& appName) {
                      });
     m_tray->show();
     return true;
+}
+
+void DesktopPlatformServices::watchForTray(const QString& appName) {
+    if (m_tray != nullptr || m_trayWatch != nullptr) {
+        return;
+    }
+    m_trayWatchAttempts = 0;
+    m_trayWatch = new QTimer(this);
+    m_trayWatch->setInterval(kTrayWatchIntervalMs);
+    connect(m_trayWatch, &QTimer::timeout, this, [this, appName] {
+        const auto finish = [this] {
+            m_trayWatch->stop();
+            m_trayWatch->deleteLater();
+            m_trayWatch = nullptr;
+        };
+        if (installTray(appName)) {
+            finish();
+            emit trayAvailable();
+            return;
+        }
+        if (++m_trayWatchAttempts >= kTrayWatchMaxAttempts) {
+            finish();
+        }
+    });
+    m_trayWatch->start();
 }
 
 bool DesktopPlatformServices::notify(const QString& title, const QString& body) {

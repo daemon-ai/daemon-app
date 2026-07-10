@@ -11,6 +11,10 @@ add_subdirectory(presentation)
 add_subdirectory(theme)
 add_subdirectory(settings)
 add_subdirectory(update)
+# After settings + update: the autostart seam links daemon-app::settings_store
+# (and, on macOS, daemon-app::update for the bundle/translocation predicates),
+# and alias targets must exist before they are named.
+add_subdirectory(platform/autostart)
 add_subdirectory(connection)
 add_subdirectory(fs)
 add_subdirectory(memory)

@@ -126,6 +126,23 @@ target_link_libraries(tst_update_self_apply_windows
 add_test(NAME tst_update_self_apply_windows COMMAND tst_update_self_apply_windows)
 set_tests_properties(tst_update_self_apply_windows PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_autostart: the launch-at-login seam (src/core/platform/autostart) - Exec
+# quoting + desktop-entry render/parse/staleness, $APPIMAGE/sibling launch-
+# command resolution, the Windows Run-value + StartupApproved byte parse (pure,
+# so Linux CI covers them), the XDG backend end-to-end under QStandardPaths
+# test mode, the controller's state matrix + one-time first-run default, and
+# the GUI single-instance guard's claim/raise protocol (platform lib).
+qt_add_executable(tst_autostart tst_autostart.cpp)
+target_link_libraries(tst_autostart
+    PRIVATE
+        Qt6::Test
+        daemon-app::autostart
+        daemon-app::platform
+        daemon-app::settings_store
+)
+add_test(NAME tst_autostart COMMAND tst_autostart)
+set_tests_properties(tst_autostart PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_self_apply_macos: the macOS DMG SelfApply guard decision (translocation,
 # read-only volume, unwritable parent, cross-filesystem) + path predicates. Pure
 # logic, so it runs on the Linux CI host even though the swap itself is darwin-only.

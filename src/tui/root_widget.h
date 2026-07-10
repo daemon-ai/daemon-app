@@ -61,6 +61,9 @@
 #include <Tui/ZTextMetrics.h>
 #include <Tui/ZWindow.h>
 
+namespace autostart {
+class AutostartController;
+}
 namespace persistence {
 class ISessionStore;
 }
@@ -513,6 +516,11 @@ private:
     memoryui::MemoryStatsModel* m_memStats = nullptr;
     memoryui::MemoryTimelineModel* m_memTimeline = nullptr;
     memoryui::MemoryGraphModel* m_memGraph = nullptr;
+
+    // Launch-at-login seam (platform/autostart): backs the Settings -> Startup
+    // toggle. Registers the GUI sibling binary; owned here, injected into the
+    // page hub's deps.
+    autostart::AutostartController* m_autostart = nullptr;
 
     // Manager-page projection + keyboard actions for seam-backed hub tabs.
     std::unique_ptr<TuiPageHub> m_pageHub;

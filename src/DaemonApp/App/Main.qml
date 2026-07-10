@@ -19,7 +19,10 @@ ApplicationWindow {
 
     width: 1100
     height: 720
-    visible: true
+    // Hidden start (--hidden, the launch-at-login path): bound to a context
+    // property set before the scene loads, so a tray-bound start never shows a
+    // frame. Application::completeWiring shows the window if no tray appears.
+    visible: !AppStartHidden
     title: qsTr("Daemon")
     color: Theme.background
 

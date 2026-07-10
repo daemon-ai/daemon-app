@@ -24,6 +24,8 @@
 #include "participants_model.h"
 #include "participants_view.h"
 #include "persistence/isession_store.h"
+#include "platform/autostart/autostart_command.h"
+#include "platform/autostart/autostart_controller.h"
 #include "session_controller.h"
 #include "session_orchestrator.h"
 #include "sessions_list_model.h"
@@ -219,6 +221,13 @@ RootWidget::RootWidget()
     m_memTimeline->setService(m_services.memory);
     m_memGraph->setService(m_services.memory);
 
+    // Launch-at-login seam (Settings -> Startup, GUI parity). The TUI registers
+    // the GUI sibling binary (empty when absent -> Unsupported, row hidden) and
+    // self-heals a stale entry at boot exactly like the GUI does.
+    m_autostart = new autostart::AutostartController(autostart::resolveSiblingGuiProgram(),
+                                                     m_services.settings, this);
+    m_autostart->repairOnBoot();
+
     // Designated initializers (declaration order enforced at compile time), so a
     // future Dependencies append can never silently misalign a positional list.
     m_pageHub = std::make_unique<TuiPageHub>(TuiPageHub::Dependencies{
@@ -250,6 +259,7 @@ RootWidget::RootWidget()
         .caps = m_services.capsRepository,           // [wave2:app-delegation] F7/DEL-7
         .gateway = m_services.gatewayRepository,     // [wave2:app-gateway] Phase F
         .engineIdentity = m_services.engineIdentity, // [wave2:integration] C5
+        .autostart = m_autostart,
     });
     // [wave2:app-delegation] F7/DEL-7: fetch the read-only delegation ceilings once so Settings ->
     // Safety renders the live numbers (node-wide policy; re-fetched, never cached).
@@ -337,6 +347,12 @@ RootWidget::RootWidget()
         connect(upd, &update::UpdateManager::stateChanged, m_status, syncUpdate);
         syncUpdate();
     }
+
+    // Launch-at-login defaults ON at first-run completion - the same one-time
+    // (app/autostartConfigured) default the GUI applies, so onboarding via
+    // either surface lands the identical state.
+    connect(m_services.firstRun, &firstrun::FirstRunModel::finished, m_autostart,
+            [this] { m_autostart->applyFirstRunDefault(); });
 
     m_services.firstRun->begin();
     // Returning users auto-open the saved connection; on first launch the gate's

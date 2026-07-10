@@ -21,6 +21,7 @@
 #include "participants_model.h"
 #include "participants_view.h"
 #include "persistence/isession_store.h"
+#include "platform/autostart/autostart_controller.h" // live refresh of the Startup settings row
 #include "profiles/iprofile_store.h" // complete type for the persona (soulChanged) repaint hook
 #include "root_widget.h"
 #include "root_widget_detail.h"
@@ -212,6 +213,10 @@ void RootWidget::wirePageLiveRefresh() {
     connect(m_services.daemonConfig, &config::IDaemonConfig::changed, this,
             [this] { refreshPageIfActive(TabModel::Settings); });
     connect(m_services.settings, &settings::ISettingsStore::changed, this,
+            [this] { refreshPageIfActive(TabModel::Settings); });
+    // The Startup row projects live OS state (launch-at-login); re-render after
+    // a toggle/refresh reports a state change.
+    connect(m_autostart, &autostart::AutostartController::statusChanged, this,
             [this] { refreshPageIfActive(TabModel::Settings); });
 }
 

@@ -262,6 +262,9 @@ target_link_libraries(daemon-tui
         daemon-app::domain
         daemon-app::persistence
         daemon-app::settings_store
+        # Launch-at-login seam (Settings -> Startup row): QtCore-only on
+        # purpose, the TUI must not drag QtWidgets in.
+        daemon-app::autostart
         # Release-feed / update scaffold: capability-dial surface only, no UI
         # wiring yet (packaging/UPDATES.md).
         daemon-app::update

@@ -168,6 +168,18 @@
 <context>
     <name>AdvancedSection</name>
     <message>
+        <source>Startup</source>
+        <translation>Автозапуск</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Запускать при входе в систему (свёрнуто в трей)</translation>
+    </message>
+    <message>
+        <source>Open Login Items…</source>
+        <translation>Открыть объекты входа…</translation>
+    </message>
+    <message>
         <source>Diagnostics</source>
         <translation>Диагностика</translation>
     </message>
@@ -995,6 +1007,37 @@ until it is re-registered.</source>
     <message>
         <source>The sign-in could not be completed</source>
         <translation>Не удалось завершить вход</translation>
+    </message>
+</context>
+<context>
+    <name>AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Ожидается ваше подтверждение в разделе «Системные настройки › Объекты входа».</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Настольное приложение Daemon не найдено рядом с этим клиентом.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Для запуска при входе нужен установленный пакет приложения Daemon.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Сначала переместите Daemon в папку «Программы», затем запустите его оттуда заново.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Управляется правами Flatpak вашей системы, а не Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Система отклонила объект входа.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Система отклонила объект входа: %1</translation>
     </message>
 </context>
 <context>
@@ -7594,6 +7637,14 @@ Thanks — proceeding with: %1
         <translation>Останавливать управляемый демон при закрытии приложения</translation>
     </message>
     <message>
+        <source>Startup</source>
+        <translation>Автозапуск</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Запускать при входе в систему (свёрнуто в трей)</translation>
+    </message>
+    <message>
         <source>Gateway</source>
         <translation>Шлюз</translation>
     </message>
@@ -8917,6 +8968,37 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Sign-in is not available in this build.</source>
         <translation>Вход недоступен в этой сборке.</translation>
+    </message>
+</context>
+<context>
+    <name>autostart::AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Ожидается ваше подтверждение в разделе «Системные настройки › Объекты входа».</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Настольное приложение Daemon не найдено рядом с этим клиентом.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Для запуска при входе нужен установленный пакет приложения Daemon.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Сначала переместите Daemon в папку «Программы», затем запустите его оттуда заново.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Управляется правами Flatpak вашей системы, а не Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Система отклонила объект входа.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Система отклонила объект входа: %1</translation>
     </message>
 </context>
 <context>

@@ -165,9 +165,11 @@ target_link_libraries(tui_access_gating_tests
         daemon-app::uimodels
         # hub_channels.cpp (compiled with the dispatcher) binds the transports seams.
         daemon-app::transports
-        # The interactive hub_settings.cpp binds theme + language seams.
+        # The interactive hub_settings.cpp binds theme + language seams, plus
+        # the launch-at-login controller behind its Startup row.
         daemon-app::theme_core
         daemon-app::i18n
+        daemon-app::autostart
         # hub_memory.cpp localizes tier/veracity via DisplayPresenter.
         daemon-app::presentation
 )
@@ -243,6 +245,8 @@ target_link_libraries(tui_settings_page_tests
         daemon-app::i18n
         daemon-app::config
         daemon-app::settings_store
+        # hub_settings.cpp's Startup row binds the launch-at-login controller.
+        daemon-app::autostart
         daemon-app::connection
         daemon-app::models
         daemon-app::accounts
@@ -470,9 +474,11 @@ target_link_libraries(tui_hub_channels_tests
         daemon-app::uimodels
         # hub_users_access.cpp (compiled with the dispatcher) binds PrincipalModel.
         daemon-app::daemon_client
-        # The interactive hub_settings.cpp binds theme + language seams.
+        # The interactive hub_settings.cpp binds theme + language seams, plus
+        # the launch-at-login controller behind its Startup row.
         daemon-app::theme_core
         daemon-app::i18n
+        daemon-app::autostart
         # hub_memory.cpp localizes tier/veracity via DisplayPresenter.
         daemon-app::presentation
 )

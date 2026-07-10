@@ -168,6 +168,18 @@
 <context>
     <name>AdvancedSection</name>
     <message>
+        <source>Startup</source>
+        <translation>Pagsisimula</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Ilunsad sa pag-login (naka-minimize sa system tray)</translation>
+    </message>
+    <message>
+        <source>Open Login Items…</source>
+        <translation>Buksan ang Login Items…</translation>
+    </message>
+    <message>
         <source>Diagnostics</source>
         <translation>Diagnostics</translation>
     </message>
@@ -995,6 +1007,37 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>The sign-in could not be completed</source>
         <translation>Hindi makumpleto ang pag-sign in</translation>
+    </message>
+</context>
+<context>
+    <name>AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Hinihintay ang iyong pag-apruba sa System Settings › Login Items.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Hindi mahanap ang Daemon desktop app sa tabi ng client na ito.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Kailangan ng paglunsad sa pag-login ang naka-install na Daemon app bundle.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Ilipat muna ang Daemon sa Applications folder, pagkatapos ay muling ilunsad ito mula roon.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Pinamamahalaan ng mga Flatpak permission ng iyong system, hindi ng Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Tinanggihan ng system ang login item.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Tinanggihan ng system ang login item: %1</translation>
     </message>
 </context>
 <context>
@@ -7586,6 +7629,14 @@ Salamat — magpapatuloy sa: %1
         <translation>Ihinto ang pinamamahalaang daemon kapag isinara ko ang app</translation>
     </message>
     <message>
+        <source>Startup</source>
+        <translation>Pagsisimula</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Ilunsad sa pag-login (naka-minimize sa system tray)</translation>
+    </message>
+    <message>
         <source>Gateway</source>
         <translation>Gateway</translation>
     </message>
@@ -8909,6 +8960,37 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <message>
         <source>Sign-in is not available in this build.</source>
         <translation>Hindi available ang pag-sign in sa build na ito.</translation>
+    </message>
+</context>
+<context>
+    <name>autostart::AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Hinihintay ang iyong pag-apruba sa System Settings › Login Items.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Hindi mahanap ang Daemon desktop app sa tabi ng client na ito.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Kailangan ng paglunsad sa pag-login ang naka-install na Daemon app bundle.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Ilipat muna ang Daemon sa Applications folder, pagkatapos ay muling ilunsad ito mula roon.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Pinamamahalaan ng mga Flatpak permission ng iyong system, hindi ng Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Tinanggihan ng system ang login item.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Tinanggihan ng system ang login item: %1</translation>
     </message>
 </context>
 <context>

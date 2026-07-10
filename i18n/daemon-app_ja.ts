@@ -168,6 +168,18 @@
 <context>
     <name>AdvancedSection</name>
     <message>
+        <source>Startup</source>
+        <translation>起動</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>ログイン時に起動（システムトレイに最小化）</translation>
+    </message>
+    <message>
+        <source>Open Login Items…</source>
+        <translation>ログイン項目を開く…</translation>
+    </message>
+    <message>
         <source>Diagnostics</source>
         <translation>診断</translation>
     </message>
@@ -995,6 +1007,37 @@ until it is re-registered.</source>
     <message>
         <source>The sign-in could not be completed</source>
         <translation>サインインを完了できませんでした</translation>
+    </message>
+</context>
+<context>
+    <name>AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>システム設定 › ログイン項目での承認を待っています。</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>このクライアントの隣に Daemon デスクトップアプリが見つかりませんでした。</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>ログイン時の起動には、インストール済みの Daemon アプリバンドルが必要です。</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>まず Daemon を「アプリケーション」フォルダに移動し、そこから再起動してください。</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Daemon ではなく、システムの Flatpak 権限で管理されます。</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>システムがログイン項目を拒否しました。</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>システムがログイン項目を拒否しました: %1</translation>
     </message>
 </context>
 <context>
@@ -7578,6 +7621,14 @@ Thanks — proceeding with: %1
         <translation>アプリを閉じたら管理中の daemon を停止する</translation>
     </message>
     <message>
+        <source>Startup</source>
+        <translation>起動</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>ログイン時に起動（システムトレイに最小化）</translation>
+    </message>
+    <message>
         <source>Gateway</source>
         <translation>ゲートウェイ</translation>
     </message>
@@ -8901,6 +8952,37 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Sign-in is not available in this build.</source>
         <translation>このビルドではサインインを利用できません。</translation>
+    </message>
+</context>
+<context>
+    <name>autostart::AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>システム設定 › ログイン項目での承認を待っています。</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>このクライアントの隣に Daemon デスクトップアプリが見つかりませんでした。</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>ログイン時の起動には、インストール済みの Daemon アプリバンドルが必要です。</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>まず Daemon を「アプリケーション」フォルダに移動し、そこから再起動してください。</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Daemon ではなく、システムの Flatpak 権限で管理されます。</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>システムがログイン項目を拒否しました。</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>システムがログイン項目を拒否しました: %1</translation>
     </message>
 </context>
 <context>

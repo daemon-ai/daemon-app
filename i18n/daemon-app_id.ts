@@ -168,6 +168,18 @@
 <context>
     <name>AdvancedSection</name>
     <message>
+        <source>Startup</source>
+        <translation>Startup</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Luncurkan saat login (diminimalkan ke baki sistem)</translation>
+    </message>
+    <message>
+        <source>Open Login Items…</source>
+        <translation>Buka Item Login…</translation>
+    </message>
+    <message>
         <source>Diagnostics</source>
         <translation>Diagnostik</translation>
     </message>
@@ -995,6 +1007,37 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>The sign-in could not be completed</source>
         <translation>Proses masuk tidak dapat diselesaikan</translation>
+    </message>
+</context>
+<context>
+    <name>AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Menunggu persetujuan Anda di Pengaturan Sistem › Item Login.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Aplikasi desktop Daemon tidak ditemukan di samping klien ini.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Peluncuran saat login memerlukan bundel aplikasi Daemon yang terinstal.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Pindahkan Daemon ke folder Aplikasi terlebih dahulu, lalu luncurkan kembali dari sana.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Dikelola oleh izin Flatpak sistem Anda, bukan oleh Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Sistem menolak item login.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Sistem menolak item login: %1</translation>
     </message>
 </context>
 <context>
@@ -7578,6 +7621,14 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Hentikan daemon terkelola saat saya menutup aplikasi</translation>
     </message>
     <message>
+        <source>Startup</source>
+        <translation>Startup</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Luncurkan saat login (diminimalkan ke baki sistem)</translation>
+    </message>
+    <message>
         <source>Gateway</source>
         <translation>Gateway</translation>
     </message>
@@ -8901,6 +8952,37 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     <message>
         <source>Sign-in is not available in this build.</source>
         <translation>Masuk tidak tersedia di build ini.</translation>
+    </message>
+</context>
+<context>
+    <name>autostart::AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Menunggu persetujuan Anda di Pengaturan Sistem › Item Login.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Aplikasi desktop Daemon tidak ditemukan di samping klien ini.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Peluncuran saat login memerlukan bundel aplikasi Daemon yang terinstal.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Pindahkan Daemon ke folder Aplikasi terlebih dahulu, lalu luncurkan kembali dari sana.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Dikelola oleh izin Flatpak sistem Anda, bukan oleh Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Sistem menolak item login.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Sistem menolak item login: %1</translation>
     </message>
 </context>
 <context>

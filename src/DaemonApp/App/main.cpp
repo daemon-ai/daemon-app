@@ -12,11 +12,17 @@ using AppBase = QGuiApplication;
 #else
 // QtWidgets is needed on desktop for the QSystemTrayIcon-based tray.
 #include <QApplication>
+// Desktop-only single-instance guard (see the block in main()).
+#include "platform/single_instance.h"
 using AppBase = QApplication;
 #endif
 
+#include <algorithm>
+#include <array>
 #include <cstdio>
 #include <QByteArray>
+#include <QCommandLineOption>
+#include <QCommandLineParser>
 #include <QDir>
 #include <QEventLoop>
 #include <QFont>
@@ -35,6 +41,24 @@ using AppBase = QApplication;
 #include <QVariant>
 
 namespace {
+
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS) && !defined(Q_OS_WASM)
+// True when one of the headless harness gates below drives this process (the
+// E2E/system-tests probes and the offscreen render harness). Those runs are
+// deliberately exempt from the single-instance guard: the harnesses launch
+// several app processes in parallel against isolated sockets, and a guard
+// bounce would fail the wrong one.
+bool headlessHarnessRun() {
+    static constexpr std::array kHarnessEnv = {
+        "DAEMON_APP_WAIT_READY",   "DAEMON_APP_ONBOARD_KEY",    "DAEMON_APP_PROFILE_CREATE",
+        "DAEMON_APP_MODELS_PROBE", "DAEMON_APP_CHAT_PROMPT",    "DAEMON_APP_HITL_PROMPT",
+        "DAEMON_APP_COMMAND_LIST", "DAEMON_APP_SESSION_SEARCH", "DAEMON_APP_FS_PROBE",
+        "DAEMON_APP_FLEET_PROBE",  "DAEMON_APP_CHANNELS_PROBE", "DAEMON_APP_RENDER_SHOTS",
+    };
+    return std::ranges::any_of(kHarnessEnv,
+                               [](const char* name) { return qEnvironmentVariableIsSet(name); });
+}
+#endif
 
 // Loads the bundled fonts into the application database and sets Inter as the
 // default UI font, so all text is Inter even without a per-item family and the
@@ -209,6 +233,32 @@ int main(int argc, char* argv[]) {
     QCoreApplication::setOrganizationName(QStringLiteral("daemon-app"));
     QCoreApplication::setApplicationVersion(QStringLiteral(DAEMON_APP_VERSION_STR));
 
+    // --hidden: start minimized to the tray (what the login autostart entry
+    // passes). parse(), not process(): unknown args (harness flags, Qt's own)
+    // must never abort the app, and --help/--version stay unhandled on purpose.
+    QCommandLineParser parser;
+    const QCommandLineOption hiddenOption(
+        QStringLiteral("hidden"),
+        QStringLiteral("Start minimized to the system tray (used by launch-at-login)."));
+    parser.addOption(hiddenOption);
+    parser.parse(QCoreApplication::arguments());
+    const bool startHidden = parser.isSet(hiddenOption);
+
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS) && !defined(Q_OS_WASM)
+    // Single-instance guard: with autostart shipping, a hidden instance is
+    // usually already running at login - a manual launch must raise it, not
+    // duplicate it (and macOS SMAppService registration bootstraps the agent
+    // immediately, launching a second copy the moment the toggle flips on).
+    // A --hidden duplicate only pings (never yanks the window forward).
+    platform::SingleInstanceGuard instanceGuard(platform::SingleInstanceGuard::defaultKey());
+    const bool primaryInstance = headlessHarnessRun() || instanceGuard.tryClaim();
+    if (!primaryInstance && instanceGuard.notifyPrimary(/*raise=*/!startHidden)) {
+        return 0;
+    }
+    // No live primary answered (stale socket already cleaned in tryClaim):
+    // continue as a normal instance rather than refusing to start.
+#endif
+
     // Pin the Controls style to Basic: our kit (DaemonApp.Controls) restyles
     // controls via theme tokens, so we want the least-opinionated base style
     // (no Material elevation/shadows). setStyle() has the highest precedence,
@@ -230,6 +280,12 @@ int main(int argc, char* argv[]) {
     }
 
     Application application;
+    application.setStartHidden(startHidden);
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS) && !defined(Q_OS_WASM)
+    // A second manual launch asked the primary (us) to surface the window.
+    QObject::connect(&instanceGuard, &platform::SingleInstanceGuard::activateRequested,
+                     &application, &Application::raiseWindow);
+#endif
 
     QQmlApplicationEngine engine;
 

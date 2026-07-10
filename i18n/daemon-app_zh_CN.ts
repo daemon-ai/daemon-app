@@ -168,6 +168,18 @@
 <context>
     <name>AdvancedSection</name>
     <message>
+        <source>Startup</source>
+        <translation>启动</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>登录时启动（最小化到系统托盘）</translation>
+    </message>
+    <message>
+        <source>Open Login Items…</source>
+        <translation>打开登录项…</translation>
+    </message>
+    <message>
         <source>Diagnostics</source>
         <translation>诊断</translation>
     </message>
@@ -995,6 +1007,37 @@ until it is re-registered.</source>
     <message>
         <source>The sign-in could not be completed</source>
         <translation>无法完成登录</translation>
+    </message>
+</context>
+<context>
+    <name>AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>正在等待你在“系统设置 › 登录项”中批准。</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>未能在此客户端旁边找到 Daemon 桌面应用。</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>登录时启动需要已安装的 Daemon 应用包。</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>请先将 Daemon 移到“应用程序”文件夹，然后从那里重新启动。</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>由你系统的 Flatpak 权限管理，而不是由 Daemon 管理。</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>系统拒绝了该登录项。</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>系统拒绝了该登录项：%1</translation>
     </message>
 </context>
 <context>
@@ -7578,6 +7621,14 @@ Thanks — proceeding with: %1
         <translation>关闭应用时停止受管的 daemon</translation>
     </message>
     <message>
+        <source>Startup</source>
+        <translation>启动</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>登录时启动（最小化到系统托盘）</translation>
+    </message>
+    <message>
         <source>Gateway</source>
         <translation>网关</translation>
     </message>
@@ -8901,6 +8952,37 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Sign-in is not available in this build.</source>
         <translation>此版本不支持登录。</translation>
+    </message>
+</context>
+<context>
+    <name>autostart::AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>正在等待你在“系统设置 › 登录项”中批准。</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>未能在此客户端旁边找到 Daemon 桌面应用。</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>登录时启动需要已安装的 Daemon 应用包。</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>请先将 Daemon 移到“应用程序”文件夹，然后从那里重新启动。</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>由你系统的 Flatpak 权限管理，而不是由 Daemon 管理。</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>系统拒绝了该登录项。</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>系统拒绝了该登录项：%1</translation>
     </message>
 </context>
 <context>

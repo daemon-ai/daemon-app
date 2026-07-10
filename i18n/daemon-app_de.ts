@@ -168,6 +168,18 @@
 <context>
     <name>AdvancedSection</name>
     <message>
+        <source>Startup</source>
+        <translation>Autostart</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Beim Anmelden starten (minimiert in den Infobereich)</translation>
+    </message>
+    <message>
+        <source>Open Login Items…</source>
+        <translation>Anmeldeobjekte öffnen…</translation>
+    </message>
+    <message>
         <source>Diagnostics</source>
         <translation>Diagnose</translation>
     </message>
@@ -995,6 +1007,37 @@ bis er erneut registriert wird.</translation>
     <message>
         <source>The sign-in could not be completed</source>
         <translation>Die Anmeldung konnte nicht abgeschlossen werden</translation>
+    </message>
+</context>
+<context>
+    <name>AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Warten auf Ihre Bestätigung in den Systemeinstellungen › Anmeldeobjekte.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Die Daemon-Desktop-App wurde neben diesem Client nicht gefunden.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>„Beim Anmelden starten“ erfordert das installierte Daemon-App-Bundle.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Verschieben Sie Daemon zuerst in den Ordner „Programme“ und starten Sie es von dort neu.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Wird von den Flatpak-Berechtigungen Ihres Systems verwaltet, nicht von Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Das System hat das Anmeldeobjekt abgelehnt.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Das System hat das Anmeldeobjekt abgelehnt: %1</translation>
     </message>
 </context>
 <context>
@@ -7586,6 +7629,14 @@ Danke — es geht weiter mit: %1
         <translation>Den verwalteten Daemon beim Schließen der App stoppen</translation>
     </message>
     <message>
+        <source>Startup</source>
+        <translation>Autostart</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Beim Anmelden starten (minimiert in den Infobereich)</translation>
+    </message>
+    <message>
         <source>Gateway</source>
         <translation>Gateway</translation>
     </message>
@@ -8909,6 +8960,37 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <message>
         <source>Sign-in is not available in this build.</source>
         <translation>Die Anmeldung ist in diesem Build nicht verfügbar.</translation>
+    </message>
+</context>
+<context>
+    <name>autostart::AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Warten auf Ihre Bestätigung in den Systemeinstellungen › Anmeldeobjekte.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Die Daemon-Desktop-App wurde neben diesem Client nicht gefunden.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>„Beim Anmelden starten“ erfordert das installierte Daemon-App-Bundle.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Verschieben Sie Daemon zuerst in den Ordner „Programme“ und starten Sie es von dort neu.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Wird von den Flatpak-Berechtigungen Ihres Systems verwaltet, nicht von Daemon.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Das System hat das Anmeldeobjekt abgelehnt.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Das System hat das Anmeldeobjekt abgelehnt: %1</translation>
     </message>
 </context>
 <context>

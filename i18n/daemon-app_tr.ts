@@ -168,6 +168,18 @@
 <context>
     <name>AdvancedSection</name>
     <message>
+        <source>Startup</source>
+        <translation>Başlangıç</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Oturum açıldığında başlat (sistem tepsisine küçültülmüş)</translation>
+    </message>
+    <message>
+        <source>Open Login Items…</source>
+        <translation>Oturum Açma Öğelerini Aç…</translation>
+    </message>
+    <message>
         <source>Diagnostics</source>
         <translation>Tanılama</translation>
     </message>
@@ -995,6 +1007,37 @@ kadar başlatılamaz.</translation>
     <message>
         <source>The sign-in could not be completed</source>
         <translation>Oturum açma tamamlanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Sistem Ayarları › Oturum Açma Öğeleri bölümünde onayınız bekleniyor.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Daemon masaüstü uygulaması bu istemcinin yanında bulunamadı.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Oturum açıldığında başlatma, yüklü Daemon uygulama paketini gerektirir.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Önce Daemon&apos;u Uygulamalar klasörüne taşıyın, sonra oradan yeniden başlatın.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Daemon tarafından değil, sisteminizin Flatpak izinleri tarafından yönetilir.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Sistem, oturum açma öğesini reddetti.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Sistem, oturum açma öğesini reddetti: %1</translation>
     </message>
 </context>
 <context>
@@ -7578,6 +7621,14 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Uygulamayı kapattığımda yönetilen daemon&apos;ı durdur</translation>
     </message>
     <message>
+        <source>Startup</source>
+        <translation>Başlangıç</translation>
+    </message>
+    <message>
+        <source>Launch at login (minimized to tray)</source>
+        <translation>Oturum açıldığında başlat (sistem tepsisine küçültülmüş)</translation>
+    </message>
+    <message>
         <source>Gateway</source>
         <translation>Ağ geçidi</translation>
     </message>
@@ -8901,6 +8952,37 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>Sign-in is not available in this build.</source>
         <translation>Bu yapıda oturum açma kullanılamıyor.</translation>
+    </message>
+</context>
+<context>
+    <name>autostart::AutostartController</name>
+    <message>
+        <source>Waiting for your approval in System Settings › Login Items.</source>
+        <translation>Sistem Ayarları › Oturum Açma Öğeleri bölümünde onayınız bekleniyor.</translation>
+    </message>
+    <message>
+        <source>The Daemon desktop app could not be found next to this client.</source>
+        <translation>Daemon masaüstü uygulaması bu istemcinin yanında bulunamadı.</translation>
+    </message>
+    <message>
+        <source>Launch at login needs the installed Daemon app bundle.</source>
+        <translation>Oturum açıldığında başlatma, yüklü Daemon uygulama paketini gerektirir.</translation>
+    </message>
+    <message>
+        <source>Move Daemon to the Applications folder first, then relaunch it from there.</source>
+        <translation>Önce Daemon&apos;u Uygulamalar klasörüne taşıyın, sonra oradan yeniden başlatın.</translation>
+    </message>
+    <message>
+        <source>Managed by your system&apos;s Flatpak permissions, not by Daemon.</source>
+        <translation>Daemon tarafından değil, sisteminizin Flatpak izinleri tarafından yönetilir.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item.</source>
+        <translation>Sistem, oturum açma öğesini reddetti.</translation>
+    </message>
+    <message>
+        <source>The system refused the login item: %1</source>
+        <translation>Sistem, oturum açma öğesini reddetti: %1</translation>
     </message>
 </context>
 <context>

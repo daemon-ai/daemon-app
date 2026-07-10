@@ -12,6 +12,46 @@ ColumnLayout {
     id: root
     spacing: 14
 
+    // Launch-at-login (platform/autostart seam, `Autostart` context property).
+    // Hidden where the mechanism doesn't exist (wasm/mobile, Flatpak); rendered
+    // disabled with the reason when Blocked (e.g. macOS running off the DMG).
+    // The OS entry is the source of truth: `checked` reflects the live query.
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 14
+        visible: Autostart.supported
+
+        SectionLabel { text: qsTr("Startup") }
+
+        OptionRow {
+            Layout.fillWidth: true
+            enabled: Autostart.available
+            opacity: Autostart.available ? 1 : 0.55
+            label: qsTr("Launch at login (minimized to tray)")
+            // RequiresApproval shows as on: the entry is registered; macOS just
+            // wants the user's nod in System Settings (the reason line below).
+            checked: Autostart.enabled || Autostart.requiresApproval
+            onToggled: function(on) { Autostart.setEnabled(on); }
+        }
+
+        QQC.Label {
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            visible: Autostart.reason !== ""
+            text: Autostart.reason
+            wrapMode: Text.WordWrap
+            color: Theme.textMuted
+            font.family: FontIcons.display
+            font.pixelSize: 12
+        }
+
+        Kit.TextButton {
+            visible: Autostart.requiresApproval
+            text: qsTr("Open Login Items…")
+            onClicked: Autostart.openApprovalSettings()
+        }
+    }
+
     SectionLabel { text: qsTr("Diagnostics") }
 
     ComboRow {

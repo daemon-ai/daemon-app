@@ -32,6 +32,16 @@ if(APPLE AND NOT DAEMON_APP_MOBILE)
         MACOSX_BUNDLE ON
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/packaging/macos/Info.plist.in"
     )
+    # Launch-at-login agent definition for SMAppService (see the plist header).
+    # Static bundle content only - registration stays 100% app-driven
+    # (src/core/platform/autostart). MACOSX_PACKAGE_LOCATION is Contents-
+    # relative, so this lands at Contents/Library/LaunchAgents/.
+    set(_da_macos_agent_plist
+        "${CMAKE_SOURCE_DIR}/packaging/macos/io.daemon.app.autostart.plist")
+    set_source_files_properties("${_da_macos_agent_plist}"
+        PROPERTIES MACOSX_PACKAGE_LOCATION "Library/LaunchAgents"
+    )
+    target_sources(daemon-app PRIVATE "${_da_macos_agent_plist}")
 endif()
 
 qt_add_qml_module(daemon-app
@@ -53,6 +63,7 @@ target_link_libraries(daemon-app
         daemon-app::i18n
         daemon-app::persistence
         daemon-app::platform
+        daemon-app::autostart
         daemon-app::command
         daemon-app::export
         daemon-app::settings_store

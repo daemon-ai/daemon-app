@@ -13,6 +13,9 @@
 namespace accounts {
 class IAccountsService;
 }
+namespace autostart {
+class AutostartController;
+}
 namespace automation {
 class ICronStore;
 } // namespace automation
@@ -120,6 +123,11 @@ public:
         // [wave2:integration] C5: the session->engine label facade, used to attribute a foreign
         // requester on approval rows (parity with the GUI EngineOriginChip).
         daemonapp::daemon::EngineIdentity* engineIdentity = nullptr;
+        // Launch-at-login seam (platform/autostart): backs the Settings ->
+        // Startup toggle (parity with the GUI AdvancedSection Startup group).
+        // The TUI's controller registers the GUI sibling binary; row hidden
+        // when unsupported (no sibling / wasm / Flatpak).
+        autostart::AutostartController* autostart = nullptr;
     };
 
     explicit TuiPageHub(Dependencies deps);
