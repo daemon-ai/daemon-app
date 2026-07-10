@@ -40,6 +40,18 @@ void ConvSendController::setOutbox(mirror::Outbox* outbox) {
                         emit lanePausedChanged();
                     }
                 });
+        // The §6.5 verb-seam failure signal: a rejection in THIS conversation's lane surfaces to
+        // the toast/footer; the strip row (retry/edit/discard) remains the durable affordance.
+        connect(m_outbox, &mirror::Outbox::opChanged, this, [this](const QString& opId) {
+            if (m_outbox == nullptr) {
+                return;
+            }
+            const mirror::PendingOp op = m_outbox->op(opId);
+            if (op.state == mirror::OpState::Rejected &&
+                op.lane == mirror::buildLane(mirror::VerbClass::ChatSend, laneScope())) {
+                emit sendRejected(op.lastError);
+            }
+        });
     }
     rebindPendingFilter();
     emit pendingChanged();

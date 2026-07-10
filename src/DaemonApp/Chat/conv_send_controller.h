@@ -88,6 +88,9 @@ signals:
     // A ConvSend was durably enqueued (before any wire call). The surface focuses the pending
     // strip.
     void enqueued(const QString& opId);
+    // A ConvSend in THIS conversation's lane was rejected by the node (§6.5): the verb seam's
+    // failure signal for the toast/footer notice — the strip row stays the durable surfacing.
+    void sendRejected(const QString& message);
 
 private:
     void rebindPendingFilter();

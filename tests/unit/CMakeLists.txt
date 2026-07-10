@@ -1022,6 +1022,35 @@ target_link_libraries(tst_conv_send_lane
 add_test(NAME tst_conv_send_lane COMMAND tst_conv_send_lane)
 set_tests_properties(tst_conv_send_lane PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_chat_conversation_mirror (mirror A5): the chat controller's MIRROR read path — window-lens
+# rebinding on open (visibility declaration → ingestor top-up), journal-delta re-projection,
+# per-conversation isolation, and demand-paging end-of-history mediation. Compiles the controller
+# source WITH the substrate define (the same shape da_chat_view / da_tui_viewmodels build).
+if(TARGET daemon-app::mirror_lens)
+    qt_add_executable(tst_chat_conversation_mirror
+        tst_chat_conversation_mirror.cpp
+        ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/chat_conversation_controller.cpp
+    )
+    set_target_properties(tst_chat_conversation_mirror PROPERTIES AUTOMOC ON)
+    target_include_directories(tst_chat_conversation_mirror
+        PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat"
+    )
+    target_compile_definitions(tst_chat_conversation_mirror
+        PRIVATE DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1
+    )
+    target_link_libraries(tst_chat_conversation_mirror
+        PRIVATE
+            Qt6::Test
+            Qt6::Qml
+            daemon-app::transports
+            daemon-app::mirror_lens
+            daemon-app::mirror_ingestor
+    )
+    add_test(NAME tst_chat_conversation_mirror COMMAND tst_chat_conversation_mirror)
+    set_tests_properties(tst_chat_conversation_mirror
+        PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
 # tst_session_orchestrator: the shared submit pipeline - submit starts the
 # turn + populates todos (and clears them after the turn settles), cancel resets,
 # and slash "/new" is handled while other commands surface via commandRequested.
