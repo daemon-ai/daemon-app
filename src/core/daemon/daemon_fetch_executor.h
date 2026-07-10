@@ -6,9 +6,9 @@
 // FetchScheduler jobs over the real NodeApiClient: encodes the wire request, sends it (correlated),
 // decodes the reply straight into mirror entities via the decode-to-mirror bridge (mirror_decode),
 // hands the ingestor already-mapped entities through deliver*(), and completes the scheduler slot.
-// Internal page loops (ConvList/RosterList replace-and-prune over the accumulated union; ConvHistory
-// forward-cursor until it reaches head) stay inside one scheduler job (§5.4). The codec + zcbor
-// live only here + the bridge (07§10 boundary); the ingestor never sees CBOR.
+// Internal page loops (ConvList/RosterList replace-and-prune over the accumulated union;
+// ConvHistory forward-cursor until it reaches head) stay inside one scheduler job (§5.4). The codec
+// + zcbor live only here + the bridge (07§10 boundary); the ingestor never sees CBOR.
 
 #include "daemon/node_api_client.h"
 #include "mirror/fetch_job.h"

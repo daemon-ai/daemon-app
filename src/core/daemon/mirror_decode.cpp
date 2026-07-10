@@ -35,8 +35,8 @@ bool decodeConversationsToMirror(const QByteArray& responseCbor,
         const bool hasNext =
             page.conv_page_next_present &&
             page.conv_page_next.conv_page_next_choice == conv_page_next_r::conv_page_next_tstr_c;
-        *next = hasNext ? codec_detail::fromZcbor(page.conv_page_next.conv_page_next_tstr)
-                        : QString();
+        *next =
+            hasNext ? codec_detail::fromZcbor(page.conv_page_next.conv_page_next_tstr) : QString();
     }
     return true;
 }
@@ -52,11 +52,13 @@ bool decodeChatHistoryToMirror(const QByteArray& responseCbor, const QString& tr
     if (!response) {
         return false;
     }
-    const journal_page_view& page = response->api_response_response_journal_m.response_journal_Journal;
+    const journal_page_view& page =
+        response->api_response_response_journal_m.response_journal_Journal;
     out->clear();
     for (size_t i = 0; i < page.journal_page_view_entries_journal_record_m_count; ++i) {
         const journal_record& rec = page.journal_page_view_entries_journal_record_m[i];
-        // The conversation journal only appends Chat records; skip any Block/Management defensively.
+        // The conversation journal only appends Chat records; skip any Block/Management
+        // defensively.
         if (rec.journal_record_payload.journal_record_payload_t_choice !=
             journal_record_payload_t_r::journal_record_payload_t_journal_record_payload_chat_m_c) {
             continue;
@@ -109,7 +111,8 @@ bool decodeContactsToMirror(const QByteArray& responseCbor, const QString& trans
     if (!response) {
         return false;
     }
-    const contact_page& page = response->api_response_response_contact_page_m.response_contact_page_ContactPage;
+    const contact_page& page =
+        response->api_response_response_contact_page_m.response_contact_page_ContactPage;
     out->clear();
     out->reserve(page.contact_page_items_contact_info_m_count);
     for (size_t i = 0; i < page.contact_page_items_contact_info_m_count; ++i) {
@@ -120,8 +123,8 @@ bool decodeContactsToMirror(const QByteArray& responseCbor, const QString& trans
     }
     if (next != nullptr) {
         const bool hasNext =
-            page.contact_page_next_present &&
-            page.contact_page_next.contact_page_next_choice == contact_page_next_r::contact_page_next_tstr_c;
+            page.contact_page_next_present && page.contact_page_next.contact_page_next_choice ==
+                                                  contact_page_next_r::contact_page_next_tstr_c;
         *next = hasNext ? codec_detail::fromZcbor(page.contact_page_next.contact_page_next_tstr)
                         : QString();
     }

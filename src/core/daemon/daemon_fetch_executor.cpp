@@ -47,7 +47,8 @@ void DaemonFetchExecutor::execute(const mirror::FetchJob& job) {
     sendFor(m_inflight[corr], QString(), job.afterCursor);
 }
 
-void DaemonFetchExecutor::sendFor(const InFlight& f, const QString& pageToken, quint64 afterCursor) {
+void DaemonFetchExecutor::sendFor(const InFlight& f, const QString& pageToken,
+                                  quint64 afterCursor) {
     QByteArray req;
     switch (f.job.op) {
     case mirror::FetchOp::ConvList:
