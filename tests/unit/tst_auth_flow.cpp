@@ -474,6 +474,46 @@ private slots:
         QCOMPARE(succeeded.count(), 1);
     }
 
+    // [integrations wire v38] The QR-pairing flow: begin -> qr challenge (payload + poll cadence)
+    // -> Poll step -> success. The controller drives every challenge kind generically (no
+    // per-family fork), so the QR family completes through the same challenge/step machinery as the
+    // others.
+    void controllerQrPairingHappyPath() {
+        MockAuthFlowService service;
+        AuthFlowController controller(&service);
+        QSignalSpy succeeded(&controller, &AuthFlowController::succeeded);
+
+        controller.start(QStringLiteral("qr"), {}, QString(), /*useSink=*/false);
+        QTRY_COMPARE(controller.phase(), QStringLiteral("challenge"));
+        QCOMPARE(controller.challengeKind(), QStringLiteral("qr"));
+        QVERIFY(!controller.qrPayload().isEmpty());
+        QCOMPARE(controller.pollIntervalMs(), 1500);
+
+        controller.poll(); // drive the Poll step directly (don't wait for the auto-poll cadence)
+        QCOMPARE(controller.phase(), QStringLiteral("stepping"));
+        QTRY_COMPARE(controller.phase(), QStringLiteral("success"));
+        QCOMPARE(succeeded.count(), 1);
+    }
+
+    // [integrations wire v38] The generic form binds the enriched field shape unchanged: a Form
+    // challenge's fields carry kind/default/placeholder/choices, which formFields() passes straight
+    // through so the GUI/TUI can mask/prefill/hint/offer-choices with nothing protocol-specific.
+    void controllerFormFieldsCarryEnrichedMetadata() {
+        MockAuthFlowService service;
+        AuthFlowController controller(&service);
+        controller.start(QStringLiteral("token"), {}, QString(), /*useSink=*/false);
+        QTRY_COMPARE(controller.phase(), QStringLiteral("challenge"));
+        QCOMPARE(controller.challengeKind(), QStringLiteral("form"));
+
+        const QVariantList fields = controller.formFields();
+        QVERIFY(!fields.isEmpty());
+        const QVariantMap field = fields.first().toMap();
+        QCOMPARE(field.value(QStringLiteral("kind")).toString(), QStringLiteral("Password"));
+        QCOMPARE(field.value(QStringLiteral("placeholder")).toString(), QStringLiteral("xoxb-…"));
+        QVERIFY(field.contains(QStringLiteral("default")));
+        QVERIFY(field.contains(QStringLiteral("choices")));
+    }
+
     void controllerBeginFailure() {
         MockAuthFlowService service;
         AuthFlowController controller(&service);

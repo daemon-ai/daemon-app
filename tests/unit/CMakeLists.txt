@@ -332,6 +332,19 @@ target_link_libraries(tst_auth_flow
 add_test(NAME tst_auth_flow COMMAND tst_auth_flow)
 set_tests_properties(tst_auth_flow PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_qr (A3 app/auth-component; [integrations wire v38]): the shared QR module-matrix seam both auth
+# surfaces render from — QrMatrix::encode() as a known-vector check against Nayuki qrcodegen's
+# reference behavior (version-1 dimensions + the spec-fixed finder/timing/dark modules), and
+# renderHalfBlocks() as the terminal projection (exact half-block glyph rows + quiet-zone framing).
+qt_add_executable(tst_qr tst_qr.cpp)
+target_link_libraries(tst_qr
+    PRIVATE
+        Qt6::Test
+        daemon-app::qr
+)
+add_test(NAME tst_qr COMMAND tst_qr)
+set_tests_properties(tst_qr PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # [wave2:app-engines] tst_agent_registry (C1/ENG-3): the foreign-agent registry codec —
 # AgentRegister/AgentRemove/AgentCatalog/AgentDiscover round-trips against the vendored zcbor codec
 # (source=Manual, protocol tag, stdio/endpoint recipe; installed absent), and AgentCatalog decode
