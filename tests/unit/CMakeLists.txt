@@ -512,6 +512,7 @@ target_link_libraries(tst_integrations_seams
     PRIVATE
         Qt6::Test
         Qt6::Network
+        daemon-app::auth
         daemon-app::daemon_client
         daemon-app::daemon_codec
         daemon-app::transports

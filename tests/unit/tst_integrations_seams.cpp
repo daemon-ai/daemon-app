@@ -5,9 +5,14 @@
 // packages (tree UI, auth component, chat tabs) consume. Covers the v38 codec wrappers
 // (enriched auth-param-field, AuthFlowKind::UserPassword, ConversationInfo.parent + Space,
 // AdapterInfo.account_schema, ConvSend/ConvHistory, PersonList, TransportSettings/Configure,
-// MessagesChanged/PersonsChanged events), the daemon repositories + services + mocks, and the
-// SubscriptionManager fan-out — all against the vendored zcbor codec + the WireMuxServer fixture.
+// MessagesChanged/PersonsChanged events), the daemon repositories + services + mocks, the
+// SubscriptionManager fan-out, the IAuthFlowService DTO plumbing for the enriched fields (incl. the
+// mock's full challenge matrix), and the conversation parent/Space cache round-trip — all against
+// the vendored zcbor codec + the WireMuxServer fixture.
 
+#include "auth/iauth_flow_service.h"
+#include "auth/mock_auth_flow_service.h"
+#include "daemon/daemon_auth_flow_service.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_chat_service.h"
 #include "daemon/daemon_persons_service.h"
@@ -32,6 +37,7 @@
 #include <QtTest/QtTest>
 
 using daemonapp::daemon::ApprovalRepository;
+using daemonapp::daemon::AuthRepository;
 using daemonapp::daemon::ChatRepository;
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
@@ -801,6 +807,129 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
         fake.pushItem(daemonapp::test::buildEventsPage({nePersonsChanged()}, 1, 1));
         QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
+    }
+
+    // ----- IAuthFlowService DTO plumbing: the enriched field metadata reaches the seam maps -----
+    // A3's generic auth component binds IAuthFlowService (via AuthFlowController), never the codec
+    // — so the v38 kind/default/placeholder/choices must ride the provider params and Form
+    // challenge field maps, or a masked/prefilled/choice field is unrenderable.
+    void authSeamCarriesEnrichedFieldMetadata() {
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock(QStringLiteral("authseam.sock"))), "listen");
+        fake.setReplySequence({authProvidersEnriched(), authBegunFormEnriched()});
+        DaemonTransport tx;
+        tx.setSocketPath(sock(QStringLiteral("authseam.sock")));
+        NodeApiClient client(&tx);
+        DaemonCacheStore cache(db(QStringLiteral("authseam.db")));
+        AuthRepository repo(&client, &cache);
+        auth::DaemonAuthFlowService svc(&repo);
+
+        // Provider params: the schema field carries the enriched metadata.
+        QSignalSpy providersChanged(&svc, &auth::IAuthFlowService::providersChanged);
+        svc.refreshProviders();
+        QTRY_COMPARE_WITH_TIMEOUT(providersChanged.count(), 1, 3000);
+        const QVariantList providers = svc.providers();
+        QCOMPARE(providers.size(), 1);
+        QCOMPARE(providers.at(0).toMap().value(QStringLiteral("flowKind")).toString(),
+                 QStringLiteral("UserPassword"));
+        const QVariantMap param =
+            providers.at(0).toMap().value(QStringLiteral("params")).toList().at(0).toMap();
+        QCOMPARE(param.value(QStringLiteral("kind")).toString(), QStringLiteral("Password"));
+        QCOMPARE(param.value(QStringLiteral("default")).toString(), QStringLiteral("hunter2"));
+        QCOMPARE(param.value(QStringLiteral("placeholder")).toString(),
+                 QStringLiteral("your password"));
+        QCOMPARE(param.value(QStringLiteral("choices")).toStringList(),
+                 QStringList({QStringLiteral("a"), QStringLiteral("b")}));
+
+        // Form challenge fields: begun() carries the same metadata per field.
+        QSignalSpy begun(&svc, &auth::IAuthFlowService::begun);
+        svc.begin(QStringLiteral("demo"), {}, QStringLiteral("http://127.0.0.1:0/cb"));
+        QTRY_COMPARE_WITH_TIMEOUT(begun.count(), 1, 3000);
+        const QVariantMap challenge = begun.at(0).at(1).toMap();
+        QCOMPARE(challenge.value(QStringLiteral("kind")).toString(), QStringLiteral("form"));
+        const QVariantMap field = challenge.value(QStringLiteral("fields")).toList().at(0).toMap();
+        QCOMPARE(field.value(QStringLiteral("kind")).toString(), QStringLiteral("Password"));
+        QCOMPARE(field.value(QStringLiteral("default")).toString(), QStringLiteral("hunter2"));
+        QCOMPARE(field.value(QStringLiteral("placeholder")).toString(),
+                 QStringLiteral("your password"));
+        QCOMPARE(field.value(QStringLiteral("choices")).toStringList().size(), 2);
+    }
+
+    // ----- MockAuthFlowService: the full challenge matrix includes a Qr flow -----
+    // The plan's A1 section wants the scripted mock to cover every challenge kind so A3 can build
+    // the QR surface offline: a "qr" family begins with a Qr challenge (payload + poll cadence) and
+    // completes on the first Poll step.
+    void mockAuthFlowCoversQrChallenge() {
+        auth::MockAuthFlowService svc;
+        bool qrFamilyOffered = false;
+        for (const QVariant& row : svc.providers()) {
+            if (row.toMap().value(QStringLiteral("family")).toString() == QLatin1String("qr")) {
+                qrFamilyOffered = true;
+            }
+        }
+        QVERIFY(qrFamilyOffered);
+
+        QSignalSpy begun(&svc, &auth::IAuthFlowService::begun);
+        QSignalSpy completed(&svc, &auth::IAuthFlowService::completed);
+        svc.begin(QStringLiteral("qr"), {}, QStringLiteral("http://127.0.0.1:0/cb"));
+        QTRY_COMPARE_WITH_TIMEOUT(begun.count(), 1, 3000);
+        const QVariantMap challenge = begun.at(0).at(1).toMap();
+        QCOMPARE(challenge.value(QStringLiteral("kind")).toString(), QStringLiteral("qr"));
+        QVERIFY(!challenge.value(QStringLiteral("payload")).toString().isEmpty());
+        QVERIFY(challenge.value(QStringLiteral("pollIntervalMs")).toInt() > 0);
+
+        auth::StepInput poll;
+        poll.kind = auth::StepInputKind::Poll;
+        svc.step(begun.at(0).at(0).toString(), poll);
+        QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 1, 3000);
+    }
+
+    // ----- Conversation parent/Space survives the cache + the registry projection -----
+    // A2's tree consumes ITransportRegistry::conversations() (projected from the offline-first
+    // daemon_conversations cache), so `parent` and the "space" kind must round-trip through both —
+    // decode-only support would strand the hierarchy at the codec layer.
+    void conversationParentSurvivesCacheAndRegistry() {
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock(QStringLiteral("convparent.sock"))), "listen");
+        fake.setReplyPayload(conversationsWithSpaceAndParent());
+        DaemonTransport tx;
+        tx.setSocketPath(sock(QStringLiteral("convparent.sock")));
+        NodeApiClient client(&tx);
+        DaemonCacheStore cache(db(QStringLiteral("convparent.db")));
+        TransportRepository repo(&client, &cache);
+        transports::DaemonTransportRegistry registry(&repo);
+        QSignalSpy refreshed(&registry, &transports::ITransportRegistry::conversationsChanged);
+        repo.refreshConversations(QStringLiteral("demo/acct"));
+        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
+
+        // The repository's cached rows carry kind="space" and the child's parent id.
+        const auto rows = repo.cachedConversations(QStringLiteral("demo/acct"));
+        QCOMPARE(rows.size(), 2);
+        QString spaceParentOfRoom;
+        bool sawSpace = false;
+        for (const auto& r : rows) {
+            if (r.convId == QStringLiteral("!space:demo")) {
+                sawSpace = r.kind == QStringLiteral("space") && r.parent.isEmpty();
+            } else if (r.convId == QStringLiteral("!room:demo")) {
+                spaceParentOfRoom = r.parent;
+            }
+        }
+        QVERIFY(sawSpace);
+        QCOMPARE(spaceParentOfRoom, QStringLiteral("!space:demo"));
+
+        // The seam projection carries both facts to the tree consumer.
+        QString projectedParent;
+        QString projectedKind;
+        for (const QVariant& rv : registry.conversations(QStringLiteral("demo/acct"))) {
+            const QVariantMap m = rv.toMap();
+            if (m.value(QStringLiteral("id")).toString() == QLatin1String("!room:demo")) {
+                projectedParent = m.value(QStringLiteral("parent")).toString();
+            } else if (m.value(QStringLiteral("id")).toString() == QLatin1String("!space:demo")) {
+                projectedKind = m.value(QStringLiteral("kind")).toString();
+            }
+        }
+        QCOMPARE(projectedParent, QStringLiteral("!space:demo"));
+        QCOMPARE(projectedKind, QStringLiteral("space"));
     }
 };
 
