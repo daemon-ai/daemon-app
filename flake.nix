@@ -100,29 +100,21 @@
     # references/ study clones so the ported behaviors track the audited code.
     #
     # immer 0.9.1+ (arximboldi/immer @ bd4fc74): normalized immer::table entity
-    # tables + immer::diff. lager 0.1.3+ (arximboldi/lager @ 276c55a): ONLY the
-    # reactive-core headers (state/commit/reader/cursor/writer/watch/setter +
-    # lenses + detail/nodes + extra/qt) are compiled — store/effects/debugger
-    # stay out (ADR-002). That subset needs zug (arximboldi/zug @ dd80433) and
-    # header-only boost::intrusive; it does NOT need boost::hana (verified
-    # references/architecture/lager/CMakeLists.txt: the INTERFACE `lager` target
-    # links neither Boost nor hana; only tests/examples do).
+    # tables + immer::diff — the mirror value substrate.
+    #
+    # ADR-008 FINALIZED (A3, M1): the observe seam is coarse signals, so the lager
+    # reactive-core candidate (and its zug + boost::intrusive transitive headers)
+    # was removed — gate 1 stayed decisively RED on the representative VM TU set
+    # (+50% clean / +53% incremental vs coarse; ~+4.5 s/TU). See
+    # src/core/mirror/ADR-008-addendum-A3.md. immer is the only mirror input now.
     immer = {
       url = "github:arximboldi/immer/bd4fc749b97dfa2b66a8f3de00bbf234db4856ef";
-      flake = false;
-    };
-    zug = {
-      url = "github:arximboldi/zug/dd80433152c9fa5b16a710c8b530fb6131749132";
-      flake = false;
-    };
-    lager = {
-      url = "github:arximboldi/lager/276c55a20c675bd5a9b1cb3dd09263cba5632fa4";
       flake = false;
     };
   };
 
   outputs =
-    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qrcodegen, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, immer, zug, lager, ... }:
+    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qrcodegen, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, immer, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -259,14 +251,10 @@
           "-DQAUTOSTART_SOURCE_DIR=${qautostart}"
           "-DQXTGLOBALSHORTCUT_SOURCE_DIR=${qxtglobalshortcut}"
           "-DQMLTERMWIDGET_QML_DIR=${qmltermwidgetQmlDir}"
-          # Mirror substrate (header-only): immer + zug + the lager reactive-core
-          # subset. BOOST_INCLUDE_DIR feeds lager's boost::intrusive dependency
-          # (header-only; the only Boost the compiled subset needs). See
-          # cmake/Dependencies.cmake for the INTERFACE-target wiring.
+          # Mirror substrate (header-only): the immer value substrate. The observe
+          # seam is coarse signals (ADR-008 finalized, A3), so lager/zug/boost are
+          # no longer vendored. See cmake/Dependencies.cmake for the INTERFACE wiring.
           "-DIMMER_SOURCE_DIR=${immer}"
-          "-DZUG_SOURCE_DIR=${zug}"
-          "-DLAGER_SOURCE_DIR=${lager}"
-          "-DBOOST_INCLUDE_DIR=${pkgs.boost.dev}/include"
           # Host Linguist tools (lupdate/lrelease for qt_add_translations),
           # pinned directly rather than listing qttools as an input: the qtbase
           # env hook folds every qttools input's plugin dir into the wrapped
@@ -1123,9 +1111,6 @@
             export QXTGLOBALSHORTCUT_SOURCE_DIR="${qxtglobalshortcut}"
             export QMLTERMWIDGET_QML_DIR="${qmltermwidgetQmlDir}"
             export IMMER_SOURCE_DIR="${immer}"
-            export ZUG_SOURCE_DIR="${zug}"
-            export LAGER_SOURCE_DIR="${lager}"
-            export BOOST_INCLUDE_DIR="${pkgs.boost.dev}/include"
           '';
         };
 
@@ -1141,15 +1126,12 @@
         # emscripten/Qt-wasm shellHook intact (an `inputsFrom` splice would drop it).
         devShells.wasm = qtWasmStack.devShell.overrideAttrs (old: {
           nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.chromium ];
-          # Surface the header-only mirror-substrate sources in the wasm shell too,
-          # so the A1 WASM smoke probe (immer + lager subset compiled under
-          # emscripten, spec 09 §11) can resolve them. Append to the existing
-          # emscripten/Qt-wasm shellHook rather than replacing it.
+          # Surface the header-only immer source in the wasm shell too, so the WASM
+          # smoke probe (immer compiled under emscripten, spec 09 §11) can resolve
+          # it. Append to the existing emscripten/Qt-wasm shellHook rather than
+          # replacing it. (lager/zug removed: ADR-008 finalized to coarse signals.)
           shellHook = (old.shellHook or "") + ''
             export IMMER_SOURCE_DIR="${immer}"
-            export ZUG_SOURCE_DIR="${zug}"
-            export LAGER_SOURCE_DIR="${lager}"
-            export BOOST_INCLUDE_DIR="${pkgs.boost.dev}/include"
           '';
         });
 

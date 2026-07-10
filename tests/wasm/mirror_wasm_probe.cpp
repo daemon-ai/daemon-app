@@ -1,18 +1,17 @@
-// A1 WASM smoke gate (a) (spec 09 §11; ADR-002/-008): prove the vendored immer + the severable
-// lager reactive-core subset COMPILE and RUN single-threaded under the emscripten/wasm toolchain
-// with exceptions-off (IMMER auto-detects -fno-exceptions). This is a MINIMAL probe — NOT the
-// full app wasm build — driven by tests/wasm/build-wasm-probe.sh under node.
+// WASM smoke gate (spec 09 §11; ADR-002/-008): prove the vendored immer value substrate COMPILES
+// and RUNS single-threaded under the emscripten/wasm toolchain with exceptions-off (IMMER
+// auto-detects -fno-exceptions). This is a MINIMAL probe — NOT the full app wasm build — driven
+// by tests/wasm/build-wasm-probe.sh under node.
 //
-// It exercises the load-bearing pieces the mirror leans on: immer::table upsert + immer::diff,
-// and lager::state<transactional_tag> + lager::commit two-phase visibility. A nonzero exit or a
-// missing sentinel fails the gate.
+// It exercises the load-bearing pieces the mirror leans on: immer::table upsert + immer::diff.
+// (The lager reactive-core probe was removed when ADR-008 was FINALIZED to the coarse-signals
+// seam — A3's gate-1 re-run on the representative VM TU set stayed decisively RED for lager; see
+// src/core/mirror/ADR-008-addendum-A3.md. The mirror no longer vendors lager, so the wasm gate
+// tracks only the substrate that ships.) A nonzero exit or a missing sentinel fails the gate.
 
 #include <cstdio>
 #include <immer/algorithm.hpp>
 #include <immer/table.hpp>
-#include <lager/commit.hpp>
-#include <lager/state.hpp>
-#include <lager/watch.hpp>
 #include <string>
 
 namespace {
@@ -51,22 +50,6 @@ int main() {
         return 1;
     }
 
-    // --- lager: transactional two-phase visibility ---
-    auto s = lager::make_state(0, lager::transactional_tag{});
-    int notifies = 0;
-    lager::watch(s, [&](int) { ++notifies; });
-    s.set(1);
-    s.set(2);
-    if (notifies != 0 || s.get() != 0) { // staged, not yet visible
-        std::printf("MIRROR_WASM_PROBE fail: premature notify=%d get=%d\n", notifies, s.get());
-        return 1;
-    }
-    lager::commit(s);
-    if (notifies != 1 || s.get() != 2) {
-        std::printf("MIRROR_WASM_PROBE fail: commit notify=%d get=%d\n", notifies, s.get());
-        return 1;
-    }
-
-    std::printf("MIRROR_WASM_PROBE ok immer(table+diff) lager(state+commit)\n");
+    std::printf("MIRROR_WASM_PROBE ok immer(table+diff)\n");
     return 0;
 }

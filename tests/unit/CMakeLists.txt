@@ -1227,3 +1227,16 @@ if(TARGET daemon-app::mirror_ingestor)
         set_tests_properties(tst_mirror_bridge PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif()
 endif()
+
+# The A3 mirror-lens suite (spec 09 §8): the generic journal-delta adapter
+# (mirror::TableModel / mirror::WindowModel), the 64-bit stable-id interner, and the
+# ConversationListModel role-map demonstrator. Every model instantiation runs under
+# QAbstractItemModelTester (§12). Gated on the lens target being built (needs the substrate).
+if(TARGET daemon-app::mirror_lens)
+    foreach(_ltst tst_mirror_stable_id tst_mirror_table_model tst_mirror_window_model)
+        qt_add_executable(${_ltst} ${_ltst}.cpp)
+        target_link_libraries(${_ltst} PRIVATE Qt6::Test daemon-app::mirror_lens)
+        add_test(NAME ${_ltst} COMMAND ${_ltst})
+        set_tests_properties(${_ltst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endforeach()
+endif()
