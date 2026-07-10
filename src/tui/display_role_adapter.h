@@ -18,8 +18,9 @@ class DisplayRoleAdapter : public QIdentityProxyModel {
 
 public:
     enum class Kind {
-        Sidebar,     // flattened agent tree (depth indent + tag/state dots)
-        SessionList, // sessions for the current scope
+        Sidebar,      // flattened agent tree (depth indent + tag/state dots)
+        SessionList,  // sessions for the current scope
+        Integrations, // flattened integrations tree (account -> sections -> rooms/DMs/persons)
     };
 
     explicit DisplayRoleAdapter(Kind kind, QObject* parent = nullptr);
@@ -29,6 +30,7 @@ public:
 private:
     [[nodiscard]] QVariant sidebarData(const QModelIndex& src, int role) const;
     [[nodiscard]] QVariant listData(const QModelIndex& src, int role) const;
+    [[nodiscard]] QVariant integrationsData(const QModelIndex& src, int role) const;
 
     Kind m_kind;
 };

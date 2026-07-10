@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Añadir integración</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Ajustes de la cuenta</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Continuar</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Guardar</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Déjalo en blanco para mantener el valor actual</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -3534,6 +3561,72 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>image unavailable</source>
         <translation>imagen no disponible</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Conectar</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Desactivar</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Activar</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Ajustes de la cuenta</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Eliminar cuenta</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Eliminar</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>¿Eliminar esta cuenta y desconectarla? El nodo la desmantela por completo.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Integraciones</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Contraer todo</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Expandir todo</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Añadir integración</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Personas</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Canales</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Mensajes directos</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Explorar</translation>
     </message>
 </context>
 <context>

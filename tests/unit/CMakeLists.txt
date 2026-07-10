@@ -817,6 +817,27 @@ target_link_libraries(tst_sidebar_model
 add_test(NAME tst_sidebar_model COMMAND tst_sidebar_model)
 set_tests_properties(tst_sidebar_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_integrations_tree (A2 app/tree-ui): the integrations tree view-model composed directly from
+# ITransportRegistry + IPersonsService (account roots -> capability-gated sections -> space/parent
+# nesting -> rooms/DMs/persons, unknown-parent-as-root), its activation intents (conversation ->
+# A4's activation seam), and the schema-driven AccountManagementController (add hand-off to the auth
+# flow, edit merge-configure with masked-field omission, remove).
+qt_add_executable(tst_integrations_tree tst_integrations_tree.cpp)
+target_include_directories(tst_integrations_tree
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Sidebar"
+)
+target_link_libraries(tst_integrations_tree
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        Qt6::Quick
+        daemon-app::transports
+        daemon-app::uimodels
+        daemon-app::sidebar
+)
+add_test(NAME tst_integrations_tree COMMAND tst_integrations_tree)
+set_tests_properties(tst_integrations_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_participants_model: the right sidebar's Participants section model (shared by
 # the GUI and TUI) - the collapsible header, the seeded Agent/User rows with their
 # green "available" presence dots, and the section fold.

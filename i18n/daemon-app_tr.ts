@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Entegrasyon ekle</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Hesap ayarları</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Devam et</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Kaydet</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Mevcut değeri korumak için boş bırakın</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -3532,6 +3559,72 @@ kadar başlatılamaz.</translation>
     <message>
         <source>image unavailable</source>
         <translation>görsel kullanılamıyor</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Bağlan</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Devre dışı bırak</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Etkinleştir</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Hesap ayarları</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Hesabı kaldır</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Kaldır</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>Bu hesap kaldırılıp bağlantısı kesilsin mi? Düğüm onu tamamen kaldırır.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Entegrasyonlar</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Tümünü daralt</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Tümünü genişlet</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Entegrasyon ekle</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Kişiler</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Kanallar</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Doğrudan mesajlar</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Gözat</translation>
     </message>
 </context>
 <context>

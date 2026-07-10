@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>連携を追加</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>アカウント設定</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>続ける</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>現在の値を保持するには空欄のままにします</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -3532,6 +3559,72 @@ until it is re-registered.</source>
     <message>
         <source>image unavailable</source>
         <translation>画像を利用できません</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>接続</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>無効にする</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>有効化</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>アカウント設定</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>アカウントを削除</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>削除</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>このアカウントを削除して切断しますか？ノードが完全に破棄します。</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>連携</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>すべて折りたたむ</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>すべて展開</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>連携を追加</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>人物</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>チャンネル</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>ダイレクトメッセージ</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>参照</translation>
     </message>
 </context>
 <context>
