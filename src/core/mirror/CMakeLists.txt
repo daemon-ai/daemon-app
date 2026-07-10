@@ -73,4 +73,41 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
             immer::immer
             lager::lager         # reactive-core subset only (observe seam); pulls zug + boost::intrusive
     )
+
+    # -----------------------------------------------------------------------
+    # A4 ingestor (spec 09 §5, §4.6, §13 M1): the single event-policy authority.
+    # Policy table (16 arms, compile-time exhaustive), fetch scheduler (dedup/
+    # priority/cap), cursor+epoch+node-rev lifecycle, reconnect both modes,
+    # visibility staleness, ConvHistory cursor fix, chat windows v1, the
+    # write-behind consumer, and dual-write parity asserts. Transport-agnostic
+    # (FetchExecutor seam) so it is unit-testable with synthetic E4 streams; the
+    # daemon bridge (src/core/daemon) wraps NodeApiClient + the vendored codec.
+    # -----------------------------------------------------------------------
+    add_library(da_mirror_ingestor STATIC
+        fetch_scheduler.cpp
+        sync_state.cpp
+        ingestor.cpp
+        write_behind.cpp
+        parity.cpp
+        node_event.h
+        policy_table.h
+        fetch_job.h
+        fetch_scheduler.h
+        sync_state.h
+        ingestor.h
+        write_behind.h
+        parity.h
+    )
+    add_library(daemon-app::mirror_ingestor ALIAS da_mirror_ingestor)
+
+    # ingestor.h / write_behind.h carry Q_OBJECT.
+    set_target_properties(da_mirror_ingestor PROPERTIES AUTOMOC ON)
+
+    target_include_directories(da_mirror_ingestor PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+
+    target_link_libraries(da_mirror_ingestor
+        PUBLIC
+            Qt6::Core
+            daemon-app::mirror_substrate
+    )
 endif()
