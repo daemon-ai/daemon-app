@@ -614,6 +614,10 @@ QString conversationTypeName(const conversation_type_r& t) {
         return QStringLiteral("channel");
     case conversation_type_r::conversation_type_Thread_tstr_c:
         return QStringLiteral("thread");
+    // [integrations wire v38] a container node (server/space) the hierarchy groups conversations
+    // under; flat protocols never emit it.
+    case conversation_type_r::conversation_type_Space_tstr_c:
+        return QStringLiteral("space");
     case conversation_type_r::conversation_type_Unset_tstr_c:
     default:
         return QStringLiteral("unset");
@@ -728,9 +732,15 @@ int contactPermissionChoice(const QString& p) {
     return contact_permission_r::contact_permission_Unset_tstr_c;
 }
 
+} // namespace
+
 // [acct-mgmt] Project one wire contact-info into DecodedContact (id + optional display name /
 // presence / permission). Shared by decodeMemberStruct (the contact portion of a conversation
-// member) and the roster/directory decoders — one projection, no duplication.
+// member), the roster/directory decoders, and the person-endpoints decoder (chat_persons.cpp) — one
+// projection, no duplication. In codec_detail (shared across TUs); its enum-name deps
+// (contactPresenceName/contactPermissionName) live in the anonymous namespace above and are found
+// by enclosing-namespace lookup.
+namespace codec_detail {
 DecodedContact decodeContactInfoStruct(const contact_info& c) {
     DecodedContact d;
     d.id = fromZcbor(c.contact_info_id);
@@ -748,6 +758,9 @@ DecodedContact decodeContactInfoStruct(const contact_info& c) {
     }
     return d;
 }
+} // namespace codec_detail
+
+namespace {
 
 QString typingStateName(const typing_state_r& t) {
     switch (t.typing_state_choice) {
@@ -769,11 +782,21 @@ QList<DecodedSettingsField> decodeSettingsSchema(const account_settings_schema& 
     }
     const account_settings_schema_fields_r& f = s.account_settings_schema_fields;
     for (size_t i = 0; i < f.account_settings_schema_fields_auth_param_field_m_count; ++i) {
-        const auth_param_field& fld = f.account_settings_schema_fields_auth_param_field_m[i];
+        // [integrations wire v38] The schema field is one enriched auth-param-field: reuse the
+        // shared projection (kind/default/placeholder/choices) and copy into the settings-field
+        // view (identical shape) so a masked/prefilled settings form renders correctly.
+        const DecodedAuthParamField a =
+            decodeAuthParamFieldStruct(f.account_settings_schema_fields_auth_param_field_m[i]);
         DecodedSettingsField d;
-        d.key = fromZcbor(fld.auth_param_field_key);
-        d.label = fromZcbor(fld.auth_param_field_label);
-        d.required = fld.auth_param_field_required;
+        d.key = a.key;
+        d.label = a.label;
+        d.required = a.required;
+        d.kind = a.kind;
+        d.hasDefault = a.hasDefault;
+        d.defaultValue = a.defaultValue;
+        d.hasPlaceholder = a.hasPlaceholder;
+        d.placeholder = a.placeholder;
+        d.choices = a.choices;
         out.append(d);
     }
     return out;
@@ -844,6 +867,13 @@ DecodedConversation decodeConversationInfoStruct(const conversation_info& cv) {
                 decodeMemberStruct(mm.conversation_info_members_conversation_member_m[i]));
         }
     }
+    // [integrations wire v38] Optional containing space/server-level conversation id (null = root).
+    if (cv.conversation_info_parent_present &&
+        cv.conversation_info_parent.conversation_info_parent_choice ==
+            conversation_info_parent_r::conversation_info_parent_tstr_c) {
+        d.hasParent = true;
+        d.parent = fromZcbor(cv.conversation_info_parent.conversation_info_parent_tstr);
+    }
     return d;
 }
 
@@ -888,8 +918,12 @@ void fillContactInfo(contact_info& c, const DecodedContact& contact, QList<QByte
     }
 }
 
+} // namespace
+
 // [acct-mgmt] Fill a generated account_settings_values from a key->value map. The zcbor_strings
-// borrow into `scratch` (a stable list the caller keeps alive across the encode).
+// borrow into `scratch` (a stable list the caller keeps alive across the encode). In codec_detail
+// (shared across TUs): the room-form encoders here and TransportConfigure in chat_persons.cpp.
+namespace codec_detail {
 void fillSettingsValues(account_settings_values& out, const QMap<QString, QString>& values,
                         QList<QByteArray>& scratch) {
     if (values.isEmpty()) {
@@ -908,8 +942,7 @@ void fillSettingsValues(account_settings_values& out, const QMap<QString, QStrin
     }
     vr.values_tstrtstr_count = n;
 }
-
-} // namespace
+} // namespace codec_detail
 
 QByteArray NodeApiCodec::encodeTransportAdaptersRequest() {
     return encodeSimple(api_request_r::api_request_request_transport_adapters_m_c);
@@ -1094,6 +1127,12 @@ bool NodeApiCodec::decodeAdapters(const QByteArray& responseCbor, QList<DecodedA
         if (a.adapter_info_directory_present) {
             d.hasDirectory = true;
             d.directory = a.adapter_info_directory.adapter_info_directory;
+        }
+        // [integrations wire v38] The adapter's account-settings schema (the add/edit-account
+        // form's field descriptors, with the enriched kind/default/placeholder/choices metadata).
+        if (a.adapter_info_account_schema_present) {
+            d.accountSchema =
+                decodeSettingsSchema(a.adapter_info_account_schema.adapter_info_account_schema);
         }
         out->append(d);
     }

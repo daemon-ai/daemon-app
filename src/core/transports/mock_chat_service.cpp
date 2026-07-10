@@ -18,14 +18,22 @@ QVariantList MockChatService::messages(const QString& transport, const QString& 
 }
 
 void MockChatService::refreshHistory(const QString& transport, const QString& conv) {
-    Q_UNUSED(transport)
-    Q_UNUSED(conv)
+    // The mock has no node to fetch from — just re-emit the current (seeded/echoed) transcript.
+    emit messagesChanged(transport, conv, m_messages.value(key(transport, conv)));
 }
 
 void MockChatService::send(const QString& transport, const QString& conv, const QString& text) {
-    Q_UNUSED(transport)
-    Q_UNUSED(conv)
-    Q_UNUSED(text)
+    // The mock is its own authority (no node): append a local echo + re-emit.
+    QVariantList& msgs = m_messages[key(transport, conv)];
+    QVariantMap row;
+    row[QStringLiteral("id")] = QStringLiteral("mock-%1").arg(msgs.size());
+    row[QStringLiteral("authorId")] = QStringLiteral("me");
+    row[QStringLiteral("authorName")] = QStringLiteral("Me");
+    row[QStringLiteral("authorIsAgent")] = false;
+    row[QStringLiteral("text")] = text;
+    row[QStringLiteral("system")] = false;
+    msgs.append(row);
+    emit messagesChanged(transport, conv, msgs);
 }
 
 void MockChatService::seed(const QString& transport, const QString& conv,
