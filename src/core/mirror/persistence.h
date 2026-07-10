@@ -43,13 +43,42 @@ private:
     QString local_db_;
 };
 
-// One durable write-behind unit (§4.4/§4.5). The Conversation table is the worked M-table
-// example; other M tables are wired identically (mechanical, codegen-friendly) as their
-// consumers land. Journal rows + the watermark advance + the sync-cursor advance ride the SAME
-// transaction as the rows (B7).
+// One per-scope windowed item to persist (class-W, §4.5): the canonical entity payload + its
+// window scope/cursor + provenance. A4's ingestion arms drive the chat window.
+struct WindowRowWrite {
+    QString kind;  // entity kind name (e.g. "ChatMessage")
+    QString scope; // canonical scope key (transport␟conv)
+    quint64 cursor = 0;
+    QByteArray payload; // canonical entity payload (JSON stand-in until the CBOR encoder lands, BR)
+    QString originOp;
+    quint64 lastRev = 0;
+};
+
+// Per-scope window bookkeeping row (window_meta, §4.6), written in the same transaction.
+struct WindowMetaWrite {
+    QString kind;
+    QString scope;
+    int itemCount = 0;
+    qint64 byteCount = 0;
+    quint64 oldestCursor = 0;
+    quint64 newestCursor = 0;
+    bool contiguousToHead = false;
+};
+
+// One durable write-behind unit (§4.4/§4.5). The Conversation/Contact/Person M-tables and the
+// ChatMessage W-window are the entities A4's arms touch (other M tables are wired identically —
+// mechanical, codegen-friendly — as their consumers land in A5+). Journal rows + the watermark
+// advance + the sync-cursor advance + node-rev state ride the SAME transaction as the rows (B7:
+// cursor advance and state apply are atomic — a crash mid-apply never skips or double-applies).
 struct WriteBatch {
     std::vector<Conversation> conversationUpserts;
     std::vector<ConversationKey> conversationTombstones;
+    std::vector<Contact> contactUpserts;
+    std::vector<ContactKey> contactTombstones;
+    std::vector<Person> personUpserts;
+    std::vector<PersonKey> personTombstones;
+    std::vector<WindowRowWrite> windowUpserts;
+    std::vector<WindowMetaWrite> windowMeta;
     std::vector<JournalRecord> journalRecords;
 
     bool advanceWatermark = false;

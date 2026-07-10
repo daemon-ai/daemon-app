@@ -224,6 +224,105 @@ bool Persistence::writeBehind(const WriteBatch& batch) {
         }
     }
 
+    for (const Contact& c : batch.contactUpserts) {
+        QSqlQuery up(db_);
+        up.prepare(QStringLiteral(
+            "INSERT OR REPLACE INTO m_contacts"
+            "(key,transport,id,display_name,permission,presence_primitive,last_rev,fetched_at_ms)"
+            " VALUES(?,?,?,?,?,?,?,?)"));
+        const QString key = c.key().serialize();
+        up.addBindValue(key);
+        up.addBindValue(c.transport);
+        up.addBindValue(c.id);
+        up.addBindValue(c.display_name);
+        up.addBindValue(c.permission);
+        up.addBindValue(c.presence_primitive);
+        up.addBindValue(static_cast<qulonglong>(lastRevFor(key)));
+        up.addBindValue(static_cast<qlonglong>(at));
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const ContactKey& key : batch.contactTombstones) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM m_contacts WHERE key=?"));
+        del.addBindValue(key.serialize());
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+
+    for (const Person& p : batch.personUpserts) {
+        QSqlQuery up(db_);
+        up.prepare(QStringLiteral("INSERT OR REPLACE INTO m_persons"
+                                  "(key,id,alias,avatar_blob,endpoint_count,last_rev,fetched_at_ms)"
+                                  " VALUES(?,?,?,?,?,?,?)"));
+        const QString key = p.key().serialize();
+        up.addBindValue(key);
+        up.addBindValue(p.id);
+        up.addBindValue(p.alias);
+        up.addBindValue(p.avatar_blob);
+        up.addBindValue(p.endpoint_count);
+        up.addBindValue(static_cast<qulonglong>(lastRevFor(key)));
+        up.addBindValue(static_cast<qlonglong>(at));
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const PersonKey& key : batch.personTombstones) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM m_persons WHERE key=?"));
+        del.addBindValue(key.serialize());
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+
+    // Class-W window rows (chat) + window_meta — same transaction (§4.5/§4.6).
+    for (const WindowRowWrite& w : batch.windowUpserts) {
+        QSqlQuery up(db_);
+        up.prepare(QStringLiteral(
+            "INSERT OR REPLACE INTO w_chat_messages(scope,cursor,payload,origin_op,last_rev)"
+            " VALUES(?,?,?,?,?)"));
+        up.addBindValue(w.scope);
+        up.addBindValue(static_cast<qulonglong>(w.cursor));
+        up.addBindValue(w.payload);
+        up.addBindValue(w.originOp.isEmpty() ? QVariant() : QVariant(w.originOp));
+        up.addBindValue(static_cast<qulonglong>(w.lastRev));
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const WindowMetaWrite& m : batch.windowMeta) {
+        QSqlQuery up(db_);
+        up.prepare(QStringLiteral(
+            "INSERT OR REPLACE INTO window_meta"
+            "(kind,scope,item_count,byte_count,oldest_cursor,newest_cursor,contiguous_to_head)"
+            " VALUES(?,?,?,?,?,?,?)"));
+        up.addBindValue(m.kind);
+        up.addBindValue(m.scope);
+        up.addBindValue(m.itemCount);
+        up.addBindValue(static_cast<qlonglong>(m.byteCount));
+        up.addBindValue(static_cast<qulonglong>(m.oldestCursor));
+        up.addBindValue(static_cast<qulonglong>(m.newestCursor));
+        up.addBindValue(m.contiguousToHead ? 1 : 0);
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+
     for (const JournalRecord& r : batch.journalRecords) {
         QSqlQuery j(db_);
         j.prepare(QStringLiteral(
@@ -311,6 +410,40 @@ bool Persistence::loadInto(MirrorModel& model) {
         idx.set(c.transport, std::move(vec));
     }
     model.conversationsByTransport = idx.persistent();
+
+    // Contacts (columnar round-trip — A4 arm ContactsChanged).
+    QSqlQuery cq(db_);
+    if (cq.exec(QStringLiteral(
+            "SELECT transport,id,display_name,permission,presence_primitive FROM m_contacts"))) {
+        auto ct = model.contacts.transient();
+        while (cq.next()) {
+            Contact c;
+            c.transport = cq.value(0).toString();
+            c.id = cq.value(1).toString();
+            c.display_name = cq.value(2).toString();
+            c.permission = cq.value(3).toString();
+            c.presence_primitive = cq.value(4).toString();
+            ct.insert(c);
+        }
+        model.contacts = ct.persistent();
+    }
+
+    // Persons (columnar round-trip — A4 arm PersonsChanged).
+    QSqlQuery pq(db_);
+    if (pq.exec(QStringLiteral("SELECT id,alias,avatar_blob,endpoint_count FROM m_persons"))) {
+        auto pt = model.persons.transient();
+        while (pq.next()) {
+            Person p;
+            p.id = pq.value(0).toString();
+            p.alias = pq.value(1).toString();
+            p.avatar_blob = pq.value(2).toString();
+            p.endpoint_count = pq.value(3).toInt();
+            pt.insert(p);
+        }
+        model.persons = pt.persistent();
+    }
+    // Chat windows are the disposable class-W cache; a cold window fills forward on demand
+    // (§4.6 interim) rather than reloading rows — deliberately not rebuilt here.
     return true;
 }
 

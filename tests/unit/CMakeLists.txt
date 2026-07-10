@@ -1202,3 +1202,17 @@ if(TARGET daemon-app::mirror_substrate)
         set_tests_properties(${_mtst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endforeach()
 endif()
+
+# The A4 ingestor suite (spec 09 §5, §4.6, §13 M1): policy-table exhaustiveness, fetch-scheduler
+# dedup/priority/cap, ingestor dispatch + ConvHistory cursor fix + windows v1 + reconnect both
+# modes + ResyncNeeded scoping + visibility staleness, the write-behind one-transaction consumer,
+# and dual-write parity. Gated on the ingestor library (which is gated on the vendored substrate).
+if(TARGET daemon-app::mirror_ingestor)
+    foreach(_itst tst_mirror_policy_table tst_mirror_fetch_scheduler tst_mirror_ingestor
+                  tst_mirror_write_behind tst_mirror_parity)
+        qt_add_executable(${_itst} ${_itst}.cpp)
+        target_link_libraries(${_itst} PRIVATE Qt6::Test daemon-app::mirror_ingestor)
+        add_test(NAME ${_itst} COMMAND ${_itst})
+        set_tests_properties(${_itst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endforeach()
+endif()

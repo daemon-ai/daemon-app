@@ -7,7 +7,98 @@
 
 #include "entities_map_gen.h"
 
+#include <QString>
+
 namespace mirror {
+namespace {
+
+// zcbor borrows its string bytes (never owns) — copy into a QString once at the map boundary
+// (the single wire→canonical point, §3.6 SPEC-DECISION QString-in-entities).
+QString qstr(const zcbor_string& s) {
+    if (s.value == nullptr || s.len == 0) {
+        return QString();
+    }
+    return QString::fromUtf8(reinterpret_cast<const char*>(s.value), static_cast<int>(s.len));
+}
+
+// conversation-type enum → canonical string (named ONCE here, per entity-map provenance).
+QString conversationKind(const ::conversation_type_r& k) {
+    switch (k.conversation_type_choice) {
+    case ::conversation_type_r::conversation_type_Dm_tstr_c:
+        return QStringLiteral("dm");
+    case ::conversation_type_r::conversation_type_GroupDm_tstr_c:
+        return QStringLiteral("group_dm");
+    case ::conversation_type_r::conversation_type_Channel_tstr_c:
+        return QStringLiteral("channel");
+    case ::conversation_type_r::conversation_type_Thread_tstr_c:
+        return QStringLiteral("thread");
+    case ::conversation_type_r::conversation_type_Space_tstr_c:
+        return QStringLiteral("space");
+    case ::conversation_type_r::conversation_type_Unset_tstr_c:
+        return QString();
+    }
+    return QString();
+}
+
+// contact-permission enum → canonical string.
+QString contactPermission(const ::contact_permission_r& p) {
+    switch (p.contact_permission_choice) {
+    case ::contact_permission_r::contact_permission_Allow_tstr_c:
+        return QStringLiteral("allow");
+    case ::contact_permission_r::contact_permission_Deny_tstr_c:
+        return QStringLiteral("deny");
+    case ::contact_permission_r::contact_permission_Unset_tstr_c:
+        return QString();
+    }
+    return QString();
+}
+
+// presence.primitive enum → canonical string.
+QString presencePrimitive(const ::presence_primitive_t_r& p) {
+    switch (p.presence_primitive_t_choice) {
+    case ::presence_primitive_t_r::presence_primitive_t_Offline_tstr_c:
+        return QStringLiteral("offline");
+    case ::presence_primitive_t_r::presence_primitive_t_Available_tstr_c:
+        return QStringLiteral("available");
+    case ::presence_primitive_t_r::presence_primitive_t_Idle_tstr_c:
+        return QStringLiteral("idle");
+    case ::presence_primitive_t_r::presence_primitive_t_Invisible_tstr_c:
+        return QStringLiteral("invisible");
+    case ::presence_primitive_t_r::presence_primitive_t_Away_tstr_c:
+        return QStringLiteral("away");
+    case ::presence_primitive_t_r::presence_primitive_t_DoNotDisturb_tstr_c:
+        return QStringLiteral("dnd");
+    case ::presence_primitive_t_r::presence_primitive_t_Streaming_tstr_c:
+        return QStringLiteral("streaming");
+    case ::presence_primitive_t_r::presence_primitive_t_OutOfOffice_tstr_c:
+        return QStringLiteral("out_of_office");
+    }
+    return QString();
+}
+
+// content-hash ([* uint] byte list) → lowercase hex string (the #blob_hash derivation, §3.3).
+QString contentHashHex(const ::content_hash& h) {
+    QString out;
+    out.reserve(static_cast<int>(h.content_hash_uint_count) * 2);
+    for (size_t i = 0; i < h.content_hash_uint_count; ++i) {
+        out += QString::asprintf("%02x", static_cast<unsigned>(h.content_hash_uint[i]) & 0xFFu);
+    }
+    return out;
+}
+
+// participant union → a display id (contact id, or agent profile␟member) — the #participant
+// derivation named once here (§3.3).
+QString participantDisplay(const ::participant_r& p) {
+    if (p.participant_choice == ::participant_r::participant_contact_m_c) {
+        return qstr(p.participant_contact_m.participant_contact_Contact.contact_info_id);
+    }
+    if (p.participant_choice == ::participant_r::participant_agent_m_c) {
+        return qstr(p.participant_agent_m.Agent_profile);
+    }
+    return QString();
+}
+
+} // namespace
 
 AccessUser map_access_user(const ::access_user& in) {
     AccessUser out;
@@ -45,9 +136,43 @@ CapsReport map_caps_report(const ::caps_report& in) {
 }
 
 ChatMessage map_chat_message(const ::chat_message& in) {
+    // A4 arm: MessagesChanged → ConvHistory. Payload-derived fields only; the scope fields
+    // (transport, conv, cursor) and rung-3 origin_op ride the ConvHistory request scope + the
+    // journal-record envelope (entity-map provenance), set by the caller (§3.6 merging rule).
     ChatMessage out;
-    (void)in;
-    // TODO(mirror-map): populate ChatMessage from wire per entity-map.toml provenance.
+    if (in.chat_message_id_present &&
+        in.chat_message_id.chat_message_id_choice == ::chat_message_id_r::chat_message_id_tstr_c) {
+        out.id = qstr(in.chat_message_id.chat_message_id_tstr);
+    }
+    if (in.chat_message_author_present &&
+        in.chat_message_author.chat_message_author_choice ==
+            ::chat_message_author_r::chat_message_author_participant_m_c) {
+        out.author = participantDisplay(in.chat_message_author.chat_message_author_participant_m);
+    }
+    if (in.chat_message_replying_to_present &&
+        in.chat_message_replying_to.chat_message_replying_to_choice ==
+            ::chat_message_replying_to_r::chat_message_replying_to_tstr_c) {
+        out.replying_to = qstr(in.chat_message_replying_to.chat_message_replying_to_tstr);
+    }
+    out.text = qstr(in.chat_message_text);
+    if (in.chat_message_timestamp_present &&
+        in.chat_message_timestamp.chat_message_timestamp_choice ==
+            ::chat_message_timestamp_r::chat_message_timestamp_uint64_m_c) {
+        out.timestamp = in.chat_message_timestamp.chat_message_timestamp_uint64_m;
+    }
+    if (in.chat_message_edited_at_present &&
+        in.chat_message_edited_at.chat_message_edited_at_choice ==
+            ::chat_message_edited_at_r::chat_message_edited_at_uint64_m_c) {
+        out.edited_at = in.chat_message_edited_at.chat_message_edited_at_uint64_m;
+    }
+    if (in.chat_message_error_present && in.chat_message_error.chat_message_error_choice ==
+                                             ::chat_message_error_r::chat_message_error_tstr_c) {
+        out.error = qstr(in.chat_message_error.chat_message_error_tstr);
+    }
+    if (in.chat_message_attachments_present) {
+        out.attachment_count = static_cast<int>(
+            in.chat_message_attachments.chat_message_attachments_message_attachment_m_count);
+    }
     return out;
 }
 
@@ -66,16 +191,57 @@ CommandSpec map_command_spec(const ::command_spec& in) {
 }
 
 Contact map_contact(const ::contact_info& in) {
+    // A4 arm: ContactsChanged → RosterList. Note `transport` is the RosterList request scope
+    // (entity-map: request-roster-list.RosterList#transport) — the caller sets it; the payload
+    // carries only the id + optional fields.
     Contact out;
-    (void)in;
-    // TODO(mirror-map): populate Contact from wire per entity-map.toml provenance.
+    out.id = qstr(in.contact_info_id);
+    if (in.contact_info_display_name_present &&
+        in.contact_info_display_name.contact_info_display_name_choice ==
+            ::contact_info_display_name_r::contact_info_display_name_tstr_c) {
+        out.display_name = qstr(in.contact_info_display_name.contact_info_display_name_tstr);
+    }
+    if (in.contact_info_permission_present) {
+        out.permission = contactPermission(in.contact_info_permission.contact_info_permission);
+    }
+    if (in.contact_info_presence_present) {
+        out.presence_primitive =
+            presencePrimitive(in.contact_info_presence.contact_info_presence.presence_primitive);
+    }
     return out;
 }
 
 Conversation map_conversation(const ::conversation_info& in) {
+    // A4 arms: ConversationsChanged/MembershipChanged → ConvGet; connect → ConvList.
     Conversation out;
-    (void)in;
-    // TODO(mirror-map): populate Conversation from wire per entity-map.toml provenance.
+    out.transport = qstr(in.conversation_info_transport);
+    out.id = qstr(in.conversation_info_id);
+    out.kind = conversationKind(in.conversation_info_kind);
+    if (in.conversation_info_title_present &&
+        in.conversation_info_title.conversation_info_title_choice ==
+            ::conversation_info_title_r::conversation_info_title_tstr_c) {
+        out.title = qstr(in.conversation_info_title.conversation_info_title_tstr);
+    }
+    if (in.conversation_info_topic_present &&
+        in.conversation_info_topic.conversation_info_topic_choice ==
+            ::conversation_info_topic_r::conversation_info_topic_tstr_c) {
+        out.topic = qstr(in.conversation_info_topic.conversation_info_topic_tstr);
+    }
+    if (in.conversation_info_description_present &&
+        in.conversation_info_description.conversation_info_description_choice ==
+            ::conversation_info_description_r::conversation_info_description_tstr_c) {
+        out.description = qstr(in.conversation_info_description.conversation_info_description_tstr);
+    }
+    if (in.conversation_info_parent_present &&
+        in.conversation_info_parent.conversation_info_parent_choice ==
+            ::conversation_info_parent_r::conversation_info_parent_tstr_c) {
+        out.parent = qstr(in.conversation_info_parent.conversation_info_parent_tstr);
+    }
+    // member_count: derived-at-map #count over the members list (entity-map provenance).
+    if (in.conversation_info_members_present) {
+        out.member_count = static_cast<int>(
+            in.conversation_info_members.conversation_info_members_conversation_member_m_count);
+    }
     return out;
 }
 
@@ -150,9 +316,24 @@ Notification map_notification(const ::notification_info& in) {
 }
 
 Person map_person(const ::person& in) {
+    // A4 arm: PersonsChanged → PersonList.
     Person out;
-    (void)in;
-    // TODO(mirror-map): populate Person from wire per entity-map.toml provenance.
+    out.id = qstr(in.person_id);
+    if (in.person_alias_present &&
+        in.person_alias.person_alias_choice == ::person_alias_r::person_alias_tstr_c) {
+        out.alias = qstr(in.person_alias.person_alias_tstr);
+    }
+    // avatar#blob_hash: the image blob content-hash (entity-map derivation). The blob_ref hash is
+    // the stable identity; hex string when present.
+    if (in.person_avatar_present &&
+        in.person_avatar.person_avatar_choice == ::person_avatar_r::person_avatar_image_m_c) {
+        out.avatar_blob =
+            contentHashHex(in.person_avatar.person_avatar_image_m.image_blob.blob_ref_hash);
+    }
+    if (in.person_endpoints_present) {
+        out.endpoint_count =
+            static_cast<int>(in.person_endpoints.person_endpoints_person_endpoint_m_count);
+    }
     return out;
 }
 
