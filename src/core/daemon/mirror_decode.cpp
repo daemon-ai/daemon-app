@@ -94,9 +94,9 @@ bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::P
     }
     const response_persons& rp = response->api_response_response_persons_m;
     out->clear();
-    out->reserve(rp.response_persons_Persons_person_m_count);
-    for (size_t i = 0; i < rp.response_persons_Persons_person_m_count; ++i) {
-        out->push_back(mirror::map_person(rp.response_persons_Persons_person_m[i]));
+    out->reserve(rp.Persons_items_person_m_count);
+    for (size_t i = 0; i < rp.Persons_items_person_m_count; ++i) {
+        out->push_back(mirror::map_person(rp.Persons_items_person_m[i]));
     }
     return true;
 }
