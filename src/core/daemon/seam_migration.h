@@ -68,9 +68,12 @@ inline constexpr SeamMigrationTarget kTargets[] = {
     {"IAccountsService", "CredentialApi / AuthApi", kAccountsMigration,
      SeamMigrationStatus::MockOnly},
     {"IFleetTree", "Tree / Unit / Pause / Resume / Scale",
-     "LANDED (Phase 5b): DaemonFleetTree projects the cached Tree query (daemon_fleet_units, "
-     "offline-first) into the fleet rows; pause/resume/scale issue the wire control op (PRO-10 "
-     "control is meaningful only on orchestrator units - engine leaves return Unsupported).",
+     "MIRRORED (G2, M5): MirrorFleetTree projects the ONE generated mirror FleetUnit entity "
+     "(child_ids edge -> pre-order depth; engine/lifetime/role off the wire unit-node) into the "
+     "fleet rows, re-derived on FleetUnit journal deltas (connect-gated like the mirror roster - "
+     "live supervision state is not persisted); pause/resume/scale issue the wire control op via "
+     "FleetRepository (PRO-10 control is meaningful only on orchestrator units - engine leaves "
+     "return Unsupported).",
      SeamMigrationStatus::DaemonAligned},
     {"ISessionRoster + IDashboard + IApprovalsInbox", "SessionsQuery / Tree / ApprovalsPending",
      "LANDED (Phase 5): DaemonApprovalsInbox + DaemonSessionRoster (offline-first over the "

@@ -60,11 +60,11 @@ public:
     [[nodiscard]] QString title(const domain::SessionId& id) const override;
     [[nodiscard]] bool isPinned(const domain::SessionId& id) const override;
 
-    // The fleet TREE is not representable in the mirror yet (FleetUnit carries no parent/children
-    // edges — the §3.5 unitsByParent relation index is a later wave); the daemon-mode consumers
-    // of these reads never hit them (sessions are flat: unitId stays empty; the sidebar's fleet
-    // membership view reads profiles + Agent-scoped sessions, not unitChildren). Empty, like the
-    // rest of the documented degradations.
+    // The fleet TREE renders through MirrorFleetTree (G2: the FleetUnit entity carries the
+    // child_ids edge), never through these ISessionStore unit reads — daemon-mode consumers never
+    // hit them (sessions are flat: unitId stays empty; the sidebar's fleet membership view reads
+    // profiles + Agent-scoped sessions, not unitChildren). Empty, like the rest of the documented
+    // degradations.
     [[nodiscard]] QList<domain::UnitNode>
     unitChildren(const domain::UnitId& parentId) const override;
     [[nodiscard]] domain::UnitNode unit(const domain::UnitId& id) const override;
@@ -72,17 +72,17 @@ public:
     [[nodiscard]] QList<domain::Tag> tags() const override;
     [[nodiscard]] QList<domain::Participant> participants() const override;
 
-    // --- transcript reads: delegated until sub-gate 6 re-homes the blocks ---------------------
+    // --- transcript reads: mirror-served since the G2 flip ------------------------------------
+    // content() projects the mirror `w_transcript_blocks` window (mirrorContent). setContent
+    // still delegates (a no-op on the legacy daemon store — the engine owns transcript writes).
     [[nodiscard]] QString content(const domain::SessionId& id) const override;
     void setContent(const domain::SessionId& id, const QString& markdown) override;
 
-    // A7T (M4 sub-step 6): the msg-fence transcript projection served FROM THE MIRROR
-    // `w_transcript_blocks` window — the byte-stable twin of `CachedSessionStore::content()`,
-    // ported grammar-for-grammar. NOT yet wired into `content()` (the flip): the generated
-    // `mirror::TranscriptBlock` entity does not carry `argsSummary`/`detailKind`/`detailBody`, so
-    // a tool call with non-empty args or a structured tool result cannot be reproduced
-    // byte-for-byte (see LEDGER-a7t "ENTITY-FIELD GAP"). Exposed for the parity harness + as the
-    // one-line flip target once the entity is enriched (node-side `just update-codec`).
+    // A7T/G2: the msg-fence transcript projection served FROM THE MIRROR `w_transcript_blocks`
+    // window — the byte-stable twin of the legacy cache projection, ported grammar-for-grammar
+    // and byte-identical across the full parity matrix (S1-S9, args + structured detail included)
+    // since G2 enriched the entity (args_summary, detail_kind, detail_body). `content()` now
+    // serves this; kept as a named method for the parity harness.
     [[nodiscard]] QString mirrorContent(const domain::SessionId& id) const;
 
     // --- node-authoritative mutations: delegated to the legacy wire path ----------------------

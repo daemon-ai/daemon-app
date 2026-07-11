@@ -91,8 +91,10 @@ CREATE TABLE IF NOT EXISTS daemon_fs_entries (
 );
 )sql";
 
-// v4: the offline-first fleet/subagent tree. One row per unit (DaemonFleetTree projects these to
-// the IFleetTree rows); parent_id ('' = a root) lets the tree be rebuilt without a connection.
+// v4: the offline-first fleet/subagent tree. One row per unit; parent_id ('' = a root) lets the
+// tree be rebuilt without a connection. G2 (M5): its LAST reader (DaemonFleetTree) is deleted —
+// the fleet TREE renders from the mirror FleetUnit entity; this cache + the FleetRepository tree
+// feed remain only as the dual-write baseline and go with the AD deletions.
 inline constexpr const char* kCreateFleetUnitsSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_fleet_units (
   unit_id TEXT PRIMARY KEY,

@@ -271,9 +271,11 @@ private slots:
         QCOMPARE(store.sessionCount(all), 1);
     }
 
-    // Mutations + transcript reads delegate to the legacy store; the wire round-trip signals
-    // are relayed; the scoped refreshes hit BOTH sides (legacy cache + mirror fetch).
-    void mutationsAndContentDelegateAndRelaySignals() {
+    // Mutations delegate to the legacy store (ONE node-authoritative wire path); the wire
+    // round-trip signals are relayed; the scoped refreshes hit BOTH sides. G2 (M5): content()
+    // no longer delegates — it projects the mirror transcript window (the flip), so the legacy
+    // content path sees ZERO reads.
+    void mutationsDelegateAndContentProjectsMirror() {
         mirror::MirrorService svc;
         svc.openInMemory();
         StubLegacyStore legacy;
@@ -286,9 +288,19 @@ private slots:
         QCOMPARE(legacy.calls,
                  (QStringList{QStringLiteral("pin:s-a:1"), QStringLiteral("rename:s-a:T"),
                               QStringLiteral("create:prof-1"), QStringLiteral("refreshArchived")}));
-        QCOMPARE(store.content(domain::SessionId(QStringLiteral("s-a"))),
-                 QStringLiteral("legacy transcript"));
-        QCOMPARE(legacy.contentReads, QStringList{QStringLiteral("s-a")});
+
+        // The flip: content() serves the mirror w_transcript_blocks projection, never the legacy.
+        mirror::TranscriptBlock b;
+        b.session = QStringLiteral("s-a");
+        b.seq = 1;
+        b.kind = QStringLiteral("Message");
+        b.role = QStringLiteral("User");
+        b.text = QStringLiteral("mirror words");
+        svc.ingestor().deliverTranscriptBlock(b);
+        const QString content = store.content(domain::SessionId(QStringLiteral("s-a")));
+        QVERIFY(content.contains(QStringLiteral("mirror words")));
+        QVERIFY(content.contains(QStringLiteral("```msg"))); // the msg-fence projection
+        QVERIFY(legacy.contentReads.isEmpty());              // zero legacy content reads post-flip
 
         QSignalSpy created(&store, &persistence::ISessionStore::sessionCreated);
         QSignalSpy failed(&store, &persistence::ISessionStore::metaUpdateFailed);
@@ -298,9 +310,10 @@ private slots:
         QCOMPARE(failed.count(), 1);
     }
 
-    // M4 sub-gate 4: the detail pane consumer — a SessionController (the VM TranscriptPage.qml
-    // + the TUI TabSessionManager bind) over the mirror store renders the DELEGATED transcript
-    // content (legacy source until sub-gate 6) and refreshes on the relayed legacy changed().
+    // M4 sub-gate 4 / G2 flip: the detail pane consumer — a SessionController (the VM
+    // TranscriptPage.qml + the TUI TabSessionManager bind) over the mirror store renders the
+    // MIRROR transcript projection, and a TranscriptBlock journal delta fires changed() so the
+    // controller refreshes on an engine transcript write.
     void detailPaneControllerReadsThroughMirrorStore() {
         mirror::MirrorService svc;
         svc.openInMemory();
@@ -310,20 +323,26 @@ private slots:
         SessionController controller;
         controller.setStore(&store);
         controller.open(QStringLiteral("s-a"));
-        QCOMPARE(controller.content(), QStringLiteral("legacy transcript"));
-        QVERIFY(legacy.contentReads.contains(QStringLiteral("s-a")));
+        QVERIFY(controller.content().isEmpty()); // nothing mirrored yet
+        QVERIFY(legacy.contentReads.isEmpty());  // the flip: no legacy delegation
 
-        // A legacy-side transcript update (the engine writes the cache, cache emits changed):
-        // the relayed changed() re-reads content through the same delegated path.
-        const int before = static_cast<int>(legacy.contentReads.size());
-        emit legacy.changed();
-        QVERIFY(static_cast<int>(legacy.contentReads.size()) > before);
+        // An engine transcript write lands in the mirror window → the TranscriptBlock delta arm
+        // fires changed() → the controller re-reads the (mirror) projection.
+        mirror::TranscriptBlock b;
+        b.session = QStringLiteral("s-a");
+        b.seq = 1;
+        b.kind = QStringLiteral("Message");
+        b.role = QStringLiteral("Assistant");
+        b.text = QStringLiteral("streamed answer");
+        svc.ingestor().deliverTranscriptBlock(b);
+        QVERIFY(controller.content().contains(QStringLiteral("streamed answer")));
+        QVERIFY(legacy.contentReads.isEmpty());
     }
 
-    // M4 sub-gate 5: the transcript chrome consumer — the shared TranscriptExporter (GUI Exporter
-    // context property + the TUI exportToPath) composes the export from the mirror store: the
-    // TITLE is the mirror row's, the CONTENT the delegated legacy transcript (until sub-gate 6).
-    void transcriptExporterComposesMirrorTitleAndDelegatedContent() {
+    // M4 sub-gate 5 / G2 flip: the transcript chrome consumer — the shared TranscriptExporter
+    // (GUI Exporter context property + the TUI exportToPath) composes the export from ONE store:
+    // the mirror row's TITLE and the mirror-projected CONTENT.
+    void transcriptExporterComposesMirrorTitleAndContent() {
         mirror::MirrorService svc;
         svc.openInMemory();
         StubLegacyStore legacy;
@@ -331,11 +350,19 @@ private slots:
         svc.ingestor().deliverSessions(
             {sess(QStringLiteral("s-a"), QStringLiteral("Mirror title"))},
             /*isFinalPage=*/true);
+        mirror::TranscriptBlock b;
+        b.session = QStringLiteral("s-a");
+        b.seq = 1;
+        b.kind = QStringLiteral("Message");
+        b.role = QStringLiteral("User");
+        b.text = QStringLiteral("mirror transcript body");
+        svc.ingestor().deliverTranscriptBlock(b);
 
         const TranscriptExporter exporter;
         const QString json = exporter.toJson(&store, QStringLiteral("s-a"));
-        QVERIFY(json.contains(QStringLiteral("Mirror title")));      // mirror row title
-        QVERIFY(json.contains(QStringLiteral("legacy transcript"))); // delegated content
+        QVERIFY(json.contains(QStringLiteral("Mirror title")));           // mirror row title
+        QVERIFY(json.contains(QStringLiteral("mirror transcript body"))); // mirror content
+        QVERIFY(legacy.contentReads.isEmpty()); // the flip: no legacy content read
     }
 };
 

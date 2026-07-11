@@ -20,7 +20,6 @@
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_contacts_service.h"
 #include "daemon/daemon_dashboard.h"
-#include "daemon/daemon_fleet_tree.h"
 #include "daemon/daemon_fs_service.h"
 #include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_persons_service.h"
@@ -34,6 +33,7 @@
 #include "daemon/daemon_transport_registry.h"
 #include "daemon/engine_identity.h"
 #include "daemon/feedback_repository.h"
+#include "daemon/mirror_fleet_tree.h" // G2 (M5): mirror-projected fleet TREE (replaces DaemonFleetTree)
 #include "daemon/node_api_client.h"
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
@@ -302,11 +302,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // polls Health (that is the connection service's single cache). Adjacent to capsRepository,
         // both being read/light node-policy seams built with the daemon connection.
         graph.gatewayRepository = new GatewayRepository(graph.nodeApi, owner);
-        delete graph.fleetTree;
-        // [wave2:app-delegation] F3: fleet rows carry engine/lifetime decoded straight off the wire
-        // UnitNode (v29) — no client-side profile-join (the node peer is v29, so the wire answers
-        // directly, per-child, including foreign-engine children under unknown profiles).
-        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
+        // G2 (M5): the fleet TREE is now projected from the ONE mirror FleetUnit entity by the
+        // MirrorFleetTree, constructed in the mirror block below (it needs the mirror store). The
+        // FleetRepository stays as the node-authoritative control seam (pause/resume/scale) the
+        // MirrorFleetTree delegates to; the mock fleetTree built above is swapped there.
         // L3 node-wide event feed (daemon-sync-protocol §5): one EventsSince stream that routes
         // out-of-focus changes (roster/meta -> debounced roster refetch + tree re-query, approvals
         // -> badge, downloads -> models, session-advanced -> focused-engine nudge, resync ->
@@ -360,10 +359,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // (chat is null outside daemon mode since M5 — no mock to delete.)
         graph.chat = new transports::DaemonChatService(graph.chatRepository, owner);
         // Daemon-backed, offline-first session roster + dashboard (replaces the mock pair). The
-        // roster projects the (offline-first) CachedSessionStore; the dashboard derives its
-        // counters from the FINAL seam pointers (DaemonFleetTree + DaemonApprovalsInbox) and its
-        // health from the connection. Both are constructed at the END of this factory (M5: in
-        // both modes), so nothing here observes a swapped-out seam pointer.
+        // roster projects the mirror-backed storeMirror; the dashboard derives its counters from
+        // the FINAL seam pointers (MirrorFleetTree + DaemonApprovalsInbox) and its health from
+        // the connection. Both are constructed at the END of this factory (M5: in both modes),
+        // so nothing here observes a swapped-out seam pointer — including the mirror block's
+        // graph.fleetTree swap (the use-after-free G2 hit on the pre-M5 layout cannot occur).
         // The real routing manager (M3): RoutingRepository is the node-authoritative DIRECT
         // mutation seam (RoutingBindChat/Unbind — it IS-A daemonnet::IRoutingActions the routing
         // manager view-model drives). Reads no longer flow through it: the routing pin table lives
@@ -726,12 +726,21 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             graph.storeMirror =
                 new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
 
-            // A7T (M4 sub-step 6): the turn engine dual-writes its coalesced transcript blocks
-            // into w_transcript_blocks through this sink (the ingestor stays the single writer,
-            // §5.1). The read facade still delegates to the legacy cache — the flip is withheld on
-            // the entity-field gap (LEDGER-a7t), so this write path is inert to the user until the
-            // entity is enriched node-side and content() flips to mirrorContent().
+            // A7T (M4 sub-step 6) + G2 (M5): the turn engine dual-writes its coalesced transcript
+            // blocks into w_transcript_blocks through this sink (the ingestor stays the single
+            // writer, §5.1). G2 closed the entity-field gap (args_summary +
+            // detail_kind/detail_body), so MirrorSessionStore::content() now projects the mirror
+            // window (S1-S9 parity green).
             graph.transcriptMirrorSink = new MirrorTranscriptSink(&svc->ingestor(), owner);
+
+            // G2 (M5): the fleet TREE now projects the ONE mirror FleetUnit entity (the 6→1 tree
+            // half), replacing the legacy DaemonFleetTree/daemon_fleet_units cache. Reads are pure
+            // mirror projections re-derived on a FleetUnit journal delta; pause/resume/scale +
+            // refresh stay node-authoritative via the FleetRepository control seam + the ingestor
+            // Tree refetch. The mock fleet tree built earlier is parented to `owner`; drop it.
+            delete graph.fleetTree;
+            graph.fleetTree = new fleet::MirrorFleetTree(&svc->store(), &svc->ingestor(),
+                                                         graph.fleetRepository, owner);
 
             // Feed the node event stream into the ingestor through the bridge. A per-session
             // Subscribe item is not an events page (decode fails) so it is ignored — the mirror

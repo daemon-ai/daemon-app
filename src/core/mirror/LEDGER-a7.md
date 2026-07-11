@@ -146,6 +146,12 @@ RETAINED (each with a live, load-bearing role in the dual-write window):
   edges (the §3.5 `unitsByParent` relation index needs an entity-map/codegen change — G-series,
   `just update-codec`, out of A7's charter). The fleet TREE stays legacy; the fleet MEMBERSHIP
   view (sidebar) is mirror-served.
+  > **G2 update: DELETED.** The FleetUnit entity now carries the `child_ids` edge (+
+  > engine/engine_agent); `fleet::MirrorFleetTree` projects the mirror table into the same
+  > IFleetTree rows (GUI + TUI bind unchanged) and `daemon_fleet_tree.{h,cpp}` + its test are
+  > GONE. `FleetRepository` survives as the control seam (pause/resume/scale); its now
+  > reader-less tree feed (`cachedUnits`/`syncFleetUnits`/`daemon_fleet_units`) is AD's — see
+  > LEDGER-g2 "Fleet legacy left for AD".
 - `MockFleetSource` + `InMemorySessionStore` — mock mode's seed/store; the composition fallback
   binds them as `storeMirror` in mock. A8's seeder replaces this aliasing with a seeded mock mirror
   and can then delete the fallback.
@@ -196,3 +202,13 @@ crossed the outbox landing seam (`Outbox::onProvenanceStamped`/`setProvenanceCap
   mirror projection → drop the CachedSessionStore delegation (facade reads go pure-mirror) →
   retire the SubscriptionManager roster arms → delete CachedSessionStore + the SessionRepository
   cache feed → drop the `SessionStore` context property.
+
+> **G2 update (deletion-order progress):** the first THREE rungs are DONE — the engine re-home
+> (A7T), the content() mirror projection (A7T), and the delegation drop (G2's flip: facade
+> transcript reads are pure-mirror; mutations still delegate by design). Newly deletable by AD,
+> in order: (1) the engine's legacy cache dual-write + `DaemonCacheStore::transcriptBlocks` +
+> `CachedSessionStore::content()`'s projection — together, since the parity harness consumes all
+> three as its baseline; (2) the SubscriptionManager roster arms; (3) CachedSessionStore +
+> SessionRepository cache feed + the `SessionStore` context property; (4) the FleetRepository
+> tree feed + `daemon_fleet_units` (G2 deleted its reader — see LEDGER-g2), keeping the control
+> ops. The mutation-outbox lane remains the gate for (2)/(3) (unchanged).

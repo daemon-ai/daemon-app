@@ -169,8 +169,8 @@ void DaemonTurnEngine::setSessionId(const QString& sessionId) {
     }
     m_sessionId = sessionId;
     // Cold-start / refocus: resume the live subscribe past the persisted watermark so
-    // already-cached entries are not re-streamed (the transcript renders from
-    // CachedSessionStore::content()).
+    // already-cached entries are not re-streamed (the transcript renders from the store facade's
+    // content() projection — mirror-served since the G2 flip).
     m_cursor = 0;
     m_epoch = 0;
     m_epochKnown = false;

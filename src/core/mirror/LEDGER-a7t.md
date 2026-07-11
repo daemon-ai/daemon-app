@@ -184,6 +184,15 @@ PARITY — the green signal), then flip `MirrorSessionStore::content()` to `mirr
 add a `TranscriptBlock`-delta arm to `onCommitted()` so `changed()` fires on transcript writes once
 the legacy `changed()` relay is retired.
 
+> **EXECUTED by G2 (M5) — see LEDGER-g2.** One correction to the plan above: NO CDDL change was
+> needed (the wire already carried `args_summary` + `detail` on both tool arms — the gap was
+> map-only), so the enrichment was `entity-map.toml` + emitter rerun, no version bump. Every other
+> step landed as written: sink + `map_transcript_block` (real body) + projection fold, S7/S8
+> flipped to `QCOMPARE` and went byte-identical-green, `content()` = `mirrorContent(id)`, and the
+> `TranscriptBlock` delta arm fires `changed()` (the legacy relay stays for the dual-write window;
+> both firing is a benign double-refresh). `CachedSessionStore::content()` is RETAINED solely as
+> the parity-harness baseline — it dies with the store in AD.
+
 ## What this landing unlocks (deletion order, extending LEDGER-a7 §"deletion order")
 
 A7's order was: engine re-home → content() mirror projection → drop the CachedSessionStore
@@ -199,6 +208,11 @@ their ACTIVATION on the entity enrichment:
   parity baseline; `CachedSessionStore` / `SessionRepository` / the `SubscriptionManager` roster
   arms stay RETAINED (unchanged from LEDGER-a7). A7T deletes nothing — deletion still waits on the
   flip AND the mutation-outbox lane (A8/A9), per LEDGER-a7.
+
+> **G2 update:** the flip is LANDED (full parity matrix byte-identical). `content()` no longer
+> delegates; `CachedSessionStore::content()`'s remaining role is parity baseline ONLY (its last
+> production reader is gone). The AD deletions this advances are recorded in LEDGER-a7's
+> deletion-order note and LEDGER-g2.
 
 ## Coordination notes for the parent (merging alongside A8)
 
