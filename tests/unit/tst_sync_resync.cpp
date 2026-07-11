@@ -3,21 +3,43 @@
 
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_transport.h"
+#include "daemon/mirror_transcript_sink.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 #include "daemon_turn_engine.h"
 #include "i_turn_engine.h"
+#include "mirror/mirror_service.h"
+#include "mirror/persistence.h"
 #include "wire_mux_fixture.h"
 
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
+#include <vector>
 
 using daemonapp::daemon::CachedTranscriptBlockRow;
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
+using daemonapp::daemon::MirrorTranscriptSink;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::test::WireMuxServer;
+
+namespace {
+// The engine's transcript rows now live on the mirror `w_transcript_blocks` window (AD 1b.3:
+// the mirror sink is the single write path). Snapshot one session's window in seq order.
+std::vector<mirror::TranscriptBlock> mirrorTranscript(mirror::MirrorService& svc,
+                                                      const QString& session) {
+    std::vector<mirror::TranscriptBlock> out;
+    const auto& windows = svc.store().snapshot().transcripts;
+    const mirror::TranscriptBlockScope scope{session};
+    if (windows.count(scope) != 0U) {
+        for (const auto& item : windows[scope].items) {
+            out.push_back(item.get());
+        }
+    }
+    return out;
+}
+} // namespace
 
 namespace {
 
@@ -411,8 +433,10 @@ private slots:
     }
 
     // D1 live path: a streamed ToolFinished carrying the rich result (full content in `summary` +
-    // typed JSON `detail`) reaches the ingest event RAW and lands in the transcript cache row, so
-    // the renderer projection and a later cold start see the same payload.
+    // typed JSON `detail`) reaches the ingest event RAW and lands as a mirror transcript-window
+    // row (AD 1b.3: the sink is the single write path), PERSISTED by the write-behind — a cold
+    // reboot of the mirror db reloads the same payload (restart / scroll-back durability, E1;
+    // equal-or-stronger than the deleted cache leg's assert).
     void toolFinishedDetailPlumbsAndPersists() {
         const QString path = sock(QStringLiteral("detail.sock"));
         WireMuxServer fake;
@@ -424,7 +448,11 @@ private slots:
         NodeApiClient client(&transport);
         DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("detail-cache.db")));
         QVERIFY(cache.isOpen());
-        DaemonTurnEngine engine(&client, &cache);
+        const QString mirrorDb = m_tmp.filePath(QStringLiteral("detail-mirror.db"));
+        mirror::MirrorService svc;
+        QVERIFY(svc.open(mirror::FixedDbPaths(mirrorDb, QString())));
+        MirrorTranscriptSink sink(&svc.ingestor());
+        DaemonTurnEngine engine(&client, &cache, nullptr, &sink);
         engine.setSessionId(QStringLiteral("s1"));
         QSignalSpy events(&engine, &ITurnEngine::eventsEmitted);
 
@@ -443,14 +471,25 @@ private slots:
         QCOMPARE(m.value(QStringLiteral("detailKind")).toString(), QStringLiteral("fs"));
         QCOMPARE(m.value(QStringLiteral("detailBody")).toString(), QString::fromUtf8(body));
 
-        // The persisted row carries the same rich result (restart / scroll-back durability).
-        const QList<CachedTranscriptBlockRow> rows = cache.transcriptBlocks(QStringLiteral("s1"));
-        QCOMPARE(rows.size(), 1);
-        QCOMPARE(rows.first().kind, QStringLiteral("ToolResult"));
-        QCOMPARE(rows.first().summary, QString::fromUtf8(summary));
-        QCOMPARE(rows.first().detailKind, QStringLiteral("fs"));
-        QCOMPARE(rows.first().detailBody, body);
+        // The mirror window row carries the same rich result.
+        const auto rows = mirrorTranscript(svc, QStringLiteral("s1"));
+        QCOMPARE(rows.size(), std::size_t(1));
+        QCOMPARE(rows.front().kind, QStringLiteral("ToolResult"));
+        QCOMPARE(rows.front().summary, QString::fromUtf8(summary));
+        QCOMPARE(rows.front().detail_kind, QStringLiteral("fs"));
+        QCOMPARE(rows.front().detail_body, QString::fromUtf8(body));
         engine.cancel();
+
+        // STRONGER: a cold mirror reboot (fresh service over the same file) reloads the row —
+        // the disk durability the legacy cache assert proved, now on the mirror path.
+        mirror::MirrorService reboot;
+        QVERIFY(reboot.open(mirror::FixedDbPaths(mirrorDb, QString())));
+        const auto reloaded = mirrorTranscript(reboot, QStringLiteral("s1"));
+        QCOMPARE(reloaded.size(), std::size_t(1));
+        QCOMPARE(reloaded.front().kind, QStringLiteral("ToolResult"));
+        QCOMPARE(reloaded.front().summary, QString::fromUtf8(summary));
+        QCOMPARE(reloaded.front().detail_kind, QStringLiteral("fs"));
+        QCOMPARE(reloaded.front().detail_body, QString::fromUtf8(body));
     }
 
     // D1 journal path: a re-baseline replay re-emits the durable ToolResult's rich payload and
@@ -469,7 +508,11 @@ private slots:
         NodeApiClient client(&transport);
         DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("jdetail-cache.db")));
         QVERIFY(cache.isOpen());
-        DaemonTurnEngine engine(&client, &cache);
+        const QString mirrorDb = m_tmp.filePath(QStringLiteral("jdetail-mirror.db"));
+        mirror::MirrorService svc;
+        QVERIFY(svc.open(mirror::FixedDbPaths(mirrorDb, QString())));
+        MirrorTranscriptSink sink(&svc.ingestor());
+        DaemonTurnEngine engine(&client, &cache, nullptr, &sink);
         engine.setSessionId(QStringLiteral("s1"));
         QSignalSpy events(&engine, &ITurnEngine::eventsEmitted);
         QSignalSpy finished(&engine, &ITurnEngine::turnFinished);
@@ -485,18 +528,25 @@ private slots:
         QCOMPARE(m.value(QStringLiteral("detailKind")).toString(), QStringLiteral("shell"));
         QCOMPARE(m.value(QStringLiteral("detailBody")).toString(), QString::fromUtf8(body));
 
-        // The rebuilt durable cache retains the rich result on the ToolResult row.
-        bool found = false;
-        const QList<CachedTranscriptBlockRow> rows = cache.transcriptBlocks(QStringLiteral("s1"));
-        for (const CachedTranscriptBlockRow& row : rows) {
-            if (row.kind == QLatin1String("ToolResult")) {
-                QCOMPARE(row.summary, QString::fromUtf8(summary));
-                QCOMPARE(row.detailKind, QStringLiteral("shell"));
-                QCOMPARE(row.detailBody, body);
-                found = true;
+        // The rebaseline rebuilt the durable MIRROR window (clear + replay through the sink);
+        // the ToolResult row retains the rich result — including across a cold mirror reboot
+        // (the wiped stale generation must never resurrect; the replayed one must survive).
+        const auto assertToolResult = [&](const std::vector<mirror::TranscriptBlock>& rows) {
+            bool found = false;
+            for (const mirror::TranscriptBlock& row : rows) {
+                if (row.kind == QLatin1String("ToolResult")) {
+                    QCOMPARE(row.summary, QString::fromUtf8(summary));
+                    QCOMPARE(row.detail_kind, QStringLiteral("shell"));
+                    QCOMPARE(row.detail_body, QString::fromUtf8(body));
+                    found = true;
+                }
             }
-        }
-        QVERIFY(found);
+            QVERIFY(found);
+        };
+        assertToolResult(mirrorTranscript(svc, QStringLiteral("s1")));
+        mirror::MirrorService reboot;
+        QVERIFY(reboot.open(mirror::FixedDbPaths(mirrorDb, QString())));
+        assertToolResult(mirrorTranscript(reboot, QStringLiteral("s1")));
     }
 };
 

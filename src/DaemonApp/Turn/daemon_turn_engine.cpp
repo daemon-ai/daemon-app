@@ -818,15 +818,11 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
         // unanswered parked Request, then finish - the interrupted turn ended with the reset.
         emit eventsEmitted(
             QVariantList{QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}});
-        // L3: the journal is the authoritative coalesced transcript — rebuild the durable cache
-        // from it so a subsequent refocus/cold-start renders from disk. Wipe the stale generation
-        // first (this drops locally-persisted Reasoning blocks too: the node's journal does not
-        // retain disclosures, and stale-generation seqs cannot be trusted against the new log).
-        if (m_cache != nullptr && !m_sessionId.isEmpty()) {
-            m_cache->clearTranscript(m_sessionId);
-        }
-        // A7T dual-write: wipe the stale generation from the mirror window too, so the replay
-        // below re-feeds it in lockstep with the cache (parity across the rebaseline).
+        // L3: the journal is the authoritative coalesced transcript — rebuild the durable mirror
+        // window from it so a subsequent refocus/cold-start renders from disk (the write-behind
+        // persists the wipe + replay). Wipe the stale generation first (this drops
+        // locally-persisted Reasoning blocks too: the node's journal does not retain disclosures,
+        // and stale-generation seqs cannot be trusted against the new log).
         if (m_mirrorSink != nullptr && !m_sessionId.isEmpty()) {
             m_mirrorSink->clear(m_sessionId);
         }
@@ -974,19 +970,16 @@ void DaemonTurnEngine::persistWatermark() {
 
 void DaemonTurnEngine::persistTranscriptBlock(
     const daemonapp::daemon::CachedTranscriptBlockRow& block) {
-    if (m_cache != nullptr) {
-        m_cache->upsertTranscriptBlock(block);
-    }
-    // A7T dual-write (§13 M4): feed the same coalesced block to the mirror window through the
-    // ingestor sink (single writer §5.1). Inert to the UI until the read facade flips (withheld
-    // on the entity-field gap, LEDGER-a7t).
+    // AD (1b.3): the mirror sink is the SINGLE transcript write path (§5.1; byte-parity proven
+    // S1-S9). The legacy cache dual-write leg is retired — durability now rides the mirror
+    // write-behind (w_transcript_blocks), which the offline cold boot reloads (E1).
     if (m_mirrorSink != nullptr) {
         m_mirrorSink->deliverBlock(block);
     }
 }
 
 void DaemonTurnEngine::checkpointReasoningBlock() {
-    if (m_reasoningSeq == 0 || m_cache == nullptr || m_sessionId.isEmpty()) {
+    if (m_reasoningSeq == 0 || m_mirrorSink == nullptr || m_sessionId.isEmpty()) {
         return;
     }
     daemonapp::daemon::CachedTranscriptBlockRow b;

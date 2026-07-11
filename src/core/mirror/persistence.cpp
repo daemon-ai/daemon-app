@@ -46,14 +46,15 @@ qint64 nowMsWall() {
     return QDateTime::currentMSecsSinceEpoch();
 }
 
-// Rebuild one ChatMessage from its persisted canonical JSON payload (the write-behind's
+// Rebuild one windowed entity from its persisted canonical JSON payload (the write-behind's
 // meta-object dump; the entity CBOR encoder replaces the format with BR). Generic over the
-// Q_GADGET properties so no per-field code; the scope fields + cursor are then overwritten from
-// the row columns, which are authoritative.
-ChatMessage chatMessageFromPayload(const QByteArray& payload) {
-    ChatMessage m;
+// Q_GADGET properties so no per-field code; the scope fields + window key are then overwritten
+// from the row columns, which are authoritative.
+template <typename T>
+T gadgetFromPayload(const QByteArray& payload) {
+    T m;
     const QJsonObject obj = QJsonDocument::fromJson(payload).object();
-    const QMetaObject& mo = ChatMessage::staticMetaObject;
+    const QMetaObject& mo = T::staticMetaObject;
     for (int i = mo.propertyOffset(); i < mo.propertyCount(); ++i) {
         const QMetaProperty p = mo.property(i);
         const auto it = obj.constFind(QString::fromLatin1(p.name()));
@@ -328,12 +329,36 @@ bool Persistence::writeBehind(const WriteBatch& batch) {
         }
     }
 
-    // Class-W window rows (chat) + window_meta — same transaction (§4.5/§4.6).
+    // Class-W window rows (chat + transcripts) + window_meta — same transaction (§4.5/§4.6).
+    // Scope CLEARS run first: a rebaseline wipe precedes its replacement generation's upserts.
+    for (const QString& scope : batch.transcriptWindowClears) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM w_transcript_blocks WHERE scope=?"));
+        del.addBindValue(scope);
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+        QSqlQuery delMeta(db_);
+        delMeta.prepare(
+            QStringLiteral("DELETE FROM window_meta WHERE kind='TranscriptBlock' AND scope=?"));
+        delMeta.addBindValue(scope);
+        if (!delMeta.exec()) {
+            last_error_ = delMeta.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
     for (const WindowRowWrite& w : batch.windowUpserts) {
         QSqlQuery up(db_);
-        up.prepare(QStringLiteral(
-            "INSERT OR REPLACE INTO w_chat_messages(scope,cursor,payload,origin_op,last_rev)"
-            " VALUES(?,?,?,?,?)"));
+        up.prepare(w.kind == QLatin1String("TranscriptBlock")
+                       ? QStringLiteral("INSERT OR REPLACE INTO "
+                                        "w_transcript_blocks(scope,seq,payload,origin_op,last_rev)"
+                                        " VALUES(?,?,?,?,?)")
+                       : QStringLiteral("INSERT OR REPLACE INTO "
+                                        "w_chat_messages(scope,cursor,payload,origin_op,last_rev)"
+                                        " VALUES(?,?,?,?,?)"));
         up.addBindValue(w.scope);
         up.addBindValue(static_cast<qulonglong>(w.cursor));
         up.addBindValue(w.payload);
@@ -507,7 +532,7 @@ bool Persistence::loadInto(MirrorModel& model, int chatWindowLimit) {
             }
             std::vector<ChatMessage> newestFirst;
             while (rq.next()) {
-                ChatMessage m = chatMessageFromPayload(rq.value(1).toByteArray());
+                auto m = gadgetFromPayload<ChatMessage>(rq.value(1).toByteArray());
                 m.transport = scope.transport;
                 m.conv = scope.conv;
                 m.cursor = rq.value(0).toULongLong();
@@ -540,6 +565,54 @@ bool Persistence::loadInto(MirrorModel& model, int chatWindowLimit) {
             wt.set(scope, std::move(win));
         }
         model.chat = wt.persistent();
+    }
+
+    // AD (1b.3): class-W transcript windows (E1 offline transcript render — the durability the
+    // deleted legacy cache leg provided). Whole-scope reload in seq order: the window is bounded
+    // by the session's replayed generation (the rebaseline clear wipes stale rows), so no LIMIT.
+    QSqlQuery tsq(db_);
+    if (tsq.exec(QStringLiteral("SELECT DISTINCT scope FROM w_transcript_blocks"))) {
+        auto wt = model.transcripts.transient();
+        while (tsq.next()) {
+            const QString scopeKey = tsq.value(0).toString();
+            const TranscriptBlockScope scope{scopeKey};
+
+            QSqlQuery rq(db_);
+            rq.prepare(QStringLiteral(
+                "SELECT seq,payload FROM w_transcript_blocks WHERE scope=? ORDER BY seq ASC"));
+            rq.addBindValue(scopeKey);
+            if (!rq.exec()) {
+                continue;
+            }
+            Window<TranscriptBlock> win;
+            auto items = win.items.transient();
+            qint64 bytes = 0;
+            int count = 0;
+            quint64 first = 0;
+            quint64 last = 0;
+            while (rq.next()) {
+                auto b = gadgetFromPayload<TranscriptBlock>(rq.value(1).toByteArray());
+                b.session = scopeKey;
+                b.seq = rq.value(0).toULongLong();
+                if (count == 0) {
+                    first = b.seq;
+                }
+                last = b.seq;
+                bytes += static_cast<qint64>(reflect::gadget_dump(b).size());
+                items.push_back(immer::box<TranscriptBlock>{b});
+                ++count;
+            }
+            if (count == 0) {
+                continue;
+            }
+            win.items = items.persistent();
+            win.meta.item_count = count;
+            win.meta.byte_count = bytes;
+            win.meta.oldest_cursor = first;
+            win.meta.newest_cursor = last;
+            wt.set(scope, std::move(win));
+        }
+        model.transcripts = wt.persistent();
     }
     return true;
 }

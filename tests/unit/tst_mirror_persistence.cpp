@@ -9,6 +9,8 @@
 
 #include "mirror/persistence.h"
 
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
@@ -106,6 +108,68 @@ private slots:
         QCOMPARE(a->title, QStringLiteral("A"));
         // Boot rebuilds the §3.5 index from loaded rows.
         QCOMPARE(model.conversationsByTransport[QStringLiteral("m")].size(), std::size_t(2));
+    }
+
+    // AD (1b.3): the transcript window persists + reloads like chat — the durability the deleted
+    // legacy cache leg provided. A scope CLEAR (the engine's rebaseline wipe) drops the persisted
+    // generation in the same transaction discipline; the replacement rows survive a reload.
+    void transcriptWindowRoundTripsAndClearDropsScope() {
+        Persistence p;
+        const auto pth = paths();
+        QVERIFY2(p.open(pth), qPrintable(p.lastError()));
+
+        TranscriptBlock b;
+        b.session = QStringLiteral("s1");
+        b.seq = 4;
+        b.kind = QStringLiteral("ToolResult");
+        b.call_id = QStringLiteral("c9");
+        b.ok = true;
+        b.summary = QStringLiteral("patched");
+        b.detail_kind = QStringLiteral("fs.diff");
+        b.detail_body = QStringLiteral("{'path':'a'}"); // structured detail body (opaque string)
+
+        WriteBatch wb;
+        WindowRowWrite w;
+        w.kind = QStringLiteral("TranscriptBlock");
+        w.scope = QStringLiteral("s1");
+        w.cursor = b.seq;
+        // The write-behind's canonical payload shape: the Q_GADGET property dump as compact JSON.
+        QJsonObject payload;
+        payload.insert(QStringLiteral("session"), b.session);
+        payload.insert(QStringLiteral("seq"), static_cast<double>(b.seq));
+        payload.insert(QStringLiteral("kind"), b.kind);
+        payload.insert(QStringLiteral("call_id"), b.call_id);
+        payload.insert(QStringLiteral("ok"), b.ok);
+        payload.insert(QStringLiteral("summary"), b.summary);
+        payload.insert(QStringLiteral("detail_kind"), b.detail_kind);
+        payload.insert(QStringLiteral("detail_body"), b.detail_body);
+        w.payload = QJsonDocument(payload).toJson(QJsonDocument::Compact);
+        w.lastRev = 1;
+        wb.windowUpserts.push_back(w);
+        wb.journalRecords.push_back(
+            rec(1, QStringLiteral("s1\x1f") + QString::number(b.seq), JournalOp::Upsert));
+        QVERIFY2(p.writeBehind(wb), qPrintable(p.lastError()));
+
+        MirrorModel model;
+        QVERIFY(p.loadInto(model));
+        const TranscriptBlockScope scope{QStringLiteral("s1")};
+        QVERIFY(model.transcripts.count(scope) != 0U);
+        const Window<TranscriptBlock>& win = model.transcripts[scope];
+        QCOMPARE(win.items.size(), std::size_t(1));
+        QCOMPARE(win.items[0].get().kind, QStringLiteral("ToolResult"));
+        QCOMPARE(win.items[0].get().summary, QStringLiteral("patched"));
+        QCOMPARE(win.items[0].get().detail_kind, QStringLiteral("fs.diff"));
+        QCOMPARE(win.items[0].get().detail_body, b.detail_body);
+        QCOMPARE(win.meta.newest_cursor, quint64(4));
+
+        // The rebaseline wipe: a scope clear drops the persisted rows (nothing resurrects).
+        WriteBatch clear;
+        clear.transcriptWindowClears.push_back(QStringLiteral("s1"));
+        clear.journalRecords.push_back(rec(2, QStringLiteral("s1"), JournalOp::Tombstone));
+        QVERIFY(p.writeBehind(clear));
+        MirrorModel wiped;
+        QVERIFY(p.loadInto(wiped));
+        QCOMPARE(wiped.transcripts.count(scope), std::size_t(0));
     }
 
     void tombstoneWriteBehindDeletesRow() {

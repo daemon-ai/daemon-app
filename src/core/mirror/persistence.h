@@ -80,6 +80,10 @@ struct WriteBatch {
     std::vector<PersonKey> personTombstones;
     std::vector<WindowRowWrite> windowUpserts;
     std::vector<WindowMetaWrite> windowMeta;
+    // AD (1b.3): a clearWindow scope tombstone (the engine's journal-rebaseline transcript wipe)
+    // drops the scope's persisted rows + meta BEFORE this batch's upserts apply, so a wiped
+    // generation never survives a reboot. Scope keys of w_transcript_blocks.
+    std::vector<QString> transcriptWindowClears;
     std::vector<JournalRecord> journalRecords;
 
     bool advanceWatermark = false;
