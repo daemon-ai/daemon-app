@@ -54,6 +54,10 @@ public slots:
         }
         auto* ctx = engine->rootContext();
         ctx->setContextProperty(QStringLiteral("SessionStore"), m_store);
+        // mirror A7 (M4): the ported consumers bind SessionStoreMirror. Offscreen QML tests run
+        // the mock posture, where composition points it at the SAME legacy store (the app graph's
+        // fallback) — inject the identical aliasing here.
+        ctx->setContextProperty(QStringLiteral("SessionStoreMirror"), m_store);
         ctx->setContextProperty(QStringLiteral("Profiles"), m_profiles);
         ctx->setContextProperty(QStringLiteral("Approvals"), m_approvals);
         ctx->setContextProperty(QStringLiteral("Transports"), m_registry);

@@ -242,20 +242,49 @@ bool decodeRoomsToMirror(const QByteArray& responseCbor, const QString& transpor
     return true;
 }
 
-bool decodeSessionsToMirror(const QByteArray& responseCbor, std::vector<mirror::Session>* out) {
+bool decodeSessionsToMirror(const QByteArray& responseCbor, std::vector<mirror::Session>* out,
+                            QString* next, quint64* rev, QStringList* removed) {
     if (out == nullptr) {
         return false;
     }
+    // SessionsQuery answers with SessionPage (dispatch: ApiRequest::SessionsQuery ->
+    // ApiResponse::SessionPage) — the paged roster read the legacy SessionRepository consumed. The
+    // bare `Sessions` arm (response-sessions) answers the old ApiRequest::Sessions verb, which the
+    // mirror path does not issue.
     const auto response =
-        decodeChecked(responseCbor, api_response_r::api_response_response_sessions_m_c);
+        decodeChecked(responseCbor, api_response_r::api_response_response_session_page_m_c);
     if (!response) {
         return false;
     }
-    const response_sessions& rs = response->api_response_response_sessions_m;
+    const session_page& page =
+        response->api_response_response_session_page_m.response_session_page_SessionPage;
     out->clear();
-    out->reserve(rs.response_sessions_Sessions_session_info_m_count);
-    for (size_t i = 0; i < rs.response_sessions_Sessions_session_info_m_count; ++i) {
-        out->push_back(mirror::map_session(rs.response_sessions_Sessions_session_info_m[i]));
+    out->reserve(page.session_page_sessions_session_info_m_count);
+    for (size_t i = 0; i < page.session_page_sessions_session_info_m_count; ++i) {
+        out->push_back(mirror::map_session(page.session_page_sessions_session_info_m[i]));
+    }
+    if (next != nullptr) {
+        next->clear();
+        if (page.session_page_next_cursor_present &&
+            page.session_page_next_cursor.session_page_next_cursor_choice ==
+                session_page_next_cursor_r::session_page_next_cursor_session_id_m_c) {
+            *next = codec_detail::fromZcbor(
+                page.session_page_next_cursor.session_page_next_cursor_session_id_m);
+        }
+    }
+    // [api/39 §10.2] The roster rev + the delta-read `removed` tombstone id list.
+    if (rev != nullptr) {
+        *rev = page.session_page_rev;
+    }
+    if (removed != nullptr) {
+        removed->clear();
+        if (page.session_page_removed_present) {
+            for (size_t i = 0;
+                 i < page.session_page_removed.session_page_removed_session_id_m_count; ++i) {
+                removed->append(codec_detail::fromZcbor(
+                    page.session_page_removed.session_page_removed_session_id_m[i]));
+            }
+        }
     }
     return true;
 }

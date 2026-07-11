@@ -185,6 +185,11 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     target_sources(da_daemon_client PRIVATE
         daemon_fetch_executor.h
         daemon_fetch_executor.cpp
+        # mirror A7 (M4): the mirror-backed ISessionStore the session/fleet consumers rebind onto
+        # (6->1 session-shape unification); daemon mode only until A8's seeder feeds the mock
+        # mirror.
+        mirror_session_store.h
+        mirror_session_store.cpp
     )
     target_link_libraries(da_daemon_client PUBLIC
         daemon-app::mirror_ingestor

@@ -338,7 +338,12 @@ void Ingestor::onBootstrap(quint64 cursor, quint64 epoch, const QHash<QString, q
         state_.setMode(c, StampingMode::WireDelta);
     }
     for (auto it = revs.constBegin(); it != revs.constEnd(); ++it) {
-        const QString& collection = it.key();
+        // The node's Bootstrap rev map keys the roster rev "roster" (daemon-host bootstrap());
+        // our collection name is "sessions" — normalize so the M4 session delta read actually
+        // fires on an api/39 connect. (The per-transport "conv:<t>"/"contacts:<t>" keys remain
+        // unmapped — they fall through baselineOpFor to None, the pre-M4 posture; A8/A9 scope.)
+        const QString collection =
+            it.key() == QStringLiteral("roster") ? QStringLiteral("sessions") : it.key();
         const quint64 nodeRev = it.value();
         const FetchOp op = baselineOpFor(collection);
         if (op == FetchOp::None) {
@@ -637,9 +642,15 @@ void Ingestor::deliverRooms(const QString& transport, const std::vector<Room>& i
 
 void Ingestor::applySessionFullList(const std::vector<Session>& items) {
     const JournalOrigin origin = originFor(QStringLiteral("sessions"));
+    // Replace-and-prune over the TopLevel roster — but SPARE archived rows: the TopLevel scope
+    // excludes them (the node filters archived), so their absence from a full listing is expected;
+    // pruning them would wipe the Archived view on every roster refresh. Identical rule to the
+    // legacy SessionRepository::pruneSessionsMissingFrom (F6).
     QSet<QString> present;
     for (const Session& s : store_.snapshot().sessions) {
-        present.insert(s.session);
+        if (!s.archived) {
+            present.insert(s.session);
+        }
     }
     QSet<QString> incoming;
     auto b = store_.beginBatch();
@@ -655,7 +666,7 @@ void Ingestor::applySessionFullList(const std::vector<Session>& items) {
     b.commit();
 }
 
-void Ingestor::deliverSessions(const std::vector<Session>& items, bool isFinalPage) {
+void Ingestor::deliverSessions(const std::vector<Session>& items, bool isFinalPage, quint64 rev) {
     if (isFinalPage) {
         applySessionFullList(items);
     } else {
@@ -665,7 +676,48 @@ void Ingestor::deliverSessions(const std::vector<Session>& items, bool isFinalPa
         }
         b.commit();
     }
-    state_.markFresh(QStringLiteral("sessions"), 0, nowMs());
+    if (isFinalPage) {
+        state_.markFresh(QStringLiteral("sessions"), rev, nowMs());
+    }
+}
+
+void Ingestor::deliverSessionsAdditive(const std::vector<Session>& items, bool isFinalPage) {
+    Q_UNUSED(isFinalPage); // additive per page; no prune, no freshness change (scoped subset)
+    auto b = store_.beginBatch();
+    for (const Session& s : items) {
+        b.upsert(s, originFor(QStringLiteral("sessions")));
+    }
+    b.commit();
+}
+
+void Ingestor::deliverTransportSessions(const QString& transportId,
+                                        const std::vector<Session>& items, bool isFinalPage) {
+    deliverSessionsAdditive(items, isFinalPage);
+    if (isFinalPage) {
+        QSet<QString> ids;
+        for (const Session& s : items) {
+            ids.insert(s.session);
+        }
+        Q_EMIT transportSessionsResolved(transportId, ids);
+    }
+}
+
+void Ingestor::deliverSessionsDelta(const std::vector<Session>& changed, const QStringList& removed,
+                                    quint64 rev, bool isFinalPage) {
+    const JournalOrigin origin = originFor(QStringLiteral("sessions"));
+    auto b = store_.beginBatch();
+    for (const Session& s : changed) {
+        b.upsert(s, origin);
+    }
+    // Delta semantics: only the node-reported `removed` ids are tombstoned — absent keys are
+    // unchanged, never pruned (the essential difference from the full-list path).
+    for (const QString& id : removed) {
+        b.tombstone<Session>(SessionKey{id}, origin);
+    }
+    b.commit();
+    if (isFinalPage) {
+        state_.markFresh(QStringLiteral("sessions"), rev, nowMs());
+    }
 }
 
 void Ingestor::deliverSession(const Session& session) {
@@ -709,6 +761,33 @@ void Ingestor::deliverFleetUnits(const std::vector<FleetUnit>& items, bool isFin
     if (isFinalPage) {
         state_.markFresh(QStringLiteral("fleet"), rev, nowMs());
     }
+}
+
+void Ingestor::refetchSessionsForProfile(const QString& profileId) {
+    if (profileId.isEmpty()) {
+        return;
+    }
+    const QString scope = QStringLiteral("profile") + kSep + profileId;
+    enqueueFetch(FetchOp::SessionsQuery, scope,
+                 observing(QStringLiteral("sessions"), scope) ? Priority::VisibleSurface
+                                                              : Priority::Prefetch);
+}
+
+void Ingestor::refetchArchivedSessions() {
+    const QString scope = QStringLiteral("archived");
+    enqueueFetch(FetchOp::SessionsQuery, scope,
+                 observing(QStringLiteral("sessions"), scope) ? Priority::VisibleSurface
+                                                              : Priority::Prefetch);
+}
+
+void Ingestor::refetchSessionsForTransport(const QString& transportId) {
+    if (transportId.isEmpty()) {
+        return;
+    }
+    const QString scope = QStringLiteral("transport") + kSep + transportId;
+    enqueueFetch(FetchOp::SessionsQuery, scope,
+                 observing(QStringLiteral("sessions"), scope) ? Priority::VisibleSurface
+                                                              : Priority::Prefetch);
 }
 
 void Ingestor::refetchRouting() {

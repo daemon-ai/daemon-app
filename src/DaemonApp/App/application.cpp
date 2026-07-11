@@ -251,6 +251,12 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
 
     // Shared store; QML view models bind their `store` property to this.
     engine.rootContext()->setContextProperty(QStringLiteral("SessionStore"), m_services.store);
+    // mirror A7 (M4): the mirror-backed store the PORTED session/fleet consumers bind (6→1
+    // unification, one consumer per sub-gate). In mock mode / substrate-less stacks this IS the
+    // legacy store (composition-time fallback in the app service graph — no QML conditionals),
+    // so every surface keeps rendering until A8's seeder feeds the mock mirror.
+    engine.rootContext()->setContextProperty(QStringLiteral("SessionStoreMirror"),
+                                             m_services.storeMirror);
 
     // Shared footer status model: the StatusBar footer renders it and the active
     // session's turn feeds it (see TranscriptPage.qml), so both halves of the

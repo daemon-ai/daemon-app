@@ -60,9 +60,13 @@ bool decodeRoutePinsToMirror(const QByteArray& responseCbor, std::vector<mirror:
 bool decodeRoomsToMirror(const QByteArray& responseCbor, const QString& transport,
                          std::vector<mirror::Room>* out, QString* next);
 
-// SessionsQuery (default scope) → the session roster → Session entities (M4). The wire reply is a
-// full list (no paging / rev at this scope), so the executor lands it as one replace-and-prune.
-bool decodeSessionsToMirror(const QByteArray& responseCbor, std::vector<mirror::Session>* out);
+// SessionsQuery → SessionPage → Session entities (M4). `next` (if non-null) receives the roster
+// page resume cursor ("" = last page; the executor page-loops full reads like the legacy
+// SessionRepository). [api/39 §10.2] `rev`/`removed` (if non-null) receive the roster revision +
+// the delta-read tombstone id list (absent/empty on a v38 full-page reply).
+bool decodeSessionsToMirror(const QByteArray& responseCbor, std::vector<mirror::Session>* out,
+                            QString* next = nullptr, quint64* rev = nullptr,
+                            QStringList* removed = nullptr);
 
 // Tree → TreeReport page → FleetUnit entities (M4). `next` (if non-null) receives the unit-id page
 // resume cursor ("" = last page); `rev` (if non-null) receives the tree revision recorded for the

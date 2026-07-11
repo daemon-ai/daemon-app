@@ -75,6 +75,7 @@
 #ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
 #include "daemon/daemon_fetch_executor.h"
 #include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
+#include "daemon/mirror_session_store.h" // mirror A7 (M4): the 6->1 session store projection
 #include "local_database.h"
 #include "mirror/mirror_service.h"
 #include "outbox.h"
@@ -574,6 +575,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.update = new update::UpdateManager(owner);
     graph.update->setSettings(graph.settings);
 
+    // mirror A7 (M4): the ported session/fleet consumers bind `storeMirror`. The composition-time
+    // fallback IS the legacy store — mock mode (null mirror until A8's seeder) and substrate-less
+    // stacks keep rendering with zero per-consumer conditionals (§9 "mock keeps working"). The
+    // daemon+substrate branch below overrides it with the MirrorSessionStore projection.
+    graph.storeMirror = graph.store;
+
 #ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
     // ---- mirror A5 (spec 09 wave M2): live-wire the ingestor beside the legacy paths ----
     // Dual-write discipline (§13 M0–M2): the SubscriptionManager + repositories keep writing their
@@ -682,6 +689,14 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                      }
                                  });
             }
+
+            // mirror A7 (M4): the mirror-backed session store the ported consumers bind. Session
+            // ROWS project the mirror `sessions` table; mutations + transcript reads delegate to
+            // the legacy CachedSessionStore (one wire mutation path; transcript re-homing is the
+            // wave's LAST sub-gate). The legacy `store` stays live for unported consumers
+            // (dual-write; parity asserts guard the two row-sets until deletion).
+            graph.storeMirror =
+                new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
 
             // Feed the node event stream into the ingestor through the bridge. A per-session
             // Subscribe item is not an events page (decode fails) so it is ignored — the mirror

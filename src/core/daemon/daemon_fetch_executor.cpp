@@ -90,9 +90,22 @@ void DaemonFetchExecutor::sendFor(const InFlight& f, const QString& pageToken,
         req = NodeApiCodec::encodeTransportRoomsRequest(f.transport, pageToken);
         break;
     case mirror::FetchOp::SessionsQuery:
-        // M4: the session roster at the daemon's default scope. Full list (no since_rev / paging at
-        // this scope); the reply lands as one replace-and-prune.
-        req = NodeApiCodec::encodeSessionsQueryRequest();
+        // M4: the roster read. Job scope selects the wire scope: "" = TopLevel (the roster;
+        // since_rev-capable, replace-and-prune), "archived" = SessionScope::Archived,
+        // "profile␟<id>" = ByProfile, "transport␟<id>" = ByTransport (the scoped subsets land
+        // additively). splitScope put the kind in f.transport and the argument in f.conv.
+        if (f.transport == QStringLiteral("archived")) {
+            req = NodeApiCodec::encodeSessionsQueryRequest(false, 0, QString(), pageToken,
+                                                           /*archivedScope=*/true);
+        } else if (f.transport == QStringLiteral("profile")) {
+            req = NodeApiCodec::encodeSessionsQueryRequest(false, 0, f.conv, pageToken);
+        } else if (f.transport == QStringLiteral("transport")) {
+            req = NodeApiCodec::encodeSessionsQueryRequest(false, 0, QString(), pageToken, false,
+                                                           f.conv);
+        } else {
+            req = NodeApiCodec::encodeSessionsQueryRequest(sendSinceRev, f.job.sinceRev, QString(),
+                                                           pageToken);
+        }
         break;
     case mirror::FetchOp::SessionGet:
         // M4: one session's full detail (hydrates model + checkpoints). The job scope is the
@@ -242,10 +255,43 @@ void DaemonFetchExecutor::onResponse(const QString& correlationId, const QByteAr
         return;
     }
     case mirror::FetchOp::SessionsQuery: {
-        // M4: the roster is a full list at the default scope — land it as one replace-and-prune.
-        std::vector<mirror::Session> sessions;
-        if (decodeSessionsToMirror(responseCbor, &sessions)) {
-            m_ingestor.deliverSessions(sessions, /*isFinalPage=*/true);
+        // M4: SessionsQuery answers SessionPage. TopLevel full reads page-loop (next_cursor) and
+        // land as ONE replace-and-prune; scoped reads (archived/profile/transport) page-loop and
+        // land ADDITIVELY; a since_rev delta stays single-page and applies via the delta seam —
+        // unless the returned rev went backwards from the asked since_rev (the node's
+        // unservable-rev fallback: it answered a FULL page; treat it as a replace) — the same
+        // rules as the legacy SessionRepository::applySessionPage.
+        std::vector<mirror::Session> page;
+        QString next;
+        quint64 rev = 0;
+        QStringList removed;
+        if (!decodeSessionsToMirror(responseCbor, &page, &next, &rev, &removed)) {
+            finish(correlationId);
+            return;
+        }
+        for (auto& s : page) {
+            f.sessionAccum.push_back(std::move(s));
+        }
+        f.removedAccum += removed;
+        f.rev = rev;
+        const bool scoped = !f.transport.isEmpty();
+        const bool fallbackFull = deltaRead && f.rev < f.job.sinceRev;
+        const bool asDelta = deltaRead && !fallbackFull;
+        if (!next.isEmpty() && !asDelta) {
+            sendFor(f, next, 0); // next page — same scheduler job
+            return;
+        }
+        if (scoped) {
+            if (f.transport == QStringLiteral("transport")) {
+                m_ingestor.deliverTransportSessions(f.conv, f.sessionAccum, /*isFinalPage=*/true);
+            } else {
+                m_ingestor.deliverSessionsAdditive(f.sessionAccum, /*isFinalPage=*/true);
+            }
+        } else if (asDelta) {
+            m_ingestor.deliverSessionsDelta(f.sessionAccum, f.removedAccum, f.rev,
+                                            /*isFinalPage=*/true);
+        } else {
+            m_ingestor.deliverSessions(f.sessionAccum, /*isFinalPage=*/true, f.rev);
         }
         finish(correlationId);
         return;

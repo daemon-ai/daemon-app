@@ -71,6 +71,38 @@ build + ctest green → parity assert vs the legacy source stays clean (dual-wri
 → commit. A failed sub-step is revertible without unwinding prior sub-steps. Legacy deletion only
 when a cache/repo/store's LAST reader is ported and its parity assert has been green.
 
+## The consumer-cutover mechanism (parent-approved design)
+
+- **`MirrorSessionStore : persistence::ISessionStore`** (`src/core/daemon/mirror_session_store.*`):
+  session ROWS/counts/title/pinned are PURE projections of the mirror `sessions` table (deterministic
+  order: pinned, last-activity desc, id; re-derived on `Store::committed` filtered to Session/
+  FleetUnit journal deltas above a registered watermark). `content()`/`setContent()` DELEGATE to the
+  legacy store (transcript re-homing is sub-gate 6). Mutations + `requestNewSession` DELEGATE to the
+  legacy store (ONE node-authoritative wire path; `sessionCreated`/`metaUpdateFailed` relayed).
+  Scoped refreshes hit BOTH sides (legacy cache + ingestor mirror fetch — dual-write).
+- **Mock fallback = composition-time aliasing (the least-magic option, chosen per parent ruling):**
+  `AppServiceGraph.storeMirror` is the ported consumers' binding. Mock mode / substrate-less stacks:
+  `storeMirror = store` (the legacy in-memory store) — zero per-consumer conditionals, mock keeps
+  rendering (§9) until A8's seeder feeds the mock mirror. Daemon+substrate: the distinct
+  `MirrorSessionStore`. GUI context property `SessionStoreMirror` beside `SessionStore`; TUI reads
+  `m_services.storeMirror`. Asserted in tst_app_service_graph.
+- **Scoped roster reads on the mirror path**: `Ingestor::refetchSessionsForProfile/-Archived/
+  -ForTransport` → `FetchOp::SessionsQuery` with scope `"profile␟<id>"`/`"archived"`/
+  `"transport␟<id>"` → additive delivery (`deliverSessionsAdditive`; ByTransport also emits
+  `transportSessionsResolved` — the store projects the node-resolved id set, B4). The TopLevel
+  replace-and-prune SPARES archived rows (the legacy pruneSessionsMissingFrom rule, F6).
+- **Wire fixes vs sub-step 0**: `decodeSessionsToMirror` now decodes **SessionPage** (SessionsQuery's
+  actual reply per dispatch.rs; the bare `Sessions` arm answers the old Sessions verb) with
+  next_cursor page-loop + rev + removed; the executor page-loops full reads, applies since_rev
+  deltas via `deliverSessionsDelta` (rev-went-backwards ⇒ node's unservable fallback ⇒ replace,
+  the legacy applySessionPage rule). `Ingestor::onBootstrap` normalizes the node's `"roster"` rev
+  key → `"sessions"` so the M4 delta read fires on an api/39 connect (the per-transport
+  `conv:<t>`/`contacts:<t>` keys remain unmapped — pre-M4 posture, A8/A9).
+- **Dual-decoder parity (the §13 M4 assert)**: tst_mirror_session_store feeds the SAME SessionPage
+  bytes through the legacy path (decodeSessionPage → DaemonCacheStore → CachedSessionStore) and the
+  mirror path (decodeSessionsToMirror → ingestor → MirrorSessionStore) and asserts row-set equality
+  (`parity::sessionKeys`) + view equality (ids/counts/titles/pinned/pinned-floats-first).
+
 ## Status / boundary (updated as sub-steps land)
 
 - **Sub-step 0 (fetch/ingest vertical) — DONE, gated green.** `sessions`/`fleet_units` mirror tables

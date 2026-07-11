@@ -85,9 +85,25 @@ public:
     // TransportRooms page (M3): a transport instance's bindable rooms — full-list
     // replace-and-prune scoped to `transport` (the rooms of OTHER transports are untouched).
     void deliverRooms(const QString& transport, const std::vector<Room>& items, bool isFinalPage);
-    // SessionsQuery page (M4): the session roster is a GLOBAL list — full-list replace-and-prune
-    // over all sessions on the final page (§5.3 PageLoop). A dropped key tombstones the row.
-    void deliverSessions(const std::vector<Session>& items, bool isFinalPage);
+    // SessionsQuery TopLevel page (M4): the roster is a GLOBAL list — full-list replace-and-prune
+    // over all sessions on the final page (§5.3 PageLoop). ARCHIVED rows are spared by the prune
+    // (the TopLevel scope excludes them; they re-sync via the Archived-scoped read) — the same
+    // rule as the legacy SessionRepository::pruneSessionsMissingFrom. `rev` (api/39) records the
+    // roster revision on markFresh for the rung-1 skip-gate / bootstrap rev-compare (§5.5).
+    void deliverSessions(const std::vector<Session>& items, bool isFinalPage, quint64 rev = 0);
+    // A SCOPED SessionsQuery page (Archived / ByProfile — subsets of the roster): ADDITIVE upsert,
+    // never a prune (a scoped subset must not clobber the roster, the legacy additive-merge rule)
+    // and no freshness change (roster freshness belongs to the TopLevel read alone).
+    void deliverSessionsAdditive(const std::vector<Session>& items, bool isFinalPage);
+    // A ByTransport-scoped SessionsQuery page (B4): additive like the other scoped reads, PLUS the
+    // node-resolved membership id set is emitted via transportSessionsResolved on the final page —
+    // the ByTransport list scope is a projection of that set, never a client-side re-derivation.
+    void deliverTransportSessions(const QString& transportId, const std::vector<Session>& items,
+                                  bool isFinalPage);
+    // [api/39 §10.2] SessionsQuery since_rev delta: upsert changed + tombstone `removed`, no
+    // replace-and-prune; records the roster `rev` on markFresh (mirrors deliverConversationsDelta).
+    void deliverSessionsDelta(const std::vector<Session>& changed, const QStringList& removed,
+                              quint64 rev, bool isFinalPage);
     // SessionGet single session (M4, keyed hydration): upsert the fully-hydrated row (base fields +
     // model + checkpoints). Never prunes siblings — a keyed patch, not a list.
     void deliverSession(const Session& session);
@@ -102,6 +118,15 @@ public:
     void refetchRouting();
     // Re-list a transport instance's bindable rooms into the mirror (TransportRooms).
     void refetchRooms(const QString& transport);
+
+    // --- scoped session refresh triggers (M4) --------------------------------------------------
+    // The scoped SessionsQuery reads the roster's scoped views need (the mirror twins of the
+    // legacy SessionRepository refresh methods). All land ADDITIVELY (deliverSessionsAdditive /
+    // deliverTransportSessions); the (op,scope) coalesce key keeps them deduped and distinct from
+    // the TopLevel roster job (scope "").
+    void refetchSessionsForProfile(const QString& profileId);     // scope "profile␟<id>"
+    void refetchArchivedSessions();                               // scope "archived"
+    void refetchSessionsForTransport(const QString& transportId); // scope "transport␟<id>"
 
     // --- FULL (wire_delta) delivery (§5.6 full / §10.2) ---------------------------------------
     // A since_rev delta read returns ONLY the changed items + a `removed` tombstone id list + the
@@ -135,6 +160,10 @@ Q_SIGNALS:
     void nudgeFocused(const QString& session);
     // A ResyncNeeded arrived and the scan was kicked (§5.7) — observable for tests / E5.
     void resyncScanStarted(const QStringList& collections);
+    // A ByTransport-scoped SessionsQuery landed (M4): the node-resolved membership id set for
+    // `transportId`. The mirror session store records it and projects the ByTransport list scope
+    // from it (the twin of SessionRepository::transportSessionsResolved).
+    void transportSessionsResolved(const QString& transportId, const QSet<QString>& ids);
 
 private:
     // policy dispatch

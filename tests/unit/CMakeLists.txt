@@ -599,6 +599,27 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     set_tests_properties(tst_mirror_sessions_fleet PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
 
+# tst_mirror_session_store: the M4 mirror-backed ISessionStore (the 6->1 projection the session
+# consumers rebind onto) - DUAL-DECODER PARITY of the same SessionPage bytes through the legacy
+# (decodeSessionPage -> DaemonCacheStore -> CachedSessionStore) and mirror (decodeSessionsToMirror
+# -> ingestor -> MirrorSessionStore) paths, the scoped views, the journal-filtered changed(), and
+# the legacy mutation/transcript delegation + signal relays. Only built with the substrate.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    qt_add_executable(tst_mirror_session_store tst_mirror_session_store.cpp)
+    target_link_libraries(tst_mirror_session_store
+        PRIVATE
+            Qt6::Test
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+            daemon-app::persistence
+            daemon-app::domain
+    )
+    add_test(NAME tst_mirror_session_store COMMAND tst_mirror_session_store)
+    set_tests_properties(tst_mirror_session_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
 # tst_graph_model: the reusable Daemon Kit graph model - generic node/edge ingestion, degree, the
 # normalized force layout, and edges()/nodeById/neighborsOf.
 qt_add_executable(tst_graph_model tst_graph_model.cpp)

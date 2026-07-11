@@ -16,6 +16,7 @@
 #include "mirror/mirror_service.h"
 #include "mirror/store.h"
 
+#include <QSet>
 #include <QtTest/QtTest>
 #include <vector>
 
@@ -30,6 +31,20 @@ void setStr(zcbor_string& z, const QByteArray& b) {
     z.len = static_cast<size_t>(b.size());
 }
 
+class RecordingExecutor : public mirror::FetchExecutor {
+public:
+    void execute(const mirror::FetchJob& job) override { executed.append(job); }
+    [[nodiscard]] bool has(mirror::FetchOp op, const QString& scope) const {
+        for (const mirror::FetchJob& j : executed) {
+            if (j.op == op && j.scope == scope) {
+                return true;
+            }
+        }
+        return false;
+    }
+    QList<mirror::FetchJob> executed;
+};
+
 QByteArray encodeResponse(const api_response_r& resp) {
     QByteArray out(64 * 1024, Qt::Uninitialized);
     size_t written = 0;
@@ -42,7 +57,9 @@ QByteArray encodeResponse(const api_response_r& resp) {
     return out;
 }
 
-// {"Sessions": [<active pinned session with a title>, <ready session, no title>]}.
+// {"SessionPage": {sessions: [<active pinned session with a title>, <ready session, no title>],
+//  rev: 3}} — the reply SessionsQuery actually answers (dispatch: SessionsQuery -> SessionPage),
+//  the same shape the legacy SessionRepository decodes.
 QByteArray sessionsResponse() {
     static const QByteArray s1 = QByteArrayLiteral("s-alpha");
     static const QByteArray t1 = QByteArrayLiteral("Alpha thread");
@@ -50,11 +67,16 @@ QByteArray sessionsResponse() {
     static const QByteArray s2 = QByteArrayLiteral("s-beta");
 
     api_response_r resp{};
-    resp.api_response_choice = api_response_r::api_response_response_sessions_m_c;
-    response_sessions& rs = resp.api_response_response_sessions_m;
-    rs.response_sessions_Sessions_session_info_m_count = 2;
+    resp.api_response_choice = api_response_r::api_response_response_session_page_m_c;
+    session_page& page =
+        resp.api_response_response_session_page_m.response_session_page_SessionPage;
+    page.session_page_sessions_session_info_m_count = 2;
+    page.session_page_next_cursor_present = false;
+    page.session_page_rev = 3;
+    page.session_page_removed_present = false;
+    page.session_page_origin_ops_present = false;
 
-    session_info& a = rs.response_sessions_Sessions_session_info_m[0];
+    session_info& a = page.session_page_sessions_session_info_m[0];
     setStr(a.session_info_session, s1);
     a.session_info_state.session_state_choice = session_state_r::session_state_Active_tstr_c;
     a.session_info_title_present = true;
@@ -71,7 +93,7 @@ QByteArray sessionsResponse() {
     a.session_info_role.session_info_role.session_role_choice =
         session_role_r::session_role_Primary_tstr_c;
 
-    session_info& b = rs.response_sessions_Sessions_session_info_m[1];
+    session_info& b = page.session_page_sessions_session_info_m[1];
     setStr(b.session_info_session, s2);
     b.session_info_state.session_state_choice = session_state_r::session_state_Ready_tstr_c;
     b.session_info_title_present = false;
@@ -202,11 +224,15 @@ class TestMirrorSessionsFleet : public QObject {
     Q_OBJECT
 
 private slots:
-    // map_session: a wire Sessions page decodes into Session entities with typed fields, enum
-    // strings and nullable-optional handling (an absent title stays empty).
+    // map_session: a wire SessionPage decodes into Session entities with typed fields, enum
+    // strings and nullable-optional handling (an absent title stays empty); the page envelope
+    // (next cursor / rev / removed) is surfaced for the page loop + rev-gate.
     void decodesSessionsWithTypedFields() {
         std::vector<mirror::Session> out;
-        QVERIFY(decodeSessionsToMirror(sessionsResponse(), &out));
+        QString next;
+        quint64 rev = 0;
+        QStringList removed;
+        QVERIFY(decodeSessionsToMirror(sessionsResponse(), &out, &next, &rev, &removed));
         QCOMPARE(out.size(), std::size_t{2});
         QCOMPARE(out[0].session, QStringLiteral("s-alpha"));
         QCOMPARE(out[0].state, QStringLiteral("Active"));
@@ -218,6 +244,9 @@ private slots:
         QCOMPARE(out[1].state, QStringLiteral("Ready"));
         QVERIFY(out[1].title.isEmpty());
         QVERIFY(!out[1].pinned);
+        QVERIFY(next.isEmpty());
+        QCOMPARE(rev, quint64{3});
+        QVERIFY(removed.isEmpty());
     }
 
     // map_fleet_unit: a wire Tree page decodes into FleetUnit entities; child_count = children
@@ -322,6 +351,98 @@ private slots:
         svc.ingestor().deliverSessions({session(QStringLiteral("s-a"), QStringLiteral("A"))},
                                        /*isFinalPage=*/true);
         QCOMPARE(svc.store().journal().headRev(), head);
+    }
+
+    // The TopLevel replace-and-prune SPARES archived rows (they live outside the TopLevel scope;
+    // the Archived-scoped read owns them) — the legacy pruneSessionsMissingFrom rule (F6).
+    void topLevelPruneSparesArchivedRows() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        mirror::Session archived = session(QStringLiteral("s-arch"), QStringLiteral("Old"));
+        archived.archived = true;
+        svc.ingestor().deliverSessionsAdditive({archived}, /*isFinalPage=*/true);
+        svc.ingestor().deliverSessions({session(QStringLiteral("s-a"), QStringLiteral("A")),
+                                        session(QStringLiteral("s-b"), QStringLiteral("B"))},
+                                       /*isFinalPage=*/true);
+        // A later TopLevel listing without s-b prunes it; s-arch (archived) survives.
+        svc.ingestor().deliverSessions({session(QStringLiteral("s-a"), QStringLiteral("A"))},
+                                       /*isFinalPage=*/true);
+        QVERIFY(findSession(svc, QStringLiteral("s-a")) != nullptr);
+        QVERIFY(findSession(svc, QStringLiteral("s-b")) == nullptr);
+        QVERIFY(findSession(svc, QStringLiteral("s-arch")) != nullptr);
+    }
+
+    // Scoped (Archived/ByProfile) deliveries are ADDITIVE: no prune of absent keys.
+    void scopedDeliveryIsAdditive() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        svc.ingestor().deliverSessions({session(QStringLiteral("s-a"), QStringLiteral("A")),
+                                        session(QStringLiteral("s-b"), QStringLiteral("B"))},
+                                       /*isFinalPage=*/true);
+        svc.ingestor().deliverSessionsAdditive(
+            {session(QStringLiteral("s-c"), QStringLiteral("C"))},
+            /*isFinalPage=*/true);
+        QCOMPARE(sessionCount(svc), 3); // a and b untouched by the scoped subset
+    }
+
+    // ByTransport delivery lands additively AND emits the node-resolved membership id set.
+    void transportScopedDeliveryEmitsResolvedIds() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        QString gotTransport;
+        QSet<QString> gotIds;
+        QObject::connect(&svc.ingestor(), &mirror::Ingestor::transportSessionsResolved, &svc,
+                         [&](const QString& t, const QSet<QString>& ids) {
+                             gotTransport = t;
+                             gotIds = ids;
+                         });
+        svc.ingestor().deliverTransportSessions(
+            QStringLiteral("matrix-1"),
+            {session(QStringLiteral("s-x"), QStringLiteral("X")),
+             session(QStringLiteral("s-y"), QStringLiteral("Y"))},
+            /*isFinalPage=*/true);
+        QCOMPARE(gotTransport, QStringLiteral("matrix-1"));
+        QCOMPARE(gotIds, (QSet<QString>{QStringLiteral("s-x"), QStringLiteral("s-y")}));
+        QCOMPARE(sessionCount(svc), 2);
+    }
+
+    // [api/39 §10.2] The since_rev delta seam: upsert changed + tombstone removed, no prune;
+    // the roster rev lands in sync-state.
+    void sessionsDeltaUpsertsRemovedOnlyNoPrune() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        svc.ingestor().deliverSessions({session(QStringLiteral("s-a"), QStringLiteral("A")),
+                                        session(QStringLiteral("s-b"), QStringLiteral("B"))},
+                                       /*isFinalPage=*/true);
+        svc.ingestor().deliverSessionsDelta({session(QStringLiteral("s-a"), QStringLiteral("A2"))},
+                                            {}, 5, /*isFinalPage=*/true);
+        QCOMPARE(sessionCount(svc), 2); // s-b absent from the delta but UNCHANGED, not pruned
+        QCOMPARE(findSession(svc, QStringLiteral("s-a"))->title, QStringLiteral("A2"));
+        QCOMPARE(svc.ingestor().syncState().collection(QStringLiteral("sessions")).nodeRev,
+                 quint64{5});
+        svc.ingestor().deliverSessionsDelta({}, {QStringLiteral("s-b")}, 6, /*isFinalPage=*/true);
+        QCOMPARE(sessionCount(svc), 1);
+        QCOMPARE(svc.ingestor().syncState().collection(QStringLiteral("sessions")).nodeRev,
+                 quint64{6});
+    }
+
+    // The scoped refresh triggers enqueue distinct (op,scope) jobs — deduped from the TopLevel
+    // roster job and from each other.
+    void scopedRefreshTriggersEnqueueDistinctJobs() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        RecordingExecutor exec;
+        svc.setFetchExecutor(&exec);
+        svc.ingestor().refetchArchivedSessions();
+        svc.ingestor().refetchSessionsForProfile(QStringLiteral("prof-1"));
+        svc.ingestor().refetchSessionsForTransport(QStringLiteral("matrix-1"));
+        QCOMPARE(exec.executed.size(), 3);
+        QVERIFY(exec.has(mirror::FetchOp::SessionsQuery, QStringLiteral("archived")));
+        QVERIFY(exec.has(mirror::FetchOp::SessionsQuery,
+                         QStringLiteral("profile") + QChar(0x1f) + QStringLiteral("prof-1")));
+        QVERIFY(exec.has(mirror::FetchOp::SessionsQuery,
+                         QStringLiteral("transport") + QChar(0x1f) + QStringLiteral("matrix-1")));
+        svc.setFetchExecutor(nullptr); // exec outlives this scope, the service does not
     }
 };
 

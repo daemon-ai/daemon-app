@@ -197,6 +197,31 @@ private slots:
             QVERIFY(graph.outbox == nullptr);
         }
     }
+
+    // mirror A7 (M4): the composition-time storeMirror invariant — NEVER null; in mock mode it
+    // ALIASES the legacy store (§9 "mock keeps working": ported consumers render the mock seed
+    // through the same binding until A8's seeder feeds the mock mirror); in daemon mode (with the
+    // substrate) it is the distinct MirrorSessionStore projection over the mirror tables.
+    void storeMirrorFallbackAliasesLegacyInMockOnly() {
+        {
+            QObject owner;
+            const auto graph = daemonapp::daemon::createAppServiceGraph(
+                daemonapp::daemon::ServiceMode::Mock, &owner);
+            QVERIFY(graph.storeMirror != nullptr);
+            QCOMPARE(graph.storeMirror, graph.store); // the mock fallback IS the legacy store
+        }
+        {
+            // (This suite assumes the substrate configuration, like the offline-reboot test
+            // above; a substrate-less stack aliases storeMirror = store in daemon mode too.)
+            QObject owner;
+            const auto graph = daemonapp::daemon::createAppServiceGraph(
+                daemonapp::daemon::ServiceMode::Daemon, &owner);
+            QVERIFY(graph.storeMirror != nullptr);
+            QVERIFY(graph.storeMirror != graph.store); // the distinct mirror projection
+            // The projection starts empty (no connection): reads answer, never crash.
+            QCOMPARE(graph.storeMirror->sessionCount(domain::ListScope{}), 0);
+        }
+    }
 };
 
 QTEST_MAIN(AppServiceGraphTests)
