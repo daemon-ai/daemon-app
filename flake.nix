@@ -399,6 +399,16 @@
           depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
         };
 
+        # --- Icon pipeline (all platforms) -----------------------------------
+        # Rasterizes packaging/icons/{small,large}.svg into every committed
+        # platform icon format (nix/icons.nix). Pure + host-agnostic; the
+        # outputs are checked into the tree via apps.update-icons and gated by
+        # checks.icons-drift (the vendored-codec model).
+        iconsPkg = import ./nix/icons.nix {
+          inherit pkgs;
+          iconSrc = ./packaging/icons;
+        };
+
         # --- Linux packaging artifacts (CPack: DEB / RPM / AppImage) --------
         # The packaged payload is the STATIC-Qt app (portableStack.app): the
         # same build the portable tarball ships, packaged through the CPack
@@ -894,6 +904,12 @@
         packages.appimagetool = appimageTooling.appimagetool;
         packages.cmake-appimage = cmake42;
 
+        # Icon pipeline output tree (nix/icons.nix): every committed platform
+        # icon format rasterized from packaging/icons/{small,large}.svg, laid
+        # out under $out at its repo-relative path (+ manifest.txt). Consumed
+        # by apps.update-icons (writes them into the tree) and checks.icons-drift.
+        packages.icons = iconsPkg;
+
         # Qt-for-WebAssembly toolchain (nix/qt-wasm.nix). `qt-wasm` is the
         # joined target stack a consumer points QT_HOST_PATH-style tooling at
         # (bin/qt-cmake + lib/cmake/Qt6/qt.toolchain.cmake); the per-module
@@ -1001,10 +1017,64 @@
         # apksigner verification (nix/android.nix).
         checks.apk-sanity = qtAndroidStack.apkSanity;
 
+        # Icon drift gate: every file the pipeline generates must match its
+        # committed copy byte-for-byte (the icon analogue of codec-drift). The
+        # committed packaging/ tree is compared against the freshly-generated
+        # $out via the manifest; a mismatch means the SVGs changed without a
+        # follow-up `nix run .#update-icons`.
+        checks.icons-drift =
+          pkgs.runCommand "daemon-icons-drift" { } ''
+            set -euo pipefail
+            committed=${./packaging}
+            fail=0
+            while IFS= read -r rel; do
+              [ -n "$rel" ] || continue
+              sub="''${rel#packaging/}"
+              if ! cmp -s "${iconsPkg}/$rel" "$committed/$sub"; then
+                echo "DRIFT: $rel differs from the committed copy (or is missing)" >&2
+                fail=1
+              fi
+            done < "${iconsPkg}/manifest.txt"
+            if [ "$fail" -ne 0 ]; then
+              echo "committed icons are stale vs packaging/icons/*.svg; run: nix run .#update-icons" >&2
+              exit 1
+            fi
+            echo "committed icons match the generated output"
+            touch "$out"
+          '';
+
         apps.default = {
           type = "app";
           program = "${daemon-app}/bin/daemon-app";
           meta.description = "Run the daemon-app Qt Quick application";
+        };
+
+        # The one impure step: copy the pure icon renders into the working tree.
+        # Nix never mutates the repo during a build, so refreshing the committed
+        # icons is an explicit `nix run .#update-icons` (the update-codec model).
+        apps.update-icons = {
+          type = "app";
+          program =
+            let
+              script = pkgs.writeShellApplication {
+                name = "update-icons";
+                runtimeInputs = [ pkgs.coreutils ];
+                text = ''
+                  if [ ! -d packaging/icons ]; then
+                    echo "run from the daemon-app root (missing packaging/icons)" >&2
+                    exit 1
+                  fi
+                  while IFS= read -r rel; do
+                    [ -n "$rel" ] || continue
+                    install -D -m644 "${iconsPkg}/$rel" "./$rel"
+                    echo "updated $rel"
+                  done < "${iconsPkg}/manifest.txt"
+                  echo "icons refreshed from packaging/icons/{small,large}.svg"
+                '';
+              };
+            in
+            "${script}/bin/update-icons";
+          meta.description = "Regenerate committed platform icons from packaging/icons/*.svg (mutates the tree)";
         };
 
         # Serve the browser build over plain HTTP for a local smoke test

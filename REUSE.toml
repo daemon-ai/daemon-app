@@ -40,14 +40,29 @@ path = [
 SPDX-FileCopyrightText = "2026 Jarrad Hope"
 SPDX-License-Identifier = "MPL-2.0"
 
-# --- First-party icon rasters: generated from packaging/linux/icons/daemon-app.svg
-#     by packaging/linux/icons/regen.sh (binary, cannot carry headers). ---
+# --- First-party icon source art: the two hand-authored SVGs the icon pipeline
+#     rasterizes from (small = 16..48 px art, large = 64 px+). SVGs are XML but
+#     ship without an inline header so the byte-for-byte icons-drift copy of
+#     large.svg -> packaging/linux/icons/daemon-app.svg stays exact. ---
+[[annotations]]
+path = [
+    "packaging/icons/*.svg",
+    "packaging/linux/icons/daemon-app.svg",
+]
+SPDX-FileCopyrightText = "2026 Jarrad Hope"
+SPDX-License-Identifier = "MPL-2.0"
+
+# --- First-party icon rasters: generated from packaging/icons/{small,large}.svg
+#     by the nix/icons.nix pipeline (`nix run .#update-icons`), drift-checked by
+#     checks.icons-drift (binary, cannot carry headers). ---
 [[annotations]]
 path = [
     "packaging/linux/icons/*.png",
     "packaging/windows/daemon-app.ico",
     "packaging/macos/daemon-app.icns",
     "packaging/android/res/mipmap-*/ic_launcher.png",
+    "packaging/ios/Assets.xcassets/AppIcon.appiconset/*.png",
+    "packaging/web/*.png",
 ]
 SPDX-FileCopyrightText = "2026 Jarrad Hope"
 SPDX-License-Identifier = "MPL-2.0"

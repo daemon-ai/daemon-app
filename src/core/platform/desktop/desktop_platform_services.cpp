@@ -3,6 +3,8 @@
 
 #include "platform/desktop/desktop_platform_services.h"
 
+#include "platform/app_icon.h"
+
 #include <QAction>
 #include <QIcon>
 #include <QMenu>
@@ -14,12 +16,14 @@ namespace platform {
 
 namespace {
 
-// A tray needs an icon to be shown on most platforms; synthesize a simple one
-// so the foundation has no asset dependency yet.
-QIcon placeholderTrayIcon() {
-    QIcon themed = QIcon::fromTheme(QStringLiteral("application-x-executable"));
-    if (!themed.isNull()) {
-        return themed;
+// The tray icon: the branded app icon (platform::appIcon() - installed hicolor
+// theme entry, else the multi-size PNGs embedded in the app resource). Falls
+// back to a synthesized blue rounded square only if neither is available, so
+// the tray is never blank on a platform that needs an icon to show it.
+QIcon trayIcon() {
+    QIcon branded = appIcon();
+    if (!branded.isNull()) {
+        return branded;
     }
     QPixmap pm(32, 32);
     pm.fill(Qt::transparent);
@@ -55,7 +59,7 @@ bool DesktopPlatformServices::installTray(const QString& appName) {
     QAction* quit = m_menu->addAction(QObject::tr("Quit"));
     QObject::connect(quit, &QAction::triggered, this, &IPlatformServices::quitRequested);
 
-    m_tray = new QSystemTrayIcon(placeholderTrayIcon(), this);
+    m_tray = new QSystemTrayIcon(trayIcon(), this);
     m_tray->setToolTip(appName);
     m_tray->setContextMenu(m_menu);
     QObject::connect(m_tray, &QSystemTrayIcon::activated, this,
@@ -74,7 +78,7 @@ bool DesktopPlatformServices::notify(const QString& title, const QString& body) 
     if (m_tray == nullptr || !QSystemTrayIcon::supportsMessages()) {
         return false;
     }
-    m_tray->showMessage(title, body, placeholderTrayIcon(), 5000);
+    m_tray->showMessage(title, body, trayIcon(), 5000);
     return true;
 }
 
