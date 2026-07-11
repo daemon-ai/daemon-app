@@ -626,6 +626,38 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(deadFailed.count(), 1, 3000);
     }
 
+    // AD (1a.2, §10.3 rung 3): the direct room-lifecycle verbs carry the client-minted
+    // retry-safety op_id when provided, and omit the key entirely when not (absent ≠ null).
+    void roomVerbsCarryRetrySafetyOpIds() {
+        daemonapp::daemon::ConvJoinForm join;
+        join.name = QStringLiteral("ops");
+        const QByteArray withId = daemonapp::daemon::NodeApiCodec::encodeConvJoinRequest(
+            QStringLiteral("matrix/@you:hs"), join, QStringLiteral("op-join-1"));
+        QVERIFY(withId.contains("op_id"));
+        QVERIFY(withId.contains("op-join-1"));
+        const QByteArray withoutId = daemonapp::daemon::NodeApiCodec::encodeConvJoinRequest(
+            QStringLiteral("matrix/@you:hs"), join);
+        QVERIFY(!withoutId.contains("op_id"));
+
+        daemonapp::daemon::ConvCreateForm create;
+        const QByteArray created = daemonapp::daemon::NodeApiCodec::encodeConvCreateRequest(
+            QStringLiteral("matrix/@you:hs"), create, QStringLiteral("op-create-1"));
+        QVERIFY(created.contains("op_id"));
+        QVERIFY(created.contains("op-create-1"));
+
+        const QByteArray invite = daemonapp::daemon::NodeApiCodec::encodeMemberInviteRequest(
+            QStringLiteral("matrix/@you:hs"), QStringLiteral("!room:hs"), QStringLiteral("@bob:hs"),
+            QStringLiteral("op-inv-1"));
+        QVERIFY(invite.contains("op_id"));
+        QVERIFY(invite.contains("op-inv-1"));
+
+        const QByteArray setRole = daemonapp::daemon::NodeApiCodec::encodeMemberSetRoleRequest(
+            QStringLiteral("matrix/@you:hs"), QStringLiteral("!room:hs"), QStringLiteral("@bob:hs"),
+            QStringLiteral("Op"), QStringLiteral("op-role-1"));
+        QVERIFY(setRole.contains("op_id"));
+        QVERIFY(setRole.contains("op-role-1"));
+    }
+
     // SessionUpdateMeta encodes ONLY the touched field(s): a pin patch carries "pinned" but not
     // "archived"/"title" (the tri-state optionals omit an untouched key from the map). Pure facade
     // encode - no fixture needed.

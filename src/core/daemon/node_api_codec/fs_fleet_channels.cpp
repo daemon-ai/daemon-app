@@ -1263,8 +1263,10 @@ QByteArray NodeApiCodec::encodeConvCreateDetailsRequest(const QString& transport
         });
 }
 
-QByteArray NodeApiCodec::encodeConvJoinRequest(const QString& transport, const ConvJoinForm& form) {
+QByteArray NodeApiCodec::encodeConvJoinRequest(const QString& transport, const ConvJoinForm& form,
+                                               const QString& opId) {
     const QByteArray t = transport.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     const QByteArray name = form.name.toUtf8();
     const QByteArray nickname = form.nickname.toUtf8();
     const QByteArray password = form.password.toUtf8();
@@ -1273,6 +1275,12 @@ QByteArray NodeApiCodec::encodeConvJoinRequest(const QString& transport, const C
         api_request_r::api_request_request_conv_join_m_c, [&](api_request_r& request) {
             request_conv_join& j = request.api_request_request_conv_join_m;
             setZcbor(j.ConvJoin_transport, t);
+            // [api/39 §10.3 rung 3] retry-safety op-id on the direct join verb (absent = none).
+            j.ConvJoin_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                j.ConvJoin_op_id.ConvJoin_op_id_choice = ConvJoin_op_id_r::ConvJoin_op_id_tstr_c;
+                setZcbor(j.ConvJoin_op_id.ConvJoin_op_id_tstr, opIdUtf8);
+            }
             channel_join_details& d = j.ConvJoin_details;
             d.channel_join_details_name_present = true;
             d.channel_join_details_name.channel_join_details_name_choice =
@@ -1307,14 +1315,22 @@ QByteArray NodeApiCodec::encodeConvJoinRequest(const QString& transport, const C
 }
 
 QByteArray NodeApiCodec::encodeConvCreateRequest(const QString& transport,
-                                                 const ConvCreateForm& form) {
+                                                 const ConvCreateForm& form, const QString& opId) {
     const QByteArray t = transport.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     QList<QByteArray> participantScratch;
     QList<QByteArray> extrasScratch;
     return encodeWithFill(
         api_request_r::api_request_request_conv_create_m_c, [&](api_request_r& request) {
             request_conv_create& c = request.api_request_request_conv_create_m;
             setZcbor(c.ConvCreate_transport, t);
+            // [api/39 §10.3 rung 3] retry-safety op-id on the direct create verb (no dup room).
+            c.ConvCreate_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                c.ConvCreate_op_id.ConvCreate_op_id_choice =
+                    ConvCreate_op_id_r::ConvCreate_op_id_tstr_c;
+                setZcbor(c.ConvCreate_op_id.ConvCreate_op_id_tstr, opIdUtf8);
+            }
             create_conversation_details& d = c.ConvCreate_details;
             d.create_conversation_details_max_participants_present = form.hasMaxParticipants;
             if (form.hasMaxParticipants) {
@@ -1385,10 +1401,11 @@ QByteArray NodeApiCodec::encodeConvGetRequest(const QString& transport, const QS
 }
 
 QByteArray NodeApiCodec::encodeMemberInviteRequest(const QString& transport, const QString& conv,
-                                                   const QString& contactId) {
+                                                   const QString& contactId, const QString& opId) {
     const QByteArray t = transport.toUtf8();
     const QByteArray c = conv.toUtf8();
     const QByteArray who = contactId.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_member_invite_m_c, [&](api_request_r& request) {
             member_invite_args& a =
@@ -1397,16 +1414,24 @@ QByteArray NodeApiCodec::encodeMemberInviteRequest(const QString& transport, con
             setZcbor(a.member_invite_args_conv, c);
             fillContactParticipant(a.member_invite_args_who, who);
             a.member_invite_args_message_present = false;
+            // [api/39 §10.3 rung 3] retry-safety op-id (double-op guard; absent = none).
+            a.member_invite_args_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                a.member_invite_args_op_id.member_invite_args_op_id_choice =
+                    member_invite_args_op_id_r::member_invite_args_op_id_tstr_c;
+                setZcbor(a.member_invite_args_op_id.member_invite_args_op_id_tstr, opIdUtf8);
+            }
         });
 }
 
 QByteArray NodeApiCodec::encodeMemberRemoveRequest(const QString& transport, const QString& conv,
-                                                   const QString& contactId,
-                                                   const QString& reason) {
+                                                   const QString& contactId, const QString& reason,
+                                                   const QString& opId) {
     const QByteArray t = transport.toUtf8();
     const QByteArray c = conv.toUtf8();
     const QByteArray who = contactId.toUtf8();
     const QByteArray reasonU = reason.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_member_remove_m_c, [&](api_request_r& request) {
             member_remove_args& a =
@@ -1420,15 +1445,23 @@ QByteArray NodeApiCodec::encodeMemberRemoveRequest(const QString& transport, con
                     member_remove_args_reason_r::member_remove_args_reason_tstr_c;
                 setZcbor(a.member_remove_args_reason.member_remove_args_reason_tstr, reasonU);
             }
+            a.member_remove_args_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                a.member_remove_args_op_id.member_remove_args_op_id_choice =
+                    member_remove_args_op_id_r::member_remove_args_op_id_tstr_c;
+                setZcbor(a.member_remove_args_op_id.member_remove_args_op_id_tstr, opIdUtf8);
+            }
         });
 }
 
 QByteArray NodeApiCodec::encodeMemberBanRequest(const QString& transport, const QString& conv,
-                                                const QString& contactId, const QString& reason) {
+                                                const QString& contactId, const QString& reason,
+                                                const QString& opId) {
     const QByteArray t = transport.toUtf8();
     const QByteArray c = conv.toUtf8();
     const QByteArray who = contactId.toUtf8();
     const QByteArray reasonU = reason.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_member_ban_m_c, [&](api_request_r& request) {
             member_ban_args& a =
@@ -1442,14 +1475,22 @@ QByteArray NodeApiCodec::encodeMemberBanRequest(const QString& transport, const 
                     member_ban_args_reason_r::member_ban_args_reason_tstr_c;
                 setZcbor(a.member_ban_args_reason.member_ban_args_reason_tstr, reasonU);
             }
+            a.member_ban_args_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                a.member_ban_args_op_id.member_ban_args_op_id_choice =
+                    member_ban_args_op_id_r::member_ban_args_op_id_tstr_c;
+                setZcbor(a.member_ban_args_op_id.member_ban_args_op_id_tstr, opIdUtf8);
+            }
         });
 }
 
 QByteArray NodeApiCodec::encodeMemberSetRoleRequest(const QString& transport, const QString& conv,
-                                                    const QString& contactId, const QString& role) {
+                                                    const QString& contactId, const QString& role,
+                                                    const QString& opId) {
     const QByteArray t = transport.toUtf8();
     const QByteArray c = conv.toUtf8();
     const QByteArray who = contactId.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_member_set_role_m_c, [&](api_request_r& request) {
             member_set_role_args& a =
@@ -1460,6 +1501,12 @@ QByteArray NodeApiCodec::encodeMemberSetRoleRequest(const QString& transport, co
             a.member_set_role_args_role.member_role_choice =
                 static_cast<decltype(a.member_set_role_args_role.member_role_choice)>(
                     memberRoleChoice(role));
+            a.member_set_role_args_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                a.member_set_role_args_op_id.member_set_role_args_op_id_choice =
+                    member_set_role_args_op_id_r::member_set_role_args_op_id_tstr_c;
+                setZcbor(a.member_set_role_args_op_id.member_set_role_args_op_id_tstr, opIdUtf8);
+            }
         });
 }
 

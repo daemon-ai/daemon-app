@@ -4,6 +4,7 @@
 #include "daemon/repositories.h"
 
 #include "daemon/node_api_codec.h"
+#include "uuidv7.h"
 
 #include <algorithm>
 #include <array>
@@ -2223,8 +2224,11 @@ void TransportRepository::joinRoom(const QString& transport, const QVariantMap& 
     f.hasPassword = !password.isEmpty();
     f.password = password;
     f.extras = extrasFromForm(form);
-    client()->sendRequest(NodeApiCodec::encodeConvJoinRequest(transport, f),
-                          QLatin1String(kJoinPrefix) + transport);
+    // [api/39 §10.3 rung 3] a client-minted op-id makes the direct join retry-safe (the node
+    // dedups on (principal, op_id) — a resent form cannot join twice).
+    client()->sendRequest(
+        NodeApiCodec::encodeConvJoinRequest(transport, f, mirror::generateUuidV7()),
+        QLatin1String(kJoinPrefix) + transport);
 }
 
 void TransportRepository::createRoom(const QString& transport, const QVariantMap& form) {
@@ -2246,8 +2250,10 @@ void TransportRepository::createRoom(const QString& transport, const QVariantMap
         }
     }
     f.extras = extrasFromForm(form);
-    client()->sendRequest(NodeApiCodec::encodeConvCreateRequest(transport, f),
-                          QLatin1String(kCreatePrefix) + transport);
+    // [api/39 §10.3 rung 3] retry-safe direct create — no duplicate room on resend.
+    client()->sendRequest(
+        NodeApiCodec::encodeConvCreateRequest(transport, f, mirror::generateUuidV7()),
+        QLatin1String(kCreatePrefix) + transport);
 }
 
 void TransportRepository::leaveRoom(const QString& transport, const QString& conversation) {
@@ -2284,9 +2290,9 @@ void TransportRepository::memberInvite(const QString& transport, const QString& 
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    client()->sendRequest(
-        NodeApiCodec::encodeMemberInviteRequest(transport, conversation, contactId),
-        QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
+    client()->sendRequest(NodeApiCodec::encodeMemberInviteRequest(
+                              transport, conversation, contactId, mirror::generateUuidV7()),
+                          QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
 }
 
 void TransportRepository::memberKick(const QString& transport, const QString& conversation,
@@ -2295,9 +2301,10 @@ void TransportRepository::memberKick(const QString& transport, const QString& co
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    client()->sendRequest(
-        NodeApiCodec::encodeMemberRemoveRequest(transport, conversation, contactId),
-        QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
+    client()->sendRequest(NodeApiCodec::encodeMemberRemoveRequest(transport, conversation,
+                                                                  contactId, QString(),
+                                                                  mirror::generateUuidV7()),
+                          QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
 }
 
 void TransportRepository::memberBan(const QString& transport, const QString& conversation,
@@ -2306,7 +2313,8 @@ void TransportRepository::memberBan(const QString& transport, const QString& con
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    client()->sendRequest(NodeApiCodec::encodeMemberBanRequest(transport, conversation, contactId),
+    client()->sendRequest(NodeApiCodec::encodeMemberBanRequest(transport, conversation, contactId,
+                                                               QString(), mirror::generateUuidV7()),
                           QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
 }
 
@@ -2316,9 +2324,9 @@ void TransportRepository::memberSetRole(const QString& transport, const QString&
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    client()->sendRequest(
-        NodeApiCodec::encodeMemberSetRoleRequest(transport, conversation, contactId, role),
-        QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
+    client()->sendRequest(NodeApiCodec::encodeMemberSetRoleRequest(
+                              transport, conversation, contactId, role, mirror::generateUuidV7()),
+                          QLatin1String(kMemberOpPrefix) + transport + QChar(0x1f) + conversation);
 }
 
 void TransportRepository::handleJoinDetailsResponse(const QString& transport,

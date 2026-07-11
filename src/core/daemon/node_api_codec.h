@@ -1735,11 +1735,15 @@ public:
     // app renders it, then sends the filled form (ConvJoin / ConvCreate). Single-verb ops
     // (leave/delete) name the target conversation. ConvGet hydrates one conversation incl. members.
     [[nodiscard]] static QByteArray encodeConvJoinDetailsRequest(const QString& transport);
+    // [api/39 §10.3 rung 3] `opId` (absent when empty) is the client-minted retry-safety key on
+    // the direct create/join verbs (the node dedups on (principal, op_id) — no duplicate room).
     [[nodiscard]] static QByteArray encodeConvJoinRequest(const QString& transport,
-                                                          const ConvJoinForm& form);
+                                                          const ConvJoinForm& form,
+                                                          const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeConvCreateDetailsRequest(const QString& transport);
     [[nodiscard]] static QByteArray encodeConvCreateRequest(const QString& transport,
-                                                            const ConvCreateForm& form);
+                                                            const ConvCreateForm& form,
+                                                            const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeConvLeaveRequest(const QString& transport,
                                                            const QString& conv);
     [[nodiscard]] static QByteArray encodeConvDeleteRequest(const QString& transport,
@@ -1748,21 +1752,24 @@ public:
                                                          const QString& conv);
     // Membership verbs: `contactId` names the target member; `role` is a MemberRole wire string
     // (None|Voice|HalfOp|Op|Founder). Kick/Ban carry an optional reason (empty = absent).
+    // [api/39 §10.3 rung 3] `opId` (absent when empty) is the retry-safety double-op guard.
     [[nodiscard]] static QByteArray encodeMemberInviteRequest(const QString& transport,
                                                               const QString& conv,
-                                                              const QString& contactId);
+                                                              const QString& contactId,
+                                                              const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeMemberRemoveRequest(const QString& transport,
                                                               const QString& conv,
                                                               const QString& contactId,
-                                                              const QString& reason = QString());
-    [[nodiscard]] static QByteArray encodeMemberBanRequest(const QString& transport,
-                                                           const QString& conv,
-                                                           const QString& contactId,
-                                                           const QString& reason = QString());
+                                                              const QString& reason = QString(),
+                                                              const QString& opId = QString());
+    [[nodiscard]] static QByteArray
+    encodeMemberBanRequest(const QString& transport, const QString& conv, const QString& contactId,
+                           const QString& reason = QString(), const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeMemberSetRoleRequest(const QString& transport,
                                                                const QString& conv,
                                                                const QString& contactId,
-                                                               const QString& role);
+                                                               const QString& role,
+                                                               const QString& opId = QString());
     // Decode the two details responses + the ConvGet response (Some/None -> *found).
     static bool decodeConvJoinDetails(const QByteArray& responseCbor,
                                       DecodedChannelJoinDetails* out);

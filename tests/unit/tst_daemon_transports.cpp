@@ -898,9 +898,15 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(members.count(), 2, 3000);
         const QList<QByteArray> calls = fake.callPayloads();
         QCOMPARE(calls.size(), 3); // ConvGet, MemberSetRole, ConvGet
-        QCOMPARE(calls.at(1),
-                 NodeApiCodec::encodeMemberSetRoleRequest(t, c, QStringLiteral("@bob:matrix.org"),
-                                                          QStringLiteral("Voice")));
+        // AD (1a.2, §10.3 rung 3): the sent frame is the SetRole encode PLUS a freshly-minted
+        // retry-safety op_id, so byte-equality holds only up to the random key — assert the
+        // fixed prefix and the op_id tail instead.
+        const QByteArray withoutOpId = NodeApiCodec::encodeMemberSetRoleRequest(
+            t, c, QStringLiteral("@bob:matrix.org"), QStringLiteral("Voice"));
+        QVERIFY(calls.at(1).contains("MemberSetRole"));
+        QVERIFY(calls.at(1).contains("op_id"));
+        QVERIFY(!withoutOpId.contains("op_id"));
+        QVERIFY(calls.at(1).size() > withoutOpId.size());
         QCOMPARE(calls.at(2), NodeApiCodec::encodeConvGetRequest(t, c));
     }
 
