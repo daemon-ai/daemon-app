@@ -61,7 +61,7 @@ const QStringList& SyncState::allCollections() {
         QStringLiteral("sessions"), QStringLiteral("fleet"),      QStringLiteral("approvals"),
         QStringLiteral("models"),   QStringLiteral("profiles"),   QStringLiteral("conversations"),
         QStringLiteral("contacts"), QStringLiteral("persons"),    QStringLiteral("notifications"),
-        QStringLiteral("chat"),     QStringLiteral("transports"),
+        QStringLiteral("chat"),     QStringLiteral("transports"), QStringLiteral("routing"),
     };
     return all;
 }

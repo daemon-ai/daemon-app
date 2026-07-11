@@ -40,6 +40,10 @@ private:
         QString conv;
         std::vector<mirror::Conversation> convAccum;
         std::vector<mirror::Contact> contactAccum;
+        // M3 routing: the pin table (RoutingListChats) + a transport's bindable rooms
+        // (TransportRooms) accumulate across the page loop, then land as one replace-and-prune.
+        std::vector<mirror::RoutePin> routePinAccum;
+        std::vector<mirror::Room> roomAccum;
         // [api/39 §10.2] Delta-read accumulation across the page loop: the removed-id tombstones
         // and the collection rev (last page wins). Applied via the ingestor's deliver*Delta seam
         // when the job is a since_rev delta read (fullMode && sinceRev > 0).

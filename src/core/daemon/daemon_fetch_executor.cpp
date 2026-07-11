@@ -81,9 +81,17 @@ void DaemonFetchExecutor::sendFor(const InFlight& f, const QString& pageToken,
         // {cursor, epoch, revs} and drives ingestor.onBootstrap(), which issues the delta reads.
         req = NodeApiCodec::encodeBootstrapRequest();
         break;
+    case mirror::FetchOp::RoutingListChats:
+        // M3: the origin→session pin table. Global list; `after` resumes the page loop.
+        req = NodeApiCodec::encodeRoutingListChatsRequest(pageToken);
+        break;
+    case mirror::FetchOp::TransportRooms:
+        // M3: a transport instance's bindable rooms; `after` resumes the page loop.
+        req = NodeApiCodec::encodeTransportRoomsRequest(f.transport, pageToken);
+        break;
     default:
-        // Ops A5 does not yet fulfil on the mirror path (routing/rooms/etc.) complete immediately;
-        // the legacy repositories still serve those surfaces (dual-write). A6+ ports them.
+        // Ops the mirror path does not fulfil yet (sessions/fleet/etc. — A7's M4 wave) complete
+        // immediately; the legacy repositories still serve those surfaces (dual-write).
         m_scheduler.complete(f.job.coalesceKey());
         m_inflight.remove(f.job.correlation());
         return;
@@ -179,6 +187,42 @@ void DaemonFetchExecutor::onResponse(const QString& correlationId, const QByteAr
         if (NodeApiCodec::decodeBootstrap(responseCbor, &cursor, &epoch, &revs)) {
             m_ingestor.onBootstrap(cursor, epoch, revs);
         }
+        finish(correlationId);
+        return;
+    }
+    case mirror::FetchOp::RoutingListChats: {
+        std::vector<mirror::RoutePin> page;
+        QString nextPage;
+        if (!decodeRoutePinsToMirror(responseCbor, &page, &nextPage)) {
+            finish(correlationId);
+            return;
+        }
+        for (auto& p : page) {
+            f.routePinAccum.push_back(std::move(p));
+        }
+        if (!nextPage.isEmpty()) {
+            sendFor(f, nextPage, 0); // next page — same scheduler job
+            return;
+        }
+        m_ingestor.deliverRoutePins(f.routePinAccum, /*isFinalPage=*/true);
+        finish(correlationId);
+        return;
+    }
+    case mirror::FetchOp::TransportRooms: {
+        std::vector<mirror::Room> page;
+        QString nextPage;
+        if (!decodeRoomsToMirror(responseCbor, f.transport, &page, &nextPage)) {
+            finish(correlationId);
+            return;
+        }
+        for (auto& r : page) {
+            f.roomAccum.push_back(std::move(r));
+        }
+        if (!nextPage.isEmpty()) {
+            sendFor(f, nextPage, 0);
+            return;
+        }
+        m_ingestor.deliverRooms(f.transport, f.roomAccum, /*isFinalPage=*/true);
         finish(correlationId);
         return;
     }
