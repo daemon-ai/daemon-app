@@ -93,8 +93,6 @@ add_library(da_daemon_client STATIC
     subscription_manager.cpp
     daemon_fs_service.h
     daemon_fs_service.cpp
-    daemon_fleet_tree.h
-    daemon_fleet_tree.cpp
     daemon_session_roster.h
     daemon_session_roster.cpp
     daemon_dashboard.h
@@ -196,6 +194,10 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         transcript_mirror_sink.h
         mirror_transcript_sink.h
         mirror_transcript_sink.cpp
+        # G2 (M5): the fleet TREE projected from the mirror FleetUnit entity (replaces the legacy
+        # DaemonFleetTree). Needs the mirror store/ingestor, so it is substrate-gated here.
+        mirror_fleet_tree.h
+        mirror_fleet_tree.cpp
     )
     target_link_libraries(da_daemon_client PUBLIC
         daemon-app::mirror_ingestor

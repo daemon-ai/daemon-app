@@ -20,7 +20,7 @@ namespace transports {
 //
 // Lives under src/core/daemon (not transports/) because it depends on the daemon
 // TransportRepository, which links the transports interface - keeping it here avoids a library
-// cycle (cf. DaemonFleetTree).
+// cycle (cf. MirrorFleetTree).
 class DaemonTransportRegistry : public ITransportRegistry {
     Q_OBJECT
 

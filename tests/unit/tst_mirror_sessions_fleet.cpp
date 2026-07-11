@@ -101,19 +101,20 @@ QByteArray sessionsResponse() {
     return encodeResponse(resp);
 }
 
-// {"Tree": {root: null, nodes: [<engine unit, 2 children>], rev: 7}}.
+// {"Tree": {root: null, nodes: [<orchestrator, 2 children>, <foreign-engine child>], rev: 7}}.
 QByteArray treeResponse() {
     static const QByteArray u1 = QByteArrayLiteral("u-root");
     static const QByteArray title = QByteArrayLiteral("Root orchestrator");
     static const QByteArray prof = QByteArrayLiteral("prof-9");
     static const QByteArray childA = QByteArrayLiteral("u-child-a");
     static const QByteArray childB = QByteArrayLiteral("u-child-b");
+    static const QByteArray agent = QByteArrayLiteral("gemini-cli");
 
     api_response_r resp{};
     resp.api_response_choice = api_response_r::api_response_response_tree_m_c;
     tree_report& tree = resp.api_response_response_tree_m.response_tree_Tree;
     tree.tree_report_root_choice = tree_report::tree_report_root_null_m_c;
-    tree.tree_report_nodes_unit_node_m_count = 1;
+    tree.tree_report_nodes_unit_node_m_count = 2;
     tree.tree_report_next_present = false;
     tree.tree_report_rev = 7;
 
@@ -136,6 +137,27 @@ QByteArray treeResponse() {
     u.unit_node_role_present = false; // null role => canonical Primary
     u.unit_node_lifetime_present = false;
     u.unit_node_engine_present = false;
+
+    // G2: a leaf child carrying the v29 engine-selector (Foreign + agent) — the enrichment the
+    // mirror tree renders without a per-node profile join.
+    unit_node& c = tree.tree_report_nodes_unit_node_m[1];
+    setStr(c.unit_node_id, childA);
+    c.unit_node_kind.unit_kind_choice = unit_kind_r::unit_kind_Engine_tstr_c;
+    c.unit_node_state.unit_state_choice = unit_state_r::unit_state_Running_tstr_c;
+    c.unit_node_work_choice = unit_node::unit_node_work_null_m_c;
+    c.unit_node_children_unit_id_m_count = 0;
+    c.unit_node_profile_present = false;
+    c.unit_node_title_present = false;
+    c.unit_node_session_present = false;
+    c.unit_node_role_present = false;
+    c.unit_node_lifetime_present = false;
+    c.unit_node_engine_present = true;
+    c.unit_node_engine.unit_node_engine_choice =
+        unit_node_engine_r::unit_node_engine_engine_selector_m_c;
+    engine_selector_r& es = c.unit_node_engine.unit_node_engine_engine_selector_m;
+    es.engine_selector_choice = engine_selector_r::engine_selector_engine_foreign_m_c;
+    setStr(es.engine_selector_engine_foreign_m.engine_foreign_Foreign.engine_foreign_agent_agent,
+           agent);
 
     return encodeResponse(resp);
 }
@@ -250,13 +272,15 @@ private slots:
     }
 
     // map_fleet_unit: a wire Tree page decodes into FleetUnit entities; child_count = children
-    // count, a null role canonicalizes to Primary, and the tree rev is surfaced.
-    void decodesFleetUnitsWithChildCountAndRev() {
+    // count, a null role canonicalizes to Primary, and the tree rev is surfaced. G2: the ORDERED
+    // children edge round-trips as the 0x1f-joined child_ids (the §3.5 unitsByParent relation the
+    // tree render reconstructs), and the v29 engine-selector decodes to engine/engine_agent.
+    void decodesFleetUnitsWithChildEdgesAndRev() {
         std::vector<mirror::FleetUnit> out;
         QString next;
         quint64 rev = 0;
         QVERIFY(decodeFleetUnitsToMirror(treeResponse(), &out, &next, &rev));
-        QCOMPARE(out.size(), std::size_t{1});
+        QCOMPARE(out.size(), std::size_t{2});
         QCOMPARE(out[0].id, QStringLiteral("u-root"));
         QCOMPARE(out[0].kind, QStringLiteral("Orchestrator"));
         QCOMPARE(out[0].state, QStringLiteral("Running"));
@@ -264,6 +288,18 @@ private slots:
         QCOMPARE(out[0].profile, QStringLiteral("prof-9"));
         QCOMPARE(out[0].role, QStringLiteral("Primary"));
         QCOMPARE(out[0].child_count, 2);
+        // The edge: LISTED child order, 0x1f-joined, verbatim off the wire.
+        QCOMPARE(out[0].child_ids,
+                 QStringLiteral("u-child-a") + QChar(0x1f) + QStringLiteral("u-child-b"));
+        QVERIFY(out[0].engine.isEmpty()); // unenriched root: no engine chip
+        QVERIFY(out[0].engine_agent.isEmpty());
+        // The foreign-engine child: engine-selector -> "Foreign" + the agent name; a leaf's edge
+        // is empty.
+        QCOMPARE(out[1].id, QStringLiteral("u-child-a"));
+        QCOMPARE(out[1].engine, QStringLiteral("Foreign"));
+        QCOMPARE(out[1].engine_agent, QStringLiteral("gemini-cli"));
+        QVERIFY(out[1].child_ids.isEmpty());
+        QCOMPARE(out[1].child_count, 0);
         QVERIFY(next.isEmpty());
         QCOMPARE(rev, quint64{7});
     }

@@ -131,6 +131,10 @@ public:
     void refetchRouting();
     // Re-list a transport instance's bindable rooms into the mirror (TransportRooms).
     void refetchRooms(const QString& transport);
+    // Re-fetch the supervision fleet tree into the mirror (Tree). Called on an explicit fleet
+    // refresh (the FleetPage/ops-hub refresh action, the mirror twin of the legacy
+    // FleetRepository::refreshTree) so the mirror-served tree re-syncs on demand.
+    void refetchFleet();
 
     // --- scoped session refresh triggers (M4) --------------------------------------------------
     // The scoped SessionsQuery reads the roster's scoped views need (the mirror twins of the

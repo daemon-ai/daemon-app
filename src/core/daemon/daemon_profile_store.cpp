@@ -475,8 +475,9 @@ void DaemonProfileStore::rebuild() {
             // catalog agent name for foreign ones (so the UI can label/hide inference-only
             // affordances). The agent's protocol (ACP vs stream-json) is a catalog-entry property.
             // NB: the presentation row key stays `acpAgent` (the foreign agent name) — it is the
-            // contract read by app-delegation's fleet mapper (daemon_fleet_tree.cpp), which this
-            // stream must not touch. Only the engine VALUE moves "Acp" -> "Foreign".
+            // contract read by the app-delegation fleet surfaces (the tree row's engineAgent key,
+            // mirror_fleet_tree.cpp), which this stream must not touch. Only the engine VALUE
+            // moves "Acp" -> "Foreign".
             row[QStringLiteral("engine")] = spec.engineKind;
             row[QStringLiteral("acpAgent")] = spec.engineForeignAgent;
             // Foreign model backend (wire v30), projected as a compact map the AgentSetupModel

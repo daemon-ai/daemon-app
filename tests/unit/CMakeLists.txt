@@ -443,21 +443,6 @@ target_link_libraries(tst_subscription_manager
 add_test(NAME tst_subscription_manager COMMAND tst_subscription_manager)
 set_tests_properties(tst_subscription_manager PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_daemon_fleet_tree: the Phase 5b daemon-backed fleet seam - offline render from cache, a Tree
-# query populating cache+model, and a PRO-10 control rejection (Unsupported) reverting the optimistic
-# pause overlay, all over the WireMuxServer fixture.
-qt_add_executable(tst_daemon_fleet_tree tst_daemon_fleet_tree.cpp)
-target_link_libraries(tst_daemon_fleet_tree
-    PRIVATE
-        Qt6::Test
-        Qt6::Network
-        daemon-app::daemon_client
-        daemon-app::fleet
-        daemon-app::uimodels
-)
-add_test(NAME tst_daemon_fleet_tree COMMAND tst_daemon_fleet_tree)
-set_tests_properties(tst_daemon_fleet_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-
 # tst_daemon_roster_dashboard: the Phase 5 daemon-backed roster + dashboard seams - offline-first
 # roster projected from the CachedSessionStore, the client-local suspend overlay + close->archive,
 # and the dashboard counters derived from roster/fleet/approvals/connection.
@@ -645,6 +630,29 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     )
     add_test(NAME tst_mirror_transcript_parity COMMAND tst_mirror_transcript_parity)
     set_tests_properties(tst_mirror_transcript_parity PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
+# tst_mirror_fleet_tree (G2/M5): the fleet TREE ported onto the mirror (replaces the deleted
+# tst_daemon_fleet_tree). Re-expresses the still-relevant behaviors on the mirror path: an
+# offline render from the seeded mirror fleet_units (depth/kind/status from the child_ids edge),
+# the wire engine chip decoded off the mirror FleetUnit, refresh() enqueuing a Tree refetch, and a
+# PRO-10 control rejection (Unsupported) reverting the optimistic pause overlay over the
+# WireMuxServer fixture. Only built with the substrate.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    qt_add_executable(tst_mirror_fleet_tree tst_mirror_fleet_tree.cpp)
+    target_link_libraries(tst_mirror_fleet_tree
+        PRIVATE
+            Qt6::Test
+            Qt6::Network
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+            daemon-app::fleet
+            daemon-app::uimodels
+    )
+    add_test(NAME tst_mirror_fleet_tree COMMAND tst_mirror_fleet_tree)
+    set_tests_properties(tst_mirror_fleet_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
 
 # tst_sessions_list_mirror (M4 sub-gate 1): the roster list consumer on the mirror path - the

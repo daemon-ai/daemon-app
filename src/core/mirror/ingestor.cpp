@@ -813,6 +813,13 @@ void Ingestor::refetchRouting() {
     state_.markSyncing(QStringLiteral("routing"));
 }
 
+void Ingestor::refetchFleet() {
+    enqueueFetch(FetchOp::Tree, QString(),
+                 observing(QStringLiteral("fleet"), QString()) ? Priority::VisibleSurface
+                                                               : Priority::Prefetch);
+    state_.markSyncing(QStringLiteral("fleet"));
+}
+
 void Ingestor::refetchRooms(const QString& transport) {
     enqueueFetch(FetchOp::TransportRooms, transport,
                  observing(QStringLiteral("rooms"), transport) ? Priority::VisibleSurface
