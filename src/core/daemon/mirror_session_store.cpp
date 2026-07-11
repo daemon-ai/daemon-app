@@ -135,7 +135,7 @@ void MirrorSessionStore::rebuildFromSnapshot() {
     }
     // Deterministic projection order: pinned first, then last-activity desc, then id (the legacy
     // cache's ORDER BY updated_at_ms DESC was client-receive-time, arbitrary within a refresh).
-    std::sort(m_rows.begin(), m_rows.end(), [](const domain::Session& a, const domain::Session& b) {
+    std::ranges::sort(m_rows, [](const domain::Session& a, const domain::Session& b) {
         if (a.isPinned != b.isPinned) {
             return a.isPinned;
         }

@@ -103,49 +103,96 @@ when a cache/repo/store's LAST reader is ported and its parity assert has been g
   mirror path (decodeSessionsToMirror → ingestor → MirrorSessionStore) and asserts row-set equality
   (`parity::sessionKeys`) + view equality (ids/counts/titles/pinned/pinned-floats-first).
 
-## Status / boundary (updated as sub-steps land)
+## Status (all gates green at each step)
 
-- **Sub-step 0 (fetch/ingest vertical) — DONE, gated green.** `sessions`/`fleet_units` mirror tables
-  are fed end-to-end in daemon mode, beside the legacy repos (dual-write). ctest 136→137.
-- **Parity infrastructure — DONE, gated green.** `parity::sessionKeys` / `parity::fleetUnitKeys`
-  extract the mirror row-set for comparison against the legacy `CachedSessionStore` /
-  `SessionRepository` / fleet-tree row-set (spec §13 M4 "parity asserts vs legacy roster until
-  deletion"). Covered in `tst_mirror_parity`.
+- **Sub-step 0 (fetch/ingest vertical) — DONE.** `sessions`/`fleet_units` fed end-to-end in daemon
+  mode beside the legacy repos (dual-write). ctest 136→137.
+- **Parity infrastructure — DONE.** `parity::sessionKeys`/`fleetUnitKeys` + the dual-decoder
+  parity assert (same SessionPage bytes through both paths). ctest →138.
+- **Mechanism — DONE.** `MirrorSessionStore` + `storeMirror`/`SessionStoreMirror` composition
+  binding + scoped roster fetches + SessionPage wire fix + bootstrap "roster"→"sessions" key map.
+- **Sub-gate 1 (roster list) — DONE.** SessionsList.qml + ArchivedSection.qml + TUI m_list +
+  wireSessionList actions on the mirror store. `tst_sessions_list_mirror`. ctest →139.
+- **Sub-gate 2 (sidebar) — DONE.** Sidebar.qml + TUI m_sidebar. Counts + Fleet membership
+  (ByProfile leaves) project mirror rows. `tst_sidebar_mirror`. ctest →140.
+- **Sub-gate 3 (pickers/tab chips) — DONE.** Session.qml (creator/_titleFor/dialogs) + TUI tab
+  title resolution, /title + /save, notification titles. `tui_tab_title_mirror_tests`. ctest →141.
+- **Sub-gate 4 (detail pane) — DONE.** TranscriptPage.qml + Participants.qml + TUI
+  TabSessionManager + m_participants. Content renders via the DELEGATED legacy transcript source.
+- **Sub-gate 5 (transcript chrome) — DONE.** Transcript.qml loadTranscript + Main.qml meta toast +
+  exporter (mirror title + delegated content composed through ONE store).
+- **Ops-hub roster — DONE.** DaemonSessionRoster (GUI Fleet/Sessions page + TUI ops hub) projects
+  storeMirror; constructed after the mirror block. Fully mirror-served row shape (no degradation).
 
-### Precise boundary handed to the next A7 continuation / A8
+Result: ZERO daemon-mode session-row consumers read the legacy CachedSessionStore. Every session
+row/count/title/pin on every surface (GUI + TUI) projects the ONE generated mirror::Session — the
+6→1 unification of 07§9.3. Mock mode renders unchanged through the composition fallback.
 
-The consumer cutover sub-gates (1 roster list → 2 sidebar → 3 pickers → 4 detail → 5 transcript
-chrome → 6 transcript-engine re-homing) are NOT yet landed. They are deliberately deferred rather
-than rushed: this is the highest-blast-radius surface and a half-finished cutover would break a
-large surface (the task's "honest partial with clean gates beats a broken total"). The precise
-seam that makes them a large, discrete step:
+## Legacy machinery: deleted vs retained (the exact A8/A9 boundary)
 
-- **Single shared store injection.** All session consumers bind to ONE context property
-  `SessionStore` (`application.cpp:253`, `engine.rootContext()->setContextProperty("SessionStore",
-  m_services.store)`) which is the legacy `CachedSessionStore`/`InMemorySessionStore`. The GUI QML
-  and the TUI both read the same object, so a per-consumer sub-gate CANNOT flip one consumer by
-  reassigning the shared property. The mechanism for the sub-gate protocol is: introduce a
-  mirror-backed `persistence::ISessionStore` (reads `Store::snapshot().sessions` + `fleet_units`,
-  re-derives on `Store::committed`), expose it as a SECOND context property, and rebind ONLY the
-  ported consumer's `store:` (QML) + its TUI wiring — keeping the legacy `SessionStore` live for the
-  unported consumers (dual-write) and for the parity assert. Delete the legacy store only when its
-  LAST reader is ported.
-- **Shape gaps the mirror Session does NOT carry (documented degradations, thin-client correct).**
-  The legacy `domain::Session` fused node facts with client-local + transcript data: `content`
-  (markdown snippet — that is the transcript/chat window, not a roster fact), `tagIds` (client-local
-  cross-cutting labels — sidecar, no node concept), and `unitId` (unit membership — derivable from
-  `fleet_units.session`). A mirror-backed roster renders snippet/tags empty until a client-local
-  sidecar (tags) and the `unitsByParent`/`sessionsByProfile` §3.5 relation indexes are added; this
-  matches the A5 canonical-shape degradation precedent. Mock mode has a null `Mirror` (A5/A6
-  precedent) so a ported surface renders empty in mock until A8's seeder feeds the mock mirror.
-- **Transcript re-homing (sub-step 6, LAST).** The turn-engine (`daemon_turn_engine.cpp`) is still
-  the single writer of transcript blocks; `TranscriptBlock`'s `map_transcript_block` remains a TODO
-  stub and the `w_transcript_blocks` legacy table is frozen (entity-map.toml note). Untouched here —
-  its own gate, per spec.
+RETAINED (each with a live, load-bearing role in the dual-write window):
+- `CachedSessionStore` — no longer a row source for ANY consumer; retained as (a) the DELEGATED
+  transcript-content source (`content()` msg-fence projection over cache transcript blocks — dies
+  with sub-step 6), (b) the delegated node-authoritative mutation path (pin/archive/rename/create →
+  SessionRepository wire ops), (c) the parity baseline + rollback path (spec §13: keep the legacy
+  path one more sub-wave; rebinding a consumer back to `SessionStore` is a one-line revert).
+- `SessionRepository` — the wire mutation sender + the legacy cache feeder (dual-write baseline).
+  Its cache feed must outlive the parity window; retire with CachedSessionStore.
+- `SubscriptionManager` session/roster arms — NOT retired: they feed the legacy cache that the
+  parity baseline + content delegation still read. Retiring them starves the dual-write baseline;
+  they die together with CachedSessionStore/SessionRepository after sub-step 6 + the mutation
+  outbox lane land.
+- `daemon_fleet_tree` (IFleetTree) — still cache-fed: mirror `FleetUnit` carries no parent/children
+  edges (the §3.5 `unitsByParent` relation index needs an entity-map/codegen change — G-series,
+  `just update-codec`, out of A7's charter). The fleet TREE stays legacy; the fleet MEMBERSHIP
+  view (sidebar) is mirror-served.
+- `MockFleetSource` + `InMemorySessionStore` — mock mode's seed/store; the composition fallback
+  binds them as `storeMirror` in mock. A8's seeder replaces this aliasing with a seeded mock mirror
+  and can then delete the fallback.
+- The `SessionStore` context property stays registered (zero QML readers) as the rollback binding.
 
-### Provenance-landing decision
+DELETED: nothing this package — by design. Deletion is gated on sub-step 6 (transcript re-homing)
+plus the mutation outbox lane; deleting the legacy store now would sever the delegated transcript
+content and the parity baseline (spec: never leave a consumer sourceless).
 
-Deferred (left for A8, as A6's LEDGER permits). This package did not touch the outbox landing seam
-(`Outbox::onProvenanceStamped` / `setProvenanceCapable`) — the session/fleet fetch vertical is a
-read path (ingestor deliver), it does not naturally cross the outbox provenance seam, so per the BR
-worker's instruction it is correctly left for A8.
+## Sub-step 6 (transcript re-homing) — NOT attempted; the precise seam
+
+Assessed and deliberately left behind its own gate (the parent-sanctioned partial). The seam:
+
+- WRITE: `DaemonTurnEngine` (src/DaemonApp/Turn/daemon_turn_engine.cpp) is the transcript single
+  writer — ~6 callsites append `CachedTranscriptBlockRow`s (Message/Reasoning/ToolCall/ToolResult
+  variants) to `DaemonCacheStore::upsertTranscriptBlock`, with live coalescing rules (reasoning
+  deltas accumulate into ONE block per run, settled by the next content event; todo-tool blocks
+  suppressed; ToolResults folded into their call's card).
+- READ: `CachedSessionStore::content()` projects those rows into byte-stable msg-fence transcript
+  markdown (~100 lines: cache-seq-derived ids, assistant-turn grouping, tool-status folding) that
+  the BlockEditor re-parses into the SAME cards as the live document.
+- RE-HOMING = a NEW writer seam: unlike every mirror write so far (wire fetch/event decode via the
+  ingestor), the engine is an app-local stream consumer. It must hand blocks to the ingestor (the
+  single mirror writer, §5.1) as `TranscriptBlock` window items (`w_transcript_blocks`, scope =
+  session, window key = seq), `map_transcript_block` gets a real body, and the content() projection
+  re-implements the msg-fence serialization over mirror windows — byte-stable, or every reload
+  reflows the user's transcript. Plus offline-reload parity (mirror.db) and the existing turn/
+  transcript suites. That is a package-sized, fidelity-critical vertical; landing it at the tail of
+  this package risks the one surface the spec ring-fenced. The 6→1 consumer unification (this
+  package's deliverable) does not depend on it: content() already flows through the ONE store
+  facade, so sub-step 6 later swaps the facade's delegation for a mirror projection with zero
+  consumer churn.
+
+## Provenance-landing decision
+
+Deferred to A8 (unchanged): this package's writes are read-path deliveries (ingestor); nothing
+crossed the outbox landing seam (`Outbox::onProvenanceStamped`/`setProvenanceCapable`).
+
+## Notes for A8 (mock/seeder) and A9 (audit)
+
+- A8: seed the mock mirror, then flip the composition fallback (`graph.storeMirror` in mock) to a
+  `MirrorSessionStore` over the seeded store; the legacy `InMemorySessionStore` + `MockFleetSource`
+  become deletable when the mock transcript path is also seeder-fed.
+- A8/A9: the bootstrap rev-key map normalizes only `"roster"`→`"sessions"`; the per-transport
+  `conv:<t>`/`contacts:<t>` keys still fall through to no-op (pre-M4 posture) — wire them when the
+  per-transport delta reads join.
+- A9: the deletion order once sub-step 6 + the mutation lane land: engine re-home → content()
+  mirror projection → drop the CachedSessionStore delegation (facade reads go pure-mirror) →
+  retire the SubscriptionManager roster arms → delete CachedSessionStore + the SessionRepository
+  cache feed → drop the `SessionStore` context property.

@@ -10,8 +10,9 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // capability provider for the command palette
-#include "daemon/repositories.h" // [wave2:app-delegation] F7/DEL-7: CapsRepository::refresh()
-#include "daemon/repositories.h" // RoutingRepository IS-A daemonnet::IRoutingActions (hub dep)
+// [wave2:app-delegation] F7/DEL-7 CapsRepository::refresh(); RoutingRepository IS-A
+// daemonnet::IRoutingActions (hub dep).
+#include "daemon/repositories.h"
 #include "dialogs/first_run_dialog.h"
 #include "display_role_adapter.h"
 #include "file_finder_model.h"
