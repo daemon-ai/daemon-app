@@ -710,12 +710,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             mirrorStore->setOutbox(graph.outbox);
             graph.storeMirror = mirrorStore;
 
-            // A7T (M4 sub-step 6) + G2 (M5): the turn engine dual-writes its coalesced transcript
-            // blocks into w_transcript_blocks through this sink (the ingestor stays the single
-            // writer, §5.1). G2 closed the entity-field gap (args_summary +
-            // detail_kind/detail_body), so MirrorSessionStore::content() now projects the mirror
-            // window (S1-S9 parity green).
-            graph.transcriptMirrorSink = new MirrorTranscriptSink(&svc->ingestor(), owner);
+            // A7T (M4 sub-step 6) → AD: the turn engine's ONE mirror seam — coalesced transcript
+            // blocks write through this sink into w_transcript_blocks (the ingestor stays the
+            // single writer, §5.1; S1-S9 byte-parity), and the engine's roster enrichment reads
+            // (child title / end-reason) answer from the mirror snapshot (the legacy
+            // roster/fleet cache reads died with AD).
+            graph.transcriptMirrorSink =
+                new MirrorTranscriptSink(&svc->ingestor(), &svc->store(), owner);
 
             // G2 (M5): the fleet TREE now projects the ONE mirror FleetUnit entity (the 6→1 tree
             // half), replacing the legacy DaemonFleetTree/daemon_fleet_units cache. Reads are pure

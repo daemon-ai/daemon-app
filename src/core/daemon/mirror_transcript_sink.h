@@ -14,6 +14,7 @@
 
 namespace mirror {
 class Ingestor;
+class Store;
 } // namespace mirror
 
 namespace daemonapp::daemon {
@@ -24,14 +25,20 @@ class MirrorTranscriptSink final : public QObject, public ITranscriptMirrorSink 
     Q_OBJECT
 
 public:
-    explicit MirrorTranscriptSink(mirror::Ingestor* ingestor, QObject* parent = nullptr)
-        : QObject(parent), m_ingestor(ingestor) {}
+    // `store` (optional) answers the roster enrichment READS (child title / end-reason) from the
+    // mirror snapshot; null (bare test stacks that only exercise the write path) answers empty.
+    explicit MirrorTranscriptSink(mirror::Ingestor* ingestor, mirror::Store* store = nullptr,
+                                  QObject* parent = nullptr)
+        : QObject(parent), m_ingestor(ingestor), m_store(store) {}
 
     void deliverBlock(const CachedTranscriptBlockRow& row) override;
     void clear(const QString& sessionId) override;
+    [[nodiscard]] QString sessionTitle(const QString& sessionId) const override;
+    [[nodiscard]] QString unitEndReason(const QString& sessionId) const override;
 
 private:
     mirror::Ingestor* m_ingestor = nullptr;
+    mirror::Store* m_store = nullptr;
 };
 
 } // namespace daemonapp::daemon

@@ -427,33 +427,25 @@ void DaemonTurnEngine::fetchSubagentEvents() {
 }
 
 QString DaemonTurnEngine::subagentTitle(const QString& childId) const {
-    // Structured enrichment: upgrade the bare child session id to its roster title (node state the
-    // cache already holds). Never parse display text. Falls back to the id when the roster has no
-    // title yet (a just-spawned child not yet in the roster page).
-    if (m_cache != nullptr) {
-        const QList<daemonapp::daemon::CachedSessionRow> rows = m_cache->sessions();
-        for (const daemonapp::daemon::CachedSessionRow& row : rows) {
-            if (row.sessionId == childId && !row.title.isEmpty()) {
-                return row.title;
-            }
+    // Structured enrichment: upgrade the bare child session id to its roster title (node state
+    // the MIRROR holds — AD re-homed this read off the legacy roster cache). Never parse display
+    // text. Falls back to the id when the roster has no title yet (a just-spawned child not yet
+    // in the roster page).
+    if (m_mirrorSink != nullptr) {
+        const QString title = m_mirrorSink->sessionTitle(childId);
+        if (!title.isEmpty()) {
+            return title;
         }
     }
     return childId;
 }
 
-// [waveB:app-v30] stretch: the node-reported terminal reason for a child session, from the cached
-// fleet tree (UnitNode.end_reason). "" when unknown (not yet in the tree / still running). Never
-// derived — rendered from the node's fact.
+// [waveB:app-v30] stretch: the node-reported terminal reason for a child session, from the
+// mirror fleet unit (unit-state-finished.end_reason — AD re-homed this read off the legacy fleet
+// cache). "" when unknown (not yet in the tree / still running). Never derived — rendered from
+// the node's fact.
 QString DaemonTurnEngine::childEndReason(const QString& childId) const {
-    if (m_cache == nullptr || childId.isEmpty()) {
-        return {};
-    }
-    for (const daemonapp::daemon::CachedFleetUnitRow& row : m_cache->fleetUnits()) {
-        if (row.sessionId == childId) {
-            return row.endReason;
-        }
-    }
-    return {};
+    return m_mirrorSink != nullptr ? m_mirrorSink->unitEndReason(childId) : QString();
 }
 
 void DaemonTurnEngine::applyUnitEvents(const QByteArray& responseCbor) {
