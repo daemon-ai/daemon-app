@@ -93,7 +93,7 @@ Rectangle {
     SidebarModel {
         id: sidebarModel
         objectName: "fleetSidebarModel"
-        store: SessionStore
+        store: SessionStoreMirror
         // The dedicated IntegrationsTree below owns the integrations surface (persons/spaces/browse
         // + account add/edit/remove + interactive auth); the legacy fleet-sidebar integrations
         // rendering was deleted in M3 (the routing manager now reads the mirror store). This model

@@ -646,6 +646,32 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     set_tests_properties(tst_sessions_list_mirror PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
 
+# tst_sidebar_mirror (M4 sub-gate 2): the sidebar session section on the mirror path - the shared
+# SidebarModel over MirrorSessionStore: All Sessions/Archived counts, the Fleet membership agent
+# counts + session leaves (ByProfile over mirror bound_profile), live updates on mirror deltas.
+# Only built with the substrate.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    qt_add_executable(tst_sidebar_mirror tst_sidebar_mirror.cpp)
+    target_include_directories(tst_sidebar_mirror
+        PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Sidebar"
+    )
+    target_link_libraries(tst_sidebar_mirror
+        PRIVATE
+            Qt6::Test
+            Qt6::Qml
+            Qt6::Quick
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::persistence
+            daemon-app::domain
+            daemon-app::profiles
+            daemon-app::sidebar
+    )
+    add_test(NAME tst_sidebar_mirror COMMAND tst_sidebar_mirror)
+    set_tests_properties(tst_sidebar_mirror PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
 # tst_graph_model: the reusable Daemon Kit graph model - generic node/edge ingestion, degree, the
 # normalized force layout, and edges()/nodeById/neighborsOf.
 qt_add_executable(tst_graph_model tst_graph_model.cpp)

@@ -103,7 +103,9 @@ RootWidget::RootWidget()
     // The reused layer: store + view models, wired exactly as in the GUI. None
     // of this depends on Tui Widgets - the same objects back the QML frontend.
     m_sidebar = new SidebarModel(this);
-    m_sidebar->setStore(m_services.store);
+    // M4 sub-gate 2: the sidebar session section reads the mirror-backed store (mock: the
+    // composition fallback alias, §9).
+    m_sidebar->setStore(m_services.storeMirror);
     // The legacy fleet-sidebar integrations section was deleted in M3 — the dedicated
     // IntegrationsTree below owns the integrations surface (GUI parity), and the routing manager
     // now reads the mirror store's pin table. SidebarModel renders only Fleet + Tags.
