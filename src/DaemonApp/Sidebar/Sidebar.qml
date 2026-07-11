@@ -94,12 +94,10 @@ Rectangle {
         id: sidebarModel
         objectName: "fleetSidebarModel"
         store: SessionStore
-        // [integrations wire v38] Work package AC: the legacy transportsTree() "Integrations"
-        // section is deliberately NOT bound here anymore — the dedicated IntegrationsTree below
-        // now owns the integrations surface (richer: persons/spaces/browse + account add/edit/
-        // remove + interactive auth), so binding both would render a duplicate "Integrations"
-        // section. The transportsTree() projection itself stays on IDaemonNet for its other
-        // consumer (the routing manager); only this fleet-sidebar rendering of it is retired.
+        // The dedicated IntegrationsTree below owns the integrations surface (persons/spaces/browse
+        // + account add/edit/remove + interactive auth); the legacy fleet-sidebar integrations
+        // rendering was deleted in M3 (the routing manager now reads the mirror store). This model
+        // renders only the Fleet + Tags sections.
         // Agents == profiles (§0): the FLEET section renders one agent row per ProfileInfo.
         profiles: Profiles
         // The node/connection ROOT label: the connection target for a remote node, else a generic

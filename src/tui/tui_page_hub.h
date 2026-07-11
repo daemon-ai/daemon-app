@@ -32,7 +32,10 @@ class GatewayRepository; // [wave2:app-gateway] Phase F: node OpenAI-gateway con
 class EngineIdentity;    // [wave2:integration] C5 approval origin attribution
 } // namespace daemonapp::daemon
 namespace daemonnet {
-class IDaemonNet;
+class IRoutingActions;
+}
+namespace mirror {
+class MirrorService;
 }
 namespace fleet {
 class IApprovalsInbox;
@@ -92,8 +95,11 @@ public:
         tools::IToolInventory* tools = nullptr; // [wave2:app-approvals-safety] D2
         fleet::IDashboard* dashboard = nullptr;
         automation::ICronStore* cron = nullptr;
-        // The Routing page's source (B6/ROU): the origin->session pin table + bindable rooms.
-        daemonnet::IDaemonNet* daemonNet = nullptr;
+        // The Routing page's source (M3): the mirror store's origin->session pin table
+        // (route_pins), shared with the GUI routing manager. Mutations (unbind) go through the
+        // node-authoritative routingActions seam. Both null in mock (the page renders empty).
+        mirror::MirrorService* mirror = nullptr;
+        daemonnet::IRoutingActions* routingActions = nullptr;
         memory::IMemoryService* memory = nullptr;
         memoryui::MemoryListModel* memList = nullptr;
         memoryui::MemoryStatsModel* memStats = nullptr;

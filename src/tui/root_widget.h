@@ -400,7 +400,7 @@ private:
     void openAccountRename(const QString& accountId, const QString& currentLabel);
     // [acct-mgmt] Channels room-lifecycle key handlers. Join/create/invite/members go through the
     // shared RoomFlow (chained dialogs); leave/delete are RootWidget confirms (the account-remove
-    // pattern); pin opens a session picker then IDaemonNet::bindChat with the canonical originKey.
+    // pattern); pin opens a session picker then RoutingBindChat on the canonical origin (M3).
     void openRoomJoinFlow(const QString& transport);
     void openRoomCreateFlow(const QString& transport);
     void openRoomMembers(const QString& transport, const QString& conversation);

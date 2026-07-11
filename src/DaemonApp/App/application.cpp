@@ -19,7 +19,6 @@
 #include "daemon/node_api_codec.h"
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
-#include "daemonnet/idaemonnet.h"
 #include "feedback/ifeedback.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/iapprovals_inbox.h"
@@ -356,8 +355,8 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("Tools"), m_services.tools);
     engine.rootContext()->setContextProperty(QStringLiteral("Dashboard"), m_services.dashboard);
 
-    // Automation facade (mock) backing the cron manager. (The routing manager binds DaemonNet
-    // below — the legacy intent->model `Routing` store is retired, B6/ROU.)
+    // Automation facade (mock) backing the cron manager. (The routing manager reads the mirror
+    // store; see the RoutingActions context property below.)
     engine.rootContext()->setContextProperty(QStringLiteral("Cron"), m_services.cron);
 
     // Transport-adapter seams (mock): the multi-protocol "Add channel" picker + configured
@@ -389,9 +388,11 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
                                              static_cast<QObject*>(nullptr));
 #endif
 
-    // The unified mock DaemonNet (actors/places + sessions-as-nodes); surfaces project from it. See
-    // multi-protocol-client-surface.md §1 + the DaemonNet meta-plan.
-    engine.rootContext()->setContextProperty(QStringLiteral("DaemonNet"), m_services.daemonNet);
+    // Routing manager (M3): the RoutingPage's RoutingManagerController reads the pin table off the
+    // mirror store (`Mirror`) and drives pin/unbind mutations through the node-authoritative
+    // RoutingActions seam (RoutingRepository IS-A daemonnet::IRoutingActions; null in mock).
+    engine.rootContext()->setContextProperty(QStringLiteral("RoutingActions"),
+                                             m_services.routingRepository);
 
     // Per-session override + checkpoint facades (mock) backing the composer popovers.
     engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"),

@@ -1,14 +1,14 @@
-# DaemonNet seam (daemon-app/docs/multi-protocol-client-surface.md §1) + inert mock. The unified
-# network of actors (agents/peers/users) and places (rooms/channels) joined by
-# runs/over/participant/inPlace/delegation edges, with sessions as first-class nodes. The single mock
-# source the Fleet/Channels/By-Peer projections + the future patch-bay derive from. Qt6::Core +
-# uimodels (VariantListModel).
+# Routing mutation seam (IRoutingActions) + the mock fleet/roster/session seed (MockFleetSource).
+# The legacy network-seam family (the mock projection + the patch-bay graph) was deleted in M3
+# (spec 09 §13): routing now lives on the mirror store, and the mock fleet/roster/sessions surfaces
+# (A7's M4 wave) render from this stripped seed. Qt6::Core + uimodels (VariantListModel) + domain.
 add_library(da_daemonnet STATIC
     daemonnet_dtos.h
     seed_transcripts.h
-    idaemonnet.h
-    mock_daemonnet.h
-    mock_daemonnet.cpp
+    routing_dtos.h
+    irouting_actions.h
+    mock_fleet_source.h
+    mock_fleet_source.cpp
 )
 add_library(daemon-app::daemonnet ALIAS da_daemonnet)
 

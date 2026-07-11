@@ -81,13 +81,15 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      SeamMigrationStatus::DaemonAligned},
     {"IDaemonConfig", "ProfileApi / SessionOverlay / node capabilities / ISettingsStore",
      kConfigMigration, SeamMigrationStatus::MockOnly},
-    {"IDaemonNet (routing slice)",
+    {"Routing (routing slice)",
      "RoutingListChats / RoutingBindChat / RoutingUnbindChat / RoutingSet / TransportRooms",
-     "LANDED (B6/ROU, wire v28): RoutingRepository speaks the Routing* pin ops + TransportRooms; "
-     "DaemonDaemonNet projects them through the IDaemonNet seam the RoutingPage/RouteDialog bind. "
-     "Honest residuals: resolve() answers from the pin table only (no read op for the lower "
-     "precedence rungs), bindingRules() is empty (config-time, no wire read), and the "
-     "delivery/handover panel stays inert until the delivery_targets/handover re-point.",
+     "MIRRORED (M3, wire v28): the routing pin table lives on the mirror store (RoutingListChats "
+     "-> "
+     "route_pins; TransportRooms -> rooms), read by RoutingManagerController; RoutingRepository is "
+     "the node-authoritative DIRECT mutation seam (RoutingBindChat/Unbind). Honest residuals: "
+     "resolve() answers Pin (a pinned origin) else Default (no read op for the lower precedence "
+     "rungs), binding rules are empty (config-time, no wire read), and the delivery/handover panel "
+     "stays inert until the SessionGet delivery seam / handover re-point land.",
      SeamMigrationStatus::DaemonAligned},
     {"ICronStore", kCronMigration, kCronMigration, SeamMigrationStatus::MockOnly},
     {"ICheckpointTimeline", "CheckpointList / CheckpointRewind",

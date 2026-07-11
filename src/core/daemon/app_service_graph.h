@@ -24,9 +24,6 @@ class IConnectionService;
 namespace feedback {
 class IFeedback;
 }
-namespace daemonnet {
-class IDaemonNet;
-}
 namespace firstrun {
 class FirstRunModel;
 }
@@ -169,7 +166,6 @@ struct AppServiceGraph {
     // Daemon* services replace them in Daemon mode (projecting PersonsRepository / ChatRepository).
     transports::IPersonsService* persons = nullptr;
     transports::IChatService* chat = nullptr;
-    daemonnet::IDaemonNet* daemonNet = nullptr;
     session::ISessionSettings* sessionSettings = nullptr;
     session::ICheckpointTimeline* checkpoints = nullptr;
     // Release-feed / auto-update surface (packaging/UPDATES.md). Inert unless the

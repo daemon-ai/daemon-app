@@ -24,14 +24,11 @@ class IPersonsService;
 // hierarchy (spaces/servers -> rooms -> DMs).
 //
 // Architecture decision (A1 deferred this to A2): this model composes DIRECTLY from
-// ITransportRegistry (instances + availableAdapters + conversations) and IPersonsService (persons),
-// NOT from IDaemonNet::transportsTree(). transportsTree() is a fleet-cross-link projection that
-// seeds EMPTY in daemon mode and carries no persons/space/capability-section shape; the
-// authoritative live data the daemon adapters actually fill lives in the registry/persons seams.
-// Since this model is the sole consumer of any enriched projection, an extra projection layer would
-// be pure indirection — composing directly keeps the protocol-governed rendering in one shared,
-// testable C++ view-model (thin-client rule) and leaves the legacy transportsTree() sidebar section
-// untouched.
+// ITransportRegistry (instances + availableAdapters + conversations) and IPersonsService (persons).
+// It is the SOLE integrations tree — the legacy fleet-cross-link sidebar projection was deleted in
+// M3. The authoritative live data the daemon adapters fill lives in the registry/persons seams;
+// composing directly keeps the protocol-governed rendering in one shared, testable C++ view-model
+// (thin-client rule).
 //
 // GUI + TUI render the SAME model: the GUI binds a flattened ListView (IntegrationsTree.qml), the
 // TUI a TreeListView via a DisplayRoleAdapter. All structural logic lives here.

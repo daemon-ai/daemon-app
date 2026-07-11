@@ -11,7 +11,7 @@
 #include "accounts/iaccounts_service.h"
 #include "automation/icron_store.h"
 #include "daemon/principal_model.h"
-#include "daemonnet/idaemonnet.h"
+#include "daemonnet/irouting_actions.h"
 #include "domain/origin.h"
 #include "fleet/iapprovals_inbox.h"
 #include "fleet/ifleet_tree.h"
@@ -306,7 +306,7 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
         }
         break;
     case TabModel::Routing:
-        if (text == QStringLiteral("x") && m_deps.daemonNet != nullptr) {
+        if (text == QStringLiteral("x") && m_deps.routingActions != nullptr) {
             // Unbind the selected pin (RoutingUnbindChat): rebuild the origin from the row's
             // flattened fields (routingPinRows packs them exactly for this).
             domain::Origin origin;
@@ -326,7 +326,7 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
             } else {
                 origin.scope.kind = domain::OriginScopeKind::Internal;
             }
-            m_deps.daemonNet->unbindChat(origin);
+            m_deps.routingActions->routingUnbindChat(origin);
             acted = true;
         }
         break;

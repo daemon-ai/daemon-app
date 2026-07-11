@@ -9,7 +9,10 @@
 // disconnecting (EIO-7) are deferred. One focused TU for the Channels
 // workstream; the dispatch stays in TuiPageHub::pageMarkdownForKind.
 
-#include "daemonnet/idaemonnet.h"
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+#include "mirror/mirror_service.h" // the route_pins projection backs the room-pin badge (M3)
+#include "mirror/store.h"
+#endif
 #include "transports/icontacts_service.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
@@ -247,11 +250,23 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
         const QString convId = row.value(QStringLiteral("convId")).toString();
         const QString label = row.value(QStringLiteral("roomLabel")).toString();
         const QString kind = row.value(QStringLiteral("kind")).toString();
-        const QString pinned = m_deps.daemonNet != nullptr
-                                   ? (kind == QLatin1String("dm")
-                                          ? m_deps.daemonNet->pinnedDmSessionFor(transport, convId)
-                                          : m_deps.daemonNet->pinnedSessionFor(transport, convId))
-                                   : QString();
+        // The pinned session for this room comes from the mirror store's route_pins (the origin_key
+        // encodes the scope: `t|dm|user` for a DM, `t|group|chat|` for a room). M3; empty in mock.
+        QString pinned;
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+        if (m_deps.mirror != nullptr) {
+            const QString wantKey =
+                kind == QLatin1String("dm")
+                    ? transport + QStringLiteral("|dm|") + convId
+                    : transport + QStringLiteral("|group|") + convId + QLatin1Char('|');
+            for (const mirror::RoutePin& p : m_deps.mirror->store().snapshot().route_pins) {
+                if (p.origin_key == wantKey) {
+                    pinned = p.session;
+                    break;
+                }
+            }
+        }
+#endif
         QString line = kind.isEmpty() ? tr("  - %1# %2").arg(mark(i), label)
                                       : tr("  - %1# %2 · %3").arg(mark(i), label, kind);
         if (!pinned.isEmpty()) {

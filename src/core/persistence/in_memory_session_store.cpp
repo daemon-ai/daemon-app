@@ -3,7 +3,7 @@
 
 #include "persistence/in_memory_session_store.h"
 
-#include "daemonnet/idaemonnet.h"
+#include "daemonnet/mock_fleet_source.h"
 #include "daemonnet/seed_transcripts.h"
 
 #include <algorithm>
@@ -64,16 +64,16 @@ InMemorySessionStore::InMemorySessionStore(QObject* parent, bool seed) : ISessio
     }
 }
 
-InMemorySessionStore::InMemorySessionStore(daemonnet::IDaemonNet* net, QObject* parent)
+InMemorySessionStore::InMemorySessionStore(daemonnet::MockFleetSource* src, QObject* parent)
     : ISessionStore(parent) {
-    seedFromDaemonNet(net);
+    seedFromSource(src);
 }
 
-void InMemorySessionStore::seedFromDaemonNet(daemonnet::IDaemonNet* net) {
-    if (net == nullptr) {
+void InMemorySessionStore::seedFromSource(daemonnet::MockFleetSource* src) {
+    if (src == nullptr) {
         return;
     }
-    const daemonnet::SeedBundle bundle = net->seed();
+    const daemonnet::SeedBundle bundle = src->seed();
     m_units = bundle.units;
     m_tags = bundle.tags;
     m_participants = bundle.participants;
@@ -220,8 +220,8 @@ bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope
     case NodeType::Transport:
     case NodeType::FleetNode:
     case NodeType::AgentSession:
-        // Transport/peer grouping needs the DaemonNet's edges (IDaemonNet::sessionsInScope), which
-        // the flat store has no data for; separators + structural rows are never matchable.
+        // Transport/peer grouping needs the deleted network-seam edges, which the flat store has no
+        // data for; separators + structural rows are never matchable.
         return false;
     }
     return false;

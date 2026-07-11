@@ -68,7 +68,6 @@ qt_add_qml_module(da_pages
         ApprovalsPage.qml
         RoutingPage.qml
         RouteDialog.qml
-        RoutingTopology.qml
         CronPage.qml
         CronJobDialog.qml
         FirstRunGate.qml
@@ -84,11 +83,19 @@ target_link_libraries(da_pages
         # block editor (DaemonApp.BlockEditor).
         daemon-app::editor
         daemon-app::blockeditor
-        # RoutingManagerController bridges the DaemonNet routing projections/mutations.
+        # RoutingManagerController reads the mirror store projections + the IRoutingActions seam.
         daemon-app::daemonnet
         daemon-app::domain
         daemon-app::uimodels
-        # RoutingTopology imports the reusable DaemonApp.Graph kit module.
-        daemon-app::graph
         daemon-app::warnings
 )
+
+# mirror A6 (spec 09 wave M3): the routing manager reads the mirror store's route_pins/rooms/
+# sessions projections where the substrate is built; substrate-less stacks render an empty manager.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    target_link_libraries(da_pages PRIVATE
+        daemon-app::mirror_substrate
+        daemon-app::mirror_ingestor
+    )
+    target_compile_definitions(da_pages PRIVATE DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1)
+endif()
