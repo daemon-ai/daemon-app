@@ -79,6 +79,12 @@ void deliverScenarioAsDaemon(mirror::MirrorService& svc, const MockScenario& scn
         svc.ingestor().deliverChatPage(msgs.front().transport, msgs.front().conv, msgs, head, head);
     }
 
+    // Transcript blocks land through the ingestor's cursor-ordered (session, seq) upsert — the
+    // exact deliver seam the engine dual-write / journal replay drives (A7T/G2).
+    for (const mirror::TranscriptBlock& tb : seed.transcriptBlocks) {
+        svc.ingestor().deliverTranscriptBlock(tb);
+    }
+
     // Transport accounts land via the TransportChanged patch in daemon mode (§5.2 — the event
     // carries liveness fields only; family/profile join with the transports vertical post-M5).
     for (const mirror::TransportAccount& a : seed.transportAccounts) {
@@ -220,6 +226,15 @@ private slots:
             daemonRowIds.insert(s.sessionId.toString() + QChar(0x1f) + s.title);
         }
         QCOMPARE(daemonRowIds, mockRowIds);
+
+        // --- transcript CONTENT parity: the msg-fence projection both feeders produce agrees, and
+        // the derived legacy baseline matches it (the ONE-bundle content join, post-G2 flip) ------
+        const domain::SessionId scratch{QStringLiteral("s-scratch")};
+        const QString mockContent = graph.storeMirror->content(scratch);
+        QVERIFY(!mockContent.isEmpty());
+        QCOMPARE(daemonStore.content(scratch), mockContent);   // mirror, both feeders agree
+        QCOMPARE(graph.store->content(scratch), mockContent);  // mock legacy baseline derived
+        QCOMPARE(daemonLegacy->content(scratch), mockContent); // daemon legacy baseline derived
     }
 
     // The journal origins differ BY DESIGN (seeder vs refetch_diff) while the rendered state is

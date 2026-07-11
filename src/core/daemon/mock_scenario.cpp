@@ -3,9 +3,12 @@
 
 #include "daemon/mock_scenario.h"
 
+#include "daemon/transcript_projection.h"
+
 #include <QJsonObject>
 #include <QLoggingCategory>
 #include <QtGlobal>
+#include <vector>
 
 namespace daemonapp::daemon {
 namespace {
@@ -230,6 +233,34 @@ void fillDefaultMirrorSeed(mirror::SeedSet& seed, const daemonnet::SeedBundle& b
     seed.routePins = {pin};
 }
 
+// Transcript CONTENT is now mirror-served (the G2 flip: MirrorSessionStore::content() projects
+// `w_transcript_blocks`, no legacy fallback). So the ONE bundle must carry the transcript as
+// canonical BLOCKS: seed a block per session INTO the mirror window, and DERIVE the surviving
+// legacy delegate's baseline content from the SAME blocks via the shared projection — the two
+// sides then agree byte-for-byte by construction (A8's ONE-bundle invariant), which is exactly
+// what the delegated-content parity assertion proves. Each seed session's prose is modeled as one
+// assistant `Message` block (seq 1); the rich block-showcase demos (`s-demo-*`) ride the same
+// path, so their leading fence is an assistant turn — faithfully re-decomposing them into typed
+// reasoning/tool blocks is blocked on the lossy mirror TranscriptBlock entity (no tone/duration/
+// stdout fields), a post-M5 entity enrichment, not this seam fix.
+void seedTranscriptsFromBundle(MockScenario& s) {
+    for (domain::Session& session : s.bundle.sessions) {
+        if (session.content.isEmpty()) {
+            continue;
+        }
+        mirror::TranscriptBlock block;
+        block.session = session.sessionId.toString();
+        block.seq = 1;
+        block.kind = QStringLiteral("Message");
+        block.role = QStringLiteral("assistant");
+        block.text = session.content;
+        s.mirror.seed.transcriptBlocks.push_back(block);
+        // The legacy delegate baseline is the projection of the SAME block(s) — never the raw
+        // markdown anymore, so store->content() == storeMirror->content() for every seeded session.
+        session.content = projectTranscriptBlocks(std::vector<mirror::TranscriptBlock>{block});
+    }
+}
+
 // The scripted timeline (§9): deterministic liveness — message arrivals + a presence flip. Each
 // step is one Seeder batch (origin = seeder) through the same apply pipeline.
 std::vector<mirror::ScenarioStep> defaultTimeline() {
@@ -293,6 +324,7 @@ MockScenario buildDefault() {
     s.bundle = daemonnet::MockFleetSource::defaultSeed();
     s.mirror.apiVersion = 39;
     fillDefaultMirrorSeed(s.mirror.seed, s.bundle);
+    seedTranscriptsFromBundle(s); // canonical transcript blocks + derived legacy content
     s.mirror.timeline = defaultTimeline();
     s.mirror.verbScript = defaultVerbScript();
     return s;

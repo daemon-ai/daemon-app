@@ -25,6 +25,11 @@ quint64 Seeder::seed(const SeedSet& set) {
             b.appendWindow(m, JournalOrigin::Seeder, m.origin_op);
         }
     }
+    // Transcript blocks: the SAME cursor-ordered (session, seq) upsert-by-key the ingestor's
+    // deliverTranscriptBlock uses, so the seeded window is byte-identical to the daemon feed.
+    for (const TranscriptBlock& tb : set.transcriptBlocks) {
+        b.upsertWindow(tb, JournalOrigin::Seeder, tb.origin_op);
+    }
     return b.commit();
 }
 

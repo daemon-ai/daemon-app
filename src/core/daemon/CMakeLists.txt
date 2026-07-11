@@ -187,6 +187,11 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         # (6->1 session-shape unification); BOTH modes since A8 (mock projects the seeded mirror).
         mirror_session_store.h
         mirror_session_store.cpp
+        # A7T/G2: the ONE msg-fence transcript projection grammar (mirror TranscriptBlock ->
+        # content markdown), shared by MirrorSessionStore::content() and the mock seeder's derived
+        # legacy baseline so both sides are byte-equal by construction.
+        transcript_projection.h
+        transcript_projection.cpp
         # A7T (M4 sub-step 6): the app-local transcript stream re-homed onto the mirror window.
         # The engine-facing ITranscriptMirrorSink is mirror-free (always buildable); the concrete
         # adapter needs the ingestor, so it is substrate-gated here.

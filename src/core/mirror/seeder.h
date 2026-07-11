@@ -38,6 +38,10 @@ struct SeedSet {
     std::vector<Room> rooms;
     std::vector<TransportAccount> transportAccounts;
     QHash<QString, std::vector<ChatMessage>> chat;
+    // Class-W transcript blocks (scope = session, window seq): the canonical transcript CONTENT
+    // form. Seeded through the same cursor-ordered upsert the engine/ingestor use so the mirror's
+    // MirrorSessionStore::content() projection is fed identically in mock and daemon (§4.6/§9).
+    std::vector<TranscriptBlock> transcriptBlocks;
 };
 
 class Seeder {
