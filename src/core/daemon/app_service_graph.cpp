@@ -364,11 +364,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         if (graph.subscriptions != nullptr) {
             graph.subscriptions->setRoutingRepository(graph.routingRepository);
         }
-        // The repository rides along for the operator steer/startTurn/interrupt ops (F4) and the
-        // archived-scope refetch (F6).
-        graph.roster = new fleet::DaemonSessionRoster(graph.store, graph.sessions, owner);
-        graph.dashboard = new fleet::DaemonDashboard(graph.roster, graph.fleetTree, graph.approvals,
-                                                     graph.connection, owner);
+        // The daemon roster + dashboard are constructed AFTER the mirror block (end of this
+        // factory): the ops-hub Sessions roster binds the mirror-backed storeMirror (M4), which
+        // does not exist yet here. Nothing between the deletes above and that construction reads
+        // graph.roster/graph.dashboard; null them for hygiene meanwhile.
+        graph.roster = nullptr;
+        graph.dashboard = nullptr;
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -758,6 +759,19 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         }
     }
 #endif
+
+    if (daemonConnection != nullptr) {
+        // Daemon-backed, offline-first session roster + dashboard (replacing the mock pair
+        // deleted in the daemon branch above). M4: the roster projects the mirror-backed
+        // storeMirror (the 6→1 session read; = graph.store on substrate-less stacks), so the
+        // ops-hub Sessions page reads the same ONE entity as the roster list/sidebar. The
+        // dashboard derives its counters from the FINAL seam pointers; the repository rides
+        // along for the operator steer/startTurn/interrupt ops (F4) and the archived-scope
+        // refetch (F6).
+        graph.roster = new fleet::DaemonSessionRoster(graph.storeMirror, graph.sessions, owner);
+        graph.dashboard = new fleet::DaemonDashboard(graph.roster, graph.fleetTree, graph.approvals,
+                                                     graph.connection, owner);
+    }
     return graph;
 }
 
