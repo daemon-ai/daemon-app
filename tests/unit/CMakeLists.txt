@@ -1375,6 +1375,21 @@ if(TARGET daemon-app::mirror_ingestor)
         set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif()
 
+    # tst_mock_daemon_parity (mirror A8, M5 exit gate): the SAME MockScenario through both
+    # feeders — the real mock graph (Seeder) vs a daemon-shaped ingestor delivery — renders
+    # equivalently at the shared-VM layer (tables via parity helpers, ConversationListModel/
+    # ChatWindowModel lenses, the MirrorSessionStore projection); journal origins record the
+    # feeder (seeder vs refetch_diff) while the state is identical (§9/§13).
+    if(TARGET daemon-app::daemon_client)
+        qt_add_executable(tst_mock_daemon_parity tst_mock_daemon_parity.cpp)
+        target_link_libraries(tst_mock_daemon_parity
+            PRIVATE Qt6::Test Qt6::Network daemon-app::daemon_client daemon-app::persistence
+                    daemon-app::domain)
+        add_test(NAME tst_mock_daemon_parity COMMAND tst_mock_daemon_parity)
+        set_tests_properties(tst_mock_daemon_parity
+            PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
     # tst_mock_scenario (mirror A8, M5): the mock scenario catalog (spec 09 §9) — mirror rows
     # derived from the ONE SeedBundle (id agreement), canonical string vocabulary, seeded chat
     # windows scope seeded conversations, the MANDATORY rejection/timeout verb rules, the api38/

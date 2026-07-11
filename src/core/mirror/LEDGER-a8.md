@@ -245,3 +245,30 @@ SURVIVORS (each with its blocking dependency, re-verified by consumer grep):
 - Mock participants/tags panes render like daemon mode renders them (MirrorSessionStore returns
   empty tags()/participants() — the legacy mock-only seeded rows were a mock/daemon shape fork).
 - Mock transcript content still flows through the legacy delegate (A7T's seam) — unchanged.
+- Mock dashboard tokensToday reports 0 (the shared roster projection carries no client-side token
+  data — the mock-only token fiction died with MockSessionRoster).
+
+## Status (second checkpoint — all landed, gates green per commit)
+
+- **C1 `8dd7ca4` scenario catalog.** `MockScenario` (default | api38 | empty) +
+  `DAEMON_APP_MOCK_SCENARIO` selector; `MockFleetSource::defaultSeed()` extraction (tr() context
+  preserved — i18n-drift green); mirror rows derived from the ONE bundle. `tst_mock_scenario`
+  (9 cases). ctest 144→145.
+- **C2 `3837d4d` mock composition cutover.** Mock graph = MirrorService(in-memory) +
+  LocalDatabase(":memory:") + Outbox(ready-gate) + provenance wiring + `MockScenarioHost`
+  (seed + timeline + scripted verb outcomes + recording scripted-pager + the api/<N> mock Hello
+  at ready/lost) + `storeMirror` = real MirrorSessionStore (A7 aliasing deleted). App-level
+  evidence in tst_app_service_graph (13 cases): full(39) Bootstrap + auto-replay → landed via
+  scripted echo; api38 degraded scan + lanes hold → manual drain; "/reject" pauses the lane;
+  all-seeder journal; id agreement + content() delegation. ctest 145 (cases +5).
+- **C3 `ac0118c` MockChatService deleted** (class + CMake + seam test case + graph construction;
+  controller tests moved to a test-local recording fixture). ctest 145.
+- **C4 `96f7f99` MockSessionRoster deleted.** One roster projection (DaemonSessionRoster over
+  storeMirror) in BOTH modes; dashboard built over final seam pointers at the end of the factory
+  in both modes (mock keeps MockDashboard presentation). tst_fleet_ops reworked over the shared
+  roster. ctest 145.
+- **C5 mock↔daemon parity suite** (`tst_mock_daemon_parity`): the SAME scenario through the
+  Seeder (real mock graph) and through the ingestor deliver* seams (daemon shape) renders
+  equivalently — table parity via the shared parity helpers, lens parity
+  (ConversationListModel/ChatWindowModel), MirrorSessionStore projection parity; journal origins
+  record the feeder (seeder vs refetch_diff) while the state is identical. ctest 145→146.
