@@ -374,6 +374,9 @@ target_link_libraries(tui_tab_title_refresh_tests
         Qt6::Qml
         daemon-app::domain
         daemon-app::persistence
+        # AD: the fixture is the mirror-backed store (the InMemory fixture died).
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tui_tab_title_refresh_tests COMMAND tui_tab_title_refresh_tests)
 set_tests_properties(tui_tab_title_refresh_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

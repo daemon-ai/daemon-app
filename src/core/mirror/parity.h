@@ -33,7 +33,7 @@ struct Result {
 [[nodiscard]] QSet<QString> contactKeys(const MirrorModel& snapshot, const QString& transport);
 
 // Extract mirror Session keys (canonical serialize() == the authoritative session id) for the
-// whole roster, for comparison against the legacy CachedSessionStore / SessionRepository row-set
+// whole roster, for mirror-vs-mirror feeder comparison (mock Seeder vs daemon ingestor delivery
 // (spec 09 §13 M4: "parity asserts vs legacy roster until deletion").
 [[nodiscard]] QSet<QString> sessionKeys(const MirrorModel& snapshot);
 

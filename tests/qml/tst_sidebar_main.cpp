@@ -2,9 +2,11 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "auth/auth_flow_controller.h"
-#include "daemonnet/mock_fleet_source.h"
+#include "daemon/mirror_session_store.h"
+#include "daemon/mock_scenario.h"
 #include "fleet/mock_approvals_inbox.h"
-#include "persistence/in_memory_session_store.h"
+#include "mirror/mirror_service.h"
+#include "mirror/seeder.h"
 #include "profiles/mock_profile_store.h"
 #include "transports/mock_persons_service.h"
 #include "transports/mock_transport_registry.h"
@@ -44,8 +46,14 @@ public slots:
             engine->addImportPath(p);
 #endif
         if (m_store == nullptr) {
-            m_fleetSeed = new daemonnet::MockFleetSource(this);
-            m_store = new persistence::InMemorySessionStore(m_fleetSeed, this);
+            // AD: the scenario-seeded MIRROR store — the same projection production binds.
+            m_mirror = new mirror::MirrorService(this);
+            m_mirror->openInMemory();
+            mirror::Seeder seeder(m_mirror->store());
+            seeder.seed(
+                daemonapp::daemon::mockScenarioByName(QStringLiteral("default")).mirror.seed);
+            m_store = new daemonapp::daemon::MirrorSessionStore(
+                &m_mirror->store(), &m_mirror->ingestor(), nullptr, this);
             m_profiles = new profiles::MockProfileStore(this);
             m_approvals = new fleet::MockApprovalsInbox(this);
             m_registry = new transports::MockTransportRegistry(this);
@@ -53,10 +61,6 @@ public slots:
             m_authFlow = new auth::AuthFlowController(nullptr, this);
         }
         auto* ctx = engine->rootContext();
-        ctx->setContextProperty(QStringLiteral("SessionStore"), m_store);
-        // mirror A7 (M4): the ported consumers bind SessionStoreMirror. Offscreen QML tests run
-        // the mock posture, where composition points it at the SAME legacy store (the app graph's
-        // fallback) — inject the identical aliasing here.
         ctx->setContextProperty(QStringLiteral("SessionStoreMirror"), m_store);
         ctx->setContextProperty(QStringLiteral("Profiles"), m_profiles);
         ctx->setContextProperty(QStringLiteral("Approvals"), m_approvals);
@@ -66,8 +70,8 @@ public slots:
     }
 
 private:
-    daemonnet::MockFleetSource* m_fleetSeed = nullptr;
-    persistence::InMemorySessionStore* m_store = nullptr;
+    mirror::MirrorService* m_mirror = nullptr;
+    daemonapp::daemon::MirrorSessionStore* m_store = nullptr;
     profiles::MockProfileStore* m_profiles = nullptr;
     fleet::MockApprovalsInbox* m_approvals = nullptr;
     transports::MockTransportRegistry* m_registry = nullptr;

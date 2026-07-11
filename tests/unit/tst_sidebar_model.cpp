@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-#include "daemonnet/mock_fleet_source.h"
-#include "persistence/in_memory_session_store.h"
+#include "daemon/mirror_session_store.h"
+#include "daemon/mock_scenario.h"
+#include "mirror/mirror_service.h"
+#include "mirror/seeder.h"
+#include "persistence/isession_store.h"
 #include "profiles/iprofile_store.h"
 #include "sidebar_model.h"
 #include "uimodels/variant_list_model.h"
 
+#include <memory>
 #include <QSignalSpy>
 #include <QtTest>
 #include <utility>
-
-using daemonnet::MockFleetSource;
-using persistence::InMemorySessionStore;
 
 namespace {
 QVariantMap agentRow(const QString& id, const QString& name, const QString& provider,
@@ -77,6 +78,23 @@ private:
 };
 } // namespace
 
+namespace {
+// AD: the scenario-seeded MIRROR store replaces the deleted InMemory fixture — the SAME
+// MirrorSessionStore + seed data production renders (mock composition), so the model tests
+// observe the real projection semantics (Agent scope = boundProfile, counts, titles).
+struct MirrorFixture {
+    mirror::MirrorService svc;
+    std::unique_ptr<daemonapp::daemon::MirrorSessionStore> store;
+    MirrorFixture() {
+        svc.openInMemory();
+        mirror::Seeder seeder(svc.store());
+        seeder.seed(daemonapp::daemon::mockScenarioByName(QStringLiteral("default")).mirror.seed);
+        store =
+            std::make_unique<daemonapp::daemon::MirrorSessionStore>(&svc.store(), &svc.ingestor());
+    }
+};
+} // namespace
+
 // Exercises the sidebar model: the Fleet MEMBERSHIP view (node/connection root -> agent rows ==
 // profiles -> per-agent session leaves; daemon-supervision-spec §0), its expand/collapse and
 // identity-based selection, the collapsible section headers, and the co-equal Integrations tree.
@@ -100,7 +118,7 @@ private:
 
     // An agent's non-archived session count, straight from the store's ByProfile scope (the same
     // query the model issues), so expectations track the seed instead of magic numbers.
-    static int agentSessions(const InMemorySessionStore& store, const QString& profileId) {
+    static int agentSessions(const persistence::ISessionStore& store, const QString& profileId) {
         return store.sessionCount({domain::NodeType::Agent, -1, domain::UnitId(), profileId});
     }
 
@@ -108,8 +126,8 @@ private slots:
     // The Fleet membership view is a fixed-shape tree: the node/connection ROOT at depth 0, one
     // agent row per profile at depth 1, and each agent's session leaves at depth 2.
     void fleetMembershipFlattensWithDepths() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -133,8 +151,8 @@ private slots:
     // row is NodeType::Agent bound to its profile id, counting (and folding) its sessions; an
     // agent with no sessions is a plain leaf; a session leaf carries profile + session ids.
     void exposesFleetMembershipRoles() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -169,8 +187,8 @@ private slots:
     // Collapsing an agent hides exactly its session leaves; collapsing the node root hides the
     // whole membership body (agents included); expanding restores both.
     void toggleExpandFoldsAgentAndRoot() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -201,8 +219,8 @@ private slots:
 
     // Activating the node root scopes the list to ALL of this node's sessions.
     void activateNodeRootScopesAllSessions() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -222,8 +240,8 @@ private slots:
     // Activating an agent row scopes the session list to its profile (ByProfile; the profile id
     // rides the string slot as the lens key).
     void activateAgentScopesByProfile() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -241,8 +259,8 @@ private slots:
     // Activating a session leaf under an agent opens its transcript (sessionActivated), not a
     // list scope — the same contract as an Integrations session leaf.
     void activateAgentSessionLeafOpensTranscript() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -259,7 +277,8 @@ private slots:
 
     // Separator rows (Fleet / Tags headers) are not selectable and emit nothing.
     void separatorsAreNotSelectable() {
-        InMemorySessionStore store;
+        MirrorFixture fx;
+        auto& store = *fx.store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -276,8 +295,8 @@ private slots:
     // sticking to a row index. Folding a SIBLING agent rebuilds the list but must leave the
     // selected agent highlighted.
     void currentRoleTracksIdentityAcrossRebuild() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -299,8 +318,8 @@ private slots:
     // silent reassignment); re-expanding restores the SAME leaf as current — the selection is
     // stored by identity, never by row index.
     void selectionIdentitySurvivesFoldAndUnfold() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -322,7 +341,8 @@ private slots:
     // Up/Down move the selection between adjacent selectable rows, skipping
     // separators; Enter re-emits the current scope.
     void keyboardNavigationMovesSelection() {
-        InMemorySessionStore store;
+        MirrorFixture fx;
+        auto& store = *fx.store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -345,8 +365,8 @@ private slots:
     // Left collapses the node root in place; Right re-expands it, then descends to its first
     // agent; Left on an expanded agent folds it while the selection stays put.
     void arrowKeysExpandCollapseAndTraverse() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -376,8 +396,8 @@ private slots:
     // Collapse-all folds the whole membership (root included: agents + leaves hidden, the root
     // row remains); expand-all restores it. anyExpanded drives the header's toggle.
     void expandAllAndCollapseAllToggleWholeTree() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -401,8 +421,8 @@ private slots:
     // collapseAll while an agent is selected keeps the selection identity: the row is hidden
     // (inside the folded root), and expandAll surfaces the SAME agent as current again.
     void collapseAllKeepsSelectionIdentity() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -421,8 +441,8 @@ private slots:
     // The Fleet "+" mints an AGENT (a profile) through the create-agent flow: it requests the
     // form and adds NO client-side row (the agent appears via the post-create profile re-list).
     void createRootUnitRequestsAgentCreation() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -438,29 +458,14 @@ private slots:
         QCOMPARE(scoped.count(), 0);        // the selection is untouched
     }
 
-    // Creating a tag adds a tag row and selects it.
-    void createTagAddsAndSelects() {
-        InMemorySessionStore store;
-        SidebarModel model;
-        model.setStore(&store);
-
-        QSignalSpy spy(&model, &SidebarModel::scopeSelected);
-        model.createTag();
-
-        const int created = findRow(model, QStringLiteral("New tag"));
-        QVERIFY(created >= 0);
-        QCOMPARE(roleAt<int>(model, created, SidebarModel::NodeTypeRole), 5); // Tag
-        QVERIFY(roleAt<bool>(model, created, SidebarModel::CurrentRole));
-        QCOMPARE(spy.takeLast().at(0).toInt(), 5);
-    }
-
     // --- Fleet membership (agents == profiles) -------------------------------
 
     // Agent rows carry NO secondary label: provider/model configuration crowds the agent name
     // in the tree (it lives in Settings > Profiles); the sublabel role stays reserved for
     // transport leaves.
     void agentRowsCarryNoSecondaryLabel() {
-        InMemorySessionStore store;
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(twoAgentRows(), QStringLiteral("anthropic"));
         SidebarModel model;
         model.setStore(&store);
@@ -481,8 +486,8 @@ private slots:
     // Folding the Fleet header hides its whole membership body (node root + agents + leaves)
     // while the header stays, and its ExpandedRole flips; other sections are untouched.
     void fleetSectionHeaderCollapses() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -513,27 +518,10 @@ private slots:
         QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0);
     }
 
-    // The Tags section folds independently of Fleet.
-    void tagsSectionHeaderCollapses() {
-        InMemorySessionStore store;
-        SidebarModel model;
-        model.setStore(&store);
-
-        // A seeded demo tag exists under the Tags header.
-        QVERIFY(!store.tags().isEmpty());
-        const QString firstTag = store.tags().first().name;
-        QVERIFY(findRow(model, firstTag) >= 0);
-
-        model.toggleExpand(findRow(model, QStringLiteral("Tags")));
-        QVERIFY(findRow(model, firstTag) < 0);
-        QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
-        // Fleet is unaffected: its node root row is still rendered.
-        QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0);
-    }
-
     // Tags section is ordered above the Fleet section in the flattened list.
     void tagsSectionIsAboveFleet() {
-        InMemorySessionStore store;
+        MirrorFixture fx;
+        auto& store = *fx.store;
         SidebarModel model;
         model.setStore(&store);
 

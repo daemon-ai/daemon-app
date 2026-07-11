@@ -4203,17 +4203,6 @@ Salamat — magpapatuloy sa: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>User</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -9460,17 +9449,6 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Nabigong ilapat ang mga setting ng account</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>User</translation>
     </message>
 </context>
 <context>

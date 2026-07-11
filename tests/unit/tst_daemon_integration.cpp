@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "daemon/cache_consolidation_policy.h"
-#include "daemon/cached_session_store.h"
 #include "daemon/client_cache_schema.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_transport.h"
@@ -12,7 +11,6 @@
 #include "daemon/repositories.h"
 #include "daemon/seam_migration.h"
 #include "domain/ids.h"
-#include "persistence/in_memory_session_store.h"
 #include "wire_mux_fixture.h"
 
 #include <array>
@@ -250,14 +248,6 @@ private slots:
         row.updatedAtMs = 20;
         QVERIFY(sessions.upsertCachedSession(row));
         QCOMPARE(sessions.cachedSessions().first().sessionId, QStringLiteral("s2"));
-    }
-
-    void domainSessionsCarryDaemonIds() {
-        persistence::InMemorySessionStore store;
-        const auto sessions = store.sessions(domain::ListScope{});
-        QVERIFY(!sessions.isEmpty());
-        QVERIFY(!sessions.first().sessionId.isEmpty());
-        QVERIFY(sessions.first().id >= 0);
     }
 
     void clientFailsAndRecoversOnBadSocket() {
@@ -705,50 +695,6 @@ private slots:
         QVERIFY(!titleReq.contains("archived"));
         // The no-op (all-nullopt) case is guarded at the repository (updateSessionMeta returns
         // early), not the facade - see sessionUpdateMetaOfflineSurfacesFailure / the repo guard.
-    }
-
-    // Node-authoritative pin: CachedSessionStore::setPinned sends a SessionUpdateMeta intent (NOT a
-    // local cache write) and, on the node's Ok, issues the authoritative SessionsQuery refetch. The
-    // cache is NOT mutated client-side - the row reflects only what the node's reply projects.
-    void setPinnedSendsIntentNoLocalWrite() {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        const QString path = dir.filePath(QStringLiteral("meta.sock"));
-        daemonapp::test::WireMuxServer fake;
-        // Ok for the SessionUpdateMeta, then an (empty) SessionPage for the authoritative refetch.
-        fake.setReplySequence({okResponse(), sessionPageResponse({}, nullptr, 9)});
-        QVERIFY2(fake.start(path), "listen");
-
-        daemonapp::daemon::DaemonTransport transport;
-        transport.setSocketPath(path);
-        daemonapp::daemon::NodeApiClient client(&transport);
-        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("meta.db")));
-        // A pre-existing cached row (unpinned): if setPinned wrote the cache locally it would flip
-        // here; node-authoritative means it must NOT.
-        daemonapp::daemon::CachedSessionRow row;
-        row.sessionId = QStringLiteral("s1");
-        row.state = QStringLiteral("Active");
-        row.pinned = false;
-        QVERIFY(cache.upsertSession(row));
-
-        daemonapp::daemon::SessionRepository sessions(&client, &cache);
-        daemonapp::daemon::CachedSessionStore store(&cache, &sessions);
-        QSignalSpy failed(&sessions, &daemonapp::daemon::SessionRepository::metaUpdateFailed);
-
-        store.setPinned(domain::SessionId(QStringLiteral("s1")), true);
-
-        // The SessionUpdateMeta intent went out carrying the pin patch (and not a local write).
-        QTRY_VERIFY_WITH_TIMEOUT(!fake.callPayloads().isEmpty(), 3000);
-        const QByteArray first = fake.callPayloads().first();
-        QVERIFY(first.contains("SessionUpdateMeta"));
-        QVERIFY(first.contains("s1"));
-        QVERIFY(first.contains("pinned"));
-        // On Ok, the authoritative refetch (SessionsQuery) follows.
-        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() >= 2, 3000);
-        QCOMPARE(failed.count(), 0);
-        // The cache row's pinned flag was never flipped client-side (the empty authoritative page
-        // pruned nothing here because updatedAt makes it a delta-less replace; the point is no
-        // OPTIMISTIC local pin happened before/without the node).
     }
 
     // A node-rejected SessionUpdateMeta (ApiError) surfaces through metaUpdateFailed with the

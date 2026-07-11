@@ -4203,17 +4203,6 @@ Gracias — continuando con: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agente</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Usuario</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -9460,17 +9449,6 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     <message>
         <source>Failed to apply the account settings</source>
         <translation>No se pudo aplicar la configuración de la cuenta</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agente</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Usuario</translation>
     </message>
 </context>
 <context>

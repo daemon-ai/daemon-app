@@ -4199,17 +4199,6 @@ Terima kasih — melanjutkan dengan: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agen</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Pengguna</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -9452,17 +9441,6 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Gagal menerapkan pengaturan akun</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agen</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Pengguna</translation>
     </message>
 </context>
 <context>

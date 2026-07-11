@@ -10,7 +10,6 @@
 #include "config/mock_daemon_config.h"
 #include "connection/iconnection_service.h"
 #include "connection/mock_connection_service.h"
-#include "daemon/cached_session_store.h"
 #include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_auth_flow_service.h"
@@ -44,12 +43,10 @@
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
 #include "daemon/subscription_manager.h"
-#include "daemonnet/mock_fleet_source.h"
 #include "feedback/mock_feedback.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/mock_approvals_inbox.h"
 #include "fleet/mock_dashboard.h"
-#include "fleet/mock_fleet_tree.h"
 #include "fs/local_disk_fs_service.h"
 #include "local_database.h"
 #include "memory/mock_memory_service.h"
@@ -58,7 +55,6 @@
 #include "models/mock_provider_catalog.h"
 #include "nav/nav_controller.h"
 #include "outbox.h"
-#include "persistence/in_memory_session_store.h"
 #include "profiles/mock_profile_store.h"
 #include "session/mock_checkpoint_timeline.h"
 #include "session/mock_session_settings.h"
@@ -160,23 +156,16 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // firstRun + accounts + modelCatalog + profiles are constructed per-mode below (after the
     // repositories the daemon-backed services need); firstRun binds the resulting modelCatalog for
     // inference readiness.
-    // The mock fleet/roster/session seed (MockFleetSource): the source the fleet/roster mocks + the
-    // mock session store project from (M3 — routing/integrations now live on the mirror; the
-    // deleted mock net's routing + transports-tree + patch-bay are gone). In daemon mode the
-    // fleet/roster/store below are deleted + rebuilt daemon-backed, so this seed is used only in
-    // mock mode; building it unconditionally keeps the pre-mode-branch surfaces simple.
-    // mirror A8 (spec 09 §9, M5): the mock SCENARIO is the only mock seed source — resolved once,
-    // feeding BOTH the legacy delegate stores (its SeedBundle, here) and the mock mirror (its
-    // canonical seed, in the mirror block below), so the two sides' session ids provably agree
-    // (the delegated content() join depends on it). Daemon mode gets an empty placeholder (the
-    // pre-branch mock services it feeds are deleted + rebuilt daemon-backed below).
+    // mirror A8 (spec 09 §9, M5) → AD: the mock SCENARIO is the only mock seed source — resolved
+    // once; its canonical mirror seed (derived from the ONE SeedBundle declaration) feeds the
+    // mock mirror in the mirror block below. The legacy delegate stores died in AD; the fleet
+    // TREE is a MirrorFleetTree over the seeded/ingested store in BOTH modes (built per mode in
+    // the mirror blocks). Daemon mode gets an empty placeholder scenario.
     const MockScenario mockScenario =
         mode == ServiceMode::Daemon ? MockScenario{} : mockScenarioFromEnvironment();
-    auto* fleetSource = new daemonnet::MockFleetSource(mockScenario.bundle, owner);
     // mirror A8 (M5): roster + dashboard are built at the END of this factory in BOTH modes — the
     // roster projects the final storeMirror (the 6→1 read everywhere; MockSessionRoster died with
     // the cutover) and the dashboard observes the FINAL seam pointers.
-    graph.fleetTree = new fleet::MockFleetTree(fleetSource, owner);
     graph.approvals = new fleet::MockApprovalsInbox(owner);
     // [wave2:app-approvals-safety] D2: tool inventory starts as the canned mock; the daemon branch
     // below REPLACES it with the repo-backed DaemonToolInventory (ToolList).
@@ -244,10 +233,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.authRepository = new AuthRepository(graph.nodeApi, graph.cache, owner);
 
     if (daemonConnection != nullptr) {
-        // Daemon mode reads sessions through the cache projection rather than the local sqlite
-        // store, and kicks a SessionsQuery once the Health probe reports the daemon is ready so
-        // the cache (and therefore the UI) populates end-to-end.
-        graph.store = new CachedSessionStore(graph.cache, graph.sessions, owner);
         // User feedback + telemetry consent (wire v32): replace the mock seam with the
         // daemon-backed adapter over FeedbackSubmit / TelemetryConsentGet/Set. The mock built above
         // is parented to `owner`; drop it for the daemon one. Consent is seeded on connect-ready
@@ -468,10 +453,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                "still mock: daemonConfig, memory; node-blocked (NO wire op yet - rendered EMPTY, "
                "not mock demo data): cron, routing delivery/handover panel.";
     } else {
-        // Mock mode: a non-persisted in-memory store re-seeded fresh from the mock fleet seed each
-        // run (deterministic, always matches the current seed - no stale-db drift). The sidebar /
-        // list / transcript and the Fleet/Sessions pages all reflect the one MockFleetSource seed.
-        graph.store = new persistence::InMemorySessionStore(fleetSource, owner);
         graph.modelCatalog = new models::MockModelCatalog(owner);
         graph.providerCatalog = new models::MockProviderCatalog(graph.modelCatalog, owner);
         graph.accounts = new accounts::MockAccountsService(owner);
@@ -881,14 +862,19 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         QObject::connect(graph.mockHost, &MockScenarioHost::sessionCreated, mirrorStore,
                          &MirrorSessionStore::onNodeSessionCreated);
         graph.storeMirror = mirrorStore;
+
+        // AD: the fleet TREE is the SAME mirror projection as daemon mode, over the scenario's
+        // seeded fleet_units (child_ids edges derived from the ONE bundle). Null control seam —
+        // pause/resume/scale are inert in mock (matching the deleted MockFleetTree's posture);
+        // refresh() rides the ingestor no-op pager.
+        graph.fleetTree =
+            new fleet::MirrorFleetTree(&svc->store(), &svc->ingestor(), nullptr, owner);
     }
 
-    // The ops-hub session roster projects storeMirror in BOTH modes (M4 daemon; M5 mock — the
-    // seeded MirrorSessionStore, or the legacy alias on substrate-less stacks): the 6→1 session
-    // read everywhere, MockSessionRoster deleted. The repository rides along for the operator
-    // steer/startTurn/interrupt ops (F4; inert without a connection) and the archived-scope
-    // refetch (F6). The dashboard observes the FINAL seam pointers; mock keeps the MockDashboard
-    // presentation (seeded activity feed) over the same interfaces.
+    // The ops-hub session roster projects storeMirror in BOTH modes: the 6→1 session read
+    // everywhere. The repository rides along for the operator steer/startTurn/interrupt ops
+    // (F4; inert without a connection). The dashboard observes the FINAL seam pointers; mock
+    // keeps the MockDashboard presentation (seeded activity feed) over the same interfaces.
     graph.roster = new fleet::DaemonSessionRoster(graph.storeMirror, graph.sessions, owner);
     graph.dashboard =
         daemonConnection != nullptr

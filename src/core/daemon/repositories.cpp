@@ -309,7 +309,7 @@ void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
     row.profileRef = profileId; // empty when the node bound its active default
     row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
     upsertCachedSession(row);
-    emit sessionsRefreshed(); // drives CachedSessionStore::reload() -> changed() -> UI rebuild
+    emit sessionsRefreshed(); // legacy cache-feed signal (reader-less since AD; feed dies in B3b)
     // The node also emits RosterChanged (subscription_manager refetches roster+tree); this signal
     // is the event-driven hook the orchestrator/sidebar auto-select on.
     emit sessionCreated(sessionId, profileId);
@@ -327,7 +327,7 @@ void SessionRepository::applyByProfilePage(const QByteArray& responseCbor) {
         return;
     }
     // Additive merge (no prune): a scoped subset must not clobber the shared roster cache. The
-    // rows carry bound_profile, so the client-side ByProfile filter (CachedSessionStore) projects
+    // rows carry bound_profile, so the client-side ByProfile filter (the session store) projects
     // them under their agent. Because it never prunes, each page can merge incrementally; the
     // page loop below just keeps fetching until next_cursor clears (guard-only PageLoop use).
     const qint64 now = QDateTime::currentMSecsSinceEpoch();

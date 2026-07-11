@@ -3,8 +3,6 @@
 
 #include "daemon/mock_scenario.h"
 
-#include "daemon/transcript_projection.h"
-
 #include <QJsonObject>
 #include <QLoggingCategory>
 #include <QtGlobal>
@@ -104,10 +102,12 @@ std::vector<mirror::Session> deriveSessions(const daemonnet::SeedBundle& bundle)
 }
 
 std::vector<mirror::FleetUnit> deriveFleetUnits(const daemonnet::SeedBundle& bundle) {
-    QHash<QString, int> childCount;
+    // The ordered child edges (bundle declaration order), 0x1f-joined — the G2 entity shape the
+    // MirrorFleetTree render reconstructs pre-order from (roots = units no child list names).
+    QHash<QString, QStringList> childIds;
     for (const domain::UnitNode& u : bundle.units) {
         if (!u.parentId.isEmpty()) {
-            ++childCount[u.parentId.toString()];
+            childIds[u.parentId.toString()].append(u.id.toString());
         }
     }
     std::vector<mirror::FleetUnit> out;
@@ -122,7 +122,9 @@ std::vector<mirror::FleetUnit> deriveFleetUnits(const daemonnet::SeedBundle& bun
         f.session = u.session.toString();
         f.title = u.name;
         f.role = roleString(u.role);
-        f.child_count = childCount.value(u.id.toString(), 0);
+        const QStringList children = childIds.value(u.id.toString());
+        f.child_count = static_cast<int>(children.size());
+        f.child_ids = children.join(QChar(0x1f));
         out.push_back(f);
     }
     return out;
@@ -233,18 +235,16 @@ void fillDefaultMirrorSeed(mirror::SeedSet& seed, const daemonnet::SeedBundle& b
     seed.routePins = {pin};
 }
 
-// Transcript CONTENT is now mirror-served (the G2 flip: MirrorSessionStore::content() projects
-// `w_transcript_blocks`, no legacy fallback). So the ONE bundle must carry the transcript as
-// canonical BLOCKS: seed a block per session INTO the mirror window, and DERIVE the surviving
-// legacy delegate's baseline content from the SAME blocks via the shared projection — the two
-// sides then agree byte-for-byte by construction (A8's ONE-bundle invariant), which is exactly
-// what the delegated-content parity assertion proves. Each seed session's prose is modeled as one
+// Transcript CONTENT is mirror-served (the G2 flip: MirrorSessionStore::content() projects
+// `w_transcript_blocks`). The ONE bundle carries the transcript as canonical BLOCKS: one seeded
+// block per session into the mirror window. Each seed session's prose is modeled as one
 // assistant `Message` block (seq 1); the rich block-showcase demos (`s-demo-*`) ride the same
 // path, so their leading fence is an assistant turn — faithfully re-decomposing them into typed
 // reasoning/tool blocks is blocked on the lossy mirror TranscriptBlock entity (no tone/duration/
-// stdout fields), a post-M5 entity enrichment, not this seam fix.
+// stdout fields), a post-M5 entity enrichment. (AD: the derived legacy-baseline leg died with
+// the InMemory delegate — the mirror is the only content source.)
 void seedTranscriptsFromBundle(MockScenario& s) {
-    for (domain::Session& session : s.bundle.sessions) {
+    for (const domain::Session& session : s.bundle.sessions) {
         if (session.content.isEmpty()) {
             continue;
         }
@@ -255,9 +255,6 @@ void seedTranscriptsFromBundle(MockScenario& s) {
         block.role = QStringLiteral("assistant");
         block.text = session.content;
         s.mirror.seed.transcriptBlocks.push_back(block);
-        // The legacy delegate baseline is the projection of the SAME block(s) — never the raw
-        // markdown anymore, so store->content() == storeMirror->content() for every seeded session.
-        session.content = projectTranscriptBlocks(std::vector<mirror::TranscriptBlock>{block});
     }
 }
 
@@ -334,7 +331,7 @@ mirror::VerbScript defaultVerbScript() {
 MockScenario buildDefault() {
     MockScenario s;
     s.name = QStringLiteral("default");
-    s.bundle = daemonnet::MockFleetSource::defaultSeed();
+    s.bundle = daemonnet::defaultSeedBundle();
     s.mirror.apiVersion = 39;
     fillDefaultMirrorSeed(s.mirror.seed, s.bundle);
     seedTranscriptsFromBundle(s); // canonical transcript blocks + derived legacy content

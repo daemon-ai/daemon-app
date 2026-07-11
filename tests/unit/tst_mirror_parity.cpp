@@ -69,9 +69,9 @@ private slots:
         QVERIFY(parity::compareKeys(keys, legacy).matches());
     }
 
-    // §13 M4: the mirror session roster key-set vs the legacy CachedSessionStore row-set. The key
-    // is the authoritative session id (SessionKey::serialize()).
-    void sessionKeysMatchLegacyRoster() {
+    // AD: the session key-set extractor — the mirror-vs-mirror feeder-parity input (the legacy
+    // CachedSessionStore comparison died with the class). Key = the authoritative session id.
+    void sessionKeysExtractAndCompare() {
         CoarseObserve obs;
         Store store(obs);
         store.beginBatch()
@@ -81,17 +81,17 @@ private slots:
         const QSet<QString> keys = parity::sessionKeys(store.snapshot());
         QCOMPARE(keys.size(), 2);
         QVERIFY(keys.contains(QStringLiteral("s-a")));
-        // A legacy roster carrying the same two sessions passes parity; a drift is reported.
-        const QSet<QString> legacyMatch = {QStringLiteral("s-a"), QStringLiteral("s-b")};
-        QVERIFY(parity::compareKeys(keys, legacyMatch).matches());
-        const QSet<QString> legacyDrift = {QStringLiteral("s-a")};
-        const parity::Result r = parity::compareKeys(keys, legacyDrift);
+        // A sibling feeder's snapshot carrying the same two sessions passes; drift is reported.
+        const QSet<QString> match = {QStringLiteral("s-a"), QStringLiteral("s-b")};
+        QVERIFY(parity::compareKeys(keys, match).matches());
+        const QSet<QString> drift = {QStringLiteral("s-a")};
+        const parity::Result r = parity::compareKeys(keys, drift);
         QVERIFY(!r.matches());
         QCOMPARE(r.onlyInMirror, QStringList{QStringLiteral("s-b")});
     }
 
-    // §13 M4: the mirror FleetUnit key-set vs the legacy fleet-tree row-set (unit ids).
-    void fleetUnitKeysMatchLegacyTree() {
+    // AD: the FleetUnit key-set extractor (mirror-vs-mirror feeder parity; unit ids).
+    void fleetUnitKeysExtractAndCompare() {
         CoarseObserve obs;
         Store store(obs);
         store.beginBatch()
@@ -100,8 +100,8 @@ private slots:
             .commit();
         const QSet<QString> keys = parity::fleetUnitKeys(store.snapshot());
         QCOMPARE(keys.size(), 2);
-        const QSet<QString> legacy = {QStringLiteral("u-a"), QStringLiteral("u-b")};
-        QVERIFY(parity::compareKeys(keys, legacy).matches());
+        const QSet<QString> sibling = {QStringLiteral("u-a"), QStringLiteral("u-b")};
+        QVERIFY(parity::compareKeys(keys, sibling).matches());
     }
 };
 

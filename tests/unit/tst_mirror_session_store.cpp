@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-// The M4 mirror-backed ISessionStore (spec 09 §13 wave M4; LEDGER-a7) — the ONE projection the
-// session consumers rebind onto (6→1). Asserts:
-//  - DUAL-DECODER PARITY: the same SessionPage wire bytes decoded through the legacy path
-//    (NodeApiCodec::decodeSessionPage → DaemonCacheStore → CachedSessionStore) and the mirror
-//    path (decodeSessionsToMirror → ingestor → MirrorSessionStore) yield the same row-set
-//    (parity::sessionKeys, §13 "parity asserts vs legacy roster until deletion") and the same
-//    per-view answers (ids, titles, pinned).
+// The mirror-backed ISessionStore (spec 09 §13 wave M4 → AD; LEDGER-a7/LEDGER-ad) — the ONE
+// projection every session consumer binds (6→1). Asserts:
+//  - the wire decode: the SAME SessionPage bytes through decodeSessionsToMirror → ingestor →
+//    MirrorSessionStore yield the pinned GOLDEN row-set/views (ids, titles, pinned,
+//    pinned-floats-first order) — the byte-stability contract the deleted dual-decoder parity
+//    assert proved against the legacy path (the legacy oracle died with CachedSessionStore);
 //  - the scoped views project mirror rows (AllSessions/Archived/Agent/ByTransport);
 //  - changed() re-derives only on Session/FleetUnit deltas (journal-filtered watermark);
-//  - mutations + transcript reads delegate to the legacy store; its wire round-trip signals
-//    (sessionCreated / metaUpdateFailed) are relayed.
+//  - session-meta mutations ride the outbox lane (§6.4) with §6.5 rejection relay + §6.6
+//    provenance landing; create rides the direct seam.
 
-#include "daemon/cached_session_store.h"
-#include "daemon/daemon_cache_store.h"
 #include "daemon/mirror_decode.h"
 #include "daemon/mirror_session_store.h"
 #include "daemon/node_api_codec.h"
@@ -22,7 +19,6 @@
 #include "daemon_api_client_types.h"
 #include "local_database.h"
 #include "mirror/mirror_service.h"
-#include "mirror/parity.h"
 #include "mirror/store.h"
 #include "outbox.h"
 #include "session_controller.h"
@@ -37,8 +33,6 @@
 #include <QtTest/QtTest>
 #include <vector>
 
-using daemonapp::daemon::CachedSessionStore;
-using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::decodeSessionsToMirror;
 using daemonapp::daemon::MirrorSessionStore;
 using daemonapp::daemon::NodeApiCodec;
@@ -122,53 +116,35 @@ class TestMirrorSessionStore : public QObject {
     Q_OBJECT
 
 private slots:
-    // §13 M4 parity: the SAME SessionPage bytes through both decode paths yield the same
-    // row-set and the same per-view answers. This is the dual-write parity assert the sub-gates
-    // hold until the legacy roster dies.
-    void dualDecoderParityOverSameWireBytes() {
+    // AD: the wire-decode GOLDEN — the same SessionPage bytes the deleted dual-decoder parity
+    // assert fed both paths now pin the mirror path's row-set and per-view answers as literals
+    // (byte-stability at equal strength; the legacy oracle died with CachedSessionStore).
+    void sessionPageWireBytesProjectGoldenRows() {
         const QByteArray bytes = sessionPageResponse();
 
-        // Legacy path: decodeSessionPage → DaemonCacheStore → CachedSessionStore.
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        DaemonCacheStore cache(dir.filePath(QStringLiteral("cache.db")));
-        QVERIFY(cache.isOpen());
-        QList<daemonapp::daemon::CachedSessionRow> rows;
-        QVERIFY(NodeApiCodec::decodeSessionPage(bytes, &rows, nullptr, nullptr, nullptr));
-        for (const auto& row : rows) {
-            QVERIFY(cache.upsertSession(row));
-        }
-        CachedSessionStore legacy(&cache, nullptr);
-
-        // Mirror path: decodeSessionsToMirror → ingestor → MirrorSessionStore.
         mirror::MirrorService svc;
         svc.openInMemory();
         std::vector<mirror::Session> mirrorRows;
         quint64 rev = 0;
         QVERIFY(decodeSessionsToMirror(bytes, &mirrorRows, nullptr, &rev, nullptr));
+        QCOMPARE(rev, quint64(4));
         svc.ingestor().deliverSessions(mirrorRows, /*isFinalPage=*/true, rev);
         MirrorSessionStore store(&svc.store(), &svc.ingestor());
 
-        // Row-set parity (the §13 M4 exit assert).
-        QSet<QString> legacyKeys;
-        for (const auto& row : cache.sessions()) {
-            legacyKeys.insert(row.sessionId);
-        }
-        const mirror::parity::Result r = mirror::parity::compareKeys(
-            mirror::parity::sessionKeys(svc.store().snapshot()), legacyKeys);
-        QVERIFY(mirror::parity::checkAndLog(QStringLiteral("sessions"), r));
-
-        // View parity: same ids, count, titles, pinned flags through the ISessionStore reads.
         const domain::ListScope all{domain::NodeType::AllSessions, -1, {}, {}};
-        QCOMPARE(idsOf(store.sessions(all)), idsOf(legacy.sessions(all)));
-        QCOMPARE(store.sessionCount(all), legacy.sessionCount(all));
-        for (const QString& id : legacyKeys) {
-            QCOMPARE(store.title(domain::SessionId(id)), legacy.title(domain::SessionId(id)));
-            QCOMPARE(store.isPinned(domain::SessionId(id)), legacy.isPinned(domain::SessionId(id)));
-        }
-        // The pinned row floats first in both projections.
+        QCOMPARE(idsOf(store.sessions(all)),
+                 (QSet<QString>{QStringLiteral("s-pinned"), QStringLiteral("s-plain")}));
+        QCOMPARE(store.sessionCount(all), 2);
+        QCOMPARE(store.title(domain::SessionId(QStringLiteral("s-pinned"))),
+                 QStringLiteral("Pinned thread"));
+        QVERIFY(store.isPinned(domain::SessionId(QStringLiteral("s-pinned"))));
+        QCOMPARE(store.title(domain::SessionId(QStringLiteral("s-plain"))), QString());
+        QVERIFY(!store.isPinned(domain::SessionId(QStringLiteral("s-plain"))));
+        // The pinned row floats first (the deterministic projection order).
         QCOMPARE(store.sessions(all).first().sessionId.toString(), QStringLiteral("s-pinned"));
-        QCOMPARE(legacy.sessions(all).first().sessionId.toString(), QStringLiteral("s-pinned"));
+        // The bound profile decoded off the wire page rides the Agent scope.
+        const domain::ListScope agent{domain::NodeType::Agent, -1, {}, QStringLiteral("prof-1")};
+        QCOMPARE(idsOf(store.sessions(agent)), (QSet<QString>{QStringLiteral("s-pinned")}));
     }
 
     // The scoped views project mirror rows: AllSessions excludes archived; Archived shows them;

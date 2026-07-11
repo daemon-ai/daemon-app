@@ -4203,17 +4203,6 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>এজেন্ট</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ব্যবহারকারী</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -9460,17 +9449,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Failed to apply the account settings</source>
         <translation>অ্যাকাউন্ট সেটিংস প্রয়োগ করতে ব্যর্থ হয়েছে</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>এজেন্ট</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ব্যবহারকারী</translation>
     </message>
 </context>
 <context>

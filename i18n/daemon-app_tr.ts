@@ -4199,17 +4199,6 @@ Teşekkürler — şununla devam ediliyor: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Aracı</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Kullanıcı</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -9452,17 +9441,6 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Hesap ayarları uygulanamadı</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Aracı</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Kullanıcı</translation>
     </message>
 </context>
 <context>

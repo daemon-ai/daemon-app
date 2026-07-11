@@ -122,20 +122,14 @@ enum class ServiceMode {
 
 // The shared GUI/TUI service bundle.
 //
-// ServiceMode::Daemon is only partially live today: `connection` (real Health probe) and `store`
-// (sessions projected from DaemonCacheStore via NodeApi SessionsQuery) are daemon-backed, while
-// `fs`, `daemonConfig`, `memory`, `modelCatalog`, `accounts`, the fleet group
-// (`roster`/`fleetTree`/`approvals`/`dashboard`), `routing`/`cron`, `sessionSettings`, and
-// `checkpoints` remain mock-backed until each grows its own daemon adapter. createAppServiceGraph()
-// logs this at startup in daemon mode so the partial state is not mistaken for fully live.
+// createAppServiceGraph() logs the daemon mode's live-seam census at startup so a partially-live
+// state is never mistaken for fully live.
 struct AppServiceGraph {
-    persistence::ISessionStore* store = nullptr;
-    // mirror A7 (spec 09 §13 wave M4): the store the PORTED session/fleet consumers bind (the
-    // 6→1 unification path). Daemon mode with the substrate: a MirrorSessionStore projecting the
-    // mirror `sessions`/`fleet_units` tables (mutations + transcript reads delegate to `store`).
-    // Mock mode / substrate-less stacks: ALIASES `store` — the composition-time fallback that
-    // keeps mock rendering until A8's seeder feeds the mock mirror (§9 "mock keeps working").
-    // NEVER null once the graph is built; consumers flip here one sub-gate at a time.
+    // mirror A7 (M4) → AD: THE session store — a MirrorSessionStore projecting the mirror
+    // `sessions` table + transcript windows in BOTH modes (daemon: ingestor-fed; mock:
+    // scenario-seeded). Session-meta mutations ride the outbox lane; create rides the direct
+    // SessionCreate seam. The legacy stores (CachedSessionStore / InMemorySessionStore) are
+    // deleted. NEVER null once the graph is built.
     persistence::ISessionStore* storeMirror = nullptr;
     settings::ISettingsStore* settings = nullptr;
     connection::IConnectionService* connection = nullptr;

@@ -47,19 +47,24 @@ void SessionController::appendUserText(const QString& text) {
     if (!m_store || m_currentId.isEmpty() || trimmed.isEmpty()) {
         return;
     }
-    // Prefix a message boundary marker (role layer, Strategy C) so the persisted
+    // Prefix a message boundary marker (role layer, Strategy C) so the rendered
     // markdown carries the user turn; the BlockEditor parser consumes the marker
     // and tags the text as a user message. A "u<epochMs>" id stays distinct from
     // the runtime's "m<n>" assistant ids, so the two never collide.
+    //
+    // AD: PRESENTATION-LOCAL adopt only (§8.5 — client-local view state). The store write died
+    // with the legacy stores: transcript persistence is the ENGINE's (daemon: the node echoes
+    // the user message → the sink persists the block → content() re-projects the authoritative
+    // row). In mock the simulator's live turn is editor-local by design (the seeded transcripts
+    // render from the mirror; an ad-hoc demo turn is not durable — recorded in LEDGER-ad).
     const QString id = QStringLiteral("u%1").arg(QDateTime::currentMSecsSinceEpoch());
     const QString marker = QStringLiteral("```msg\n{\"id\":\"%1\",\"role\":\"user\"}\n```").arg(id);
 
-    QString next = m_content;
-    if (!next.isEmpty()) {
-        next += QStringLiteral("\n\n");
+    if (!m_content.isEmpty()) {
+        m_content += QStringLiteral("\n\n");
     }
-    next += marker + QStringLiteral("\n\n") + trimmed;
-    m_store->setContent(m_currentId, next); // emits changed() -> refresh()
+    m_content += marker + QStringLiteral("\n\n") + trimmed;
+    emit contentChanged();
 }
 
 void SessionController::updateContent(const QString& markdown) {

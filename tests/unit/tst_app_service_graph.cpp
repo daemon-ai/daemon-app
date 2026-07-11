@@ -31,7 +31,7 @@ private slots:
         const auto graph =
             daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
 
-        QVERIFY(graph.store != nullptr);
+        QVERIFY(graph.storeMirror != nullptr);
         QVERIFY(graph.settings != nullptr);
         QVERIFY(graph.connection != nullptr);
         QVERIFY(graph.daemonConfig != nullptr);
@@ -59,29 +59,21 @@ private slots:
         QVERIFY(qobject_cast<connection::MockConnectionService*>(graph.connection) != nullptr);
     }
 
-    // P1 single-source: in mock mode the session store is re-seeded from the unified DaemonNet, so
-    // the sidebar/list/transcript reflect the same source as the Fleet/Sessions pages - and every
-    // session now carries its authoritative string sessionId (not just an int handle).
-    void mockStoreIsSeededFromDaemonNet() {
+    // AD single-source: the ONE scenario seeds the mock mirror; the store every consumer binds
+    // renders its sessions with authoritative string ids (and the demoted int handle).
+    void mockStoreIsSeededFromScenario() {
         QObject owner;
         const auto graph =
             daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
 
-        // The supervision tree came from DaemonNet (fleet-of-fleets roots present).
-        const QList<domain::UnitNode> roots = graph.store->unitChildren(domain::UnitId());
-        QVERIFY(!roots.isEmpty());
-
-        // Tags folded in from the seed (ideas / todo).
-        QVERIFY(graph.store->tags().size() >= 2);
-
-        // Sessions are present and each carries a non-empty, authoritative sessionId while also
-        // holding a stable int handle (the transitional dual-identity P1 establishes).
-        const QList<domain::Session> sessions = graph.store->sessions(domain::ListScope{});
+        const QList<domain::Session> sessions = graph.storeMirror->sessions(domain::ListScope{});
         QVERIFY(sessions.size() >= 1);
         for (const domain::Session& s : sessions) {
             QVERIFY2(!s.sessionId.isEmpty(), "every seeded session must carry its real SessionId");
             QVERIFY(s.id >= 0);
         }
+        // The mock fleet tree is the mirror projection over the seeded fleet_units.
+        QVERIFY(graph.fleetTree != nullptr);
     }
 
     // Live agent enablement #1: the code default is Daemon (unset env), and DAEMON_APP_SERVICE_MODE
@@ -124,7 +116,7 @@ private slots:
         QVERIFY(graph.sessions != nullptr);
         QVERIFY(graph.cache != nullptr);
         QVERIFY(graph.fs != nullptr);
-        QVERIFY(graph.store != nullptr);
+        QVERIFY(graph.storeMirror != nullptr);
     }
 
     // Regression: the daemon-mode seam replacements delete the mock fleet tree the dashboard was
@@ -208,43 +200,28 @@ private slots:
         }
     }
 
-    // mirror A8 (M5): storeMirror is the REAL MirrorSessionStore projection in BOTH modes (the
-    // A7 mock aliasing fallback is deleted). The mock projection renders the scenario's seeded
-    // sessions, and its ids agree with the legacy delegate store's — the content() join.
+    // mirror A8 (M5) → AD: storeMirror is the REAL MirrorSessionStore projection in BOTH modes
+    // (the legacy delegate stores are deleted). The mock projection renders the scenario's
+    // seeded sessions with mirror-served transcript content.
     void storeMirrorIsTheMirrorProjectionInBothModes() {
         {
             QObject owner;
             const auto graph = daemonapp::daemon::createAppServiceGraph(
                 daemonapp::daemon::ServiceMode::Mock, &owner);
             QVERIFY(graph.storeMirror != nullptr);
-            QVERIFY(graph.storeMirror != graph.store); // no longer the legacy alias
             const QList<domain::Session> mirrorRows =
                 graph.storeMirror->sessions(domain::ListScope{});
             QVERIFY(!mirrorRows.isEmpty());
-            // Same row-set as the legacy delegate (both sides seeded from the ONE scenario).
-            const QList<domain::Session> legacyRows = graph.store->sessions(domain::ListScope{});
-            QSet<QString> mirrorIds;
-            for (const domain::Session& s : mirrorRows) {
-                mirrorIds.insert(s.sessionId.toString());
-            }
-            QSet<QString> legacyIds;
-            for (const domain::Session& s : legacyRows) {
-                legacyIds.insert(s.sessionId.toString());
-            }
-            QCOMPARE(mirrorIds, legacyIds);
-            // The delegated transcript join: a mirror row's content flows from the legacy store.
+            // The seeded transcript window serves content for the scenario's sessions.
             const domain::SessionId scratch{QStringLiteral("s-scratch")};
             QVERIFY(!graph.storeMirror->content(scratch).isEmpty());
-            QCOMPARE(graph.storeMirror->content(scratch), graph.store->content(scratch));
+            QVERIFY(graph.storeMirror->content(scratch).contains(QStringLiteral("```msg")));
         }
         {
-            // (This suite assumes the substrate configuration, like the offline-reboot test
-            // above; a substrate-less stack aliases storeMirror = store in daemon mode too.)
             QObject owner;
             const auto graph = daemonapp::daemon::createAppServiceGraph(
                 daemonapp::daemon::ServiceMode::Daemon, &owner);
             QVERIFY(graph.storeMirror != nullptr);
-            QVERIFY(graph.storeMirror != graph.store); // the distinct mirror projection
             // The projection starts empty (no connection): reads answer, never crash.
             QCOMPARE(graph.storeMirror->sessionCount(domain::ListScope{}), 0);
         }

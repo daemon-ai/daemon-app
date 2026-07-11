@@ -248,11 +248,10 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // onLanguageChanged, wired in completeWiring once the singleton exists).
     m_engine = &engine;
 
-    // Shared store; QML view models bind their `store` property to this.
-    engine.rootContext()->setContextProperty(QStringLiteral("SessionStore"), m_services.store);
-    // mirror A7 (M4) → AD: the mirror-backed store EVERY session/fleet consumer binds (6→1
+    // mirror A7 (M4) → AD: the ONE session store EVERY session/fleet consumer binds (6→1
     // unification) — the real MirrorSessionStore projection in both modes (daemon: ingestor-fed;
-    // mock: scenario-seeded).
+    // mock: scenario-seeded). The legacy `SessionStore` rollback binding died with the legacy
+    // stores.
     engine.rootContext()->setContextProperty(QStringLiteral("SessionStoreMirror"),
                                              m_services.storeMirror);
 

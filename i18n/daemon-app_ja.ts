@@ -4199,17 +4199,6 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>エージェント</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ユーザー</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -9452,17 +9441,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Failed to apply the account settings</source>
         <translation>アカウント設定の適用に失敗しました</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>エージェント</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ユーザー</translation>
     </message>
 </context>
 <context>

@@ -24,7 +24,7 @@ namespace {
 constexpr auto kConsumer = "mirror_session_store";
 
 // Canonical mirror strings (entities_map.cpp) -> domain enums. The same mapping the legacy
-// CachedSessionStore applies to its cache columns, so a ported consumer sees identical values.
+// legacy daemon store applied to its cache columns, so ported consumers saw identical values.
 domain::SessionState stateFromString(const QString& s) {
     if (s == QStringLiteral("Active")) {
         return domain::SessionState::Active;

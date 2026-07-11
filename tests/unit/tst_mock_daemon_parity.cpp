@@ -18,12 +18,10 @@
 #include "daemon/app_service_graph.h"
 #include "daemon/mirror_session_store.h"
 #include "daemon/mock_scenario.h"
-#include "daemonnet/mock_fleet_source.h"
 #include "mirror/chat_window_model.h"
 #include "mirror/conversation_list_model.h"
 #include "mirror/mirror_service.h"
 #include "mirror/parity.h"
-#include "persistence/in_memory_session_store.h"
 
 #include <QHash>
 #include <QSet>
@@ -210,8 +208,6 @@ private slots:
                  lensColumn(daemonChat, mirror::ChatWindowModel::AuthorRole));
 
         // --- store-projection parity: the 6→1 session read both modes' consumers bind ---------
-        auto* fleetSource = new daemonnet::MockFleetSource(scn.bundle, &owner);
-        auto* daemonLegacy = new persistence::InMemorySessionStore(fleetSource, &owner);
         daemonapp::daemon::MirrorSessionStore daemonStore(&daemonSvc.store(),
                                                           &daemonSvc.ingestor());
         const QList<domain::Session> mockRows = graph.storeMirror->sessions(domain::ListScope{});
@@ -227,14 +223,12 @@ private slots:
         }
         QCOMPARE(daemonRowIds, mockRowIds);
 
-        // --- transcript CONTENT parity: the msg-fence projection both feeders produce agrees, and
-        // the derived legacy baseline matches it (the ONE-bundle content join, post-G2 flip) ------
+        // --- transcript CONTENT parity: the msg-fence projection both feeders produce agrees
+        // (mirror-vs-mirror — the legacy baselines died with the legacy stores, AD) -------------
         const domain::SessionId scratch{QStringLiteral("s-scratch")};
         const QString mockContent = graph.storeMirror->content(scratch);
         QVERIFY(!mockContent.isEmpty());
-        QCOMPARE(daemonStore.content(scratch), mockContent);   // mirror, both feeders agree
-        QCOMPARE(graph.store->content(scratch), mockContent);  // mock legacy baseline derived
-        QCOMPARE(daemonLegacy->content(scratch), mockContent); // daemon legacy baseline derived
+        QCOMPARE(daemonStore.content(scratch), mockContent); // mirror, both feeders agree
     }
 
     // The journal origins differ BY DESIGN (seeder vs refetch_diff) while the rendered state is

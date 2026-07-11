@@ -20,7 +20,7 @@
 //    land too (dual-write, both live).
 //  - Documented degradations (07§9.3 / LEDGER-a7): row `content` snippets and `tagIds` are empty
 //    (transcript re-homing / client-local tag sidecar are later waves); `unitId` stays empty
-//    (parity with the legacy daemon CachedSessionStore, which never sets it).
+//    (parity with the deleted legacy daemon store, which never set it either).
 //
 // Signals: changed() = mirror session/fleet/transcript journal deltas; sessionCreated is relayed
 // from the direct create seam (daemon: SessionRepository::createSession; mock: the scenario

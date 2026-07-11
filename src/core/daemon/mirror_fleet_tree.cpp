@@ -162,23 +162,25 @@ void MirrorFleetTree::rebuild() {
 }
 
 void MirrorFleetTree::pause(const QString& id) {
-    if (m_control == nullptr) {
-        return;
-    }
+    // The paused overlay is CLIENT-LOCAL presentation state (§8.5) — applied in both modes so
+    // the surfaces render identically (AD: the mock tree is this same class with a null control
+    // seam). The wire op goes out only where the control seam exists; a daemon rejection
+    // reverts the overlay via controlFailed.
     m_lastControlId = id;
     m_paused.insert(id); // optimistic; reverted on controlFailed
     rebuild();
-    m_control->pause(id);
+    if (m_control != nullptr) {
+        m_control->pause(id);
+    }
 }
 
 void MirrorFleetTree::resume(const QString& id) {
-    if (m_control == nullptr) {
-        return;
-    }
     m_lastControlId = id;
     m_paused.remove(id);
     rebuild();
-    m_control->resume(id);
+    if (m_control != nullptr) {
+        m_control->resume(id);
+    }
 }
 
 void MirrorFleetTree::scale(const QString& id, int n) {

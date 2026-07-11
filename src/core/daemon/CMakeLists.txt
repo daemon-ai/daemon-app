@@ -109,8 +109,6 @@ add_library(da_daemon_client STATIC
     daemon_presence_service.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
-    cached_session_store.h
-    cached_session_store.cpp
     app_service_graph.h
     app_service_graph.cpp
     client_cache_schema.h

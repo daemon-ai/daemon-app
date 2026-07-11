@@ -454,6 +454,8 @@ target_link_libraries(tst_daemon_roster_dashboard
         daemon-app::daemon_client
         daemon-app::fleet
         daemon-app::uimodels
+        daemon-app::mirror_ingestor
+        daemon-app::local
 )
 add_test(NAME tst_daemon_roster_dashboard COMMAND tst_daemon_roster_dashboard)
 set_tests_properties(tst_daemon_roster_dashboard PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -857,6 +859,9 @@ target_link_libraries(tst_fleet_ops
         daemon-app::fleet
         daemon-app::persistence
         daemon-app::uimodels
+        # AD: the scenario-seeded mirror + the session-meta lane are the fixtures now.
+        daemon-app::mirror_ingestor
+        daemon-app::local
 )
 add_test(NAME tst_fleet_ops COMMAND tst_fleet_ops)
 set_tests_properties(tst_fleet_ops PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -897,18 +902,6 @@ target_link_libraries(tst_theme_palette
 add_test(NAME tst_theme_palette COMMAND tst_theme_palette)
 set_tests_properties(tst_theme_palette PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_store: exercises the in-memory store's uniformly-recursive agent tree -
-# roots, arbitrary depth, subtree-folded counts/scopes, and creation.
-qt_add_executable(tst_store tst_store.cpp)
-target_link_libraries(tst_store
-    PRIVATE
-        Qt6::Test
-        daemon-app::domain
-        daemon-app::persistence
-)
-
-add_test(NAME tst_store COMMAND tst_store)
-set_tests_properties(tst_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_sidebar_model: exercises the flattened agent-tree sidebar model - recursive
 # depths, tree roles, expand/collapse, and node-scope selection.
@@ -925,6 +918,8 @@ target_link_libraries(tst_sidebar_model
         daemon-app::persistence
         daemon-app::daemonnet
         daemon-app::sidebar
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 
 add_test(NAME tst_sidebar_model COMMAND tst_sidebar_model)
@@ -967,6 +962,8 @@ target_link_libraries(tst_participants_model
         daemon-app::persistence
         daemon-app::daemonnet
         daemon-app::participants
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 
 add_test(NAME tst_participants_model COMMAND tst_participants_model)
@@ -1178,6 +1175,8 @@ target_link_libraries(tst_session_orchestrator
         daemon-app::profiles
         daemon-app::persistence
         daemon-app::domain
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tst_session_orchestrator COMMAND tst_session_orchestrator)
 set_tests_properties(tst_session_orchestrator PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
