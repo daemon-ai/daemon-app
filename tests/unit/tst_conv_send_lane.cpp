@@ -129,12 +129,13 @@ private slots:
         QCOMPARE(text, QStringLiteral("worse"));
     }
 
-    void autoReplayStaysOff() {
-        // The core M2 invariant (§6.8): the outbox never auto-replays — not against v38, and NOT
-        // against api/39 either (BR flips it later, per connection). A5 asserts it stays OFF.
+    void autoReplayEnabledFromApi39() {
+        // BR flip (§6.8): the controller delegates the gate to the outbox — OFF against api/38
+        // (manual drain only; a blind resend can duplicate), ON from api/39 where the node dedups
+        // on op_id and stamps provenance, making unattended replay safe.
         QVERIFY(!ConvSendController::autoReplayEnabled(38));
-        QVERIFY(!ConvSendController::autoReplayEnabled(39));
-        QVERIFY(!ConvSendController::autoReplayEnabled(40));
+        QVERIFY(ConvSendController::autoReplayEnabled(39));
+        QVERIFY(ConvSendController::autoReplayEnabled(40));
     }
 };
 

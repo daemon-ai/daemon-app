@@ -461,6 +461,13 @@ private slots:
         QCOMPARE(out.at(1).parent, QStringLiteral("!space:demo"));
     }
 
+    // ----- BR flip: the app speaks the api/39 contract (handshake 38→39) -----
+    void daemonApiContractVersionIs39() {
+        // The BR bridge activates the rung-1/2/3 wire shapes vendored at v39: the ONLY app-side
+        // contract-version constant advances to 39, so the connection gate requires an api/39 node.
+        QCOMPARE(NodeApiCodec::kDaemonApiVersion, quint32(39));
+    }
+
     // ----- codec: ConvSend / ConvHistory encode + decode -----
     void convSendEncodeRoundTrip() {
         const QByteArray req = NodeApiCodec::encodeConvSendRequest(
