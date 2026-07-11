@@ -6275,16 +6275,8 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Gagal mendekode respons SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Tidak tersambung ke daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Sesi menolak perintah</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta gagal</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9361,16 +9353,8 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
         <translation>Gagal mendekode respons SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Tidak tersambung ke daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Sesi menolak perintah</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta gagal</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>

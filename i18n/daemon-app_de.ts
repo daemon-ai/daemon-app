@@ -6279,16 +6279,8 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>SessionDetail-Antwort konnte nicht dekodiert werden</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Nicht mit einem Daemon verbunden</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Die Sitzung hat den Befehl abgelehnt</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta fehlgeschlagen</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9369,16 +9361,8 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
         <translation>SessionDetail-Antwort konnte nicht dekodiert werden</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Nicht mit einem Daemon verbunden</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Die Sitzung hat den Befehl abgelehnt</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta fehlgeschlagen</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>

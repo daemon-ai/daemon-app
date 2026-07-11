@@ -6275,16 +6275,8 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>SessionDetail yanıtı çözülemedi</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Bir daemon&apos;a bağlı değil</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Oturum komutu reddetti</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta başarısız oldu</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9361,16 +9353,8 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
         <translation>SessionDetail yanıtı çözülemedi</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Bir daemon&apos;a bağlı değil</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Oturum komutu reddetti</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta başarısız oldu</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>

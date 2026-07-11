@@ -6275,16 +6275,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>解码 SessionDetail 响应失败</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>未连接到 daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>会话拒绝了该命令</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta 失败</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9361,16 +9353,8 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
         <translation>解码 SessionDetail 响应失败</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>未连接到 daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>会话拒绝了该命令</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta 失败</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>

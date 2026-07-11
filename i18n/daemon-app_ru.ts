@@ -6283,16 +6283,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Не удалось декодировать ответ SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Нет подключения к демону</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Сессия отклонила команду</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Не удалось обновить метаданные сессии</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9377,16 +9369,8 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
         <translation>Не удалось декодировать ответ SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Нет подключения к демону</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Сессия отклонила команду</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Не удалось обновить метаданные сессии</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>

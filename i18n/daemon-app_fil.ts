@@ -6279,16 +6279,8 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Nabigo sa pag-decode ng tugon ng SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Hindi nakakonekta sa isang daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Tinanggihan ng session ang command</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Nabigo ang SessionUpdateMeta</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9369,16 +9361,8 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
         <translation>Nabigo sa pag-decode ng tugon ng SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Hindi nakakonekta sa isang daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Tinanggihan ng session ang command</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Nabigo ang SessionUpdateMeta</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>

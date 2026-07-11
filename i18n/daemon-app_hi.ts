@@ -6279,16 +6279,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>SessionDetail प्रतिक्रिया डिकोड करने में विफल</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>किसी daemon से कनेक्ट नहीं</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>सत्र ने कमांड अस्वीकार कर दी</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta विफल</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9369,16 +9361,8 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
         <translation>SessionDetail प्रतिक्रिया डिकोड करने में विफल</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>किसी daemon से कनेक्ट नहीं</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>सत्र ने कमांड अस्वीकार कर दी</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta विफल</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>

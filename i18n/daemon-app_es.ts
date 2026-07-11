@@ -6279,16 +6279,8 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>No se pudo decodificar la respuesta de SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>No conectado a un daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>La sesión rechazó el comando</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Error en SessionUpdateMeta</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9369,16 +9361,8 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
         <translation>No se pudo decodificar la respuesta de SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>No conectado a un daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>La sesión rechazó el comando</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Error en SessionUpdateMeta</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>

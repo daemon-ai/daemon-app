@@ -6,20 +6,23 @@ program's closing act). Base: `integrations/app` @ `4e69f2f` (the G2×A8 merge).
 migration/compatibility with pre-mirror versions, no legacy paths kept as "insurance" once their
 replacement is proven.**
 
-## STATUS — assessment complete; implementation NOT landed (honest boundary at Phase 1)
+## STATUS — Phase 1b COMPLETE + every deletion it unlocks LANDED; Phase 1a not started
 
-This ledger is the package's **evidence + execution map**, not a final-counts artifact. No code was
-deleted or ported in this pass. The reason, stated plainly and backed by the code census below: AD
-has **no cleanly-isolated, low-risk slice**. Every deletion thread is gated on one of two large
-Phase-1 verticals or pulls the §13-ring-fenced transcript surface, and completing either vertical to
-the repo's green-gate standard (GUI+TUI+tests + clang-tidy + i18n + byte-parity) is a dedicated
-effort. Per the program rule invoked throughout the sibling ledgers — *an honest clean-gated partial
-beats a broken total* — and the AD brief's own instruction to "land the honest boundary with clean
-gates and report it precisely," this pass delivers the verified map so the resume is efficient and
-correct, rather than a rushed partial that would regress the one surface the program ring-fenced.
+Executed this resume (each sub-step RED→GREEN, full GUI+TUI+tests build, ctest zero failures,
+format/tidy, committed; trajectory 147 → 146, the −1 being the deleted `tst_store`):
 
-Base gate re-confirmed green at handoff: **147/147 ctest**, GUI (`daemon-app`) + TUI (`daemon-tui`)
-+ all tests build clean (only pre-existing `-Wconversion` warnings in `fetch_scheduler.h`).
+| commit | sub-step | net LOC |
+|---|---|---|
+| `81df15d` | **1b.1** session-meta OUTBOX lane (SessionUpdateMeta durable, op_id §10.3, §6.5 rejection relay GUI+TUI, §6.6 provenance landing incl. page-side `origin_ops` + event `origin_op` carriers, daemon accepted-expiry sweep) | +1,043 |
+| `7f4fd8f` | **1b.2** direct SessionCreate seam (repo relay daemon / scripted host answer mock); the legacy ISessionStore DELEGATE PARAMETER IS GONE; node-owned no-verb ops aligned as no-ops in both modes; scoped refreshes ingestor-only | +18 |
+| `d4a0606` | **1b.3** engine transcript-cache retirement — the sink is the SINGLE write path; mirror `w_transcript_blocks` PERSISTENCE added (write-behind upserts + rebaseline scope-clears + boot reload; schema v12→v13) so the mirror path carries the durability the cache leg provided; ring-fenced tests re-expressed STRONGER (cold-reboot reload asserts) | +233 |
+| `2dfd0c9` | **P2-B1** substrate UNCONDITIONAL (ratified): `DAEMON_APP_HAVE_MIRROR_SUBSTRATE` deleted everywhere; Dependencies.cmake FATALs without the immer pin; null-mirror fallbacks + ChatConversationController/Routing substrate-less forks deleted | −134 |
+| `2b962a4` | **P2-B2** engine roster reads re-homed (subagentTitle/childEndReason via sink read shims); FleetUnit gains `end_reason` (map-only regen off `unit-state-finished`, drift gate green) | +46 |
+| `58c5593` | **P2-B3** legacy READ machinery deleted: `CachedSessionStore`, `InMemorySessionStore`, `MockFleetSource` (bundle → `daemonnet::defaultSeedBundle()`), `MockFleetTree` (mock tree = the SAME `MirrorFleetTree`); `graph.store` + `SessionStore` context property gone; parity legacy legs → GOLDEN literals + pipeline-integrity; i18n −4 obsolete entries | −2,123 |
+| `460d285` + `99cb820` | **P2-B4** legacy FEEDERS retired: SessionRepository slimmed to create/submit/detail; FleetRepository = control seam only (`controlAcked` → mirror Tree refetch); RoutingRepository = mutation seam only (`mutationApplied` → mirror pin refetch; the LEDGER-a6 in-memory cache residual DELETED); SubscriptionManager migrated arms retired; DaemonCacheStore drops daemon_sessions/daemon_fleet_units/daemon_transcript_blocks (cache schema v10→v11); connect-ready storm slimmed | −1,318 |
+
+Branch totals vs base: **114 files, +2,349 / −4,958 (net −2,609 LOC)**; ctest 146/146 green;
+i18n drift green; clang-format/clang-tidy clean on all touched TUs.
 
 ## Settled decisions (verified this pass — do NOT re-litigate)
 
@@ -219,22 +222,57 @@ Substrate unconditional       ── entangled with the null-mirror fallback →
 Parity plumbing               ── dies WITH each legacy source it compares
 ```
 
-## End-of-package evidence owed to A9 (F6 audit vs 07 baselines: 31 seams / 20 repos / 5+6 layouts)
+## Deletion census (F6 evidence — deleted vs survivors, as of `99cb820`)
 
-When the phases land, this ledger must record: deleted classes/files/LOC; survivors + reason
-(FleetRepository CONTROL seam; the non-transcript `daemon_cache_store` domains out of program scope —
-credentials/models/fs; the Daemon* transport/persons feeders as the mirror's wire source; the
-post-M5 domain mocks A8 listed as blocked); zero-reference gate outputs per batch; the substrate
-decision (settled: unconditional); parity-plumbing disposition (settled). Ctest trajectory will move
-DOWN as legacy suites delete and MIRROR suites absorb their still-relevant assertions — track and
-explain each step.
+DELETED (classes/files):
+- `CachedSessionStore` (.h/.cpp), `InMemorySessionStore` (.h/.cpp), `MockFleetSource` (.h/.cpp),
+  `MockFleetTree` (.h/.cpp), `tst_store.cpp`; `graph.store` + the `SessionStore` QML context
+  property (zero QML readers, verified); the null-mirror composition fallback.
+- `DAEMON_APP_HAVE_MIRROR_SUBSTRATE` (option + every gate) and the substrate-less code forks.
+- SessionRepository: the whole roster read path/cache feed + `updateSessionMeta` (+
+  `sessionsRefreshed`/`metaUpdateFailed`/`transportSessionsResolved` signals, page loops, L4
+  delta/prune). FleetRepository: the tree feed (`refreshTree`/`cachedUnits`/`syncFleetUnits`/
+  `handleTreeResponse`/`treeRefreshed`). RoutingRepository: the in-memory routes/rooms cache
+  (the LEDGER-a6 residual) + `refreshChats`/`refreshRooms`/`getRoute`/`bindChat`/`unbindChat`/
+  `setRoute` + their signals. SubscriptionManager: the roster debounce + roster/fleet/routing
+  refetch arms + the FleetRepository/RoutingRepository members.
+- DaemonCacheStore: `daemon_sessions` + `daemon_fleet_units` + `daemon_transcript_blocks` tables
+  (schema v11 drop-and-rebuild) + their upsert/read/clear methods + `latestTranscriptSnippets` +
+  `CachedFleetUnitRow`. The engine's legacy cache transcript dual-write leg + roster/fleet reads.
+- The dual-write parity legacy legs (`tst_mirror_session_store` dual-decoder,
+  `tst_mirror_transcript_parity` legacy oracle, `tst_mock_daemon_parity` legacy-baseline asserts,
+  the mock scenario's derived legacy-baseline content leg); the seed bundle's dead
+  tags/participants members (+ their 4 i18n entries across 12 catalogs).
 
-## Handoff note for the parent / next resume
+SURVIVORS (with reason):
+- `SessionRepository` (direct SessionCreate + operator Submit + SessionGet detail — §7 seams).
+- `FleetRepository` CONTROL seam (pause/resume/scale; `controlAcked` → mirror Tree refetch).
+- `RoutingRepository` MUTATION seam (IRoutingActions; `mutationApplied` → mirror pin refetch).
+- `DaemonCacheStore` non-migrated domains: sync cursors (engine resync + events-since), profiles,
+  fs entries, transport instances/conversations (out of program scope / Phase-1a territory).
+- `CachedSessionRow` (the codec's SessionInfo DTO), `CachedTranscriptBlockRow` (the engine's
+  coalescing value shape + sink input). `parity::sessionKeys`/`fleetUnitKeys`
+  (mirror-vs-mirror feeder-parity extractors) + `projectTranscriptBlocks` (load-bearing).
+- Mirror-internal invariants kept: journal-replay ≡ snapshot-diff, mock-vs-daemon feeder parity,
+  the S1-S9 grammar now pinned as GOLDEN literals + sink→window→projection pipeline-integrity.
 
-Start with Phase 1b's mutation re-homing (it gates the largest deletions and is more self-contained
-than 1a): land the `session-meta` outbox lane + `SessionUpdateMeta` op_id + the `sendRequested`
-handler + §6.5 rejection UX (GUI+TUI) FIRST, gate green, commit; then the direct
-`SessionCreate`/`SessionDelete` op_id seams; then the engine transcript retirement WITH the
-`tst_sync_resync`/`tst_subscription_manager`/`tst_mirror_transcript_parity` rewrites, gate green,
-commit. Phase 1a (tree vertical) is the larger, later effort. Every commit stays in this worktree
-(`mirror/ad`); the parent merges.
+Straggler-sweep candidates recorded for the NEXT batch (not yet deleted; each needs a QML/UX or
+facade-boundary judgment): the codec facade's now-orphaned `decodeSessionPage`/`decodeTree`/
+`encodeRoutingSetRequest`/`decodeChatRoutes`/`decodeRooms`/`encodeRoutingListChatsRequest`/
+`encodeTransportRoomsRequest` arms; the permanently-empty Participants section + Tags sidebar
+section and `ISessionStore`'s dead `tags()`/`participants()`/`unitChildren()`/`unit()`/
+`createUnit()`/`createTag()` interface members (+ SidebarModel's Unit/Tag arms) — these are
+user-visible surface removals; `SessionController::appendUserText` is now presentation-local
+(§8.5) and the mock live-turn transcript is editor-local by design (seeded transcripts render
+from the mirror; an ad-hoc mock demo turn is not durable). The generated `TODO(mirror-map)` stub
+mappers belong to un-landed verticals (1a), not dead code.
+
+## Phase-1a boundary (NOT started — the next resume's work)
+
+Unchanged from the map below: adapter-catalog/instances + PersonEndpoint fetch/deliver arms,
+room-lifecycle verbs per §7, integrations tree + TUI channels hub onto mirror projections in both
+modes (scenario seed extended), then delete `MockTransportRegistry`/`MockPresenceService`/
+`MockPersonsService`/`MockContactsService` and the remaining Phase-2 items they gate
+(`TransportRepository`/`PersonsRepository`/`ContactsRepository` read paths where the tree/hub
+was their last consumer, the `daemon_conversations`/`daemon_transport_instances` cache domains
+if the mirror takes them, and the SubscriptionManager transports/contacts/persons arms).
