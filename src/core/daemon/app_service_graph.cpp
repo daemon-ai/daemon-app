@@ -57,7 +57,6 @@
 #include "settings/qt_settings_store.h"
 #include "setup/agent_setup_model.h"
 #include "tools/mock_tool_inventory.h" // [wave2:app-approvals-safety] D2
-#include "transports/mock_chat_service.h"
 #include "transports/mock_contacts_service.h"
 #include "transports/mock_persons_service.h"
 #include "transports/mock_presence_service.h"
@@ -204,10 +203,14 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // [acct-mgmt] Transport contacts / roster (Phase D): inert canned mock until a daemon adapter
     // decodes the node's roster ops (replaced in the Daemon branch below).
     graph.contacts = new transports::MockContactsService(owner);
-    // [integrations wire v38] Person registry + native chat: inert canned mocks until a daemon
-    // adapter decodes the node's PersonList / ConvHistory (replaced in the Daemon branch below).
+    // [integrations wire v38] Person registry: inert canned mock until the integrations tree's
+    // persons sections port onto the mirror (post-M5; the tree composes directly from
+    // IPersonsService). The Daemon branch below replaces it with the DaemonPersonsService.
     graph.persons = new transports::MockPersonsService(owner);
-    graph.chat = new transports::MockChatService(owner);
+    // mirror A8 (M5): NO mock chat seam. The chat surfaces read the seeded mock MIRROR (window
+    // lens) and send through the ConvSend outbox lane + scripted outcomes — MockChatService died
+    // with the M5 cutover. `chat` stays null in mock; daemon mode builds DaemonChatService below
+    // (the dual-write legacy path until A9 retires the seam).
     // sessionSettings is constructed per-mode below (the daemon variant needs nodeApi to send
     // SetSessionMode); checkpoints starts as the mock and is REPLACED in the daemon branch with
     // the repo-backed DaemonCheckpointTimeline (CheckpointList/CheckpointRewind; E4/TOOL-9).
@@ -354,7 +357,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         }
         delete graph.persons;
         graph.persons = new transports::DaemonPersonsService(graph.personsRepository, owner);
-        delete graph.chat;
+        // (chat is null outside daemon mode since M5 — no mock to delete.)
         graph.chat = new transports::DaemonChatService(graph.chatRepository, owner);
         // Daemon-backed, offline-first session roster + dashboard (replaces the mock pair). The
         // roster projects the (offline-first) CachedSessionStore; the dashboard derives its

@@ -1075,7 +1075,7 @@ set_tests_properties(tst_tab_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offsc
 # view-model BOTH surfaces bind — history load on open, the oldest-first markdown projection
 # of ConvHistory rows, send-without-local-echo, authoritative MessagesChanged refresh (fg + bg),
 # per-conversation signal filtering, and sendFailed surfacing. Compiles the controller source
-# directly and links the transports seam (IChatService + MockChatService).
+# directly and links the transports seam (IChatService; a test-local recording fixture).
 qt_add_executable(tst_chat_conversation_controller
     tst_chat_conversation_controller.cpp
     ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/chat_conversation_controller.cpp
