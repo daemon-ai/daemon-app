@@ -38,11 +38,9 @@
 #include "profiles/iprofile_store.h"
 #include "session/icheckpoint_timeline.h"
 
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
 // [mirror M2] Complete types for the Mirror/Outbox context-property upcasts (spec 09 §2/§6).
 #include "mirror/mirror_service.h"
 #include "outbox.h"
-#endif
 #include "session/isession_settings.h"
 #include "settings/isettings_store.h"
 #include "setup/agent_setup_model.h"
@@ -252,10 +250,9 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
 
     // Shared store; QML view models bind their `store` property to this.
     engine.rootContext()->setContextProperty(QStringLiteral("SessionStore"), m_services.store);
-    // mirror A7 (M4): the mirror-backed store the PORTED session/fleet consumers bind (6→1
-    // unification, one consumer per sub-gate). In mock mode / substrate-less stacks this IS the
-    // legacy store (composition-time fallback in the app service graph — no QML conditionals),
-    // so every surface keeps rendering until A8's seeder feeds the mock mirror.
+    // mirror A7 (M4) → AD: the mirror-backed store EVERY session/fleet consumer binds (6→1
+    // unification) — the real MirrorSessionStore projection in both modes (daemon: ingestor-fed;
+    // mock: scenario-seeded).
     engine.rootContext()->setContextProperty(QStringLiteral("SessionStoreMirror"),
                                              m_services.storeMirror);
 
@@ -385,15 +382,8 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // at M2 (null in mock — the chat surfaces fall back to the legacy seams until A8's seeder):
     // ChatPage reads the ChatWindowModel timeline via `Mirror` and routes sends through the
     // ConvSend outbox lane via `Outbox` (manual drain; §6.8 auto-replay stays off).
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
     engine.rootContext()->setContextProperty(QStringLiteral("Mirror"), m_services.mirrorService);
     engine.rootContext()->setContextProperty(QStringLiteral("Outbox"), m_services.outbox);
-#else
-    engine.rootContext()->setContextProperty(QStringLiteral("Mirror"),
-                                             static_cast<QObject*>(nullptr));
-    engine.rootContext()->setContextProperty(QStringLiteral("Outbox"),
-                                             static_cast<QObject*>(nullptr));
-#endif
 
     // Routing manager (M3): the RoutingPage's RoutingManagerController reads the pin table off the
     // mirror store (`Mirror`) and drives pin/unbind mutations through the node-authoritative

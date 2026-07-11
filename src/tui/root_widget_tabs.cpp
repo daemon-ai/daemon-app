@@ -71,10 +71,8 @@
 #include <Tui/ZWidget.h>
 #include <Tui/ZWindow.h>
 
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
 // [mirror M2] Complete type for the setMirror(QObject*) upcast of graph.mirrorService.
 #include "mirror/mirror_service.h"
-#endif
 
 // [integrations wire v38 → mirror M2] Per-native-chat-tab state: the shared conversation
 // view-model (mirror-window read path in daemon mode, IChatService rows otherwise) + the ConvSend
@@ -176,11 +174,9 @@ ChatTab* RootWidget::ensureChatTab(int tabId) {
     chat->tabId = tabId;
     chat->controller = new ChatConversationController(this);
     chat->controller->setService(m_services.chat);
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
     // [mirror M2] The timeline reads the mirror's chat window in daemon mode (null in mock —
     // the legacy IChatService rows path stays until A8's seeder).
     chat->controller->setMirror(m_services.mirrorService);
-#endif
     // [mirror M2] Sends route through the durable ConvSend outbox lane when live (§6.4/§6.8);
     // the same controller backs the pending strip (per-conversation lens). Null outbox (mock)
     // keeps the legacy direct-send fallback in the submit dispatch.

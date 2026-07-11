@@ -298,9 +298,10 @@ endif()
 # ---------------------------------------------------------------------------
 # Mirror substrate (spec 09 §4, ADR-002/-008): the header-only immer value
 # substrate, wired as an INTERFACE target from the flake's IMMER_SOURCE_DIR pin
-# (rev matches the references/ study clone). OPTIONAL: platform stacks that do
-# not pass the source simply skip it, and src/core/mirror only builds the
-# substrate library when DAEMON_APP_HAVE_MIRROR_SUBSTRATE is set below.
+# (rev matches the references/ study clone). REQUIRED (AD, ratified): the mirror
+# IS the data path — every shipped configuration (desktop, wasm, devShells) pins
+# immer, so a missing source tree is a broken environment, not a supported
+# configuration. The substrate-less fallbacks were deleted with the legacy paths.
 #
 # ADR-008 FINALIZED (A3, M1): the observe seam is coarse signals; the lager
 # candidate (and its zug + boost::intrusive transitive headers) was deleted
@@ -314,28 +315,24 @@ endif()
 # (spec §11), async lives only at the wire edge. Exceptions are left to immer's
 # auto-detection of -fno-exceptions (config.hpp), which the wasm preset relies on.
 # ---------------------------------------------------------------------------
-set(DAEMON_APP_HAVE_MIRROR_SUBSTRATE OFF CACHE INTERNAL "immer substrate available")
 _daemon_app_resolve_dir(_immer_dir IMMER_SOURCE_DIR)
-if(_immer_dir)
-    if(NOT EXISTS "${_immer_dir}/immer/table.hpp")
-        message(FATAL_ERROR "IMMER_SOURCE_DIR must point at an immer source tree (got '${_immer_dir}')")
-    endif()
-
-    if(NOT TARGET immer)
-        add_library(immer INTERFACE)
-        add_library(immer::immer ALIAS immer)
-        # SYSTEM so the vendored headers' own warnings never surface under our
-        # -Werror project flags (CompilerWarnings.cmake).
-        target_include_directories(immer SYSTEM INTERFACE "${_immer_dir}")
-    endif()
-
-    # ODR-global immer switch (study 01 §6). Applied to the whole project so
-    # every TU that includes an immer header agrees on the memory policy.
-    add_compile_definitions(IMMER_NO_THREAD_SAFETY=1)
-
-    set(DAEMON_APP_HAVE_MIRROR_SUBSTRATE ON CACHE INTERNAL "immer substrate available" FORCE)
-    message(STATUS "Dependencies: mirror substrate available (immer value substrate; coarse observe seam).")
-else()
-    message(STATUS "Dependencies: IMMER_SOURCE_DIR not set; mirror substrate library skipped "
-        "(generated entity layer still builds).")
+if(NOT _immer_dir)
+    message(FATAL_ERROR "IMMER_SOURCE_DIR is required (the mirror substrate is the app's data "
+        "path; every shipped config pins it — build via the flake/devShell).")
 endif()
+if(NOT EXISTS "${_immer_dir}/immer/table.hpp")
+    message(FATAL_ERROR "IMMER_SOURCE_DIR must point at an immer source tree (got '${_immer_dir}')")
+endif()
+
+if(NOT TARGET immer)
+    add_library(immer INTERFACE)
+    add_library(immer::immer ALIAS immer)
+    # SYSTEM so the vendored headers' own warnings never surface under our
+    # -Werror project flags (CompilerWarnings.cmake).
+    target_include_directories(immer SYSTEM INTERFACE "${_immer_dir}")
+endif()
+
+# ODR-global immer switch (study 01 §6). Applied to the whole project so
+# every TU that includes an immer header agrees on the memory policy.
+add_compile_definitions(IMMER_NO_THREAD_SAFETY=1)
+message(STATUS "Dependencies: mirror substrate wired (immer value substrate; coarse observe seam).")

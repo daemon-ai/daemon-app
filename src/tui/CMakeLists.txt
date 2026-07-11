@@ -125,15 +125,12 @@ target_link_libraries(da_tui_viewmodels
         daemon-app::warnings
 )
 
-# mirror A5 (spec 09 wave M2): the shared chat controller reads the mirror window where the
-# substrate is built (same define daemon_client uses); substrate-less stacks keep the legacy path.
-if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
-    target_link_libraries(da_tui_viewmodels PUBLIC
-        daemon-app::mirror_lens
-        daemon-app::mirror_ingestor
-    )
-    target_compile_definitions(da_tui_viewmodels PUBLIC DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1)
-endif()
+# mirror A5 → AD: the shared chat controller reads the mirror window (unconditional — the
+# mirror is the only data path; the substrate-less legacy fork was deleted).
+target_link_libraries(da_tui_viewmodels PUBLIC
+    daemon-app::mirror_lens
+    daemon-app::mirror_ingestor
+)
 
 # ---------------------------------------------------------------------------
 # daemon-tui - the terminal application executable.

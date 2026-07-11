@@ -4,14 +4,11 @@
 #include "routing_manager_controller.h"
 
 #include "daemonnet/irouting_actions.h"
+#include "mirror/mirror_service.h"
+#include "mirror/store.h"
 #include "uimodels/variant_list_model.h"
 
 #include <QSet>
-
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
-#include "mirror/mirror_service.h"
-#include "mirror/store.h"
-#endif
 
 using domain::Origin;
 using domain::OriginScope;
@@ -71,14 +68,12 @@ QString groupOriginKey(const QString& transport, const QString& chat) {
 
 } // namespace
 
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
 namespace {
 mirror::Store* storeOf(QObject* mirrorObject) {
     auto* svc = qobject_cast<mirror::MirrorService*>(mirrorObject);
     return svc != nullptr ? &svc->store() : nullptr;
 }
 } // namespace
-#endif
 
 RoutingManagerController::RoutingManagerController(QObject* parent)
     : QObject(parent), m_routes(new uimodels::VariantListModel(this)),
@@ -118,7 +113,6 @@ void RoutingManagerController::setActions(QObject* actions) {
 }
 
 void RoutingManagerController::bindStoreSignals() {
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
     if (auto* svc = qobject_cast<mirror::MirrorService*>(m_mirrorObject)) {
         // Re-derive the panels on every committed batch (§8.1 — the store is the read path).
         connect(
@@ -127,7 +121,6 @@ void RoutingManagerController::bindStoreSignals() {
         // Visibility (§5.8): declare interest in the pin table so the ingestor tops it up.
         svc->ingestor().beginObserving(QStringLiteral("routing"));
     }
-#endif
 }
 
 QObject* RoutingManagerController::routes() const {
@@ -160,7 +153,6 @@ void RoutingManagerController::setSelectedSession(const QString& session) {
 
 void RoutingManagerController::rebuild() {
     m_originByKey.clear();
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
     mirror::Store* store = storeOf(m_mirrorObject);
     if (store == nullptr) {
         m_routes->setRows({});
@@ -254,14 +246,6 @@ void RoutingManagerController::rebuild() {
     m_bindable->setRows(bindableRows);
 
     rebuildDelivery();
-#else
-    m_routes->setRows({});
-    m_accounts->setRows({});
-    m_rules->setRows({});
-    m_bindable->setRows({});
-    m_sessions->setRows({});
-    rebuildDelivery();
-#endif
 }
 
 void RoutingManagerController::rebuildDelivery() {
@@ -304,7 +288,6 @@ void RoutingManagerController::bindAccount(const QString& transport, const QStri
 
 QVariantMap RoutingManagerController::explain(const QString& originKey) const {
     QVariantMap out;
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
     mirror::Store* store = storeOf(m_mirrorObject);
     if (store != nullptr) {
         for (const mirror::RoutePin& p : store->snapshot().route_pins) {
@@ -317,9 +300,6 @@ QVariantMap RoutingManagerController::explain(const QString& originKey) const {
             }
         }
     }
-#else
-    Q_UNUSED(originKey)
-#endif
     // No pin for this origin: the node owns the lower rungs; the client honestly reports Default.
     out[QStringLiteral("found")] = true;
     out[QStringLiteral("decidedBy")] = QStringLiteral("default");

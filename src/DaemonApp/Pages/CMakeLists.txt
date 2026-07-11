@@ -90,12 +90,9 @@ target_link_libraries(da_pages
         daemon-app::warnings
 )
 
-# mirror A6 (spec 09 wave M3): the routing manager reads the mirror store's route_pins/rooms/
-# sessions projections where the substrate is built; substrate-less stacks render an empty manager.
-if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
-    target_link_libraries(da_pages PRIVATE
-        daemon-app::mirror_substrate
-        daemon-app::mirror_ingestor
-    )
-    target_compile_definitions(da_pages PRIVATE DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1)
-endif()
+# mirror A6 → AD: the routing manager reads the mirror store's route_pins/rooms/sessions
+# projections (unconditional — the mirror is the only data path).
+target_link_libraries(da_pages PRIVATE
+    daemon-app::mirror_substrate
+    daemon-app::mirror_ingestor
+)

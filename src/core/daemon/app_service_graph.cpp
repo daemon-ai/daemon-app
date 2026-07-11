@@ -20,6 +20,7 @@
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_contacts_service.h"
 #include "daemon/daemon_dashboard.h"
+#include "daemon/daemon_fetch_executor.h"
 #include "daemon/daemon_fs_service.h"
 #include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_persons_service.h"
@@ -33,7 +34,12 @@
 #include "daemon/daemon_transport_registry.h"
 #include "daemon/engine_identity.h"
 #include "daemon/feedback_repository.h"
+#include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
 #include "daemon/mirror_fleet_tree.h" // G2 (M5): mirror-projected fleet TREE (replaces DaemonFleetTree)
+#include "daemon/mirror_session_store.h"   // mirror A7 (M4): the 6->1 session store projection
+#include "daemon/mirror_transcript_sink.h" // A7T (M4 sub-step 6): engine transcript -> mirror
+#include "daemon/mock_scenario.h"          // mirror A8 (M5): the mock seed-scenario catalog
+#include "daemon/mock_scenario_host.h"     // mirror A8 (M5): the mock scenario driver (Seeder)
 #include "daemon/node_api_client.h"
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
@@ -45,10 +51,13 @@
 #include "fleet/mock_dashboard.h"
 #include "fleet/mock_fleet_tree.h"
 #include "fs/local_disk_fs_service.h"
+#include "local_database.h"
 #include "memory/mock_memory_service.h"
+#include "mirror/mirror_service.h"
 #include "models/mock_model_catalog.h"
 #include "models/mock_provider_catalog.h"
 #include "nav/nav_controller.h"
+#include "outbox.h"
 #include "persistence/in_memory_session_store.h"
 #include "profiles/mock_profile_store.h"
 #include "session/mock_checkpoint_timeline.h"
@@ -61,39 +70,25 @@
 #include "transports/mock_presence_service.h"
 #include "transports/mock_transport_registry.h"
 #include "update/update_manager.h"
+#include "verb_class.h"
 
 #include <memory>
 #include <optional>
 #include <QByteArray>
+#include <QCryptographicHash>
 #include <QDateTime>
 #include <QDebug>
+#include <QDir>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QStandardPaths>
 #include <QString>
 #include <QtGlobal>
 #include <QTimer>
 
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
-#include "daemon/daemon_fetch_executor.h"
-#include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
-#include "daemon/mirror_session_store.h"   // mirror A7 (M4): the 6->1 session store projection
-#include "daemon/mirror_transcript_sink.h" // A7T (M4 sub-step 6): engine transcript -> mirror
-#include "daemon/mock_scenario.h"          // mirror A8 (M5): the mock seed-scenario catalog
-#include "daemon/mock_scenario_host.h"     // mirror A8 (M5): the mock scenario driver (Seeder)
-#include "local_database.h"
-#include "mirror/mirror_service.h"
-#include "outbox.h"
-#include "verb_class.h"
-
-#include <QCryptographicHash>
-#include <QDir>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QStandardPaths>
-#endif
-
 namespace daemonapp::daemon {
 
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
 namespace {
 
 // Per-identity mirror-db paths (spec 09 §4.5), matching the DaemonCacheStore / LocalDatabase
@@ -129,7 +124,6 @@ private:
 };
 
 } // namespace
-#endif
 
 ServiceMode serviceModeFromEnvironment(ServiceMode fallback) {
     const QByteArray raw = qgetenv("DAEMON_APP_SERVICE_MODE");
@@ -171,7 +165,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // deleted mock net's routing + transports-tree + patch-bay are gone). In daemon mode the
     // fleet/roster/store below are deleted + rebuilt daemon-backed, so this seed is used only in
     // mock mode; building it unconditionally keeps the pre-mode-branch surfaces simple.
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
     // mirror A8 (spec 09 §9, M5): the mock SCENARIO is the only mock seed source — resolved once,
     // feeding BOTH the legacy delegate stores (its SeedBundle, here) and the mock mirror (its
     // canonical seed, in the mirror block below), so the two sides' session ids provably agree
@@ -180,9 +173,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     const MockScenario mockScenario =
         mode == ServiceMode::Daemon ? MockScenario{} : mockScenarioFromEnvironment();
     auto* fleetSource = new daemonnet::MockFleetSource(mockScenario.bundle, owner);
-#else
-    auto* fleetSource = new daemonnet::MockFleetSource(owner);
-#endif
     // mirror A8 (M5): roster + dashboard are built at the END of this factory in BOTH modes — the
     // roster projects the final storeMirror (the 6→1 read everywhere; MockSessionRoster died with
     // the cutover) and the dashboard observes the FINAL seam pointers.
@@ -584,20 +574,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.update = new update::UpdateManager(owner);
     graph.update->setSettings(graph.settings);
 
-    // mirror A7 (M4): the ported session/fleet consumers bind `storeMirror`. The composition-time
-    // fallback IS the legacy store — mock mode (null mirror until A8's seeder) and substrate-less
-    // stacks keep rendering with zero per-consumer conditionals (§9 "mock keeps working"). The
-    // daemon+substrate branch below overrides it with the MirrorSessionStore projection.
-    graph.storeMirror = graph.store;
-
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
-    // ---- mirror A5 (spec 09 wave M2): live-wire the ingestor beside the legacy paths ----
-    // Dual-write discipline (§13 M0–M2): the SubscriptionManager + repositories keep writing their
-    // caches; the mirror is fed in parallel and the M2 read lenses (chat/persons/contacts/
-    // conversation) read it. The ingestor is the single writer (§5.1). DAEMON MODE ONLY at M2:
-    // mock mode leaves mirrorService/outbox null so the chat surfaces fall back to the legacy
-    // mock seams (§9 "mock keeps working"); A8's seeder feeds the mirror in mock and removes the
-    // fallback.
+    // ---- the mirror data path (spec 09 §5; AD: unconditional, no null-mirror fallback) ----
+    // Daemon mode: the ingestor is the single writer over the live wire (§5.1); mock mode: the
+    // scenario host's Seeder is the single writer (§9). Both branches bind `storeMirror` to the
+    // real MirrorSessionStore projection — every session/fleet consumer reads the ONE mirror.
     if (daemonConnection != nullptr) {
         auto* svc = new mirror::MirrorService(owner);
         // Persistent per-identity boot (§4.5): mirror-<id>.db opens under the LAST authenticated
@@ -901,7 +881,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                          &MirrorSessionStore::onNodeSessionCreated);
         graph.storeMirror = mirrorStore;
     }
-#endif
 
     // The ops-hub session roster projects storeMirror in BOTH modes (M4 daemon; M5 mock — the
     // seeded MirrorSessionStore, or the legacy alias on substrate-less stacks): the 6→1 session

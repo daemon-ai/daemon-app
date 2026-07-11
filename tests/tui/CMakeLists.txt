@@ -382,7 +382,6 @@ set_tests_properties(tui_tab_title_refresh_tests PROPERTIES ENVIRONMENT "QT_QPA_
 # a node-side retitle (keyed mirror upsert) re-titles the open transcript tab through
 # refreshTranscriptTabTitles, the exact RootWidget wiring flipped to storeMirror. Only built
 # with the substrate.
-if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     qt_add_executable(tui_tab_title_mirror_tests
         tst_tab_title_mirror.cpp
         ${CMAKE_SOURCE_DIR}/src/tui/root_widget_detail.cpp
@@ -405,7 +404,6 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     )
     add_test(NAME tui_tab_title_mirror_tests COMMAND tui_tab_title_mirror_tests)
     set_tests_properties(tui_tab_title_mirror_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-endif()
 
 # tst_chat_activation (A4 app/chat-tabs; wire v38): the activation-dispatch rewire -
 # activating a room/DM opens (or focuses) a native Chat tab for (transport, conv)
