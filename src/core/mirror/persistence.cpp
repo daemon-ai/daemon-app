@@ -191,6 +191,27 @@ quint64 Persistence::persistedJournalHead() const {
     return 0;
 }
 
+QSet<QString> Persistence::persistedOriginOps() const {
+    QSet<QString> out;
+    if (!isOpen()) {
+        return out;
+    }
+    // The retention-tail scan that supplies the outbox's two-phase boot reconciliation (§6.6): the
+    // distinct non-null provenance op-ids that already landed in the persisted mirror journal. A2
+    // does the idempotent local cleanup (Outbox::reconcileLandedOps); A1 owns this surface.
+    QSqlQuery q(db_);
+    if (q.exec(QStringLiteral("SELECT DISTINCT origin_op FROM mirror_journal "
+                              "WHERE origin_op IS NOT NULL AND origin_op != ''"))) {
+        while (q.next()) {
+            const QString op = q.value(0).toString();
+            if (!op.isEmpty()) {
+                out.insert(op);
+            }
+        }
+    }
+    return out;
+}
+
 bool Persistence::writeBehind(const WriteBatch& batch) {
     if (!db_.transaction()) {
         last_error_ = db_.lastError().text();

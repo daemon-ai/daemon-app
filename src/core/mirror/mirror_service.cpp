@@ -13,7 +13,21 @@ Q_LOGGING_CATEGORY(lcMirror, "daemon.mirror.service")
 
 MirrorService::MirrorService(QObject* parent)
     : QObject(parent), store_(observe_), write_behind_(store_, persistence_),
-      scheduler_(forwarding_), ingestor_(store_, scheduler_) {}
+      scheduler_(forwarding_), ingestor_(store_, scheduler_) {
+    // §5.1/§6.6 provenance-landing seam: the single-writer commit path doubles as the outbox's
+    // confirmation feed. On every commit, re-emit each newly-stamped journal record's non-empty
+    // origin_op so the graph can land the matching outbox op (Outbox::onProvenanceStamped). This
+    // is a read-side coupling — the outbox never writes mirrored state.
+    QObject::connect(&store_, &Store::committed, this, &MirrorService::relayProvenance);
+}
+
+void MirrorService::relayProvenance(quint64 revFrom, quint64 /*revTo*/) {
+    for (const JournalRecord& rec : store_.journal().since(revFrom)) {
+        if (!rec.origin_op.isEmpty()) {
+            Q_EMIT provenanceStamped(rec.origin_op);
+        }
+    }
+}
 
 MirrorService::~MirrorService() = default;
 

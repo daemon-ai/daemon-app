@@ -67,7 +67,19 @@ public:
     [[nodiscard]] WriteBehind& writeBehind() noexcept { return write_behind_; }
     [[nodiscard]] bool persistent() const noexcept { return persistent_; }
 
+Q_SIGNALS:
+    // The stamper's outbox-confirmation feed (§5.1/§6.6): emitted once per journal record carrying
+    // a non-empty `origin_op` on each commit — the provenance-stamped applies whose op-id the
+    // outbox lands (`Outbox::onProvenanceStamped`). The substrate stays free of any outbox
+    // dependency; the graph connects this signal to the outbox. A read-side coupling only: the
+    // outbox never writes mirrored state. Deferred to A8 by BR/A7 (the provenance-landing seam).
+    void provenanceStamped(const QString& originOp);
+
 private:
+    // Scan the just-committed journal window (revFrom, revTo] and re-emit each record's non-empty
+    // origin_op as provenanceStamped (§5.1). Connected to Store::committed in the constructor.
+    void relayProvenance(quint64 revFrom, quint64 revTo);
+
     // The scheduler holds a FetchExecutor& for its lifetime; this trivial forwarder lets the
     // mode-specific delegate be installed AFTER construction (breaking the service↔executor
     // construction cycle — the daemon executor needs the ingestor + scheduler this service owns).

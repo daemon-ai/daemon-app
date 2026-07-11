@@ -1371,6 +1371,20 @@ if(TARGET daemon-app::mirror_ingestor)
         set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif()
 
+    # tst_provenance_landing (mirror A8): the provenance-landing seam deferred to A8 by BR/A7
+    # (spec 09 §5.1/§6.6) — MirrorService::provenanceStamped re-emits each commit's journal
+    # origin_op, driving Outbox::onProvenanceStamped end-to-end (ack→echo→landed; rejection→paused
+    # lane; ack-without-echo→expire; api/38 ack terminal). Links the ingestor (the single-writer
+    # commit path) + the local (outbox) module.
+    if(TARGET daemon-app::local)
+        qt_add_executable(tst_provenance_landing tst_provenance_landing.cpp)
+        target_link_libraries(tst_provenance_landing
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::local)
+        add_test(NAME tst_provenance_landing COMMAND tst_provenance_landing)
+        set_tests_properties(tst_provenance_landing
+            PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
     # The daemon bridge translation (DecodedNodeEvent → mirror::NodeEvent): the second compile-time
     # exhaustiveness layer tying the app's generated wire enum to the policy table (spec §5.1/§12).
     # Needs the daemon codec facade (node_api_codec.h) + the ingestor's policy table.

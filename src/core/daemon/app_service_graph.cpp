@@ -618,6 +618,21 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                 return !mirror::requiresConnected(cls) || nodeApi->isAuthenticated();
             });
         graph.outbox->load();
+        // Provenance-landing seam (§5.1/§6.6, deferred to A8 by BR/A7): the single-writer commit
+        // path doubles as the outbox's confirmation feed. Every provenance-stamped apply
+        // (journal record carrying origin_op) lands the matching outbox op. Wired IN THE SAME
+        // CHANGE as setProvenanceCapable below — otherwise an `accepted` op (ack seen, awaiting the
+        // provenance echo) would linger forever (BR's explicit warning). Read-side coupling: the
+        // outbox never writes mirrored state.
+        QObject::connect(svc, &mirror::MirrorService::provenanceStamped, graph.outbox,
+                         [outbox = graph.outbox](const QString& originOp) {
+                             outbox->onProvenanceStamped(originOp);
+                         });
+        // Two-phase-landing local cleanup (§6.6): a crash between "delta persisted" and "op row
+        // deleted" leaves an op whose op-id already appears in the persisted mirror journal. Boot
+        // reconciliation scans that retention tail (A1's Persistence surface) and idempotently
+        // deletes such landed ops. Runs once at boot after both durable stores are open.
+        graph.outbox->reconcileLandedOps(svc->persistence().persistedOriginOps());
 
         // Identity switch (AuthOk): persist the key, then re-namespace BOTH durable stores —
         // reopen only on an actual CHANGE (a plain reconnect of the same user must not rebase the
@@ -654,6 +669,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // Bootstrap probe → onBootstrap → since_rev delta reads; degraded (api/38) ⇒
                     // the staleness scan.
                     svc->ingestor().onConnected(api, /*hasRevFields=*/true);
+                    // Provenance capability (§6.6): from api/39 the node stamps origin_op on the
+                    // read path, so an ack moves the op to `accepted` awaiting the provenance echo
+                    // (landed via the provenanceStamped→onProvenanceStamped wiring above). Against
+                    // api/38 an ack is terminal success (no provenance contract). Same per-
+                    // connection gate as autoReplayEnabled.
+                    outbox->setProvenanceCapable(mirror::Outbox::autoReplayEnabled(api));
                     // Auto-replay (§6.8): from api/39 the node dedups on op_id, so an unattended
                     // reconnect drain is safe. api/38 holds the lanes for a manual tap.
                     if (mirror::Outbox::autoReplayEnabled(api)) {

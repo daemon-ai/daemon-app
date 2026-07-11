@@ -139,3 +139,8 @@ data-mock deletion, (6) mock e2e parity.
 ## Status
 
 - Ledger — this file.
+- **Provenance-landing seam — DONE.** `MirrorService::provenanceStamped` re-emits each commit's
+  journal `origin_op`; graph wires it to `Outbox::onProvenanceStamped`, flips
+  `setProvenanceCapable(api>=39)` in the SAME change, and runs boot reconciliation over
+  `Persistence::persistedOriginOps()` (§6.6 two-phase local cleanup). `tst_provenance_landing`
+  (8 cases) + `tst_mirror_service::provenanceStampedRelaysOriginOp`. ctest 141→142.

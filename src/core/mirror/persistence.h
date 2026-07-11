@@ -14,6 +14,7 @@
 #include "mirror/journal.h"
 #include "mirror/model.h"
 
+#include <QSet>
 #include <QSqlDatabase>
 #include <QString>
 #include <vector>
@@ -115,6 +116,12 @@ public:
 
     // The persisted journal head (MAX(rev)) — seeds the in-memory counter at boot (§4.3).
     [[nodiscard]] quint64 persistedJournalHead() const;
+
+    // The distinct non-null provenance op-ids in the persisted mirror journal (§6.6 two-phase
+    // boot reconciliation): the retention-tail scan the outbox's idempotent local cleanup
+    // (Outbox::reconcileLandedOps) consumes so a crash between "delta persisted" and "op row
+    // deleted" resolves to the op being deleted. A1's surface; A2 does the cleanup.
+    [[nodiscard]] QSet<QString> persistedOriginOps() const;
 
     // One transaction: rows + journal + watermark + cursor (B7). Rolls back on any failure.
     bool writeBehind(const WriteBatch& batch);
