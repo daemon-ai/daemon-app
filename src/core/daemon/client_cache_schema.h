@@ -36,27 +36,15 @@ namespace daemonapp::daemon::cache {
 // v10 ([integrations] wire v38): adds parent to daemon_conversations (the containing space/server-
 // level conversation id; NULL/'' = a root) — with kind now carrying "space" container rows, the
 // integrations tree's hierarchy renders offline-first. Non-authoritative: drop + rebuild.
-inline constexpr int kSchemaVersion = 10;
+// v11 (AD): DROPS daemon_sessions + daemon_fleet_units + daemon_transcript_blocks — the mirror
+// (`sessions` / `fleet_units` M-tables + the `w_transcript_blocks` window in mirror-<id>.db) is
+// the ONLY store for those domains now. Non-authoritative: drop + rebuild, no migration.
+inline constexpr int kSchemaVersion = 11;
 
 inline constexpr const char* kCreateMetaSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_cache_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
-);
-)sql";
-
-inline constexpr const char* kCreateSessionsSql = R"sql(
-CREATE TABLE IF NOT EXISTS daemon_sessions (
-  session_id TEXT PRIMARY KEY,
-  title TEXT,
-  state TEXT NOT NULL,
-  profile_ref TEXT,
-  lifecycle TEXT,
-  role TEXT,
-  parent_session_id TEXT,
-  pinned INTEGER NOT NULL DEFAULT 0,
-  archived INTEGER NOT NULL DEFAULT 0,
-  updated_at_ms INTEGER NOT NULL
 );
 )sql";
 
@@ -88,34 +76,6 @@ CREATE TABLE IF NOT EXISTS daemon_fs_entries (
   revision_cbor BLOB,
   updated_at_ms INTEGER NOT NULL,
   PRIMARY KEY (root_id, path)
-);
-)sql";
-
-// v4: the offline-first fleet/subagent tree. One row per unit; parent_id ('' = a root) lets the
-// tree be rebuilt without a connection. G2 (M5): its LAST reader (DaemonFleetTree) is deleted —
-// the fleet TREE renders from the mirror FleetUnit entity; this cache + the FleetRepository tree
-// feed remain only as the dual-write baseline and go with the AD deletions.
-inline constexpr const char* kCreateFleetUnitsSql = R"sql(
-CREATE TABLE IF NOT EXISTS daemon_fleet_units (
-  unit_id TEXT PRIMARY KEY,
-  parent_id TEXT,  -- NULL/'' == a root (a null QString binds as NULL, which reads back as "")
-  depth INTEGER NOT NULL DEFAULT 0,
-  ordinal INTEGER NOT NULL DEFAULT 0,
-  name TEXT,
-  kind TEXT NOT NULL,
-  state TEXT NOT NULL,
-  role TEXT,
-  profile_ref TEXT,
-  session_id TEXT,
-  work TEXT,
-  -- [wave2:app-delegation] v7 (F3): authoritative per-child wire enrichment (UnitNode v29).
-  lifetime TEXT,      -- '' | 'Persistent' | 'Ephemeral'
-  engine_kind TEXT,   -- '' | 'Core' | 'Foreign'
-  engine_agent TEXT,  -- foreign agent name (only when engine_kind == 'Foreign')
-  -- [waveB:app-v30] v8 (stretch): UnitNode.end_reason (node-reported terminal reason for a
-  -- Finished unit) so the subagent strip renders an error status offline-first.
-  end_reason TEXT,
-  updated_at_ms INTEGER NOT NULL
 );
 )sql";
 
@@ -157,31 +117,6 @@ CREATE TABLE IF NOT EXISTS daemon_conversations (
   parent TEXT,
   updated_at_ms INTEGER NOT NULL,
   PRIMARY KEY (transport, conv_id)
-);
-)sql";
-
-// v2: the durable, render-from-cache transcript. One coalesced block per (session, seq) — the same
-// shape the journal replays and the live stream coalesces to — so a refocus/cold-start renders the
-// conversation from disk and only fetches a short journal/log delta past the persisted watermark.
-inline constexpr const char* kCreateTranscriptBlocksSql = R"sql(
-CREATE TABLE IF NOT EXISTS daemon_transcript_blocks (
-  session_id TEXT NOT NULL,
-  seq INTEGER NOT NULL,
-  kind TEXT NOT NULL,
-  role TEXT,
-  text TEXT,
-  call_id TEXT,
-  tool_name TEXT,
-  args_summary TEXT,
-  ok INTEGER NOT NULL DEFAULT 0,
-  summary TEXT,
-  detail_kind TEXT,
-  detail_body BLOB,
-  request_id INTEGER NOT NULL DEFAULT 0,
-  host_kind TEXT,
-  content_kind TEXT,
-  updated_at_ms INTEGER NOT NULL,
-  PRIMARY KEY (session_id, seq)
 );
 )sql";
 

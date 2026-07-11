@@ -29,78 +29,6 @@ SessionRepository::SessionRepository(NodeApiClient* client, DaemonCacheStore* ca
     }
 }
 
-bool SessionRepository::upsertCachedSession(const CachedSessionRow& row) {
-    return cache() != nullptr && cache()->upsertSession(row);
-}
-
-QList<CachedSessionRow> SessionRepository::cachedSessions() const {
-    return cache() != nullptr ? cache()->sessions() : QList<CachedSessionRow>{};
-}
-
-void SessionRepository::refreshSessions() {
-    if (client() == nullptr) {
-        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
-        return;
-    }
-    // L4: resume from the persisted roster revision so a warm reconnect / RosterChanged pulls only
-    // the delta (changed sessions + a removed list) instead of the whole roster. A cold cache (no
-    // persisted rev) sends no since_rev -> a full page.
-    m_sentRosterSinceRev = 0;
-    if (cache() != nullptr) {
-        const QString stored = cache()->cursor(QLatin1String(kRosterRevScope));
-        if (!stored.isEmpty()) {
-            m_sentRosterSinceRev = stored.toULongLong();
-        }
-    }
-    m_sentRosterDelta = m_sentRosterSinceRev > 0;
-    // A fresh refresh restarts the page loop: drop anything a superseded loop accumulated.
-    m_rosterLoop.reset();
-    client()->sendRequest(
-        NodeApiCodec::encodeSessionsQueryRequest(m_sentRosterDelta, m_sentRosterSinceRev),
-        QLatin1String(kSessionsCorrelation));
-}
-
-void SessionRepository::refreshSessionsByProfile(const QString& profileId) {
-    if (client() == nullptr) {
-        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
-        return;
-    }
-    if (profileId.isEmpty()) {
-        return;
-    }
-    m_byProfileId = profileId;
-    m_byProfileLoop.reset();
-    client()->sendRequest(
-        NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0, profileId),
-        QLatin1String(kByProfileCorrelation));
-}
-
-void SessionRepository::refreshArchivedSessions() {
-    if (client() == nullptr) {
-        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
-        return;
-    }
-    m_archivedLoop.reset();
-    client()->sendRequest(
-        NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0,
-                                                 /*byProfile=*/QString(), /*after=*/QString(),
-                                                 /*archivedScope=*/true),
-        QLatin1String(kArchivedCorrelation));
-}
-
-void SessionRepository::refreshSessionsByTransport(const QString& transportId) {
-    if (client() == nullptr || transportId.isEmpty()) {
-        return;
-    }
-    m_byTransportId = transportId;
-    m_byTransportLoop.reset();
-    client()->sendRequest(
-        NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0,
-                                                 /*byProfile=*/QString(), /*after=*/QString(),
-                                                 /*archivedScope=*/false, transportId),
-        QLatin1String(kByTransportCorrelation));
-}
-
 void SessionRepository::startTurn(const QString& sessionId, const QString& text) {
     if (client() == nullptr || sessionId.isEmpty() || text.isEmpty()) {
         return;
@@ -183,38 +111,10 @@ void SessionRepository::applySessionDetail(const QString& sessionId,
     emit sessionDetailLoaded(sessionId);
 }
 
-void SessionRepository::updateSessionMeta(const QString& sessionId, std::optional<bool> pinned,
-                                          std::optional<bool> archived,
-                                          std::optional<QString> title) {
-    if (sessionId.isEmpty() || (!pinned && !archived && !title)) {
-        return; // nothing to patch
-    }
-    if (client() == nullptr) {
-        // Offline / no client: pin/archive/title are node-owned, so there is no local write to
-        // fall back on. Surface it rather than silently swallowing the intent.
-        emit metaUpdateFailed(sessionId, tr("Not connected to a daemon"));
-        return;
-    }
-    m_pendingMetaSession = sessionId;
-    client()->sendRequest(
-        NodeApiCodec::encodeSessionUpdateMetaRequest(sessionId, pinned, archived, std::move(title)),
-        QLatin1String(kUpdateMetaCorrelation));
-}
-
 void SessionRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
-    if (correlationId == QLatin1String(kSessionsCorrelation)) {
-        applySessionPage(responseCbor);
-    } else if (correlationId == QLatin1String(kByProfileCorrelation)) {
-        applyByProfilePage(responseCbor);
-    } else if (correlationId == QLatin1String(kArchivedCorrelation)) {
-        applyArchivedPage(responseCbor);
-    } else if (correlationId == QLatin1String(kByTransportCorrelation)) {
-        applyByTransportPage(responseCbor);
-    } else if (correlationId == QLatin1String(kCreateCorrelation)) {
+    if (correlationId == QLatin1String(kCreateCorrelation)) {
         applySessionCreated(responseCbor);
-    } else if (correlationId == QLatin1String(kUpdateMetaCorrelation)) {
-        applyMetaUpdate(responseCbor);
     } else if (correlationId.startsWith(QLatin1String(kDetailPrefix))) {
         applySessionDetail(correlationId.mid(int(qstrlen(kDetailPrefix))), responseCbor);
     } else if (correlationId.startsWith(QLatin1String(kSubmitPrefix))) {
@@ -236,51 +136,6 @@ void SessionRepository::applySubmitReply(const QString& sessionId, const QByteAr
     emit submitFailed(sessionId, msg);
 }
 
-void SessionRepository::applyArchivedPage(const QByteArray& responseCbor) {
-    QList<CachedSessionRow> rows;
-    QString nextCursor;
-    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, nullptr, nullptr)) {
-        emit refreshFailed(QStringLiteral("Failed to decode Archived SessionPage response"));
-        return;
-    }
-    // Additive merge (no prune), like ByProfile: the archived subset augments the roster cache
-    // (rows arrive with archived=true, so the AllSessions scope keeps filtering them out).
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    for (CachedSessionRow& row : rows) {
-        row.updatedAtMs = now;
-        upsertCachedSession(row);
-    }
-    if (!nextCursor.isEmpty() && m_archivedLoop.guard(nextCursor) && client() != nullptr) {
-        client()->sendRequest(
-            NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0,
-                                                     /*byProfile=*/QString(), nextCursor,
-                                                     /*archivedScope=*/true),
-            QLatin1String(kArchivedCorrelation));
-    } else {
-        m_archivedLoop.reset();
-    }
-    emit sessionsRefreshed();
-}
-
-void SessionRepository::applyMetaUpdate(const QByteArray& responseCbor) {
-    const QString sessionId = m_pendingMetaSession;
-    m_pendingMetaSession.clear();
-    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
-        // Node-authoritative: the row is now updated node-side (and
-        // RosterChanged/SessionMetaChanged will fire). Issue the immediate, non-debounced refetch
-        // so the roster projects the node's stored pin/archive/title without waiting on the feed
-        // debounce - race-free because the node persisted + bumped the roster rev before replying
-        // Ok (mirrors applySessionCreated).
-        refreshSessions();
-        return;
-    }
-    DecodedApiError err;
-    const QString msg = NodeApiCodec::decodeError(responseCbor, &err)
-                            ? err.message
-                            : tr("SessionUpdateMeta failed");
-    emit metaUpdateFailed(sessionId, msg);
-}
-
 void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
     QString sessionId;
     if (!NodeApiCodec::decodeSessionCreated(responseCbor, &sessionId)) {
@@ -296,184 +151,14 @@ void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
     }
     const QString profileId = m_pendingCreateProfile;
     m_pendingCreateProfile.clear();
-    // Upsert a minimal cached row NOW so the All Sessions list / Fleet leaves show the new
-    // session immediately instead of waiting on the debounced RosterChanged refetch (whose
-    // full-replace form would otherwise be the first time the row exists client-side). The
-    // authoritative row (node-bound default profile, state, role) lands via the immediate
-    // refetch below; the node's title is seeded later by the first message.
-    CachedSessionRow row;
-    row.sessionId = sessionId;
-    // A blank node-created session is un-run: "Ready" is its wire state (and the schema's
-    // daemon_sessions.state is NOT NULL, so the placeholder must carry one).
-    row.state = QStringLiteral("Ready");
-    row.profileRef = profileId; // empty when the node bound its active default
-    row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
-    upsertCachedSession(row);
-    emit sessionsRefreshed(); // legacy cache-feed signal (reader-less since AD; feed dies in B3b)
-    // The node also emits RosterChanged (subscription_manager refetches roster+tree); this signal
-    // is the event-driven hook the orchestrator/sidebar auto-select on.
+    // The node also emits RosterChanged (the mirror ingestor's policy arm refetches the roster
+    // into the `sessions` table — the authoritative row lands there); this signal is the
+    // event-driven hook the orchestrator/sidebar auto-select on (AD: the legacy cache placeholder
+    // write + immediate cache refetch died with the cache feed).
     emit sessionCreated(sessionId, profileId);
-    // Immediate (non-debounced) authoritative refetch. Request ordering makes this race-free: the
-    // node registered the session and bumped the roster rev before replying SessionCreated, so
-    // this SessionsQuery always includes the new row (a full replace cannot prune it).
-    refreshSessions();
-}
-
-void SessionRepository::applyByProfilePage(const QByteArray& responseCbor) {
-    QList<CachedSessionRow> rows;
-    QString nextCursor;
-    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, nullptr, nullptr)) {
-        emit refreshFailed(QStringLiteral("Failed to decode ByProfile SessionPage response"));
-        return;
-    }
-    // Additive merge (no prune): a scoped subset must not clobber the shared roster cache. The
-    // rows carry bound_profile, so the client-side ByProfile filter (the session store) projects
-    // them under their agent. Because it never prunes, each page can merge incrementally; the
-    // page loop below just keeps fetching until next_cursor clears (guard-only PageLoop use).
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    for (CachedSessionRow& row : rows) {
-        row.updatedAtMs = now;
-        upsertCachedSession(row);
-    }
-    if (!nextCursor.isEmpty() && !m_byProfileId.isEmpty() && m_byProfileLoop.guard(nextCursor) &&
-        client() != nullptr) {
-        client()->sendRequest(NodeApiCodec::encodeSessionsQueryRequest(
-                                  /*hasSinceRev=*/false, /*sinceRev=*/0, m_byProfileId, nextCursor),
-                              QLatin1String(kByProfileCorrelation));
-    } else {
-        m_byProfileLoop.reset();
-    }
-    emit sessionsRefreshed();
-}
-
-void SessionRepository::applyByTransportPage(const QByteArray& responseCbor) {
-    QList<CachedSessionRow> rows;
-    QString nextCursor;
-    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, nullptr, nullptr)) {
-        m_byTransportLoop.reset();
-        emit refreshFailed(QStringLiteral("Failed to decode ByTransport SessionPage response"));
-        return;
-    }
-    // Additive merge (no prune) like ByProfile, PLUS membership accumulation: the node decided
-    // which sessions ride this transport, and the store projects the ByTransport list scope from
-    // the resolved id set (the cache row carries no transport column — the set is the scope).
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    for (CachedSessionRow& row : rows) {
-        row.updatedAtMs = now;
-        upsertCachedSession(row);
-    }
-    m_byTransportLoop.items.append(rows);
-    if (!nextCursor.isEmpty() && !m_byTransportId.isEmpty() &&
-        m_byTransportLoop.guard(nextCursor) && client() != nullptr) {
-        client()->sendRequest(
-            NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0,
-                                                     /*byProfile=*/QString(), nextCursor,
-                                                     /*archivedScope=*/false, m_byTransportId),
-            QLatin1String(kByTransportCorrelation));
-        return;
-    }
-    QSet<QString> ids;
-    for (const CachedSessionRow& row : m_byTransportLoop.items) {
-        ids.insert(row.sessionId);
-    }
-    m_byTransportLoop.reset();
-    emit transportSessionsResolved(m_byTransportId, ids);
-    emit sessionsRefreshed();
-}
-
-void SessionRepository::applySessionPage(const QByteArray& responseCbor) {
-    QList<CachedSessionRow> rows;
-    QString nextCursor;
-    quint64 rev = 0;
-    QStringList removed;
-    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, &rev, &removed)) {
-        m_rosterLoop.reset();
-        emit refreshFailed(QStringLiteral("Failed to decode SessionPage response"));
-        return;
-    }
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    // L4: a full page replaces the roster; a delta merges. A delta whose returned rev went
-    // *backwards* from what we asked for is a daemon-reset fallback (the server returned a full
-    // page because our since_rev was unservable) -> treat it as a replace too.
-    const bool fallbackFull = m_sentRosterDelta && rev < m_sentRosterSinceRev;
-    const bool replace = !m_sentRosterDelta || fallbackFull;
-    if (replace && !nextCursor.isEmpty() && m_rosterLoop.guard(nextCursor) && client() != nullptr) {
-        // Page loop (full reads only): accumulate and query the next page; the replace + prune
-        // below must see the WHOLE roster, or every session past page one would be dropped.
-        // The continuation of a full read is itself a full read (no since_rev — a delta fallback
-        // has already resolved to full pages). Delta reads stay single-page: their persisted rev
-        // catches the tail up on the next refresh.
-        m_rosterLoop.items.append(rows);
-        m_sentRosterDelta = false;
-        client()->sendRequest(
-            NodeApiCodec::encodeSessionsQueryRequest(false, 0, QString(), nextCursor),
-            QLatin1String(kSessionsCorrelation));
-        return;
-    }
-    if (replace) {
-        // The final page: run the merge over everything the loop accumulated.
-        rows = m_rosterLoop.items + rows;
-    }
-    m_rosterLoop.reset();
-    if (replace) {
-        // Prune any cached session the full listing no longer contains (closes the "removed
-        // sessions never purged" gap on a cold/fallback resync).
-        pruneSessionsMissingFrom(rows);
-    }
-    for (CachedSessionRow& row : rows) {
-        row.updatedAtMs = now;
-        upsertCachedSession(row);
-    }
-    if (!replace) {
-        // L4 delta prune: drop sessions the server reported removed (hard-removed or left scope).
-        pruneRemovedSessions(removed);
-    }
-    if (cache() != nullptr) {
-        // Persist the roster revision so the next refresh resumes as a delta.
-        cache()->setCursor(QLatin1String(kRosterRevScope), QString::number(rev), now);
-    }
-    emit sessionsRefreshed();
-}
-
-void SessionRepository::pruneSessionsMissingFrom(const QList<CachedSessionRow>& rows) {
-    if (cache() == nullptr) {
-        return;
-    }
-    QSet<QString> keep;
-    for (const CachedSessionRow& row : rows) {
-        keep.insert(row.sessionId);
-    }
-    for (const CachedSessionRow& existing : cache()->sessions()) {
-        // Archived rows live OUTSIDE the TopLevel scope this full listing answered (the node
-        // filters !archived), so their absence is expected — pruning them would wipe the
-        // archived view (F6) on every roster refresh. They re-sync via refreshArchivedSessions.
-        if (existing.archived) {
-            continue;
-        }
-        if (!keep.contains(existing.sessionId)) {
-            cache()->deleteSession(existing.sessionId);
-        }
-    }
-}
-
-void SessionRepository::pruneRemovedSessions(const QList<QString>& removed) {
-    if (cache() == nullptr) {
-        return;
-    }
-    for (const QString& id : removed) {
-        cache()->deleteSession(id);
-    }
 }
 
 void SessionRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kUpdateMetaCorrelation)) {
-        // A transport-level meta-update failure (timeout / dropped socket): surface it so the
-        // pin/archive/rename is not silently mistaken for applied.
-        const QString sessionId = m_pendingMetaSession;
-        m_pendingMetaSession.clear();
-        emit metaUpdateFailed(sessionId, message);
-        return;
-    }
     if (correlationId == QLatin1String(kCreateCorrelation)) {
         // A transport-level create failure (timeout / dropped socket): the pending create is
         // dead — clear its state and surface the error instead of vanishing silently.
@@ -493,18 +178,6 @@ void SessionRepository::handleFailure(const QString& correlationId, const QStrin
         const QString sessionId = correlationId.mid(int(qstrlen(kDetailPrefix)));
         m_detailInFlight.remove(sessionId);
         emit detailFailed(sessionId, message);
-        return;
-    }
-    if (correlationId == QLatin1String(kSessionsCorrelation) ||
-        correlationId == QLatin1String(kByProfileCorrelation) ||
-        correlationId == QLatin1String(kArchivedCorrelation) ||
-        correlationId == QLatin1String(kByTransportCorrelation)) {
-        // A dead page loop must not leak its partial accumulation into the next refresh.
-        m_rosterLoop.reset();
-        m_byProfileLoop.reset();
-        m_archivedLoop.reset();
-        m_byTransportLoop.reset();
-        emit refreshFailed(message);
     }
 }
 
@@ -1813,21 +1486,6 @@ FleetRepository::FleetRepository(NodeApiClient* client, DaemonCacheStore* cache,
     }
 }
 
-QList<CachedFleetUnitRow> FleetRepository::cachedUnits() const {
-    return cache() != nullptr ? cache()->fleetUnits() : QList<CachedFleetUnitRow>{};
-}
-
-void FleetRepository::refreshTree(const QString& source) {
-    if (client() == nullptr) {
-        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
-        return;
-    }
-    // A fresh refresh restarts the page loop: drop anything a superseded loop accumulated.
-    m_treeLoop.reset();
-    m_treeRoot.clear();
-    client()->sendRequest(NodeApiCodec::encodeTreeRequest(), QLatin1String(kTreeCorrelation));
-}
-
 void FleetRepository::pause(const QString& unitId) {
     if (client() == nullptr) {
         emit controlFailed(QStringLiteral("No NodeApi client configured"));
@@ -1856,103 +1514,27 @@ void FleetRepository::scale(const QString& unitId, quint32 n) {
 }
 
 void FleetRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
-    if (correlationId == QLatin1String(kTreeCorrelation)) {
-        handleTreeResponse(responseCbor);
-        return;
-    }
     if (correlationId == QLatin1String(kControlCorrelation)) {
         handleUnitControlResponse(responseCbor);
     }
 }
 
-void FleetRepository::handleTreeResponse(const QByteArray& responseCbor) {
-    QList<DecodedUnitNode> nodes;
-    QString root;
-    QString next;
-    if (!NodeApiCodec::decodeTreeReport(responseCbor, &nodes, &root, &next)) {
-        m_treeLoop.reset();
-        m_treeRoot.clear();
-        emit refreshFailed(QStringLiteral("Failed to decode Tree response"));
-        return;
-    }
-    // Page loop: accumulate the raw nodes and re-issue with the cursor until it clears (`root`
-    // rides every page; the first page fixes it), then flatten + sync ONCE over the whole union —
-    // the id-linked DFS needs every node, and pruning against one page would drop the rest.
-    if (m_treeLoop.pages == 0) {
-        m_treeRoot = root;
-    }
-    m_treeLoop.items.append(nodes);
-    if (!next.isEmpty() && m_treeLoop.guard(next) && client() != nullptr) {
-        client()->sendRequest(NodeApiCodec::encodeTreeRequest(next),
-                              QLatin1String(kTreeCorrelation));
-        return;
-    }
-    const QList<DecodedUnitNode> flat =
-        NodeApiCodec::flattenTreeNodes(m_treeLoop.items, m_treeRoot);
-    m_treeLoop.reset();
-    m_treeRoot.clear();
-    syncFleetUnits(flat);
-    emit treeRefreshed();
-}
-
-void FleetRepository::syncFleetUnits(const QList<DecodedUnitNode>& flat) {
-    if (cache() == nullptr) {
-        return;
-    }
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    QSet<QString> keep;
-    int ordinal = 0;
-    for (const DecodedUnitNode& n : flat) {
-        CachedFleetUnitRow row;
-        row.unitId = n.id;
-        row.parentId = n.parentId;
-        row.depth = n.depth;
-        row.ordinal = ordinal++;
-        row.name = n.title.isEmpty() ? n.id : n.title;
-        row.kind = n.kind;
-        row.state = n.state;
-        row.role = n.role;
-        row.profileRef = n.profileRef;
-        row.sessionId = n.sessionId;
-        row.work = n.work;
-        // [wave2:app-delegation] F3: carry the authoritative wire lifetime/engine into the cache.
-        row.lifetime = n.lifetime;
-        row.engineKind = n.engineKind;
-        row.engineAgent = n.engineAgent;
-        // [waveB:app-v30] stretch: the node-reported terminal reason (UnitNode.end_reason) so the
-        // subagent strip can render an error status offline-first (never derived client-side).
-        row.endReason = n.endReason;
-        row.updatedAtMs = now;
-        cache()->upsertFleetUnit(row);
-        keep.insert(n.id);
-    }
-    // Prune units the live tree no longer lists (finished/removed subagents).
-    for (const CachedFleetUnitRow& existing : cache()->fleetUnits()) {
-        if (!keep.contains(existing.unitId)) {
-            cache()->deleteFleetUnit(existing.unitId);
-        }
-    }
-}
-
 void FleetRepository::handleUnitControlResponse(const QByteArray& responseCbor) {
-    // Pause/Resume/Scale answer Ok (re-fetch the tree) or an ApiError (e.g. Unsupported on an
-    // engine-leaf unit -> surface it, do not silently swallow).
+    // Pause/Resume/Scale answer Ok or an ApiError (e.g. Unsupported on an engine-leaf unit ->
+    // surface it, do not silently swallow). AD: the ack no longer refetches the legacy cache
+    // tree — controlAcked is bridged to the ingestor's Tree refetch (MirrorFleetTree), so the
+    // post-ack re-render reaches the ONE mirror read path.
     if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
         DecodedApiError err;
         NodeApiCodec::decodeError(responseCbor, &err);
         emit controlFailed(err.message.isEmpty() ? tr("Unit control failed") : err.message);
     } else {
-        refreshTree(QStringLiteral("control"));
+        emit controlAcked();
     }
 }
 
 void FleetRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kTreeCorrelation)) {
-        // A dead page loop must not leak its partial accumulation into the next refresh.
-        m_treeLoop.reset();
-        m_treeRoot.clear();
-        emit refreshFailed(message);
-    } else if (correlationId == QLatin1String(kControlCorrelation)) {
+    if (correlationId == QLatin1String(kControlCorrelation)) {
         emit controlFailed(message);
     }
 }
@@ -2341,59 +1923,6 @@ RoutingRepository::RoutingRepository(NodeApiClient* client, DaemonCacheStore* ca
     }
 }
 
-void RoutingRepository::refreshChats() {
-    if (client() == nullptr) {
-        emit operationFailed(QStringLiteral("No NodeApi client configured"));
-        return;
-    }
-    // A fresh refresh restarts the page loop: drop anything a superseded loop accumulated.
-    m_routesLoop.reset();
-    client()->sendRequest(NodeApiCodec::encodeRoutingListChatsRequest(),
-                          QLatin1String(kListCorrelation));
-}
-
-void RoutingRepository::refreshRooms(const QString& transport) {
-    if (client() == nullptr || transport.isEmpty()) {
-        return;
-    }
-    m_roomsLoops[transport].reset();
-    client()->sendRequest(NodeApiCodec::encodeTransportRoomsRequest(transport),
-                          QLatin1String(kRoomsPrefix) + transport);
-}
-
-void RoutingRepository::getRoute(const DecodedOrigin& origin) {
-    if (client() == nullptr) {
-        return;
-    }
-    client()->sendRequest(NodeApiCodec::encodeRoutingGetRequest(origin),
-                          QLatin1String(kGetCorrelation));
-}
-
-void RoutingRepository::bindChat(const DecodedOrigin& origin, const QString& session,
-                                 const QString& profile) {
-    if (client() == nullptr || session.isEmpty()) {
-        return;
-    }
-    client()->sendRequest(NodeApiCodec::encodeRoutingBindChatRequest(origin, session, profile),
-                          QLatin1String(kMutateCorrelation));
-}
-
-void RoutingRepository::unbindChat(const DecodedOrigin& origin) {
-    if (client() == nullptr) {
-        return;
-    }
-    client()->sendRequest(NodeApiCodec::encodeRoutingUnbindChatRequest(origin),
-                          QLatin1String(kMutateCorrelation));
-}
-
-void RoutingRepository::setRoute(const DecodedChatRoute& route) {
-    if (client() == nullptr || route.session.isEmpty()) {
-        return;
-    }
-    client()->sendRequest(NodeApiCodec::encodeRoutingSetRequest(route),
-                          QLatin1String(kMutateCorrelation));
-}
-
 namespace {
 // domain::Origin -> the codec's flattened DecodedOrigin (what the Routing* encoders take). The
 // inverse of the mirror map's origin decode; kept local to the routing mutation seam.
@@ -2426,18 +1955,30 @@ DecodedOrigin toDecodedOrigin(const domain::Origin& o) {
 void RoutingRepository::routingBindChat(const domain::Origin& origin,
                                         const domain::SessionId& session,
                                         const domain::ProfileRef& profile) {
-    bindChat(toDecodedOrigin(origin), session.toString(), profile.toString());
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeRoutingBindChatRequest(
+                              toDecodedOrigin(origin), session.toString(), profile.toString()),
+                          QLatin1String(kMutateCorrelation));
 }
 
 void RoutingRepository::routingUnbindChat(const domain::Origin& origin) {
-    unbindChat(toDecodedOrigin(origin));
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeRoutingUnbindChatRequest(toDecodedOrigin(origin)),
+                          QLatin1String(kMutateCorrelation));
 }
 
 void RoutingRepository::handleMutationResponse(const QByteArray& responseCbor) {
     if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
-        // Node-authoritative: re-list so the client renders the stored pin table (never an
-        // optimistic local write).
-        refreshChats();
+        // Node-authoritative: announce the ack — the graph bridges it to the ingestor's
+        // RoutingListChats refetch so the MIRROR pin table renders the stored state (AD: the
+        // repo's dead in-memory re-list died; the mirror is the only read path).
+        emit mutationApplied();
         return;
     }
     DecodedApiError err;
@@ -2450,72 +1991,13 @@ void RoutingRepository::handleMutationResponse(const QByteArray& responseCbor) {
 
 void RoutingRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
-    if (correlationId == QLatin1String(kListCorrelation)) {
-        QList<DecodedChatRoute> page;
-        QString next;
-        if (!NodeApiCodec::decodeChatRoutes(responseCbor, &page, &next)) {
-            m_routesLoop.reset();
-            emit operationFailed(QStringLiteral("Failed to decode ChatRoutes response"));
-            return;
-        }
-        m_routesLoop.items.append(page);
-        if (!next.isEmpty() && m_routesLoop.guard(next) && client() != nullptr) {
-            client()->sendRequest(NodeApiCodec::encodeRoutingListChatsRequest(next),
-                                  QLatin1String(kListCorrelation));
-            return;
-        }
-        m_routes = m_routesLoop.items;
-        m_routesLoop.reset();
-        emit routesRefreshed();
-        return;
-    }
-    if (correlationId == QLatin1String(kGetCorrelation)) {
-        DecodedChatRoute route;
-        bool found = false;
-        if (!NodeApiCodec::decodeChatRoute(responseCbor, &route, &found)) {
-            emit operationFailed(QStringLiteral("Failed to decode ChatRoute response"));
-            return;
-        }
-        emit routeResolved(found, route);
-        return;
-    }
     if (correlationId == QLatin1String(kMutateCorrelation)) {
         handleMutationResponse(responseCbor);
-        return;
-    }
-    if (correlationId.startsWith(QLatin1String(kRoomsPrefix))) {
-        const QString transport = correlationId.mid(int(qstrlen(kRoomsPrefix)));
-        QList<DecodedRoomInfo> page;
-        QString next;
-        if (!NodeApiCodec::decodeRooms(responseCbor, &page, &next)) {
-            m_roomsLoops.remove(transport);
-            emit operationFailed(QStringLiteral("Failed to decode Rooms response"));
-            return;
-        }
-        PageLoop<DecodedRoomInfo>& loop = m_roomsLoops[transport];
-        loop.items.append(page);
-        if (!next.isEmpty() && loop.guard(next) && client() != nullptr) {
-            client()->sendRequest(NodeApiCodec::encodeTransportRoomsRequest(transport, next),
-                                  QLatin1String(kRoomsPrefix) + transport);
-            return;
-        }
-        m_rooms.insert(transport, loop.items);
-        m_roomsLoops.remove(transport);
-        emit roomsRefreshed(transport);
-        return;
     }
 }
 
 void RoutingRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kListCorrelation) ||
-        correlationId == QLatin1String(kGetCorrelation) ||
-        correlationId == QLatin1String(kMutateCorrelation) ||
-        correlationId.startsWith(QLatin1String(kRoomsPrefix))) {
-        // A dead page loop must not leak its partial accumulation into the next refresh.
-        m_routesLoop.reset();
-        if (correlationId.startsWith(QLatin1String(kRoomsPrefix))) {
-            m_roomsLoops.remove(correlationId.mid(int(qstrlen(kRoomsPrefix))));
-        }
+    if (correlationId == QLatin1String(kMutateCorrelation)) {
         emit operationFailed(message);
     }
 }

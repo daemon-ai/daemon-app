@@ -211,9 +211,9 @@ private slots:
         tree.refresh();
         QCOMPARE(exec.countOf(mirror::FetchOp::Tree), 1);
         // Free the coalesce slot (the in-flight job would dedup a same-key enqueue), then the
-        // control-Ok ack path (repo re-fetched its legacy tree) drives a fresh mirror refetch.
+        // control-Ok ack (controlAcked) drives a fresh mirror refetch.
         svc.scheduler().complete(exec.executed.first().coalesceKey());
-        emit repo.treeRefreshed();
+        emit repo.controlAcked();
         QCOMPARE(exec.countOf(mirror::FetchOp::Tree), 2);
         svc.setFetchExecutor(nullptr); // exec outlives this scope, the service does not
     }

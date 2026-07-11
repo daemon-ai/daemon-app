@@ -284,12 +284,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // FleetRepository stays as the node-authoritative control seam (pause/resume/scale) the
         // MirrorFleetTree delegates to; the mock fleetTree built above is swapped there.
         // L3 node-wide event feed (daemon-sync-protocol §5): one EventsSince stream that routes
-        // out-of-focus changes (roster/meta -> debounced roster refetch + tree re-query, approvals
-        // -> badge, downloads -> models, session-advanced -> focused-engine nudge, resync ->
-        // baseline) so the client stops polling and stops full-refetching on every change.
-        graph.subscriptions = new SubscriptionManager(
-            graph.nodeApi, graph.sessions, graph.approvalRepository, graph.models, graph.cache,
-            graph.fleetRepository, graph.profileRepository, owner);
+        // out-of-focus changes for the NON-MIGRATED repo domains (approvals badge, downloads,
+        // catalog, profiles, session-detail rehydrate, focused-engine nudges). The mirror
+        // ingestor consumes the SAME wire events for every migrated domain (roster/fleet/routing/
+        // chat/persons/contacts — AD).
+        graph.subscriptions =
+            new SubscriptionManager(graph.nodeApi, graph.sessions, graph.approvalRepository,
+                                    graph.models, graph.cache, graph.profileRepository, owner);
         // Daemon-backed filesystem: replace the dev local-disk seam over the NodeApi fs_* ops - the
         // only path that reaches a remote/embedded host's workspace. The common LocalDiskFsService
         // built above is parented to `owner`; drop it for the daemon one.
@@ -348,11 +349,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // re-listed on the routing refresh triggers wired in the mirror block below. Its own
         // in-memory cache is now dead (residual debt; see LEDGER-a6).
         graph.routingRepository = new RoutingRepository(graph.nodeApi, graph.cache, owner);
-        // [waveB:app-v30] D2: the feed's MembershipChanged (self removal) re-lists the routing pins
-        // (the node reconciled them); wired now that the routing repo exists.
-        if (graph.subscriptions != nullptr) {
-            graph.subscriptions->setRoutingRepository(graph.routingRepository);
-        }
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -380,12 +376,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         auto wasReady = std::make_shared<bool>(false);
         QObject::connect(
             graph.connection, &connection::IConnectionService::stateChanged, graph.sessions,
-            [conn = graph.connection, sessions = graph.sessions, profiles = graph.profileRepository,
+            [conn = graph.connection, profiles = graph.profileRepository,
              credentials = graph.credentialRepository, models = graph.models,
              providers = graph.providerRepository, approvals = graph.approvalRepository,
-             subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
-             transports = graph.transportRepository, routing = graph.routingRepository,
-             agents = graph.agents, authRepo = graph.authRepository,
+             subscriptions = graph.subscriptions, fs = graph.fs,
+             transports = graph.transportRepository, agents = graph.agents,
+             authRepo = graph.authRepository,
              toolRepo = graph.toolRepository,   // [wave2:app-approvals-safety] D2
              gateway = graph.gatewayRepository, // Phase F: node OpenAI-gateway status
              feedback = daemonFeedback,         // wire v32: seed telemetry consent
@@ -396,7 +392,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
                     // surfaces fresh incrementally instead of re-running this storm on every
                     // change.
-                    sessions->refreshSessions();
                     profiles->refreshProfiles();
                     credentials->refreshList();
                     models->refreshModels();
@@ -405,7 +400,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     approvals->refreshPending();
                     toolRepo->refreshTools(); // [wave2:app-approvals-safety] D2 tool inventory
                     fs->listRoots();          // populate the daemon-backed file roots
-                    fleet->refreshTree(QStringLiteral("baseline")); // PRO-9: baseline the tree
                     // Channels: the adapter picker + configured accounts/status dots (EIO-1/3/9).
                     transports->refreshAdapters();
                     transports->refreshInstances();
@@ -416,12 +410,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // [integrations wire v38] The node's person/metacontact registry (the Persons
                     // tree section); refetched incrementally on the PersonsChanged feed event.
                     persons->refresh();
-                    // Routing (M3): the reconnect staleness scan already fetches the pin table into
-                    // the mirror (routing is a scanned collection); this repo re-list only keeps
-                    // the dead cache warm + fires routesRefreshed → the mirror re-fetch wired
-                    // below. Per-account rooms follow the instances refresh (wired in the mirror
-                    // block).
-                    routing->refreshChats();
+                    // Roster/fleet/routing baselines are the mirror ingestor's (the reconnect
+                    // staleness scan / Bootstrap covers every scanned collection — AD).
                     // Foreign engines: the catalog for the engine picker + Agents settings.
                     agents->refreshCatalog();
                     // Interactive-auth family discovery (the AuthFlowSheet's provider list).
@@ -661,13 +651,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                 new DaemonFetchExecutor(graph.nodeApi, svc->ingestor(), svc->scheduler(), owner);
             svc->setFetchExecutor(graph.mirrorExecutor);
 
-            // Routing (M3): the pin table lives on the mirror store. A node-acked routing mutation
-            // (or the connect-ready re-list) fires RoutingRepository::routesRefreshed → re-fetch
-            // the pin table into the mirror (single writer: the ingestor, not the repo, writes
-            // rows). Per-account bindable rooms follow the transport instance list
-            // (TransportRooms).
+            // Routing (M3 → AD): the pin table lives on the mirror store. A node-acked routing
+            // mutation fires RoutingRepository::mutationApplied → re-fetch the pin table into
+            // the mirror (single writer: the ingestor, not the repo, writes rows). Per-account
+            // bindable rooms follow the transport instance list (TransportRooms).
             if (graph.routingRepository != nullptr) {
-                QObject::connect(graph.routingRepository, &RoutingRepository::routesRefreshed, svc,
+                QObject::connect(graph.routingRepository, &RoutingRepository::mutationApplied, svc,
                                  [svc] { svc->ingestor().refetchRouting(); });
             }
             if (graph.transportRepository != nullptr) {

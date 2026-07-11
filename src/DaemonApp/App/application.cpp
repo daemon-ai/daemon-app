@@ -559,8 +559,8 @@ void Application::announceReloadSentinels() const {
         std::fflush(stdout);
     }
 
-    // (1b) Re-emit the cache-row count once the per-user namespace is active, BEFORE the on-ready
-    // refreshSessions() re-fetch. The per-user db is opened by AuthOk (cache->setUserNamespace in
+    // (1b) Re-emit the cache-row count once the per-user namespace is active, BEFORE the
+    // on-ready baseline re-fetches. The per-user db is opened by AuthOk (cache->setUserNamespace in
     // app_service_graph.cpp, which fires on NodeApiClient::authenticated and precedes "ready"); on
     // a resume that db is the IDBFS-preloaded copy, so this reading is a true PRE-FETCH proof that
     // the SQLite cache survived the reload (the reload-survival harness asserts rows>0 on load 2
@@ -756,18 +756,21 @@ QString Application::runHeadlessFleet(int timeoutMs) {
     }
     settle(600);
     FleetRepository* repo = m_services.fleetRepository;
-    if (repo == nullptr) {
+    mirror::MirrorService* svc = m_services.mirrorService;
+    if (repo == nullptr || svc == nullptr) {
         return {};
     }
+    // AD: the tree feed is the mirror's — refetch the Tree into `fleet_units` and count the
+    // mirrored rows (the same read path the Fleet page renders).
     int units = -1;
     {
         QEventLoop loop;
-        const auto c = connect(repo, &FleetRepository::treeRefreshed, this, [&] {
-            units = static_cast<int>(repo->cachedUnits().size());
+        const auto c = connect(&svc->store(), &mirror::Store::committed, this, [&] {
+            units = static_cast<int>(svc->store().snapshot().fleet_units.size());
             loop.quit();
         });
         QTimer::singleShot(qMax(2000, timeoutMs / 2), &loop, &QEventLoop::quit);
-        repo->refreshTree();
+        svc->ingestor().refetchFleet();
         loop.exec();
         disconnect(c);
     }

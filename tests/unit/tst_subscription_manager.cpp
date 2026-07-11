@@ -19,7 +19,6 @@ using daemonapp::daemon::CachedTransportInstanceRow; // [wave2:app-channels-live
 using daemonapp::daemon::ContactsRepository; // [acct-mgmt] transport contacts / roster (wire v34)
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
-using daemonapp::daemon::FleetRepository; // [wave2:app-channels-liveness]
 using daemonapp::daemon::ModelRepository;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::ProfileRepository; // profile roster refetch (wire v31, phase H)
@@ -131,30 +130,6 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
     }
 
-    // RosterChanged triggers a (debounced) roster refetch.
-    void rosterChangedRefetchesRoster() {
-        const QString path = sock(QStringLiteral("roster.sock"));
-        WireMuxServer fake;
-        QVERIFY2(fake.start(path), "listen");
-        DaemonTransport transport;
-        transport.setSocketPath(path);
-        NodeApiClient client(&transport);
-        DaemonCacheStore cache(dbPath(QStringLiteral("c3.db")));
-        SessionRepository sessions(&client, &cache);
-        ApprovalRepository approvals(&client, &cache);
-        ModelRepository models(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
-
-        mgr.start();
-        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
-        const int callsBefore = fake.requestCount();
-
-        fake.pushItem(
-            daemonapp::test::buildEventsPage({daemonapp::test::neRosterChanged(7)}, 1, 1));
-        // Debounced (~300ms) SessionsQuery one-shot Call.
-        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 4000);
-    }
-
     // SessionAdvanced for a registered session nudges its focused engine; an unregistered one does
     // not crash and simply has no target.
     void sessionAdvancedNudgesFocusedEngine() {
@@ -238,31 +213,6 @@ private slots:
         QCOMPARE(s.state, QStringLiteral("Downloading"));
         QCOMPARE(s.downloadedBytes, quint64(46'000'000));
         QCOMPARE(s.totalBytes, quint64(92'000'000));
-    }
-
-    // [wave2:app-channels-liveness] F5: a FleetChanged notification re-queries the Tree directly
-    // (a fleet change need not move the roster). Previously fell through to Unknown (ignored).
-    void fleetChangedRefetchesTree() {
-        const QString path = sock(QStringLiteral("fleet.sock"));
-        WireMuxServer fake;
-        QVERIFY2(fake.start(path), "listen");
-        DaemonTransport transport;
-        transport.setSocketPath(path);
-        NodeApiClient client(&transport);
-        DaemonCacheStore cache(dbPath(QStringLiteral("fc.db")));
-        SessionRepository sessions(&client, &cache);
-        ApprovalRepository approvals(&client, &cache);
-        ModelRepository models(&client, &cache);
-        FleetRepository fleet(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache, &fleet);
-
-        mgr.start();
-        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
-        const int callsBefore = fake.requestCount();
-
-        fake.pushItem(daemonapp::test::buildEventsPage({daemonapp::test::neFleetChanged(3)}, 1, 1));
-        // The routed refreshTree() issues a Tree one-shot Call.
-        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
     }
 
     // [wave2:app-channels-liveness] B5: a TransportChanged notification patches the cached account
@@ -376,10 +326,9 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
     }
 
-    // [waveB:app-v30] D2: a MembershipChanged with is_self + a removal (Left/Kicked/Banned)
-    // refetches the ConvList AND re-lists the routing pins (the node reconciled them). A non-self
-    // change only refetches the ConvList.
-    void membershipChangedSelfRemovalRefetchesRouting() {
+    // [waveB:app-v30] D2 → AD: a MembershipChanged refetches the transport's ConvList (the
+    // repo-side arm). The routing pin-table + roster refetches are the mirror ingestor's arms.
+    void membershipChangedRefetchesConvList() {
         const QString path = sock(QStringLiteral("memberch.sock"));
         WireMuxServer fake;
         QVERIFY2(fake.start(path), "listen");
@@ -391,21 +340,19 @@ private slots:
         ApprovalRepository approvals(&client, &cache);
         ModelRepository models(&client, &cache);
         TransportRepository transports(&client, &cache);
-        daemonapp::daemon::RoutingRepository routing(&client, &cache);
         SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
         mgr.setTransportRepository(&transports);
-        mgr.setRoutingRepository(&routing);
 
         mgr.start();
         QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
         const int callsBefore = fake.requestCount();
 
-        // is_self=true, Kicked -> ConvList + RoutingListChats + TransportRooms (>= 3 new Calls).
+        // is_self=true, Kicked -> the transport's ConvList refetch (one new Call).
         fake.pushItem(daemonapp::test::buildEventsPage(
             {daemonapp::test::neMembershipChanged("matrix/@bot:hs", "!room:hs", "@bot:hs", "Kicked",
                                                   true)},
             1, 1));
-        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() >= callsBefore + 3, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() >= callsBefore + 1, 3000);
     }
 
     // Phase H: a ProfilesChanged event refetches the profile roster (ProfileList) — the
@@ -424,8 +371,7 @@ private slots:
         ApprovalRepository approvals(&client, &cache);
         ModelRepository models(&client, &cache);
         ProfileRepository profiles(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache,
-                                /*fleet=*/nullptr, &profiles);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache, &profiles);
 
         mgr.start();
         QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
@@ -458,51 +404,6 @@ private slots:
         fake.pushItem(
             daemonapp::test::buildEventsPage({daemonapp::test::neResyncNeeded("all")}, 5, 5));
         QTRY_COMPARE_WITH_TIMEOUT(resync.count(), 1, 3000);
-    }
-
-    // L4: the first (cold) refresh is a full page that seeds the cache + persists the roster rev; a
-    // subsequent refresh is a delta (since_rev) that merges changed rows + prunes removed; a delta
-    // whose returned rev went backwards (daemon reset) falls back to a full replace.
-    void rosterDeltaMergesPrunesAndReplaceFallback() {
-        const QString path = sock(QStringLiteral("roster-delta.sock"));
-        WireMuxServer fake;
-        QVERIFY2(fake.start(path), "listen");
-        DaemonTransport transport;
-        transport.setSocketPath(path);
-        NodeApiClient client(&transport);
-        DaemonCacheStore cache(dbPath(QStringLiteral("rd.db")));
-        SessionRepository sessions(&client, &cache);
-        QSignalSpy refreshed(&sessions, &SessionRepository::sessionsRefreshed);
-
-        // 1. Cold full page (rev 5, sessions A + B) -> cache seeded, rev persisted.
-        fake.setReplyPayload(sessionPage({sInfo("A"), sInfo("B")}, 5));
-        sessions.refreshSessions();
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-        auto ids = [&] {
-            QStringList v;
-            for (const auto& r : cache.sessions()) {
-                v << r.sessionId;
-            }
-            v.sort();
-            return v;
-        };
-        QCOMPARE(ids(), (QStringList{"A", "B"}));
-        QCOMPARE(cache.cursor(QStringLiteral("roster-rev")), QStringLiteral("5"));
-
-        // 2. Delta (rev 7: A changed, B removed) -> merge A, prune B.
-        fake.setReplyPayload(sessionPage({sInfo("A")}, 7, {"B"}));
-        sessions.refreshSessions();
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 2, 3000);
-        QCOMPARE(ids(), (QStringList{"A"}));
-        QCOMPARE(cache.cursor(QStringLiteral("roster-rev")), QStringLiteral("7"));
-
-        // 3. Fallback: we send since_rev 7 but the server returns a *lower* rev 2 (it restarted) ->
-        // the page is a full replace (prune A, seed C).
-        fake.setReplyPayload(sessionPage({sInfo("C")}, 2));
-        sessions.refreshSessions();
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 3, 3000);
-        QCOMPARE(ids(), (QStringList{"C"}));
-        QCOMPARE(cache.cursor(QStringLiteral("roster-rev")), QStringLiteral("2"));
     }
 
     // P3 focus wiring (now live): a DaemonTurnEngine self-registers with the SubscriptionManager on

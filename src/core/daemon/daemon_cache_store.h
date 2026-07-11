@@ -13,6 +13,8 @@ QT_FORWARD_DECLARE_CLASS(QSqlQuery)
 
 namespace daemonapp::daemon {
 
+// The codec's SessionInfo row DTO (decode shape for SessionGet detail / SessionPage). AD: the
+// daemon_sessions cache table died — this struct survives purely as the decoded value shape.
 struct CachedSessionRow {
     QString sessionId;
     QString title;
@@ -53,32 +55,6 @@ struct CachedProfileRow {
     qint64 updatedAtMs = 0;
 };
 
-// One unit of the offline-first fleet/subagent tree (daemon_fleet_units; schema v4).
-// `depth`/`ordinal` preserve the pre-order flatten so the tree re-renders from cache without a
-// connection.
-struct CachedFleetUnitRow {
-    QString unitId;
-    QString parentId; // "" = a root
-    int depth = 0;
-    int ordinal = 0; // position in the pre-order flatten
-    QString name;
-    QString kind;  // "Engine" | "Host" | "Orchestrator"
-    QString state; // "Running" | "Finished" | "Unknown"
-    QString role;
-    QString profileRef;
-    QString sessionId;
-    QString work;
-    // [wave2:app-delegation] v7 (F3): authoritative per-child lifetime + engine (UnitNode v29).
-    QString lifetime;    // "" | "Persistent" | "Ephemeral"
-    QString engineKind;  // "" | "Core" | "Foreign"
-    QString engineAgent; // foreign agent name (only when engineKind == "Foreign")
-    // [waveB:app-v30] v8 (stretch): UnitNode.end_reason for a Finished unit ("Completed" |
-    // "Failed" | "Interrupted" | ...); "" for a running unit. The subagent strip reads this to
-    // render an error status (node-reported, not client-derived).
-    QString endReason;
-    qint64 updatedAtMs = 0;
-};
-
 // One offline-first transport instance/account row (daemon_transport_instances; Phase 6a).
 struct CachedTransportInstanceRow {
     QString transport; // pk (instance-qualified id)
@@ -114,8 +90,9 @@ struct CachedConversationRow {
     qint64 updatedAtMs = 0;
 };
 
-// One coalesced durable transcript block (schema v2; render-from-cache). Mirrors
-// DecodedTranscriptBlock (journal) / the live coalesced shape, keyed by (sessionId, seq).
+// One coalesced transcript block — the ENGINE's coalescing value shape (and the mirror sink's
+// input, keyed by (sessionId, seq)). AD: the daemon_transcript_blocks cache table died; the
+// mirror `w_transcript_blocks` window is the durable store.
 struct CachedTranscriptBlockRow {
     QString sessionId;
     quint64 seq = 0;
@@ -154,12 +131,6 @@ public:
     // Persisted schema version, read from daemon_cache_meta (0 if absent/unopened).
     [[nodiscard]] int schemaVersion() const;
 
-    bool upsertSession(const CachedSessionRow& row);
-    [[nodiscard]] QList<CachedSessionRow> sessions() const;
-    // Remove a session row (L4 delta prune: a `removed` id or a session that left the queried
-    // scope). Best-effort; a missing row is not an error.
-    bool deleteSession(const QString& sessionId);
-
     bool setCursor(const QString& scope, const QString& cursor, qint64 updatedAtMs);
     [[nodiscard]] QString cursor(const QString& scope) const;
 
@@ -171,12 +142,6 @@ public:
     // Remove a cached profile (a live ProfileList no longer lists it). Best-effort.
     bool deleteProfile(const QString& profileRef);
 
-    // Offline-first fleet tree (daemon_fleet_units). fleetUnits() returns pre-order (ORDER BY
-    // ordinal).
-    bool upsertFleetUnit(const CachedFleetUnitRow& row);
-    [[nodiscard]] QList<CachedFleetUnitRow> fleetUnits() const;
-    bool deleteFleetUnit(const QString& unitId);
-
     // Offline-first Channels read surface (Phase 6a). Instances are accounts (ORDER BY family,
     // display_name); conversations are scoped per transport.
     bool upsertTransportInstance(const CachedTransportInstanceRow& row);
@@ -185,17 +150,6 @@ public:
     bool upsertConversation(const CachedConversationRow& row);
     [[nodiscard]] QList<CachedConversationRow> conversations(const QString& transport) const;
     bool deleteConversation(const QString& transport, const QString& convId);
-
-    // Durable transcript blocks (schema v2 render-from-cache). upsert is idempotent per (session,
-    // seq); transcriptBlocks reads in seq order past `afterSeq`; clearTranscript wipes a session's
-    // blocks for a re-baseline (epoch change / Reset).
-    bool upsertTranscriptBlock(const CachedTranscriptBlockRow& row);
-    [[nodiscard]] QList<CachedTranscriptBlockRow> transcriptBlocks(const QString& sessionId,
-                                                                   quint64 afterSeq = 0) const;
-    bool clearTranscript(const QString& sessionId);
-    // The latest non-empty Message text per session (one grouped query), for an offline roster
-    // snippet/preview. Maps sessionId -> last message text.
-    [[nodiscard]] QHash<QString, QString> latestTranscriptSnippets() const;
 
     // Generic typed metadata stored in daemon_cache_meta (schema version, etc).
     bool setMeta(const QString& key, const QString& value);

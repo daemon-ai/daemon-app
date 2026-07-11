@@ -8,7 +8,6 @@
 #include <QObject>
 #include <QPointer>
 #include <QString>
-#include <QTimer>
 
 namespace daemonapp::daemon {
 
@@ -16,10 +15,8 @@ class NodeApiClient;
 class SessionRepository;
 class ApprovalRepository;
 class ModelRepository;
-class FleetRepository;
 class ProfileRepository;
 class TransportRepository; // [wave2:app-channels-liveness]
-class RoutingRepository;   // [waveB:app-v30] D2
 class ContactsRepository;  // [acct-mgmt] transport contacts / roster (wire v34)
 class ChatRepository;      // [integrations wire v38] native chat (ConvHistory / MessagesChanged)
 class PersonsRepository;   // [integrations wire v38] person registry (PersonList / PersonsChanged)
@@ -31,10 +28,10 @@ struct DecodedNodeEvent;
 // payload-free `NodeEvent` pointers and routes them so the client learns what changed *out of
 // focus* without polling and without the connect-ready full-refetch storm:
 //
-//   - RosterChanged / SessionMetaChanged -> a debounced SessionRepository::refreshSessions()
-//                                           (+ FleetRepository::refreshTree(), since a fleet unit
-//                                           IS a durable session: a session created lazily on first
-//                                           Submit must also repopulate the projected tree - FIX 2)
+//   - SessionMetaChanged                 -> re-hydrate the session's SessionDetail (if cached);
+//                                           roster/fleet REFETCHES are the mirror ingestor's
+//                                           policy arms since AD (this manager routes only the
+//                                           non-migrated repo domains)
 //   - ApprovalPending                    -> ApprovalRepository::refreshPending() (the inbox badge)
 //   - DownloadProgress                   -> ModelRepository (retires the 600ms poll; see
 //   p3-downloads)
@@ -50,8 +47,8 @@ class SubscriptionManager : public QObject {
 public:
     SubscriptionManager(NodeApiClient* nodeApi, SessionRepository* sessions,
                         ApprovalRepository* approvals, ModelRepository* models,
-                        DaemonCacheStore* cache, FleetRepository* fleet = nullptr,
-                        ProfileRepository* profiles = nullptr, QObject* parent = nullptr);
+                        DaemonCacheStore* cache, ProfileRepository* profiles = nullptr,
+                        QObject* parent = nullptr);
 
     // Open (or re-open) the single node-wide feed from the tracked cursor. Idempotent; call on
     // connect-ready. A re-open after a drop resumes from the last applied cursor (the retained ring
@@ -72,11 +69,6 @@ public:
     // patches (connection/presence). Wired via a setter because the repo is constructed AFTER this
     // manager in the service graph. Optional; TransportChanged is ignored when unset.
     void setTransportRepository(TransportRepository* transports) { m_transports = transports; }
-
-    // [waveB:app-v30] D2: the routing repository refetched on a self membership removal (the node
-    // has already reconciled the routing pins; the client re-lists to render the node's state).
-    // Wired via a setter because the repo is constructed after this manager. Optional.
-    void setRoutingRepository(RoutingRepository* routing) { m_routing = routing; }
 
     // [acct-mgmt] The contacts repository refetched on a ContactsChanged feed event (wire v34). The
     // node owns the roster; this refetches that transport's RosterList. Wired via a setter because
@@ -101,16 +93,13 @@ private:
     void onStreamItem(quint64 id, const QByteArray& responseCbor);
     void onStreamEnded(quint64 id, bool error, const QString& message);
     void applyEvent(const DecodedNodeEvent& event);
-    void scheduleRosterRefetch();
 
     NodeApiClient* m_nodeApi = nullptr;
     SessionRepository* m_sessions = nullptr;
     ApprovalRepository* m_approvals = nullptr;
     ModelRepository* m_models = nullptr;
-    FleetRepository* m_fleet = nullptr;
     ProfileRepository* m_profiles = nullptr;
     TransportRepository* m_transports = nullptr; // [wave2:app-channels-liveness]
-    RoutingRepository* m_routing = nullptr;      // [waveB:app-v30] D2
     ContactsRepository* m_contacts = nullptr;    // [acct-mgmt] wire v34
     ChatRepository* m_chat = nullptr;            // [integrations wire v38]
     PersonsRepository* m_persons = nullptr;      // [integrations wire v38]
@@ -120,10 +109,6 @@ private:
     quint64 m_feedCursor = 0;   // the applied feed-cursor watermark (resume point)
 
     QHash<QString, QPointer<QObject>> m_focus; // sessionId -> focused turn engine
-    QTimer m_rosterDebounce;                   // coalesce roster refetches under event bursts
-    bool m_rosterDirty = false;
-
-    static constexpr int kRosterDebounceMs = 300;
 };
 
 } // namespace daemonapp::daemon

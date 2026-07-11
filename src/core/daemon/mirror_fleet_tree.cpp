@@ -55,12 +55,12 @@ MirrorFleetTree::MirrorFleetTree(mirror::Store* store, mirror::Ingestor* ingesto
     if (m_control != nullptr) {
         connect(m_control, &daemonapp::daemon::FleetRepository::controlFailed, this,
                 &MirrorFleetTree::onControlRejected);
-        // A control Ok re-fetches the legacy repo tree and emits treeRefreshed (the legacy tree's
-        // rebuild trigger). Route it to a mirror refetch so the post-control-ack refresh reaches
-        // the read model deterministically (belt-and-braces beside the FleetChanged event arm; the
-        // scheduler's coalesce key dedups the overlap).
+        // A control Ok (controlAcked) re-fetches the Tree into the MIRROR so the post-ack
+        // refresh reaches the read model deterministically (belt-and-braces beside the
+        // FleetChanged event arm; the scheduler's coalesce key dedups the overlap). AD: the
+        // legacy repo tree refetch died with the tree feed.
         if (m_ingestor != nullptr) {
-            connect(m_control, &daemonapp::daemon::FleetRepository::treeRefreshed, this,
+            connect(m_control, &daemonapp::daemon::FleetRepository::controlAcked, this,
                     [this] { m_ingestor->refetchFleet(); });
         }
     }

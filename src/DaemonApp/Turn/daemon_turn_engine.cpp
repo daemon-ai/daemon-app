@@ -464,7 +464,7 @@ void DaemonTurnEngine::applyUnitEvents(const QByteArray& responseCbor) {
         m_subagentSeq = ev.seq;
         // SubagentPhase -> the strip's status. Spawned = a live child (running); Finished =
         // settled. [waveB:app-v30] stretch: a Finished child's terminal outcome is the
-        // node-reported UnitNode.end_reason (cached in daemon_fleet_units) — "Failed" renders as
+        // node-reported UnitNode.end_reason (the mirror FleetUnit row) — "Failed" renders as
         // "error" (feeds the strip's failedCount), anything else as "done". This is rendering the
         // node's fact, not re-deriving it; the wire carries no error phase on the ManageEvent
         // itself.
