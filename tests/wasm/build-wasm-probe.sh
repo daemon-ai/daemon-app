@@ -24,4 +24,7 @@ em++ -std=c++20 -Oz -fno-exceptions -fno-rtti \
     "$here/mirror_wasm_probe.cpp" -o "$out"
 
 echo "--- running under node ---"
-node "$out"
+# The wasm devShell doesn't put node on PATH; emscripten pins its own (em-config
+# emits a Python list literal, so strip the brackets/quotes).
+NODE_BIN="$(em-config NODE_JS | tr -d "[]'\"" | awk -F, '{print $1}')"
+"${NODE_BIN:-node}" "$out"
