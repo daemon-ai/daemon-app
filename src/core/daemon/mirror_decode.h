@@ -16,13 +16,18 @@
 
 #include <QByteArray>
 #include <QString>
+#include <QStringList>
 #include <vector>
 
 namespace daemonapp::daemon {
 
 // ConvList → Conversations page. `next` (if non-null) receives the resume cursor ("" = last page).
+// [api/39 §10.2] `rev` (if non-null) receives the collection revision; `removed` (if non-null)
+// receives the delta-read tombstone id list (the conversations removed since the request's
+// since_rev). Both are absent/empty on a v38 full-list reply.
 bool decodeConversationsToMirror(const QByteArray& responseCbor,
-                                 std::vector<mirror::Conversation>* out, QString* next);
+                                 std::vector<mirror::Conversation>* out, QString* next,
+                                 quint64* rev = nullptr, QStringList* removed = nullptr);
 
 // ConvHistory (JournalPageView) → the conversation's ChatMessages, scoped to (transport, conv).
 // `nextCursor`/`headCursor` drive the forward page loop (§13 M1 cursor fix).
@@ -30,12 +35,16 @@ bool decodeChatHistoryToMirror(const QByteArray& responseCbor, const QString& tr
                                const QString& conv, std::vector<mirror::ChatMessage>* out,
                                quint64* nextCursor, quint64* headCursor);
 
-// PersonList → Persons.
-bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::Person>* out);
+// PersonList → Persons. [api/39 §10.2] `rev`/`removed` (if non-null) receive the delta-read
+// revision + tombstone id list (absent/empty on a v38 full-list reply).
+bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::Person>* out,
+                           quint64* rev = nullptr, QStringList* removed = nullptr);
 
 // RosterList → Contacts for `transport` (the payload carries only the id; transport is the scope).
-// `next` (if non-null) receives the roster resume cursor.
+// `next` (if non-null) receives the roster resume cursor. [api/39 §10.2] `rev`/`removed` (if
+// non-null) receive the delta-read revision + tombstone id list.
 bool decodeContactsToMirror(const QByteArray& responseCbor, const QString& transport,
-                            std::vector<mirror::Contact>* out, QString* next);
+                            std::vector<mirror::Contact>* out, QString* next,
+                            quint64* rev = nullptr, QStringList* removed = nullptr);
 
 } // namespace daemonapp::daemon

@@ -208,6 +208,58 @@ private slots:
                     ConversationKey{QStringLiteral("m"), QStringLiteral("!a")}) != nullptr);
     }
 
+    void onConnectedFullModeIssuesBootstrapProbe() {
+        // §5.6 full (BR): an api/39 connect issues ONE Bootstrap probe — not a blind full scan of
+        // every collection. The executor decodes the probe and calls onBootstrap for the deltas.
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+        ing.onConnected(39, /*hasRevFields=*/true);
+        QCOMPARE(exec.count(FetchOp::Bootstrap), 1);
+        QVERIFY(!exec.has(FetchOp::SessionsQuery, QString())); // no degraded staleness scan
+    }
+
+    void onConnectedDegradedScansStaleNotBootstrap() {
+        // §5.6 interim (api/38): no Bootstrap; the degraded staleness scan re-baselines instead.
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+        ing.onConnected(38, /*hasRevFields=*/false);
+        QCOMPARE(exec.count(FetchOp::Bootstrap), 0);
+        QVERIFY(exec.has(FetchOp::SessionsQuery, QString()));
+    }
+
+    void deliverConversationsDeltaUpsertsRemovedOnlyNoPrune() {
+        // §5.6 full / §10.2: a since_rev delta carries ONLY changed items + a `removed` list.
+        // Absent keys are UNCHANGED (never pruned — the essential difference from the full-list
+        // path), and the collection rev is recorded on markFresh for the next rev-gate.
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+        ing.deliverConversations(QStringLiteral("m"), {conv("m", "!a", "A"), conv("m", "!b", "B")},
+                                 true);
+        QCOMPARE(store.snapshot().conversations.size(), std::size_t(2));
+
+        // Delta: change !a, remove nothing. !b is absent from the page but MUST survive (a
+        // full-list deliver would prune it here).
+        ing.deliverConversationsDelta(QStringLiteral("m"), {conv("m", "!a", "A2")}, {}, 5, true);
+        QCOMPARE(store.snapshot().conversations.size(), std::size_t(2));
+        QCOMPARE(ing.syncState().collection(QStringLiteral("conversations")).nodeRev, quint64(5));
+
+        // Delta: remove !b via the tombstone list.
+        ing.deliverConversationsDelta(QStringLiteral("m"), {}, {QStringLiteral("!b")}, 6, true);
+        QCOMPARE(store.snapshot().conversations.size(), std::size_t(1));
+        QVERIFY(store.snapshot().conversations.find(
+                    ConversationKey{QStringLiteral("m"), QStringLiteral("!a")}) != nullptr);
+        QCOMPARE(ing.syncState().collection(QStringLiteral("conversations")).nodeRev, quint64(6));
+    }
+
     void diffBeforeWriteSuppressesNoOpDelivery() {
         // §5.3: re-delivering an identical list stamps nothing (no journal growth, no churn).
         CoarseObserve obs;

@@ -7,6 +7,7 @@
 
 #include <optional>
 #include <QByteArray>
+#include <QHash>
 #include <QList>
 #include <QMap>
 #include <QMetaType>
@@ -1704,8 +1705,13 @@ public:
     [[nodiscard]] static QByteArray
     encodeTransportSetLabelRequest(const QString& transport, bool hasLabel, const QString& label);
     // `after` (wire v25) resumes past the previous page's `next` cursor (empty = first page).
+    // [api/39 §10.2] `hasSinceRev` makes it a delta read: the node returns only conversations
+    // changed since `sinceRev` plus a `removed` tombstone list and the collection `rev`
+    // (decodeConversationsToMirror surfaces those). Omitted ⇒ a full-list read (v38 behavior).
     [[nodiscard]] static QByteArray encodeConvListRequest(const QString& transport,
-                                                          const QString& after = QString());
+                                                          const QString& after = QString(),
+                                                          bool hasSinceRev = false,
+                                                          quint64 sinceRev = 0);
     static bool decodeAdapters(const QByteArray& responseCbor, QList<DecodedAdapterInfo>* out);
     static bool decodeTransportInstances(const QByteArray& responseCbor,
                                          QList<DecodedTransportInstance>* out);
@@ -1759,14 +1765,24 @@ public:
     // Send a plain-text message to a conversation (ConvSend{transport, conv, message}). The node
     // fills `from` (this account's identity), appends a JournalRecordPayload::Chat record, and
     // emits MessagesChanged; the reply is Ok/Error. (Attachments are out of scope — text only.)
+    // [api/39 §10.3] `opId` (when non-empty) carries the client-minted idempotency + provenance
+    // key: the node dedups on (principal, op_id) and stamps `origin_op` on the resulting journal
+    // record so the outbox confirm keys on provenance. Empty ⇒ absent (v38 behavior / direct sends
+    // that carry no op-id). The outbox reuses the SAME op_id across retries so a resend is
+    // dedup-safe (§6.8's auto-replay guarantee).
     [[nodiscard]] static QByteArray encodeConvSendRequest(const QString& transport,
-                                                          const QString& conv, const QString& text);
+                                                          const QString& conv, const QString& text,
+                                                          const QString& opId = QString());
     // Read a conversation's durable transcript (ConvHistory{transport, conv, ? after_cursor,
     // ? max} -> Journal). `hasAfter` resumes past a prior page's cursor (exclusive); `hasMax`
     // bounds the page (the node also caps at WIRE_PAGE_MAX).
+    // [api/39 §10.2] `hasBefore`/`beforeCursor` request a BACKWARD window: the `max` records with
+    // cursor < beforeCursor, newest-anchored (the generalized backward-window read). Exposed here
+    // for the facade; wiring a backward UI path is A6+ (the ingestor still forward-fills).
     [[nodiscard]] static QByteArray
     encodeConvHistoryRequest(const QString& transport, const QString& conv, bool hasAfter = false,
-                             quint64 afterCursor = 0, bool hasMax = false, quint32 max = 0);
+                             quint64 afterCursor = 0, bool hasMax = false, quint32 max = 0,
+                             bool hasBefore = false, quint64 beforeCursor = 0);
     // Decode a ConvHistory reply (a JournalPageView) into the conversation's ChatMessages: only
     // the JournalRecordPayload::Chat records are projected (Block/Management records — if any —
     // are skipped), each stamped with its journal `cursor`. `*nextCursor`/`*headCursor` (when
@@ -1776,8 +1792,20 @@ public:
 
     // --- [integrations wire v38] Persons / metacontacts ---------------------------------------
     // List the node's person registry (PersonList -> Persons; re-listed on PersonsChanged).
-    [[nodiscard]] static QByteArray encodePersonListRequest();
+    // [api/39 §10.2] `hasSinceRev` makes it a delta read (changed persons + `removed` + `rev`);
+    // omitted ⇒ a full-list read (v38 behavior).
+    [[nodiscard]] static QByteArray encodePersonListRequest(bool hasSinceRev = false,
+                                                            quint64 sinceRev = 0);
     static bool decodePersons(const QByteArray& responseCbor, QList<DecodedPerson>* out);
+
+    // --- [api/39 §10.3] Bootstrap probe -------------------------------------------------------
+    // A race-free reconnect baseline (§5.6 full step 1): one request returns every collection's
+    // node `rev` + the feed `cursor`/`epoch`, snapshotted under the feed lock (counts + cursors
+    // only, no entity payloads). The ingestor compares the revs against its stored node_revs to
+    // decide per-collection skip-vs-delta, and detects a node restart via the epoch.
+    [[nodiscard]] static QByteArray encodeBootstrapRequest();
+    static bool decodeBootstrap(const QByteArray& responseCbor, quint64* cursor, quint64* epoch,
+                                QHash<QString, quint64>* revs);
 
     // --- [integrations wire v38] Transport account settings (read + configure) ----------------
     // Read a transport instance's persisted NON-SECRET account-settings values (TransportSettings
@@ -1799,8 +1827,12 @@ public:
     // only the id, update carries the editable fields. ContactGetProfile returns a node-rendered
     // profile string; ContactSetAlias sets/clears the local alias (empty = clear); DirectorySearch
     // returns an unpaged contact list for the people-picker (the node bounds it).
+    // [api/39 §10.2] `hasSinceRev` makes the roster read a delta (changed contacts + a `removed`
+    // tombstone list + the collection `rev`); omitted ⇒ a full-list read (v38 behavior).
     [[nodiscard]] static QByteArray encodeRosterListRequest(const QString& transport,
-                                                            const QString& after = QString());
+                                                            const QString& after = QString(),
+                                                            bool hasSinceRev = false,
+                                                            quint64 sinceRev = 0);
     [[nodiscard]] static QByteArray encodeRosterAddRequest(const QString& transport,
                                                            const DecodedContact& contact);
     [[nodiscard]] static QByteArray encodeRosterUpdateRequest(const QString& transport,
@@ -1838,7 +1870,11 @@ public:
     // contract version moves. The server advertises its own version as the "api/<N>" Hello
     // feature; the connection service compares the two at connect and replaces (app-managed) or
     // refuses (attach) a mismatched daemon instead of silently serving stale wire shapes.
-    static constexpr quint32 kDaemonApiVersion = 38;
+    // v39 (BR): the rungs 1+2+3 bump — per-collection revs + feed epoch, since_rev delta reads +
+    // removed tombstones + before_cursor backward windows, op-id dedup + provenance + the Bootstrap
+    // probe (§10). Activating it gates FULL (wire_delta) ingestion and outbox auto-replay
+    // (§5.6/§6.8) on connections to an api/39 node.
+    static constexpr quint32 kDaemonApiVersion = 39;
     // The wire page bound (daemon-api WIRE_PAGE_MAX): a paged response carries at most this many
     // array elements per page — the generated codec decodes into fixed 64-element buffers — so
     // clients loop on the page cursors instead of ever asking for more per response.

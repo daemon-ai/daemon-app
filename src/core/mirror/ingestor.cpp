@@ -298,6 +298,18 @@ void Ingestor::onConnected(int apiVersion, bool hasRevFields) {
     for (const QString& c : SyncState::allCollections()) {
         state_.setMode(c, mode);
     }
+    if (mode == StampingMode::WireDelta) {
+        // FULL (§5.6 full step 1): a single Bootstrap probe returns {cursor, epoch, revs}. The
+        // executor decodes it and calls onBootstrap(), which issues the per-collection since_rev
+        // delta reads (rev == stored ⇒ skip). The probe supersedes the degraded scan — no blind
+        // full re-baseline of every collection.
+        FetchJob job;
+        job.op = FetchOp::Bootstrap;
+        job.priority = Priority::Prefetch;
+        job.reason = nextReason();
+        scheduler_.enqueue(job);
+        return;
+    }
     // Degraded resume: scan whatever is currently stale (a warm reconnect re-baselines nothing
     // new).
     runStalenessScan(Priority::Prefetch);
@@ -548,6 +560,62 @@ void Ingestor::deliverPersons(const std::vector<Person>& items, bool isFinalPage
         b.commit();
     }
     state_.markFresh(QStringLiteral("persons"), 0, nowMs());
+}
+
+// ---------------------------------------------------------------------------
+// FULL (wire_delta) delivery (§5.6 full / §10.2): upsert changed + tombstone removed, no prune.
+// ---------------------------------------------------------------------------
+void Ingestor::deliverConversationsDelta(const QString& transport,
+                                         const std::vector<Conversation>& changed,
+                                         const QStringList& removed, quint64 rev,
+                                         bool isFinalPage) {
+    const JournalOrigin origin = originFor(QStringLiteral("conversations"));
+    auto b = store_.beginBatch();
+    for (const Conversation& c : changed) {
+        b.upsert(c, origin);
+    }
+    // Delta semantics: only the ids the node reports as `removed` are tombstoned — absent keys are
+    // UNCHANGED (not pruned). This is the essential difference from the full-list
+    // replace-and-prune.
+    for (const QString& id : removed) {
+        b.tombstone<Conversation>(ConversationKey{transport, id}, origin);
+    }
+    b.commit();
+    if (isFinalPage) {
+        state_.markFresh(QStringLiteral("conversations"), rev, nowMs());
+    }
+}
+
+void Ingestor::deliverContactsDelta(const QString& transport, const std::vector<Contact>& changed,
+                                    const QStringList& removed, quint64 rev, bool isFinalPage) {
+    const JournalOrigin origin = originFor(QStringLiteral("contacts"));
+    auto b = store_.beginBatch();
+    for (const Contact& c : changed) {
+        b.upsert(c, origin);
+    }
+    for (const QString& id : removed) {
+        b.tombstone<Contact>(ContactKey{transport, id}, origin);
+    }
+    b.commit();
+    if (isFinalPage) {
+        state_.markFresh(QStringLiteral("contacts"), rev, nowMs());
+    }
+}
+
+void Ingestor::deliverPersonsDelta(const std::vector<Person>& changed, const QStringList& removed,
+                                   quint64 rev, bool isFinalPage) {
+    const JournalOrigin origin = originFor(QStringLiteral("persons"));
+    auto b = store_.beginBatch();
+    for (const Person& p : changed) {
+        b.upsert(p, origin);
+    }
+    for (const QString& id : removed) {
+        b.tombstone<Person>(PersonKey{id}, origin);
+    }
+    b.commit();
+    if (isFinalPage) {
+        state_.markFresh(QStringLiteral("persons"), rev, nowMs());
+    }
 }
 
 void Ingestor::patchTransportAccount(const NodeEvent& e) {

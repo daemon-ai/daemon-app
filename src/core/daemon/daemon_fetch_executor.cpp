@@ -49,6 +49,12 @@ void DaemonFetchExecutor::execute(const mirror::FetchJob& job) {
 
 void DaemonFetchExecutor::sendFor(const InFlight& f, const QString& pageToken,
                                   quint64 afterCursor) {
+    // [api/39 §10.2] A since_rev delta read: send it on the FIRST page of a full-mode job (a
+    // sinceRev of 0 is a full read — the bootstrap epoch-restart fallback). Subsequent pages resume
+    // via the `after` token, which continues the same delta query node-side.
+    const bool deltaRead = f.job.fullMode && f.job.sinceRev > 0;
+    const bool firstPage = pageToken.isEmpty();
+    const bool sendSinceRev = deltaRead && firstPage;
     QByteArray req;
     switch (f.job.op) {
     case mirror::FetchOp::ConvList:
@@ -56,17 +62,24 @@ void DaemonFetchExecutor::sendFor(const InFlight& f, const QString& pageToken,
         // ConvGet (a single added conversation) is fulfilled by re-listing the transport — the
         // node owns membership; the replace-and-prune reconciles the added/removed row. (A keyed
         // ConvGet decoder is a later optimization; correctness holds under dual-write.)
-        req = NodeApiCodec::encodeConvListRequest(f.transport, pageToken);
+        req = NodeApiCodec::encodeConvListRequest(f.transport, pageToken, sendSinceRev,
+                                                  f.job.sinceRev);
         break;
     case mirror::FetchOp::RosterList:
-        req = NodeApiCodec::encodeRosterListRequest(f.transport, pageToken);
+        req = NodeApiCodec::encodeRosterListRequest(f.transport, pageToken, sendSinceRev,
+                                                    f.job.sinceRev);
         break;
     case mirror::FetchOp::PersonList:
-        req = NodeApiCodec::encodePersonListRequest();
+        req = NodeApiCodec::encodePersonListRequest(sendSinceRev, f.job.sinceRev);
         break;
     case mirror::FetchOp::ConvHistory:
         req = NodeApiCodec::encodeConvHistoryRequest(f.transport, f.conv, afterCursor != 0,
                                                      afterCursor);
+        break;
+    case mirror::FetchOp::Bootstrap:
+        // [api/39 §10.3] The reconnect baseline probe (§5.6 full step 1): the reply decodes to
+        // {cursor, epoch, revs} and drives ingestor.onBootstrap(), which issues the delta reads.
+        req = NodeApiCodec::encodeBootstrapRequest();
         break;
     default:
         // Ops A5 does not yet fulfil on the mirror path (routing/rooms/etc.) complete immediately;
@@ -84,48 +97,87 @@ void DaemonFetchExecutor::onResponse(const QString& correlationId, const QByteAr
         return; // not ours (a legacy repository correlation)
     }
     InFlight& f = it.value();
+    // [api/39 §10.2] A since_rev delta read (fullMode with a non-zero sinceRev) applies through the
+    // ingestor's delta seam — upsert changed + tombstone `removed`, no replace-and-prune. A full
+    // read (sinceRev == 0, incl. ConvGet re-lists) keeps the full-list replace-and-prune path.
+    const bool deltaRead = f.job.fullMode && f.job.sinceRev > 0;
     switch (f.job.op) {
     case mirror::FetchOp::ConvList:
     case mirror::FetchOp::ConvGet: {
         std::vector<mirror::Conversation> page;
         QString next;
-        if (!decodeConversationsToMirror(responseCbor, &page, &next)) {
+        quint64 rev = 0;
+        QStringList removed;
+        if (!decodeConversationsToMirror(responseCbor, &page, &next, &rev, &removed)) {
             finish(correlationId);
             return;
         }
         for (auto& c : page) {
             f.convAccum.push_back(std::move(c));
         }
+        f.removedAccum += removed;
+        f.rev = rev;
         if (!next.isEmpty()) {
             sendFor(f, next, 0); // next page — same scheduler job
             return;
         }
-        m_ingestor.deliverConversations(f.transport, f.convAccum, /*isFinalPage=*/true);
+        if (deltaRead) {
+            m_ingestor.deliverConversationsDelta(f.transport, f.convAccum, f.removedAccum, f.rev,
+                                                 /*isFinalPage=*/true);
+        } else {
+            m_ingestor.deliverConversations(f.transport, f.convAccum, /*isFinalPage=*/true);
+        }
         finish(correlationId);
         return;
     }
     case mirror::FetchOp::RosterList: {
         std::vector<mirror::Contact> page;
         QString next;
-        if (!decodeContactsToMirror(responseCbor, f.transport, &page, &next)) {
+        quint64 rev = 0;
+        QStringList removed;
+        if (!decodeContactsToMirror(responseCbor, f.transport, &page, &next, &rev, &removed)) {
             finish(correlationId);
             return;
         }
         for (auto& c : page) {
             f.contactAccum.push_back(std::move(c));
         }
+        f.removedAccum += removed;
+        f.rev = rev;
         if (!next.isEmpty()) {
             sendFor(f, next, 0);
             return;
         }
-        m_ingestor.deliverContacts(f.transport, f.contactAccum, /*isFinalPage=*/true);
+        if (deltaRead) {
+            m_ingestor.deliverContactsDelta(f.transport, f.contactAccum, f.removedAccum, f.rev,
+                                            /*isFinalPage=*/true);
+        } else {
+            m_ingestor.deliverContacts(f.transport, f.contactAccum, /*isFinalPage=*/true);
+        }
         finish(correlationId);
         return;
     }
     case mirror::FetchOp::PersonList: {
         std::vector<mirror::Person> persons;
-        if (decodePersonsToMirror(responseCbor, &persons)) {
-            m_ingestor.deliverPersons(persons, /*isFinalPage=*/true);
+        quint64 rev = 0;
+        QStringList removed;
+        if (decodePersonsToMirror(responseCbor, &persons, &rev, &removed)) {
+            if (deltaRead) {
+                m_ingestor.deliverPersonsDelta(persons, removed, rev, /*isFinalPage=*/true);
+            } else {
+                m_ingestor.deliverPersons(persons, /*isFinalPage=*/true);
+            }
+        }
+        finish(correlationId);
+        return;
+    }
+    case mirror::FetchOp::Bootstrap: {
+        // [api/39 §10.3] Decode the probe → drive the reconnect baseline (§5.6 full step 1-2).
+        quint64 cursor = 0;
+        quint64 epoch = 0;
+        QHash<QString, quint64> revs;
+        if (NodeApiCodec::decodeBootstrap(responseCbor, &cursor, &epoch, &revs)) {
+            m_ingestor.onBootstrap(cursor, epoch, revs);
         }
         finish(correlationId);
         return;

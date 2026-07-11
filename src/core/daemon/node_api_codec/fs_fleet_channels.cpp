@@ -1017,7 +1017,8 @@ QByteArray NodeApiCodec::encodeTransportSetLabelRequest(const QString& transport
         });
 }
 
-QByteArray NodeApiCodec::encodeConvListRequest(const QString& transport, const QString& after) {
+QByteArray NodeApiCodec::encodeConvListRequest(const QString& transport, const QString& after,
+                                               bool hasSinceRev, quint64 sinceRev) {
     const QByteArray t = transport.toUtf8();
     const QByteArray afterUtf8 = after.toUtf8();
     return encodeWithFill(
@@ -1028,6 +1029,14 @@ QByteArray NodeApiCodec::encodeConvListRequest(const QString& transport, const Q
             if (!after.isEmpty()) {
                 l.ConvList_after.ConvList_after_choice = ConvList_after_r::ConvList_after_tstr_c;
                 setZcbor(l.ConvList_after.ConvList_after_tstr, afterUtf8);
+            }
+            // [api/39 §10.2] The optional since_rev turns the full-list read into a delta read; the
+            // node replies with the changed conversations + a `removed` tombstone list + the `rev`.
+            l.ConvList_since_rev_present = hasSinceRev;
+            if (hasSinceRev) {
+                l.ConvList_since_rev.ConvList_since_rev_choice =
+                    ConvList_since_rev_r::ConvList_since_rev_uint64_m_c;
+                l.ConvList_since_rev.ConvList_since_rev_uint64_m = static_cast<uint64_t>(sinceRev);
             }
         });
 }
@@ -1834,7 +1843,8 @@ bool NodeApiCodec::decodeRooms(const QByteArray& responseCbor, QList<DecodedRoom
 
 // --- [acct-mgmt] Transport contacts / roster (wire v34) ------------------------------------------
 
-QByteArray NodeApiCodec::encodeRosterListRequest(const QString& transport, const QString& after) {
+QByteArray NodeApiCodec::encodeRosterListRequest(const QString& transport, const QString& after,
+                                                 bool hasSinceRev, quint64 sinceRev) {
     const QByteArray t = transport.toUtf8();
     const QByteArray afterUtf8 = after.toUtf8();
     return encodeWithFill(api_request_r::api_request_request_roster_list_m_c,
@@ -1846,6 +1856,14 @@ QByteArray NodeApiCodec::encodeRosterListRequest(const QString& transport, const
                                   l.RosterList_after.RosterList_after_choice =
                                       RosterList_after_r::RosterList_after_tstr_c;
                                   setZcbor(l.RosterList_after.RosterList_after_tstr, afterUtf8);
+                              }
+                              // [api/39 §10.2] since_rev ⇒ delta read (changed + removed + rev).
+                              l.RosterList_since_rev_present = hasSinceRev;
+                              if (hasSinceRev) {
+                                  l.RosterList_since_rev.RosterList_since_rev_choice =
+                                      RosterList_since_rev_r::RosterList_since_rev_uint64_m_c;
+                                  l.RosterList_since_rev.RosterList_since_rev_uint64_m =
+                                      static_cast<uint64_t>(sinceRev);
                               }
                           });
 }

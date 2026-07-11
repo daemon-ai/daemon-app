@@ -1882,4 +1882,30 @@ bool NodeApiCodec::decodeGatewayStatus(const QByteArray& responseCbor, DecodedGa
     return true;
 }
 
+// --- [api/39 §10.3] Bootstrap probe response ---------------------------------------------------
+bool NodeApiCodec::decodeBootstrap(const QByteArray& responseCbor, quint64* cursor, quint64* epoch,
+                                   QHash<QString, quint64>* revs) {
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_bootstrap_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_bootstrap& b = response->api_response_response_bootstrap_m;
+    if (cursor != nullptr) {
+        *cursor = b.Bootstrap_cursor;
+    }
+    if (epoch != nullptr) {
+        *epoch = b.Bootstrap_epoch;
+    }
+    if (revs != nullptr) {
+        revs->clear();
+        revs->reserve(static_cast<int>(b.revs_uint64_m_count));
+        for (size_t i = 0; i < b.revs_uint64_m_count; ++i) {
+            revs->insert(fromZcbor(b.revs_uint64_m[i].response_bootstrap_revs_uint64_m_key),
+                         b.revs_uint64_m[i].revs_uint64_m);
+        }
+    }
+    return true;
+}
+
 } // namespace daemonapp::daemon

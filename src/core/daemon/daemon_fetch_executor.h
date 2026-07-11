@@ -19,6 +19,7 @@
 #include <QHash>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <vector>
 
 namespace daemonapp::daemon {
@@ -39,6 +40,11 @@ private:
         QString conv;
         std::vector<mirror::Conversation> convAccum;
         std::vector<mirror::Contact> contactAccum;
+        // [api/39 §10.2] Delta-read accumulation across the page loop: the removed-id tombstones
+        // and the collection rev (last page wins). Applied via the ingestor's deliver*Delta seam
+        // when the job is a since_rev delta read (fullMode && sinceRev > 0).
+        QStringList removedAccum;
+        quint64 rev = 0;
     };
 
     void onResponse(const QString& correlationId, const QByteArray& responseCbor);

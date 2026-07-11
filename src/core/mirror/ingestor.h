@@ -8,8 +8,10 @@
 // FetchExecutor seam; the daemon bridge wraps NodeApiClient + the vendored codec + the mappers,
 // decodes replies, and feeds the deliver*() methods (already-mapped entities), keeping the codec
 // confined to the bridge (07§10). Reconnect (§5.6) runs in both modes; the FULL (wire_delta) path
-// is seamed for BR (api/39). ConvHistory is cursor-paged (§13 M1 fix). Chat is a class-W window
-// (§4.6). Visibility declarations (§5.8) — never lens callsites — drive freshness.
+// is ACTIVE from api/39 (BR): onConnected issues a Bootstrap probe → onBootstrap → since_rev delta
+// reads, and the deliver*Delta() seams apply changed+removed. ConvHistory is cursor-paged (§13 M1
+// fix). Chat is a class-W window (§4.6). Visibility declarations (§5.8) — never lens callsites —
+// drive freshness.
 
 #include "mirror/fetch_scheduler.h"
 #include "mirror/node_event.h"
@@ -36,8 +38,10 @@ public:
     void ingest(const NodeEvent& event);
 
     // --- reconnect (§5.6) ---
-    // Per-connection mode select + resume. Degraded: scan currently-stale collections. Full:
-    // callers use onBootstrap() with the probe result. `hasRevFields` is the BR activation gate.
+    // Per-connection mode select + resume. Degraded (api < 39): scan currently-stale collections.
+    // Full (api >= 39, wire_delta): enqueue a Bootstrap probe whose reply drives onBootstrap() —
+    // the executor decodes it and calls back. `hasRevFields` is compile-time true now the v39 codec
+    // is vendored; it stays a parameter so a degraded-codec build still selects RefetchDiff.
     void onConnected(int apiVersion, bool hasRevFields);
     void onDisconnected();
     // Suspected node restart at the transport level (v38 cannot distinguish restart from overflow,
@@ -75,6 +79,20 @@ public:
     void deliverContacts(const QString& transport, const std::vector<Contact>& items,
                          bool isFinalPage);
     void deliverPersons(const std::vector<Person>& items, bool isFinalPage);
+
+    // --- FULL (wire_delta) delivery (§5.6 full / §10.2) ---------------------------------------
+    // A since_rev delta read returns ONLY the changed items + a `removed` tombstone id list + the
+    // collection `rev` — never the full membership. So these UPSERT the changed items and tombstone
+    // the removed ids (no replace-and-prune: absent keys are unchanged, not gone), then record the
+    // node `rev` on markFresh so the next rev-gate can skip. `changed`/`removed` accumulate across
+    // the page loop; `rev` + isFinalPage=true mark the collection fresh once the loop completes.
+    void deliverConversationsDelta(const QString& transport,
+                                   const std::vector<Conversation>& changed,
+                                   const QStringList& removed, quint64 rev, bool isFinalPage);
+    void deliverContactsDelta(const QString& transport, const std::vector<Contact>& changed,
+                              const QStringList& removed, quint64 rev, bool isFinalPage);
+    void deliverPersonsDelta(const std::vector<Person>& changed, const QStringList& removed,
+                             quint64 rev, bool isFinalPage);
 
     // Report a fetch job finished so the scheduler frees the slot (the executor also may call the
     // scheduler directly; this is the ingestor-side convenience used by the bridge on decode).

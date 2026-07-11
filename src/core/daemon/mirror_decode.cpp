@@ -15,7 +15,8 @@ namespace daemonapp::daemon {
 using codec_detail::decodeChecked;
 
 bool decodeConversationsToMirror(const QByteArray& responseCbor,
-                                 std::vector<mirror::Conversation>* out, QString* next) {
+                                 std::vector<mirror::Conversation>* out, QString* next,
+                                 quint64* rev, QStringList* removed) {
     if (out == nullptr) {
         return false;
     }
@@ -37,6 +38,19 @@ bool decodeConversationsToMirror(const QByteArray& responseCbor,
             page.conv_page_next.conv_page_next_choice == conv_page_next_r::conv_page_next_tstr_c;
         *next =
             hasNext ? codec_detail::fromZcbor(page.conv_page_next.conv_page_next_tstr) : QString();
+    }
+    // [api/39 §10.2] The collection rev + the delta-read `removed` tombstone id list.
+    if (rev != nullptr) {
+        *rev = page.conv_page_rev;
+    }
+    if (removed != nullptr) {
+        removed->clear();
+        if (page.conv_page_removed_present) {
+            for (size_t i = 0; i < page.conv_page_removed.conv_page_removed_tstr_count; ++i) {
+                removed->append(
+                    codec_detail::fromZcbor(page.conv_page_removed.conv_page_removed_tstr[i]));
+            }
+        }
     }
     return true;
 }
@@ -72,6 +86,15 @@ bool decodeChatHistoryToMirror(const QByteArray& responseCbor, const QString& tr
         msg.transport = transport;
         msg.conv = conv;
         msg.cursor = rec.journal_record_cursor;
+        // [api/39 §10.3] Provenance rides the journal-record envelope (not the chat payload): the
+        // op_id that caused this record, when the node stamped one. The ingestor threads it into
+        // the journal so the outbox confirm keys on provenance (§6.6). Null against v38.
+        if (rec.journal_record_origin_op_present &&
+            rec.journal_record_origin_op.journal_record_origin_op_choice ==
+                journal_record_origin_op_r::journal_record_origin_op_origin_op_m_c) {
+            msg.origin_op = codec_detail::fromZcbor(
+                rec.journal_record_origin_op.journal_record_origin_op_origin_op_m);
+        }
         out->push_back(std::move(msg));
     }
     if (nextCursor != nullptr) {
@@ -83,7 +106,8 @@ bool decodeChatHistoryToMirror(const QByteArray& responseCbor, const QString& tr
     return true;
 }
 
-bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::Person>* out) {
+bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::Person>* out,
+                           quint64* rev, QStringList* removed) {
     if (out == nullptr) {
         return false;
     }
@@ -98,11 +122,25 @@ bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::P
     for (size_t i = 0; i < rp.Persons_items_person_m_count; ++i) {
         out->push_back(mirror::map_person(rp.Persons_items_person_m[i]));
     }
+    // [api/39 §10.2] The collection rev + the delta-read `removed` tombstone id list.
+    if (rev != nullptr) {
+        *rev = rp.Persons_rev;
+    }
+    if (removed != nullptr) {
+        removed->clear();
+        if (rp.Persons_removed_present) {
+            for (size_t i = 0; i < rp.Persons_removed.Persons_removed_tstr_count; ++i) {
+                removed->append(
+                    codec_detail::fromZcbor(rp.Persons_removed.Persons_removed_tstr[i]));
+            }
+        }
+    }
     return true;
 }
 
 bool decodeContactsToMirror(const QByteArray& responseCbor, const QString& transport,
-                            std::vector<mirror::Contact>* out, QString* next) {
+                            std::vector<mirror::Contact>* out, QString* next, quint64* rev,
+                            QStringList* removed) {
     if (out == nullptr) {
         return false;
     }
@@ -127,6 +165,19 @@ bool decodeContactsToMirror(const QByteArray& responseCbor, const QString& trans
                                                   contact_page_next_r::contact_page_next_tstr_c;
         *next = hasNext ? codec_detail::fromZcbor(page.contact_page_next.contact_page_next_tstr)
                         : QString();
+    }
+    // [api/39 §10.2] The collection rev + the delta-read `removed` tombstone id list.
+    if (rev != nullptr) {
+        *rev = page.contact_page_rev;
+    }
+    if (removed != nullptr) {
+        removed->clear();
+        if (page.contact_page_removed_present) {
+            for (size_t i = 0; i < page.contact_page_removed.contact_page_removed_tstr_count; ++i) {
+                removed->append(codec_detail::fromZcbor(
+                    page.contact_page_removed.contact_page_removed_tstr[i]));
+            }
+        }
     }
     return true;
 }

@@ -14,6 +14,11 @@ QByteArray NodeApiCodec::encodeHealthRequest() {
     return encodeSimple(api_request_r::api_request_request_health_m_c);
 }
 
+// [api/39 §10.3] The Bootstrap probe: a payload-free request (`request-bootstrap = "Bootstrap"`).
+QByteArray NodeApiCodec::encodeBootstrapRequest() {
+    return encodeSimple(api_request_r::api_request_request_bootstrap_m_c);
+}
+
 QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 sinceRev,
                                                     const QString& byProfile, const QString& after,
                                                     bool archivedScope,

@@ -68,10 +68,11 @@ public:
     [[nodiscard]] static QStringList scopeToCollections(const QString& scope);
     [[nodiscard]] static const QStringList& allCollections();
 
-    // --- mode selection (§5.6, BR seam) ---
+    // --- mode selection (§5.6) ---
     // Full (wire_delta) iff the connection advertises api ≥ 39 AND the rev/removed fields are
-    // present in the codec; otherwise degraded (refetch_diff). The `wire_delta` gate arrives with
-    // BR — until then this returns RefetchDiff regardless (api/38 vendored codec).
+    // present in the codec; otherwise degraded (refetch_diff). ACTIVE from BR: the v39 codec is
+    // vendored (hasRevFields is compile-time true) and onConnected drives the FULL path for an
+    // api/39 node — deployed v38 nodes stay first-class on the degraded path.
     static constexpr int kFullModeApiFloor = 39;
     [[nodiscard]] static StampingMode selectMode(int apiVersion, bool hasRevFields) {
         return (apiVersion >= kFullModeApiFloor && hasRevFields) ? StampingMode::WireDelta
