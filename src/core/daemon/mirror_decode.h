@@ -47,4 +47,17 @@ bool decodeContactsToMirror(const QByteArray& responseCbor, const QString& trans
                             std::vector<mirror::Contact>* out, QString* next,
                             quint64* rev = nullptr, QStringList* removed = nullptr);
 
+// RoutingListChats → ChatRoutes page → RoutePins (the origin→session pin table, §5.4 / M3). `next`
+// (if non-null) receives the page resume cursor ("" = last page). RoutePins are a global list (not
+// transport-scoped): the origin_key IS the canonical key.
+bool decodeRoutePinsToMirror(const QByteArray& responseCbor, std::vector<mirror::RoutePin>* out,
+                             QString* next);
+
+// TransportRooms → Rooms page → Rooms for `transport` (the bindable rooms/chats + their pinned
+// session). `next` (if non-null) receives the page resume cursor. `transport` stamps the
+// (transport, room) key so the per-transport replace-and-prune matches the fetch scope (§3.6
+// merging rule).
+bool decodeRoomsToMirror(const QByteArray& responseCbor, const QString& transport,
+                         std::vector<mirror::Room>* out, QString* next);
+
 } // namespace daemonapp::daemon

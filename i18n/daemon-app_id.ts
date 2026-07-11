@@ -2492,17 +2492,6 @@ sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Saluran</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM</translation>
-    </message>
-</context>
-<context>
     <name>DaemonModelCatalog</name>
     <message>
         <source>Model %1 is missing on disk: %2</source>
@@ -4210,7 +4199,7 @@ Terima kasih — melanjutkan dengan: %1
     </message>
 </context>
 <context>
-    <name>MockDaemonNet</name>
+    <name>MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agen</translation>
@@ -6094,21 +6083,6 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— disematkan</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· turunan</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - penonton</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6869,10 +6843,6 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
     <message>
         <source>Fleet</source>
         <translation>Armada</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Integrasi</translation>
     </message>
     <message>
         <source>New tag</source>
@@ -9230,17 +9200,6 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Saluran</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9496,7 +9455,7 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
+    <name>daemonnet::MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agen</translation>

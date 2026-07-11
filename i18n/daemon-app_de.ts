@@ -2492,17 +2492,6 @@ bis er erneut registriert wird.</translation>
     </message>
 </context>
 <context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Kanäle</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>DaemonModelCatalog</name>
     <message>
         <source>Model %1 is missing on disk: %2</source>
@@ -4214,7 +4203,7 @@ Danke — es geht weiter mit: %1
     </message>
 </context>
 <context>
-    <name>MockDaemonNet</name>
+    <name>MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agent</translation>
@@ -6098,21 +6087,6 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— angeheftet</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· abgeleitet</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - Zuschauer</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6874,10 +6848,6 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
     <message>
         <source>Fleet</source>
         <translation>Flotte</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Integrationen</translation>
     </message>
     <message>
         <source>New tag</source>
@@ -9238,17 +9208,6 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Kanäle</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9504,7 +9463,7 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
+    <name>daemonnet::MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agent</translation>

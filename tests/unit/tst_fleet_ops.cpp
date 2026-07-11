@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-#include "daemonnet/mock_daemonnet.h"
+#include "daemonnet/mock_fleet_source.h"
 #include "fleet/mock_approvals_inbox.h"
 #include "fleet/mock_dashboard.h"
 #include "fleet/mock_fleet_tree.h"
@@ -24,7 +24,7 @@ class TestFleetOps : public QObject {
 
 private slots:
     void rosterStateTransitions() {
-        daemonnet::MockDaemonNet net;
+        daemonnet::MockFleetSource net;
         MockSessionRoster r(&net);
         const int before = r.count();
         r.suspend(QStringLiteral("s-help"));
@@ -44,7 +44,7 @@ private slots:
     }
 
     void fleetPauseResume() {
-        daemonnet::MockDaemonNet net;
+        daemonnet::MockFleetSource net;
         MockFleetTree f(&net);
         f.pause(QStringLiteral("n-coder"));
         QCOMPARE(asModel(f.nodes())
@@ -69,7 +69,7 @@ private slots:
     }
 
     void dashboardDerivesCounters() {
-        daemonnet::MockDaemonNet net;
+        daemonnet::MockFleetSource net;
         MockSessionRoster r(&net);
         MockFleetTree f(&net);
         MockApprovalsInbox a;
@@ -92,7 +92,7 @@ private slots:
     // tokensToday is derived from the roster (sum of session tokens), and closing
     // a session both lowers it and appends a "Session closed" activity entry.
     void dashboardTokensAndActivityAreLive() {
-        daemonnet::MockDaemonNet net;
+        daemonnet::MockFleetSource net;
         MockSessionRoster r(&net);
         MockFleetTree f(&net);
         MockApprovalsInbox a;

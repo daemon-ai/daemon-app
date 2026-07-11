@@ -79,6 +79,19 @@ public:
     void deliverContacts(const QString& transport, const std::vector<Contact>& items,
                          bool isFinalPage);
     void deliverPersons(const std::vector<Person>& items, bool isFinalPage);
+    // RoutingListChats page (M3): the origin→session pin table is a GLOBAL list — full-list
+    // replace-and-prune over all route_pins on the final page (§5.3 PageLoop).
+    void deliverRoutePins(const std::vector<RoutePin>& items, bool isFinalPage);
+    // TransportRooms page (M3): a transport instance's bindable rooms — full-list
+    // replace-and-prune scoped to `transport` (the rooms of OTHER transports are untouched).
+    void deliverRooms(const QString& transport, const std::vector<Room>& items, bool isFinalPage);
+
+    // --- routing refresh triggers (M3) --------------------------------------------------------
+    // Re-list the routing pins into the mirror (RoutingListChats). Called on connect-ready and
+    // after a node-acked routing mutation so the store reflects the node's authoritative state.
+    void refetchRouting();
+    // Re-list a transport instance's bindable rooms into the mirror (TransportRooms).
+    void refetchRooms(const QString& transport);
 
     // --- FULL (wire_delta) delivery (§5.6 full / §10.2) ---------------------------------------
     // A since_rev delta read returns ONLY the changed items + a `removed` tombstone id list + the
@@ -138,6 +151,8 @@ private:
                                    const QString& originOp);
     void applyContactFullList(const QString& transport, const std::vector<Contact>& items);
     void applyPersonFullList(const std::vector<Person>& items);
+    void applyRoutePinFullList(const std::vector<RoutePin>& items);
+    void applyRoomFullList(const QString& transport, const std::vector<Room>& items);
     void patchTransportAccount(const NodeEvent& e);
     void patchDownload(const NodeEvent& e);
 

@@ -7,17 +7,18 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
-// Routing manager (mock). Vertical layout: a (deferred) topology slot on top, and below it the
-// control surface - a primary "Routes" card list (the pins: origin -> session + agent) with an
-// add/edit dialog, plus a Delivery/handover panel for the selected route's session. The rule /
-// account / default precedence is surfaced only as the read-only provenance chip on each route.
-// Backed by the shared DaemonNet via RoutingManagerController. See docs/routing-manager-design.md.
+// Routing manager (M3). The control surface: a primary "Routes" card list (the pins: origin ->
+// session + agent) with an add/edit dialog, plus a Delivery panel for the selected route's session.
+// The provenance chip on each route surfaces its decidedBy rung. Backed by the mirror STORE
+// projections via RoutingManagerController (route_pins/rooms/sessions), with node-authoritative
+// pin/unbind through RoutingActions. See docs/routing-manager-design.md.
 Item {
     id: root
 
     RoutingManagerController {
         id: rm
-        daemonNet: typeof DaemonNet !== "undefined" ? DaemonNet : null
+        mirror: typeof Mirror !== "undefined" ? Mirror : null
+        actions: typeof RoutingActions !== "undefined" ? RoutingActions : null
     }
 
     // The selected route (by origin key); drives the Delivery panel + the highlight.
@@ -48,28 +49,6 @@ Item {
         anchors.bottom: parent.bottom
         anchors.margins: 16
         spacing: 12
-
-        // --- Topology: force-directed DaemonNet view (above the control surface) ---
-        RoutingTopology {
-            id: topology
-            Layout.fillWidth: true
-            Layout.preferredHeight: Math.max(220, root.height * 0.4)
-            // A session node tap selects that route's session in the control below.
-            onSessionActivated: function(sessionId) {
-                root.selectedRouteId = "";
-                rm.selectedSession = sessionId;
-            }
-            // Drag an origin onto a session -> pin it.
-            onPinRequested: function(originKey, sessionId) {
-                rm.pin(originKey, sessionId, "");
-            }
-        }
-
-        // Control -> topology selection sync (selecting a route highlights its node).
-        Connections {
-            target: rm
-            function onSelectedSessionChanged() { topology.highlight(rm.selectedSession); }
-        }
 
         // --- Routes (primary) -------------------------------------------------
         RowLayout {

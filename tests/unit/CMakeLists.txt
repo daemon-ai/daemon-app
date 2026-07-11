@@ -224,8 +224,9 @@ add_test(NAME tst_checkpoint_repository COMMAND tst_checkpoint_repository)
 set_tests_properties(tst_checkpoint_repository PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_routing_repository: the real routing manager backend (B6/ROU, wire v28) -
-# RoutingListChats/BindChat/UnbindChat + TransportRooms over the WireMuxServer fixture, plus the
-# DaemonDaemonNet IDaemonNet projection (pins, pin-table resolve, QML chip helpers).
+# RoutingListChats/BindChat/UnbindChat + TransportRooms over the WireMuxServer fixture (the same
+# wire shapes the mirror decode-to-mirror bridge maps into route_pins/rooms; see
+# tst_routing_projection for the mirror landing).
 qt_add_executable(tst_routing_repository tst_routing_repository.cpp)
 target_link_libraries(tst_routing_repository
     PRIVATE
@@ -559,31 +560,24 @@ target_link_libraries(tst_app_service_graph
 add_test(NAME tst_app_service_graph COMMAND tst_app_service_graph)
 set_tests_properties(tst_app_service_graph PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_daemonnet: the P2 IDaemonNet typed read seam - unit tree accessors, the
-# All/Archived/Unit-subtree/Tag scope folds, the ByTransport/ByPeer lens grouping,
-# and sessionDetail/content by SessionId, all over the one mock DaemonNet seed.
-qt_add_executable(tst_daemonnet tst_daemonnet.cpp)
-target_link_libraries(tst_daemonnet
-    PRIVATE
-        Qt6::Test
-        daemon-app::daemonnet
-        daemon-app::domain
-)
-add_test(NAME tst_daemonnet COMMAND tst_daemonnet)
-set_tests_properties(tst_daemonnet PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-
-# tst_routing_model: the routing-manager model on MockDaemonNet - resolve() precedence
-# (pin > rule > account-bound > default), the pin/handover/bindAccount mutations, and the
-# routes/delivery/accounts projections.
-qt_add_executable(tst_routing_model tst_routing_model.cpp)
-target_link_libraries(tst_routing_model
-    PRIVATE
-        Qt6::Test
-        daemon-app::daemonnet
-        daemon-app::domain
-)
-add_test(NAME tst_routing_model COMMAND tst_routing_model)
-set_tests_properties(tst_routing_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+# tst_routing_projection: the M3 routing read path on the MIRROR store - the ingestor's
+# deliverRoutePins (global replace-and-prune over route_pins) + deliverRooms (per-transport
+# replace-and-prune over rooms), plus the map_route_pin/map_room decode round-trip. Replaces the
+# deleted tst_daemonnet / tst_routing_model (the node owns routing precedence; the client reads the
+# store's pin table). Only built where the immer substrate is present.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    qt_add_executable(tst_routing_projection tst_routing_projection.cpp)
+    target_link_libraries(tst_routing_projection
+        PRIVATE
+            Qt6::Test
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+    )
+    add_test(NAME tst_routing_projection COMMAND tst_routing_projection)
+    set_tests_properties(tst_routing_projection PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
 
 # tst_graph_model: the reusable Daemon Kit graph model - generic node/edge ingestion, degree, the
 # normalized force layout, and edges()/nodeById/neighborsOf.

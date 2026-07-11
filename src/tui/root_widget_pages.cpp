@@ -6,7 +6,7 @@
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
-#include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
+#include "daemon/repositories.h"              // RoutingRepository::routingBindChat (room pin, M3)
 #include "dialogs/add_account_flow.h"
 #include "dialogs/auth_flow_dialog.h"
 #include "dialogs/contact_flow.h" // [acct-mgmt] Channels transport-contacts flows (wire v34)
@@ -724,13 +724,13 @@ void RootWidget::openRoomDeleteConfirm(const QString& transport, const QString& 
     });
 }
 
-// [acct-mgmt] Pin a room to a session: a PaletteDialog session picker, then IDaemonNet::bindChat
-// on the canonical origin (Group{chat} for a room, Dm{user} for a dm — honoring the
-// pinnedDmSessionFor precedent). Reuses the routing seam directly (no RoutingManagerController).
+// [acct-mgmt] Pin a room to a session: a PaletteDialog session picker, then the node-authoritative
+// RoutingBindChat on the canonical origin (Group{chat} for a room, Dm{user} for a dm). Uses the
+// routingRepository IRoutingActions seam directly (M3; null in mock).
 void RootWidget::openRoomPin(const QString& transport, const QString& conversation,
                              const QString& kind) {
-    if (m_services.daemonNet == nullptr || m_services.roster == nullptr || transport.isEmpty() ||
-        conversation.isEmpty()) {
+    if (m_services.routingRepository == nullptr || m_services.roster == nullptr ||
+        transport.isEmpty() || conversation.isEmpty()) {
         return;
     }
     auto* picker = new PaletteDialog(tr("Pin room to session"), this);
@@ -758,8 +758,8 @@ void RootWidget::openRoomPin(const QString& transport, const QString& conversati
                     origin.scope.kind = domain::OriginScopeKind::Group;
                     origin.scope.chat = conversation;
                 }
-                m_services.daemonNet->bindChat(origin, domain::SessionId(sessionId),
-                                               domain::ProfileRef());
+                m_services.routingRepository->routingBindChat(origin, domain::SessionId(sessionId),
+                                                              domain::ProfileRef());
                 refreshActivePage();
             });
     connect(picker, &PaletteDialog::canceled, this, [this] {

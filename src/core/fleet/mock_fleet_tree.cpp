@@ -3,17 +3,17 @@
 
 #include "fleet/mock_fleet_tree.h"
 
-#include "daemonnet/idaemonnet.h"
+#include "daemonnet/mock_fleet_source.h"
 
 namespace fleet {
 
-MockFleetTree::MockFleetTree(daemonnet::IDaemonNet* net, QObject* parent)
+MockFleetTree::MockFleetTree(daemonnet::MockFleetSource* src, QObject* parent)
     : IFleetTree(parent), m_nodes(new uimodels::VariantListModel(this)) {
-    // Single source: copy the DaemonNet's fleet projection (the delegation spanning tree) at
+    // Single source: copy the mock seed's fleet projection (the delegation spanning tree) at
     // construction; pause/resume then mutate this local copy.
-    if (net != nullptr) {
-        if (auto* src = qobject_cast<uimodels::VariantListModel*>(net->fleet())) {
-            m_nodes->setRows(src->rows());
+    if (src != nullptr) {
+        if (auto* rows = qobject_cast<uimodels::VariantListModel*>(src->fleet())) {
+            m_nodes->setRows(rows->rows());
         }
     }
 }

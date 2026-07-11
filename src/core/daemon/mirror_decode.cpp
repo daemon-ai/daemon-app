@@ -182,4 +182,64 @@ bool decodeContactsToMirror(const QByteArray& responseCbor, const QString& trans
     return true;
 }
 
+bool decodeRoutePinsToMirror(const QByteArray& responseCbor, std::vector<mirror::RoutePin>* out,
+                             QString* next) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_chat_routes_m_c);
+    if (!response) {
+        return false;
+    }
+    const chat_route_page& page =
+        response->api_response_response_chat_routes_m.response_chat_routes_ChatRoutes;
+    out->clear();
+    out->reserve(page.chat_route_page_items_chat_route_m_count);
+    for (size_t i = 0; i < page.chat_route_page_items_chat_route_m_count; ++i) {
+        out->push_back(mirror::map_route_pin(page.chat_route_page_items_chat_route_m[i]));
+    }
+    if (next != nullptr) {
+        const bool hasNext = page.chat_route_page_next_present &&
+                             page.chat_route_page_next.chat_route_page_next_choice ==
+                                 chat_route_page_next_r::chat_route_page_next_tstr_c;
+        *next = hasNext
+                    ? codec_detail::fromZcbor(page.chat_route_page_next.chat_route_page_next_tstr)
+                    : QString();
+    }
+    return true;
+}
+
+bool decodeRoomsToMirror(const QByteArray& responseCbor, const QString& transport,
+                         std::vector<mirror::Room>* out, QString* next) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_rooms_m_c);
+    if (!response) {
+        return false;
+    }
+    const room_page& page = response->api_response_response_rooms_m.response_rooms_Rooms;
+    out->clear();
+    out->reserve(page.room_page_items_room_info_m_count);
+    for (size_t i = 0; i < page.room_page_items_room_info_m_count; ++i) {
+        mirror::Room room = mirror::map_room(page.room_page_items_room_info_m[i]);
+        // Stamp the request-scope transport so the (transport, room) key matches the fetch scope
+        // even if a payload omitted it (§3.6 merging rule; the ingestor prunes per transport).
+        if (room.transport.isEmpty()) {
+            room.transport = transport;
+        }
+        out->push_back(std::move(room));
+    }
+    if (next != nullptr) {
+        const bool hasNext =
+            page.room_page_next_present &&
+            page.room_page_next.room_page_next_choice == room_page_next_r::room_page_next_tstr_c;
+        *next =
+            hasNext ? codec_detail::fromZcbor(page.room_page_next.room_page_next_tstr) : QString();
+    }
+    return true;
+}
+
 } // namespace daemonapp::daemon

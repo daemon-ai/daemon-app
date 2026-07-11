@@ -10,8 +10,8 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // capability provider for the command palette
-#include "daemon/repositories.h"  // [wave2:app-delegation] F7/DEL-7: CapsRepository::refresh()
-#include "daemonnet/idaemonnet.h" // complete type for setDaemonNet(QObject*)
+#include "daemon/repositories.h" // [wave2:app-delegation] F7/DEL-7: CapsRepository::refresh()
+#include "daemon/repositories.h" // RoutingRepository IS-A daemonnet::IRoutingActions (hub dep)
 #include "dialogs/first_run_dialog.h"
 #include "display_role_adapter.h"
 #include "file_finder_model.h"
@@ -104,10 +104,9 @@ RootWidget::RootWidget()
     // of this depends on Tui Widgets - the same objects back the QML frontend.
     m_sidebar = new SidebarModel(this);
     m_sidebar->setStore(m_services.store);
-    // [integrations wire v38] Work package AC: the legacy transportsTree() Integrations section is
-    // no longer composed into the fleet sidebar model — the dedicated IntegrationsTree below now
-    // owns the integrations surface (GUI parity). transportsTree() itself stays on IDaemonNet for
-    // its other consumer (the routing manager); only this fleet-sidebar rendering of it is retired.
+    // The legacy fleet-sidebar integrations section was deleted in M3 — the dedicated
+    // IntegrationsTree below owns the integrations surface (GUI parity), and the routing manager
+    // now reads the mirror store's pin table. SidebarModel renders only Fleet + Tags.
 
     // The co-equal Integrations tree: the SAME shared IntegrationsTreeModel the GUI binds, composed
     // from the transport registry (accounts/adapters/conversations) + the cross-transport persons
@@ -255,7 +254,8 @@ RootWidget::RootWidget()
         .tools = m_services.tools, // [wave2:app-approvals-safety] D2
         .dashboard = m_services.dashboard,
         .cron = m_services.cron,
-        .daemonNet = m_services.daemonNet,
+        .mirror = m_services.mirrorService,
+        .routingActions = m_services.routingRepository,
         .memory = m_services.memory,
         .memList = m_memList,
         .memStats = m_memStats,

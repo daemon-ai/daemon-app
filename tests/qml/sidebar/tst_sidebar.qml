@@ -5,16 +5,12 @@ import QtQuick
 import QtTest
 import DaemonApp.Sidebar
 
-// [integrations wire v38] Work package AC (sidebar composition): the REAL Sidebar.qml, driven by
-// the mock context-property seams. Guards the placement decision A2 deferred:
-//   - the new IntegrationsTree is MOUNTED in the sidebar and populated from the Transports seam;
+// Sidebar composition (the REAL Sidebar.qml, driven by the mock context-property seams):
+//   - the IntegrationsTree is MOUNTED in the sidebar and populated from the Transports seam;
 //   - activating one of its conversation rows propagates to the Sidebar's conversationActivated
 //     signal (the seam the shell forwards to the chat-tab dispatch);
-//   - the LEGACY transportsTree() "Integrations" section is NO LONGER composed into the fleet
-//     SidebarModel, even though a demo DaemonNet is present in context (so the two would otherwise
-//     render a duplicate "Integrations" section). The transportsTree() projection itself is
-//     retained on IDaemonNet for its other consumer (RoutingManagerController); only the sidebar
-//     rendering is retired — the new IntegrationsTree owns the surface.
+//   - the fleet SidebarModel renders no transport section (the legacy transports-tree sidebar path
+//     was deleted in M3 — the IntegrationsTree owns the integrations surface).
 TestCase {
     id: tc
     name: "SidebarComposition"
@@ -65,12 +61,12 @@ TestCase {
         compare(convSpy.signalArguments[0][1], c);
     }
 
-    // The legacy transportsTree() section is NOT composed into the fleet model: even with a demo
-    // DaemonNet in context, the fleet SidebarModel has no expanded transport section.
+    // The fleet SidebarModel renders no transport section (the legacy transports-tree sidebar path
+    // was deleted in M3 — the IntegrationsTree owns the integrations surface).
     function test_legacy_transports_section_not_composed() {
         var s = findChild(sidebar, "fleetSidebarModel");
         verify(s !== null, "the fleet SidebarModel is reachable");
         verify(!s.anyTransportExpanded,
-               "the legacy transportsTree() Integrations section is no longer mounted");
+               "the fleet SidebarModel no longer mounts a transport section");
     }
 }

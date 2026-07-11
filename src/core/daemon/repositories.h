@@ -7,6 +7,7 @@
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 #include "daemon/page_loop.h"
+#include "daemonnet/irouting_actions.h"
 
 #include <optional>
 #include <QHash>
@@ -91,8 +92,8 @@ public:
     // failure detailFailed(id, message) fires. Deduped: an in-flight fetch for the same id is not
     // re-issued.
     void getSessionDetail(const QString& sessionId);
-    // The last hydrated detail for `id`, if a SessionGet has resolved it (the DaemonDaemonNet
-    // projection + subagent title enrichment read this; the wire is never touched here).
+    // The last hydrated detail for `id`, if a SessionGet has resolved it (the session-detail
+    // projections + subagent title enrichment read this; the wire is never touched here).
     [[nodiscard]] bool cachedDetail(const QString& id, DecodedSessionDetail* out) const;
 
     // Node-authoritative session-metadata patch (SessionUpdateMeta{session, patch} -> Ok). Each
@@ -1255,13 +1256,21 @@ private:
 // (RoutingBindChat/RoutingUnbindChat/RoutingSet; on Ok the pins re-list so the client renders
 // the node's stored state, never an optimistic local write). Kept in memory (re-fetched on
 // connect/focus); pins are small and authoritative.
-class RoutingRepository : public RepositoryBase {
+class RoutingRepository : public RepositoryBase, public daemonnet::IRoutingActions {
     Q_OBJECT
 
 public:
     RoutingRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
 
     [[nodiscard]] const QList<DecodedChatRoute>& routes() const { return m_routes; }
+
+    // daemonnet::IRoutingActions (M3): the node-authoritative mutation seam the routing manager
+    // view-model drives. Converts the domain::Origin to the codec's DecodedOrigin and sends the
+    // RoutingBindChat / RoutingUnbindChat wire op; on Ok the pins re-list (routesRefreshed), which
+    // the graph forwards to the ingestor to re-fetch the pin table into the mirror.
+    void routingBindChat(const domain::Origin& origin, const domain::SessionId& session,
+                         const domain::ProfileRef& profile) override;
+    void routingUnbindChat(const domain::Origin& origin) override;
     [[nodiscard]] QList<DecodedRoomInfo> roomsFor(const QString& transport) const {
         return m_rooms.value(transport);
     }

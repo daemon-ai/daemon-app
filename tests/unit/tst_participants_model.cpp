@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-#include "daemonnet/mock_daemonnet.h"
+#include "daemonnet/mock_fleet_source.h"
 #include "participants_model.h"
 #include "persistence/in_memory_session_store.h"
 
 #include <QtTest>
 
-using daemonnet::MockDaemonNet;
+using daemonnet::MockFleetSource;
 using participants::ParticipantsModel;
 using persistence::InMemorySessionStore;
 
@@ -26,7 +26,7 @@ private:
 private slots:
     // Row 0 is the collapsible section header ("Participants").
     void exposesSectionHeader() {
-        MockDaemonNet net;
+        MockFleetSource net;
         InMemorySessionStore store(&net);
         ParticipantsModel model;
         model.setStore(&store);
@@ -42,7 +42,7 @@ private slots:
     // The two seeded participants ("Agent"/"User") follow the header, both with a
     // green ("available") presence dot; the agent flag distinguishes them.
     void exposesParticipantRows() {
-        MockDaemonNet net;
+        MockFleetSource net;
         InMemorySessionStore store(&net);
         ParticipantsModel model;
         model.setStore(&store);
@@ -66,7 +66,7 @@ private slots:
 
     // Folding the header hides the participant rows; unfolding restores them.
     void headerCollapsesAndExpands() {
-        MockDaemonNet net;
+        MockFleetSource net;
         InMemorySessionStore store(&net);
         ParticipantsModel model;
         model.setStore(&store);

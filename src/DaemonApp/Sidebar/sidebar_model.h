@@ -16,10 +16,6 @@ namespace persistence {
 class ISessionStore;
 }
 
-namespace daemonnet {
-class IDaemonNet;
-}
-
 namespace profiles {
 class IProfileStore;
 }
@@ -45,10 +41,6 @@ class SidebarModel : public QAbstractListModel {
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(QObject* store READ store WRITE setStore NOTIFY storeChanged)
-    // The DaemonNet seam: the source for the co-equal "Integrations" section (events-IO axis; the
-    // user-facing name for the transport-adapter tree). Bound from QML to the shared `DaemonNet`
-    // context property. Null => no Integrations section is shown.
-    Q_PROPERTY(QObject* daemonNet READ daemonNet WRITE setDaemonNet NOTIFY daemonNetChanged)
     // The profile store (agents == profiles; daemon-supervision-spec §0). The FLEET section renders
     // one agent row per ProfileInfo from here (NOT from the node's tree()). Bound from QML to the
     // shared `Profiles` context property. Null => the node root shows with no agents.
@@ -95,9 +87,6 @@ public:
 
     [[nodiscard]] QObject* store() const;
     void setStore(QObject* store);
-
-    [[nodiscard]] QObject* daemonNet() const;
-    void setDaemonNet(QObject* net);
 
     [[nodiscard]] QObject* profiles() const;
     void setProfiles(QObject* profiles);
@@ -148,7 +137,6 @@ public:
 
 signals:
     void storeChanged();
-    void daemonNetChanged();
     void profilesChanged();
     void nodeLabelChanged();
     void treeChanged();
@@ -220,8 +208,7 @@ private:
     // Collect the Fleet membership expand keys currently foldable (the node root + agents that have
     // sessions), for the header's expand-all/collapse-all + anyExpanded.
     void collectFleetExpandKeys(QSet<QString>& out) const;
-    void appendTransportRows();
-    // Push a collapsible section header (Fleet/Tags/Integrations); `sectionKey` keys
+    // Push a collapsible section header (Fleet/Tags); `sectionKey` keys
     // its fold state in m_sectionCollapsed.
     void pushSectionHeader(const QString& label, domain::NodeType type, const QString& sectionKey);
     [[nodiscard]] bool isExpanded(const QString& id) const;
@@ -240,7 +227,6 @@ private:
     void collectTransportExpandableIds(QSet<QString>& out) const;
 
     persistence::ISessionStore* m_store = nullptr;
-    daemonnet::IDaemonNet* m_net = nullptr;
     profiles::IProfileStore* m_profiles = nullptr;
     QString m_nodeLabel;
     QList<Row> m_rows;

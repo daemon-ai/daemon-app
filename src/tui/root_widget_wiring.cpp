@@ -9,7 +9,10 @@
 #include "conv_send_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // live refresh of the Users & Access page
-#include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+#include "mirror/mirror_service.h" // Store::committed drives the Routing page re-render (M3)
+#include "mirror/store.h"
+#endif
 #include "display_role_adapter.h"
 #include "feedback/ifeedback.h"     // complete type for the transcript thumbs-feedback submit
 #include "fleet/iapprovals_inbox.h" // complete type for the footer pending-approvals count (TOOL-8)
@@ -163,12 +166,15 @@ void RootWidget::wirePageLiveRefresh() {
     if (m_services.tools != nullptr) {
         liveRefresh(m_services.tools->tools(), TabModel::Settings);
     }
-    // The Routing page projects the DaemonNet pin table (no row model): re-render the open page
-    // when the pins / rooms / accounts change (B6/ROU).
-    if (m_services.daemonNet != nullptr) {
-        connect(m_services.daemonNet, &daemonnet::IDaemonNet::changed, this,
+    // The Routing page projects the mirror store's pin table (route_pins): re-render the open page
+    // whenever the store commits (a routing fetch landing is a commit; the refresh is a no-op
+    // unless the Routing page is active). Daemon mode only (the store is null in mock).
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+    if (m_services.mirrorService != nullptr) {
+        connect(&m_services.mirrorService->store(), &mirror::Store::committed, this,
                 [this] { refreshPageIfActive(TabModel::Routing); });
     }
+#endif
     liveRefresh(m_services.cron->jobs(), TabModel::Cron);
     // The Dashboard is a read-only projection of the roster / approvals, so refresh
     // it when either of those churns too.

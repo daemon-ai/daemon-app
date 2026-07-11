@@ -6,24 +6,23 @@
 #include "persistence/isession_store.h"
 
 namespace daemonnet {
-class IDaemonNet;
+class MockFleetSource;
 }
 
 namespace persistence {
 
 // In-memory ISessionStore. Two seed sources: the canonical demo `seedSampleData()` (test fixtures),
-// and `seedFromDaemonNet()` which copies the unified DaemonNet seed (the single source for the mock
-// UI). Not persisted across runs. The demo data is a deliberate fleet-of-fleets that exercises
-// arbitrary depth (orchestrators nested inside orchestrators) and a lone-unit root.
+// and `seedFromSource()` which copies the mock fleet/session seed (MockFleetSource). Not persisted
+// across runs. The demo data is a deliberate fleet-of-fleets that exercises arbitrary depth
+// (orchestrators nested inside orchestrators) and a lone-unit root.
 class InMemorySessionStore : public ISessionStore {
     Q_OBJECT
 
 public:
     explicit InMemorySessionStore(QObject* parent = nullptr);
-    // Seed the store from the DaemonNet (the single source): copies its units/sessions/tags,
-    // assigning each session a stable int handle while carrying its authoritative string
-    // `sessionId`.
-    explicit InMemorySessionStore(daemonnet::IDaemonNet* net, QObject* parent = nullptr);
+    // Seed the store from the mock fleet seed: copies its units/sessions/tags, assigning each
+    // session a stable int handle while carrying its authoritative string `sessionId`.
+    explicit InMemorySessionStore(daemonnet::MockFleetSource* src, QObject* parent = nullptr);
 
     [[nodiscard]] QList<domain::UnitNode>
     unitChildren(const domain::UnitId& parentId) const override;
@@ -57,8 +56,8 @@ protected:
     // Protected so a durable subclass can seed a fresh (empty) database.
     void seedSampleData();
 
-    // Replace the in-memory tree/tags/sessions with the DaemonNet's unified seed bundle.
-    void seedFromDaemonNet(daemonnet::IDaemonNet* net);
+    // Replace the in-memory tree/tags/sessions with the mock fleet seed bundle.
+    void seedFromSource(daemonnet::MockFleetSource* src);
 
     // Derive a unit's daemon-parity metadata (profile / session / role) from its
     // id + kind. These fields are NOT persisted (the SQLite schema predates them),

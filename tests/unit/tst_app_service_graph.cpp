@@ -4,7 +4,6 @@
 #include "connection/mock_connection_service.h"
 #include "daemon/app_service_graph.h"
 #include "daemon/daemon_connection_service.h"
-#include "daemonnet/idaemonnet.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
 #include "fleet/idashboard.h"
@@ -40,7 +39,6 @@ private slots:
         QVERIFY(graph.fleetTree != nullptr);
         QVERIFY(graph.approvals != nullptr);
         QVERIFY(graph.dashboard != nullptr);
-        QVERIFY(graph.daemonNet != nullptr); // the routing surface (origin->session pins)
         QVERIFY(graph.cron != nullptr);
         QVERIFY(graph.sessionSettings != nullptr);
         QVERIFY(graph.checkpoints != nullptr);
@@ -198,29 +196,6 @@ private slots:
             QVERIFY(graph.mirrorService == nullptr);
             QVERIFY(graph.outbox == nullptr);
         }
-    }
-
-    // W3 (plan 2d): Daemon mode must not pass the mock transports tree off as live Integrations.
-    // The DaemonNet still constructs (the roster/routing mocks project from it), but its events-IO
-    // tree seeds empty until the daemon-backed projection lands; DAEMON_APP_MOCK_INTEGRATIONS is
-    // the developer escape hatch, and mock mode keeps the demo tree unconditionally.
-    void daemonGraphSeedsEmptyIntegrationsUnlessFlagged() {
-        qunsetenv("DAEMON_APP_MOCK_INTEGRATIONS");
-        QObject owner;
-        const auto daemonGraph = daemonapp::daemon::createAppServiceGraph(
-            daemonapp::daemon::ServiceMode::Daemon, &owner);
-        QVERIFY(daemonGraph.daemonNet != nullptr);
-        QVERIFY(daemonGraph.daemonNet->transportsTree().isEmpty());
-
-        qputenv("DAEMON_APP_MOCK_INTEGRATIONS", "1");
-        const auto flaggedGraph = daemonapp::daemon::createAppServiceGraph(
-            daemonapp::daemon::ServiceMode::Daemon, &owner);
-        QVERIFY(!flaggedGraph.daemonNet->transportsTree().isEmpty());
-        qunsetenv("DAEMON_APP_MOCK_INTEGRATIONS");
-
-        const auto mockGraph =
-            daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
-        QVERIFY(!mockGraph.daemonNet->transportsTree().isEmpty());
     }
 };
 

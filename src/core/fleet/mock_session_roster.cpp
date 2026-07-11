@@ -3,17 +3,17 @@
 
 #include "fleet/mock_session_roster.h"
 
-#include "daemonnet/idaemonnet.h"
+#include "daemonnet/mock_fleet_source.h"
 
 namespace fleet {
 
-MockSessionRoster::MockSessionRoster(daemonnet::IDaemonNet* net, QObject* parent)
+MockSessionRoster::MockSessionRoster(daemonnet::MockFleetSource* src, QObject* parent)
     : ISessionRoster(parent), m_sessions(new uimodels::VariantListModel(this)) {
-    // Single source: copy the DaemonNet's flat session projection at construction;
+    // Single source: copy the mock seed's flat session projection at construction;
     // suspend/resume/close then mutate this local copy.
-    if (net != nullptr) {
-        if (auto* src = qobject_cast<uimodels::VariantListModel*>(net->sessions())) {
-            m_sessions->setRows(src->rows());
+    if (src != nullptr) {
+        if (auto* rows = qobject_cast<uimodels::VariantListModel*>(src->sessions())) {
+            m_sessions->setRows(rows->rows());
         }
     }
     connect(m_sessions, &uimodels::VariantListModel::countChanged, this, &ISessionRoster::changed);

@@ -6,7 +6,6 @@
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
-#include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "dialogs/agents_dialog.h" // [wave2:app-engines] foreign-agent management dialog (C1)
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"

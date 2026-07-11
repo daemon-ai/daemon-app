@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "auth/auth_flow_controller.h"
-#include "daemonnet/mock_daemonnet.h"
+#include "daemonnet/mock_fleet_source.h"
 #include "fleet/mock_approvals_inbox.h"
 #include "persistence/in_memory_session_store.h"
 #include "profiles/mock_profile_store.h"
@@ -25,10 +25,10 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_PagesPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_SidebarPlugin)
 
 // The Sidebar binds the app-global context-property seams (injected by Application::registerContext
-// in production). The test injects the in-repo mocks. Critically it provides a DEMO DaemonNet
-// (whose transportsTree() is non-empty) to prove the legacy transports section is deliberately NOT
-// composed anymore. The AuthFlowController is serviceless so the mounted AuthFlowSheet never binds
-// a redirect sink offscreen.
+// in production). The test injects the in-repo mocks: the mock fleet seed backs the session store,
+// and the dedicated IntegrationsTree renders from the transport registry + persons seams (the
+// legacy transports-tree sidebar section was deleted in M3). The AuthFlowController is serviceless
+// so the mounted AuthFlowSheet never binds a redirect sink offscreen.
 class SidebarTestSetup : public QObject {
     Q_OBJECT
 
@@ -44,8 +44,8 @@ public slots:
             engine->addImportPath(p);
 #endif
         if (m_store == nullptr) {
-            m_daemonNet = new daemonnet::MockDaemonNet(this);
-            m_store = new persistence::InMemorySessionStore(m_daemonNet, this);
+            m_fleetSeed = new daemonnet::MockFleetSource(this);
+            m_store = new persistence::InMemorySessionStore(m_fleetSeed, this);
             m_profiles = new profiles::MockProfileStore(this);
             m_approvals = new fleet::MockApprovalsInbox(this);
             m_registry = new transports::MockTransportRegistry(this);
@@ -54,7 +54,6 @@ public slots:
         }
         auto* ctx = engine->rootContext();
         ctx->setContextProperty(QStringLiteral("SessionStore"), m_store);
-        ctx->setContextProperty(QStringLiteral("DaemonNet"), m_daemonNet);
         ctx->setContextProperty(QStringLiteral("Profiles"), m_profiles);
         ctx->setContextProperty(QStringLiteral("Approvals"), m_approvals);
         ctx->setContextProperty(QStringLiteral("Transports"), m_registry);
@@ -63,7 +62,7 @@ public slots:
     }
 
 private:
-    daemonnet::MockDaemonNet* m_daemonNet = nullptr;
+    daemonnet::MockFleetSource* m_fleetSeed = nullptr;
     persistence::InMemorySessionStore* m_store = nullptr;
     profiles::MockProfileStore* m_profiles = nullptr;
     fleet::MockApprovalsInbox* m_approvals = nullptr;

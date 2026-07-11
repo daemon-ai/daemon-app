@@ -7,8 +7,6 @@
 
 #include "automation/icron_store.h"
 #include "daemon/engine_identity.h" // [wave2:integration] C5 approval origin
-#include "daemonnet/idaemonnet.h"
-#include "daemonnet/routing_dtos.h"
 #include "fleet/iapprovals_inbox.h"
 #include "fleet/idashboard.h"
 #include "fleet/ifleet_tree.h"
@@ -18,6 +16,11 @@
 #include "uimodels/variant_list_model.h"
 
 #include <QCoreApplication>
+
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+#include "mirror/mirror_service.h"
+#include "mirror/store.h"
+#endif
 
 namespace {
 // [wave2:integration] F3 + C3/ENG-7: the TUI projection of the GUI fleet engine chip, off the
@@ -249,40 +252,51 @@ static QString routingScopeLabel(const QVariantMap& row) {
     return QStringLiteral("internal");
 }
 
+namespace {
+// Decompose a canonical origin key (see the RoutePin origin_key derivation / daemonnet::originKey)
+// into the flattened scope fields the routing page + its 'x' unbind need. Formats:
+// `t|dm|user`, `t|group|chat|thread`, `t|api|key`, `t|internal`.
+void packOriginKey(const QString& key, QVariantMap& row) {
+    const QStringList parts = key.split(QLatin1Char('|'));
+    row[QStringLiteral("transport")] = parts.value(0);
+    const QString kind = parts.value(1);
+    if (kind == QStringLiteral("dm")) {
+        row[QStringLiteral("scopeKind")] = QStringLiteral("dm");
+        row[QStringLiteral("user")] = parts.value(2);
+    } else if (kind == QStringLiteral("group")) {
+        row[QStringLiteral("scopeKind")] = QStringLiteral("group");
+        row[QStringLiteral("chat")] = parts.value(2);
+        row[QStringLiteral("thread")] = parts.value(3);
+    } else if (kind == QStringLiteral("api")) {
+        row[QStringLiteral("scopeKind")] = QStringLiteral("api");
+        row[QStringLiteral("apiKey")] = parts.value(2);
+    } else {
+        row[QStringLiteral("scopeKind")] = QStringLiteral("internal");
+    }
+}
+} // namespace
+
 QList<QVariantMap> TuiPageHub::routingPinRows() const {
     QList<QVariantMap> rows;
-    if (m_deps.daemonNet == nullptr) {
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+    if (m_deps.mirror == nullptr) {
         return rows;
     }
-    const QList<daemonnet::RoutingPin> pins = m_deps.daemonNet->routes();
-    rows.reserve(pins.size());
-    for (const daemonnet::RoutingPin& pin : pins) {
+    // The pin table IS the mirror store's route_pins projection (shared with the GUI routing
+    // manager); the origin_key carries the flattened scope, unpacked here for display + unbind.
+    for (const mirror::RoutePin& pin : m_deps.mirror->store().snapshot().route_pins) {
         QVariantMap row;
-        row[QStringLiteral("id")] = daemonnet::originKey(pin.origin);
-        row[QStringLiteral("transport")] = pin.origin.transport.toString();
-        switch (pin.origin.scope.kind) {
-        case domain::OriginScopeKind::Dm:
-            row[QStringLiteral("scopeKind")] = QStringLiteral("dm");
-            row[QStringLiteral("user")] = pin.origin.scope.user;
-            break;
-        case domain::OriginScopeKind::Group:
-            row[QStringLiteral("scopeKind")] = QStringLiteral("group");
-            row[QStringLiteral("chat")] = pin.origin.scope.chat;
-            row[QStringLiteral("thread")] = pin.origin.scope.thread;
-            break;
-        case domain::OriginScopeKind::Api:
-            row[QStringLiteral("scopeKind")] = QStringLiteral("api");
-            row[QStringLiteral("apiKey")] = pin.origin.scope.apiKey;
-            break;
-        case domain::OriginScopeKind::Internal:
-            row[QStringLiteral("scopeKind")] = QStringLiteral("internal");
-            break;
+        row[QStringLiteral("id")] = pin.origin_key;
+        packOriginKey(pin.origin_key, row);
+        if (!pin.transport.isEmpty()) {
+            row[QStringLiteral("transport")] = pin.transport;
         }
-        row[QStringLiteral("session")] = pin.session.toString();
-        row[QStringLiteral("profile")] = pin.profile.toString();
+        row[QStringLiteral("session")] = pin.session;
+        row[QStringLiteral("profile")] = pin.profile;
         row[QStringLiteral("isolation")] = pin.isolation;
         rows.append(row);
     }
+#endif
     return rows;
 }
 

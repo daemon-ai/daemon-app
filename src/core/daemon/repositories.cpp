@@ -2394,6 +2394,45 @@ void RoutingRepository::setRoute(const DecodedChatRoute& route) {
                           QLatin1String(kMutateCorrelation));
 }
 
+namespace {
+// domain::Origin -> the codec's flattened DecodedOrigin (what the Routing* encoders take). The
+// inverse of the mirror map's origin decode; kept local to the routing mutation seam.
+DecodedOrigin toDecodedOrigin(const domain::Origin& o) {
+    DecodedOrigin d;
+    d.transport = o.transport.toString();
+    switch (o.scope.kind) {
+    case domain::OriginScopeKind::Dm:
+        d.scopeKind = QStringLiteral("dm");
+        d.user = o.scope.user;
+        break;
+    case domain::OriginScopeKind::Group:
+        d.scopeKind = QStringLiteral("group");
+        d.chat = o.scope.chat;
+        d.hasThread = !o.scope.thread.isEmpty();
+        d.thread = o.scope.thread;
+        break;
+    case domain::OriginScopeKind::Api:
+        d.scopeKind = QStringLiteral("api");
+        d.apiKey = o.scope.apiKey;
+        break;
+    case domain::OriginScopeKind::Internal:
+        d.scopeKind = QStringLiteral("internal");
+        break;
+    }
+    return d;
+}
+} // namespace
+
+void RoutingRepository::routingBindChat(const domain::Origin& origin,
+                                        const domain::SessionId& session,
+                                        const domain::ProfileRef& profile) {
+    bindChat(toDecodedOrigin(origin), session.toString(), profile.toString());
+}
+
+void RoutingRepository::routingUnbindChat(const domain::Origin& origin) {
+    unbindChat(toDecodedOrigin(origin));
+}
+
 void RoutingRepository::handleMutationResponse(const QByteArray& responseCbor) {
     if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
         // Node-authoritative: re-list so the client renders the stored pin table (never an

@@ -315,7 +315,7 @@ private slots:
             return SeamMigrationStatus::MockOnly;
         };
         QCOMPARE(find("ISessionRoster"), SeamMigrationStatus::DaemonAligned);
-        QCOMPARE(find("IDaemonNet (routing slice)"), SeamMigrationStatus::DaemonAligned);
+        QCOMPARE(find("Routing (routing slice)"), SeamMigrationStatus::DaemonAligned);
         QCOMPARE(find("ICronStore"), SeamMigrationStatus::MockOnly);
         QCOMPARE(find("ICheckpointTimeline"), SeamMigrationStatus::DaemonAligned);
     }

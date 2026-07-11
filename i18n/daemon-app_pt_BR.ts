@@ -2492,17 +2492,6 @@ até que seja registrado novamente.</translation>
     </message>
 </context>
 <context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Canais</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>DaemonModelCatalog</name>
     <message>
         <source>Model %1 is missing on disk: %2</source>
@@ -4214,7 +4203,7 @@ Obrigado — prosseguindo com: %1
     </message>
 </context>
 <context>
-    <name>MockDaemonNet</name>
+    <name>MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agente</translation>
@@ -6098,21 +6087,6 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— fixado</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· derivado</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - espectador</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6874,10 +6848,6 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
     <message>
         <source>Fleet</source>
         <translation>Frota</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Integrações</translation>
     </message>
     <message>
         <source>New tag</source>
@@ -9238,17 +9208,6 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Canais</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9504,7 +9463,7 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
+    <name>daemonnet::MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agente</translation>

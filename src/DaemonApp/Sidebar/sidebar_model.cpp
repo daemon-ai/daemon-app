@@ -3,7 +3,6 @@
 
 #include "sidebar_model.h"
 
-#include "daemonnet/idaemonnet.h"
 #include "domain/ids.h"
 #include "domain/session.h"
 #include "domain/unit_node.h"
@@ -16,7 +15,6 @@
 #include <QFile>
 #include <QHash>
 
-using daemonnet::TransportTreeRow;
 using domain::ListScope;
 using domain::NodeType;
 using domain::UnitId;
@@ -52,26 +50,6 @@ void SidebarModel::setStore(QObject* store) {
         connect(m_store, &persistence::ISessionStore::changed, this, &SidebarModel::rebuild);
     }
     emit storeChanged();
-    rebuild();
-}
-
-QObject* SidebarModel::daemonNet() const {
-    return m_net;
-}
-
-void SidebarModel::setDaemonNet(QObject* net) {
-    auto* dn = qobject_cast<daemonnet::IDaemonNet*>(net);
-    if (m_net == dn) {
-        return;
-    }
-    if (m_net) {
-        m_net->disconnect(this);
-    }
-    m_net = dn;
-    if (m_net) {
-        connect(m_net, &daemonnet::IDaemonNet::changed, this, &SidebarModel::rebuild);
-    }
-    emit daemonNetChanged();
     rebuild();
 }
 
@@ -316,80 +294,10 @@ void SidebarModel::rebuild() {
             appendFleetMembership();
         }
     }
-    // The co-equal events-IO axis: an "Integrations" header + the capability-driven
-    // transport tree (account -> taxonomy -> session leaf), sourced from DaemonNet.
-    appendTransportRows();
+    // The co-equal events-IO axis (the "Integrations" section) is rendered by the dedicated
+    // IntegrationsTreeModel now (A5) — the legacy transports-tree sidebar path was deleted in M3.
     endResetModel();
     emit treeChanged();
-}
-
-void SidebarModel::appendTransportRows() {
-    if (!m_net) {
-        return;
-    }
-    const QList<TransportTreeRow> tree = m_net->transportsTree();
-    if (tree.isEmpty()) {
-        // No transports, no section (header included). This is the deliberate empty state of
-        // ServiceMode::Daemon, whose graph seeds the DaemonNet transports tree empty until the
-        // live projection replaces the mock seam (see createAppServiceGraph).
-        return;
-    }
-
-    // The "Integrations" section header (the user-facing name for the events-IO
-    // transport-adapter tree). Collapsible like Fleet/Tags.
-    pushSectionHeader(tr("Integrations"), NodeType::TransportSeparator,
-                      QStringLiteral("integrations"));
-    if (!isSectionExpanded(QStringLiteral("integrations"))) {
-        return; // section folded: header only, no body
-    }
-
-    // Parent-chain map so a collapsed account/group hides its whole subtree.
-    QHash<QString, QString> parentOf;
-    for (const TransportTreeRow& t : tree) {
-        parentOf.insert(t.id, t.parentId);
-    }
-    const auto hiddenByCollapse = [&](const QString& id) {
-        QString cur = parentOf.value(id);
-        for (int guard = 0; !cur.isEmpty() && guard <= 4096; ++guard) {
-            if (!isExpanded(cur)) {
-                return true;
-            }
-            cur = parentOf.value(cur);
-        }
-        return false;
-    };
-
-    for (const TransportTreeRow& t : tree) {
-        if (hiddenByCollapse(t.id)) {
-            continue;
-        }
-        Row r;
-        r.label = t.label;
-        r.type = NodeType::Transport;
-        r.selectable = true;
-        r.depth = t.depth;
-        r.hasChildren = t.hasChildren;
-        r.expanded = isExpanded(t.id);
-        r.count = t.memberCount > 0 ? t.memberCount : -1;
-        r.session = t.sessionId;
-        r.txNode = t.id;
-        r.txKind = t.kind;
-        r.convType = t.convType;
-        r.sublabel = t.sublabel;
-        r.presence = t.presence;
-        r.scopeKey = t.scopeKey;
-        r.txTransport = t.transportId;
-        r.txConversation = t.conversationId;
-        // When a row has no session leaf, selecting it scopes the list: an account
-        // groups all sessions over its transport (ByTransport); a 1:1 Dm peer groups
-        // by that peer (ByPeer). Channels / convGroups carry no list scope.
-        if (t.kind == QStringLiteral("account")) {
-            r.scopeType = static_cast<int>(NodeType::ByTransport);
-        } else if (t.convType == QStringLiteral("dm")) {
-            r.scopeType = static_cast<int>(NodeType::ByPeer);
-        }
-        m_rows.push_back(r);
-    }
 }
 
 int SidebarModel::rowCount(const QModelIndex& parent) const {
@@ -734,13 +642,13 @@ bool SidebarModel::anyExpanded() const {
 }
 
 void SidebarModel::collectTransportExpandableIds(QSet<QString>& out) const {
-    if (!m_net) {
-        return;
-    }
-    // The Integrations-tree nodes that can fold (accounts + conversation groups).
-    for (const TransportTreeRow& t : m_net->transportsTree()) {
-        if (t.hasChildren) {
-            out.insert(t.id);
+    // Vestigial after the M3 transports-tree deletion: SidebarModel no longer renders transport
+    // rows (the dedicated IntegrationsTreeModel owns that surface), so there are no foldable
+    // transport nodes here. Kept (scanning the current rows) so the header's expand-all control
+    // stays valid; it folds nothing until/unless transport rows return to this model.
+    for (const Row& r : m_rows) {
+        if (r.type == NodeType::Transport && r.hasChildren && !r.txNode.isEmpty()) {
+            out.insert(r.txNode);
         }
     }
 }

@@ -19,7 +19,6 @@
 #include "daemon/daemon_checkpoint_timeline.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_contacts_service.h"
-#include "daemon/daemon_daemonnet.h"
 #include "daemon/daemon_dashboard.h"
 #include "daemon/daemon_fleet_tree.h"
 #include "daemon/daemon_fs_service.h"
@@ -39,7 +38,7 @@
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
 #include "daemon/subscription_manager.h"
-#include "daemonnet/mock_daemonnet.h"
+#include "daemonnet/mock_fleet_source.h"
 #include "feedback/mock_feedback.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/mock_approvals_inbox.h"
@@ -163,22 +162,14 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // firstRun + accounts + modelCatalog + profiles are constructed per-mode below (after the
     // repositories the daemon-backed services need); firstRun binds the resulting modelCatalog for
     // inference readiness.
-    // The unified mock DaemonNet (the single source the fleet/roster mocks now project from, plus
-    // the future lenses + patch-bay); construct it before the surfaces that derive from it.
-    //
-    // Its transportsTree() is also the sidebar's INTEGRATIONS source, and that demo tree is
-    // truthful only for the mock UI. Daemon mode has no live DaemonNet projection yet — the
-    // planned replacement of this seam is a DaemonDaemonNet projected from TransportRepository
-    // (TransportAdapters/Instances + ConvList) — so until it lands, Daemon mode seeds the tree
-    // empty (no Integrations section) rather than passing mock channels off as live ones.
-    // DAEMON_APP_MOCK_INTEGRATIONS opts back into the demo tree for development, mirroring the
-    // DAEMON_APP_EDITOR_DEMO gate.
-    const bool demoTransports =
-        mode != ServiceMode::Daemon || qEnvironmentVariableIsSet("DAEMON_APP_MOCK_INTEGRATIONS");
-    graph.daemonNet = new daemonnet::MockDaemonNet(
-        demoTransports ? daemonnet::TransportsSeed::Demo : daemonnet::TransportsSeed::Empty, owner);
-    graph.roster = new fleet::MockSessionRoster(graph.daemonNet, owner);
-    graph.fleetTree = new fleet::MockFleetTree(graph.daemonNet, owner);
+    // The mock fleet/roster/session seed (MockFleetSource): the source the fleet/roster mocks + the
+    // mock session store project from (M3 — routing/integrations now live on the mirror; the
+    // deleted mock net's routing + transports-tree + patch-bay are gone). In daemon mode the
+    // fleet/roster/store below are deleted + rebuilt daemon-backed, so this seed is used only in
+    // mock mode; building it unconditionally keeps the pre-mode-branch surfaces simple.
+    auto* fleetSource = new daemonnet::MockFleetSource(owner);
+    graph.roster = new fleet::MockSessionRoster(fleetSource, owner);
+    graph.fleetTree = new fleet::MockFleetTree(fleetSource, owner);
     graph.approvals = new fleet::MockApprovalsInbox(owner);
     // [wave2:app-approvals-safety] D2: tool inventory starts as the canned mock; the daemon branch
     // below REPLACES it with the repo-backed DaemonToolInventory (ToolList).
@@ -187,9 +178,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner);
     // Cron has NO node wire op yet (the daemon-api codec subset carries none), so in Daemon mode
     // it must render EMPTY rather than pass its illustrative demo rows off as node-backed data
-    // (render honesty; see seam_migration.h). Mock mode keeps the demo seed. (Routing left this
-    // bucket at wire v28: the origin->session pin table is served by DaemonDaemonNet below; the
-    // legacy intent->model IRoutingStore surface is retired.)
+    // (render honesty; see seam_migration.h). Mock mode keeps the demo seed. (Routing moved to the
+    // mirror store's pin table in M3; the legacy intent->model surfaces are retired.)
     const bool seedMockDemo = mode != ServiceMode::Daemon;
     graph.cron = new automation::MockCronStore(owner, seedMockDemo);
     // Transport-adapter seams (daemon-transport-adapter-spec.md): inert mocks until a daemon
@@ -361,24 +351,17 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // confirmed use-after-free / SIGSEGV in MockDashboard::runningAgents()).
         delete graph.dashboard;
         delete graph.roster;
-        // The real routing manager (B6/ROU, wire v28): RoutingRepository speaks
-        // RoutingListChats/BindChat/UnbindChat/Set + TransportRooms; DaemonDaemonNet projects it
-        // (plus the transport instances) through the IDaemonNet seam the RoutingPage/RouteDialog
-        // already bind — replacing the always-demo MockDaemonNet. Swapped here, after every mock
-        // consumer of the old pointer (roster/fleet/dashboard) is gone.
-        // DAEMON_APP_MOCK_INTEGRATIONS keeps the demo MockDaemonNet for development (the same
-        // escape hatch the Integrations tree seed honors above).
+        // The real routing manager (M3): RoutingRepository is the node-authoritative DIRECT
+        // mutation seam (RoutingBindChat/Unbind — it IS-A daemonnet::IRoutingActions the routing
+        // manager view-model drives). Reads no longer flow through it: the routing pin table lives
+        // on the mirror store (RoutingListChats → route_pins), fetched by the ingestor and
+        // re-listed on the routing refresh triggers wired in the mirror block below. Its own
+        // in-memory cache is now dead (residual debt; see LEDGER-a6).
         graph.routingRepository = new RoutingRepository(graph.nodeApi, graph.cache, owner);
         // [waveB:app-v30] D2: the feed's MembershipChanged (self removal) re-lists the routing pins
         // (the node reconciled them); wired now that the routing repo exists.
         if (graph.subscriptions != nullptr) {
             graph.subscriptions->setRoutingRepository(graph.routingRepository);
-        }
-        if (!demoTransports) {
-            delete graph.daemonNet;
-            graph.daemonNet =
-                new DaemonDaemonNet(graph.routingRepository, graph.transportRepository, graph.store,
-                                    graph.sessions, owner);
         }
         // The repository rides along for the operator steer/startTurn/interrupt ops (F4) and the
         // archived-scope refetch (F6).
@@ -448,8 +431,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // [integrations wire v38] The node's person/metacontact registry (the Persons
                     // tree section); refetched incrementally on the PersonsChanged feed event.
                     persons->refresh();
-                    // Routing: the origin->session pin table (B6/ROU). Per-account rooms follow
-                    // the instances refresh (DaemonDaemonNet chains them).
+                    // Routing (M3): the reconnect staleness scan already fetches the pin table into
+                    // the mirror (routing is a scanned collection); this repo re-list only keeps
+                    // the dead cache warm + fires routesRefreshed → the mirror re-fetch wired
+                    // below. Per-account rooms follow the instances refresh (wired in the mirror
+                    // block).
                     routing->refreshChats();
                     // Foreign engines: the catalog for the engine picker + Agents settings.
                     agents->refreshCatalog();
@@ -478,15 +464,14 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                "fleetTree(Tree), roster/dashboard(offline-first over cache/fleet/approvals), "
                "transports/presence(TransportAdapters/Instances+ConvList), "
                "checkpoints(CheckpointList/Rewind), "
-               "routing(RoutingListChats/BindChat/UnbindChat+TransportRooms via DaemonDaemonNet); "
+               "routing(mirror store pin table; RoutingBindChat/Unbind mutations); "
                "still mock: daemonConfig, memory; node-blocked (NO wire op yet - rendered EMPTY, "
-               "not mock demo data): cron, daemonNet delivery/handover panel.";
+               "not mock demo data): cron, routing delivery/handover panel.";
     } else {
-        // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet
-        // each run (deterministic, always matches the current seed - no stale-db drift). The
-        // sidebar/list/ transcript and the Fleet/Sessions pages now all reflect the one DaemonNet
-        // source.
-        graph.store = new persistence::InMemorySessionStore(graph.daemonNet, owner);
+        // Mock mode: a non-persisted in-memory store re-seeded fresh from the mock fleet seed each
+        // run (deterministic, always matches the current seed - no stale-db drift). The sidebar /
+        // list / transcript and the Fleet/Sessions pages all reflect the one MockFleetSource seed.
+        graph.store = new persistence::InMemorySessionStore(fleetSource, owner);
         graph.modelCatalog = new models::MockModelCatalog(owner);
         graph.providerCatalog = new models::MockProviderCatalog(graph.modelCatalog, owner);
         graph.accounts = new accounts::MockAccountsService(owner);
@@ -677,6 +662,26 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             graph.mirrorExecutor =
                 new DaemonFetchExecutor(graph.nodeApi, svc->ingestor(), svc->scheduler(), owner);
             svc->setFetchExecutor(graph.mirrorExecutor);
+
+            // Routing (M3): the pin table lives on the mirror store. A node-acked routing mutation
+            // (or the connect-ready re-list) fires RoutingRepository::routesRefreshed → re-fetch
+            // the pin table into the mirror (single writer: the ingestor, not the repo, writes
+            // rows). Per-account bindable rooms follow the transport instance list
+            // (TransportRooms).
+            if (graph.routingRepository != nullptr) {
+                QObject::connect(graph.routingRepository, &RoutingRepository::routesRefreshed, svc,
+                                 [svc] { svc->ingestor().refetchRouting(); });
+            }
+            if (graph.transportRepository != nullptr) {
+                QObject::connect(graph.transportRepository,
+                                 &TransportRepository::instancesRefreshed, svc,
+                                 [svc, transports = graph.transportRepository] {
+                                     for (const CachedTransportInstanceRow& row :
+                                          transports->cachedInstances()) {
+                                         svc->ingestor().refetchRooms(row.transport);
+                                     }
+                                 });
+            }
 
             // Feed the node event stream into the ingestor through the bridge. A per-session
             // Subscribe item is not an events page (decode fails) so it is ignored — the mirror

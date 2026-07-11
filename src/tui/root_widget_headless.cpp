@@ -6,7 +6,6 @@
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
-#include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"

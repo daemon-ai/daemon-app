@@ -98,6 +98,46 @@ QString participantDisplay(const ::participant_r& p) {
     return {};
 }
 
+// origin#origin_key: the canonical, order-stable pin key (mirrors daemon-node's `origin_pin_key`
+// and the client-side `daemonnet::originKey`), named ONCE here per the RoutePin entity-map
+// provenance (chat-route.origin#origin_key). A group scope always appends `|<thread>` (empty when
+// absent) so the key is stable across the thread-present/absent cases.
+QString originKeyOf(const ::origin& o) {
+    const QString t = qstr(o.origin_transport);
+    switch (o.origin_scope.origin_scope_t_choice) {
+    case ::origin_scope_t_r::origin_scope_t_origin_scope_dm_m_c:
+        return t + QStringLiteral("|dm|") +
+               qstr(o.origin_scope.origin_scope_t_origin_scope_dm_m.Dm_user);
+    case ::origin_scope_t_r::origin_scope_t_origin_scope_group_m_c: {
+        const ::origin_scope_group& g = o.origin_scope.origin_scope_t_origin_scope_group_m;
+        const QString thread = g.Group_thread_choice == ::origin_scope_group::Group_thread_tstr_c
+                                   ? qstr(g.Group_thread_tstr)
+                                   : QString();
+        return t + QStringLiteral("|group|") + qstr(g.Group_chat) + QLatin1Char('|') + thread;
+    }
+    case ::origin_scope_t_r::origin_scope_t_origin_scope_api_m_c:
+        return t + QStringLiteral("|api|") +
+               qstr(o.origin_scope.origin_scope_t_origin_scope_api_m.Api_key);
+    default:
+        return t + QStringLiteral("|internal");
+    }
+}
+
+// isolation_policy enum → canonical string (entity-map provenance chat-route.isolation).
+QString isolationPolicy(const ::isolation_policy_r& p) {
+    switch (p.isolation_policy_choice) {
+    case ::isolation_policy_r::isolation_policy_PerUser_tstr_c:
+        return QStringLiteral("PerUser");
+    case ::isolation_policy_r::isolation_policy_PerChat_tstr_c:
+        return QStringLiteral("PerChat");
+    case ::isolation_policy_r::isolation_policy_PerThread_tstr_c:
+        return QStringLiteral("PerThread");
+    case ::isolation_policy_r::isolation_policy_Shared_tstr_c:
+        return QStringLiteral("Shared");
+    }
+    return {};
+}
+
 } // namespace
 
 AccessUser map_access_user(const ::access_user& in) {
@@ -380,16 +420,39 @@ RoleInfo map_role_info(const ::role_info& in) {
 }
 
 Room map_room(const ::room_info& in) {
+    // A6 arm: TransportRooms → Rooms. `transport` rides the payload (room_info carries it); the
+    // executor also stamps it from the request scope so the (transport, room) key matches the
+    // fetch.
     Room out;
-    (void)in;
-    // TODO(mirror-map): populate Room from wire per entity-map.toml provenance.
+    out.transport = qstr(in.room_info_transport);
+    out.room = qstr(in.room_info_room);
+    if (in.room_info_name_present &&
+        in.room_info_name.room_info_name_choice == ::room_info_name_r::room_info_name_tstr_c) {
+        out.name = qstr(in.room_info_name.room_info_name_tstr);
+    }
+    if (in.room_info_session_present &&
+        in.room_info_session.room_info_session_choice ==
+            ::room_info_session_r::room_info_session_session_id_m_c) {
+        out.session = qstr(in.room_info_session.room_info_session_session_id_m);
+    }
     return out;
 }
 
 RoutePin map_route_pin(const ::chat_route& in) {
+    // A6 arm: RoutingListChats → ChatRoutes. origin_key is the derived canonical pin key (§3.3);
+    // transport is the origin's transport instance.
     RoutePin out;
-    (void)in;
-    // TODO(mirror-map): populate RoutePin from wire per entity-map.toml provenance.
+    out.origin_key = originKeyOf(in.chat_route_origin);
+    out.transport = qstr(in.chat_route_origin.origin_transport);
+    out.session = qstr(in.chat_route_session);
+    if (in.chat_route_profile_present &&
+        in.chat_route_profile.chat_route_profile_choice ==
+            ::chat_route_profile_r::chat_route_profile_profile_ref_m_c) {
+        out.profile = qstr(in.chat_route_profile.chat_route_profile_profile_ref_m);
+    }
+    if (in.chat_route_isolation_present) {
+        out.isolation = isolationPolicy(in.chat_route_isolation.chat_route_isolation);
+    }
     return out;
 }
 

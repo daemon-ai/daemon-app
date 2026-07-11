@@ -244,6 +244,10 @@ FetchOp Ingestor::baselineOpFor(const QString& collection) const {
         return FetchOp::PersonList;
     if (collection == QStringLiteral("notifications"))
         return FetchOp::NotificationList;
+    if (collection == QStringLiteral("routing"))
+        return FetchOp::RoutingListChats;
+    if (collection == QStringLiteral("rooms"))
+        return FetchOp::TransportRooms;
     // chat windows fill on demand (§4.6); transports has no single list op here.
     return FetchOp::None;
 }
@@ -560,6 +564,89 @@ void Ingestor::deliverPersons(const std::vector<Person>& items, bool isFinalPage
         b.commit();
     }
     state_.markFresh(QStringLiteral("persons"), 0, nowMs());
+}
+
+void Ingestor::applyRoutePinFullList(const std::vector<RoutePin>& items) {
+    const JournalOrigin origin = originFor(QStringLiteral("routing"));
+    QSet<QString> present;
+    for (const RoutePin& p : store_.snapshot().route_pins) {
+        present.insert(p.origin_key);
+    }
+    QSet<QString> incoming;
+    auto b = store_.beginBatch();
+    for (const RoutePin& p : items) {
+        incoming.insert(p.origin_key);
+        b.upsert(p, origin);
+    }
+    for (const QString& key : present) {
+        if (!incoming.contains(key)) {
+            b.tombstone<RoutePin>(RoutePinKey{key}, origin);
+        }
+    }
+    b.commit();
+}
+
+void Ingestor::deliverRoutePins(const std::vector<RoutePin>& items, bool isFinalPage) {
+    if (isFinalPage) {
+        applyRoutePinFullList(items);
+    } else {
+        auto b = store_.beginBatch();
+        for (const RoutePin& p : items) {
+            b.upsert(p, originFor(QStringLiteral("routing")));
+        }
+        b.commit();
+    }
+    state_.markFresh(QStringLiteral("routing"), 0, nowMs());
+}
+
+void Ingestor::applyRoomFullList(const QString& transport, const std::vector<Room>& items) {
+    const JournalOrigin origin = originFor(QStringLiteral("rooms"));
+    QSet<QString> present;
+    for (const Room& r : store_.snapshot().rooms) {
+        if (r.transport == transport) {
+            present.insert(r.room);
+        }
+    }
+    QSet<QString> incoming;
+    auto b = store_.beginBatch();
+    for (const Room& r : items) {
+        incoming.insert(r.room);
+        b.upsert(r, origin);
+    }
+    for (const QString& room : present) {
+        if (!incoming.contains(room)) {
+            b.tombstone<Room>(RoomKey{transport, room}, origin);
+        }
+    }
+    b.commit();
+}
+
+void Ingestor::deliverRooms(const QString& transport, const std::vector<Room>& items,
+                            bool isFinalPage) {
+    if (isFinalPage) {
+        applyRoomFullList(transport, items);
+    } else {
+        auto b = store_.beginBatch();
+        for (const Room& r : items) {
+            b.upsert(r, originFor(QStringLiteral("rooms")));
+        }
+        b.commit();
+    }
+    state_.markFresh(QStringLiteral("rooms"), 0, nowMs());
+}
+
+void Ingestor::refetchRouting() {
+    enqueueFetch(FetchOp::RoutingListChats, QString(),
+                 observing(QStringLiteral("routing"), QString()) ? Priority::VisibleSurface
+                                                                 : Priority::Prefetch);
+    state_.markSyncing(QStringLiteral("routing"));
+}
+
+void Ingestor::refetchRooms(const QString& transport) {
+    enqueueFetch(FetchOp::TransportRooms, transport,
+                 observing(QStringLiteral("rooms"), transport) ? Priority::VisibleSurface
+                                                               : Priority::Prefetch);
+    state_.markSyncing(QStringLiteral("rooms"));
 }
 
 // ---------------------------------------------------------------------------
