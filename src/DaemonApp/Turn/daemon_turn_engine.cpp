@@ -8,6 +8,7 @@
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 #include "daemon/subscription_manager.h"
+#include "daemon/transcript_mirror_sink.h"
 
 #include <algorithm>
 #include <QDateTime>
@@ -120,8 +121,10 @@ QVariantList todoItemsFromDetail(const QByteArray& body) {
 DaemonTurnEngine::DaemonTurnEngine(NodeApiClient* client,
                                    daemonapp::daemon::DaemonCacheStore* cache,
                                    daemonapp::daemon::SubscriptionManager* subscriptions,
+                                   daemonapp::daemon::ITranscriptMirrorSink* mirrorSink,
                                    QObject* parent)
-    : ITurnEngine(parent), m_client(client), m_cache(cache), m_subscriptions(subscriptions) {
+    : ITurnEngine(parent), m_client(client), m_cache(cache), m_subscriptions(subscriptions),
+      m_mirrorSink(mirrorSink) {
     m_elapsedTimer.setInterval(1000);
     m_deadlineTimer.setSingleShot(true);
     m_deadlineTimer.setInterval(kDeadlineMs);
@@ -609,7 +612,7 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
                     b.role = role;
                     b.text = entry.commandText;
                     b.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
-                    m_cache->upsertTranscriptBlock(b);
+                    persistTranscriptBlock(b);
                 }
             }
             continue;
@@ -678,7 +681,7 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
                 b.toolName = entry.event.toolName;
                 b.argsSummary = entry.event.toolArgs;
                 b.updatedAtMs = now;
-                m_cache->upsertTranscriptBlock(b);
+                persistTranscriptBlock(b);
             } else if (entry.event.kind == AgentEventKind::ToolFinished) {
                 daemonapp::daemon::CachedTranscriptBlockRow b;
                 b.sessionId = m_sessionId;
@@ -692,7 +695,7 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
                 b.detailKind = entry.event.detailKind;
                 b.detailBody = entry.event.detailBody;
                 b.updatedAtMs = now;
-                m_cache->upsertTranscriptBlock(b);
+                persistTranscriptBlock(b);
             } else if (entry.event.kind == AgentEventKind::TurnFinished &&
                        !entry.event.finalText.isEmpty()) {
                 daemonapp::daemon::CachedTranscriptBlockRow b;
@@ -702,7 +705,7 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
                 b.role = QStringLiteral("Assistant");
                 b.text = entry.event.finalText;
                 b.updatedAtMs = now;
-                m_cache->upsertTranscriptBlock(b);
+                persistTranscriptBlock(b);
             }
         }
         if (entry.event.kind == AgentEventKind::TurnFinished) {
@@ -822,6 +825,11 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
         if (m_cache != nullptr && !m_sessionId.isEmpty()) {
             m_cache->clearTranscript(m_sessionId);
         }
+        // A7T dual-write: wipe the stale generation from the mirror window too, so the replay
+        // below re-feeds it in lockstep with the cache (parity across the rebaseline).
+        if (m_mirrorSink != nullptr && !m_sessionId.isEmpty()) {
+            m_mirrorSink->clear(m_sessionId);
+        }
         m_reasoningSeq = 0;
         m_reasoningText.clear();
         bool parked = false;
@@ -879,7 +887,7 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
                     row.kind = QStringLiteral("Other");
                     break;
                 }
-                m_cache->upsertTranscriptBlock(row);
+                persistTranscriptBlock(row);
             }
             switch (b.kind) {
             case Kind::Message:
@@ -964,6 +972,19 @@ void DaemonTurnEngine::persistWatermark() {
     m_cache->setCursor(dcache::sessionEpochScope(m_sessionId), QString::number(m_epoch), now);
 }
 
+void DaemonTurnEngine::persistTranscriptBlock(
+    const daemonapp::daemon::CachedTranscriptBlockRow& block) {
+    if (m_cache != nullptr) {
+        m_cache->upsertTranscriptBlock(block);
+    }
+    // A7T dual-write (§13 M4): feed the same coalesced block to the mirror window through the
+    // ingestor sink (single writer §5.1). Inert to the UI until the read facade flips (withheld
+    // on the entity-field gap, LEDGER-a7t).
+    if (m_mirrorSink != nullptr) {
+        m_mirrorSink->deliverBlock(block);
+    }
+}
+
 void DaemonTurnEngine::checkpointReasoningBlock() {
     if (m_reasoningSeq == 0 || m_cache == nullptr || m_sessionId.isEmpty()) {
         return;
@@ -974,7 +995,7 @@ void DaemonTurnEngine::checkpointReasoningBlock() {
     b.kind = QStringLiteral("Reasoning");
     b.text = m_reasoningText;
     b.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
-    m_cache->upsertTranscriptBlock(b);
+    persistTranscriptBlock(b);
 }
 
 void DaemonTurnEngine::settleReasoningBlock() {

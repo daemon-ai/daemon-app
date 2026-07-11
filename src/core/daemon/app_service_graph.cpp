@@ -75,7 +75,8 @@
 #ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
 #include "daemon/daemon_fetch_executor.h"
 #include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
-#include "daemon/mirror_session_store.h" // mirror A7 (M4): the 6->1 session store projection
+#include "daemon/mirror_session_store.h"   // mirror A7 (M4): the 6->1 session store projection
+#include "daemon/mirror_transcript_sink.h" // A7T (M4 sub-step 6): engine transcript -> mirror
 #include "local_database.h"
 #include "mirror/mirror_service.h"
 #include "outbox.h"
@@ -698,6 +699,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             // (dual-write; parity asserts guard the two row-sets until deletion).
             graph.storeMirror =
                 new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
+
+            // A7T (M4 sub-step 6): the turn engine dual-writes its coalesced transcript blocks
+            // into w_transcript_blocks through this sink (the ingestor stays the single writer,
+            // §5.1). The read facade still delegates to the legacy cache — the flip is withheld on
+            // the entity-field gap (LEDGER-a7t), so this write path is inert to the user until the
+            // entity is enriched node-side and content() flips to mirrorContent().
+            graph.transcriptMirrorSink = new MirrorTranscriptSink(&svc->ingestor(), owner);
 
             // Feed the node event stream into the ingestor through the bridge. A per-session
             // Subscribe item is not an events page (decode fails) so it is ignored — the mirror

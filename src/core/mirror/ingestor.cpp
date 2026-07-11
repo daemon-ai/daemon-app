@@ -763,6 +763,22 @@ void Ingestor::deliverFleetUnits(const std::vector<FleetUnit>& items, bool isFin
     }
 }
 
+void Ingestor::deliverTranscriptBlock(const TranscriptBlock& block) {
+    // Single-writer (§5.1) cursor-ordered upsert-by-seq: the engine already coalesced this block,
+    // so re-writing the same (session, seq) replaces it in place (reasoning re-checkpoints /
+    // journal replay), diff-before-write suppressing a no-op re-write (§5.3).
+    auto b = store_.beginBatch();
+    b.upsertWindow(block, originFor(QStringLiteral("transcripts")), block.origin_op);
+    b.commit();
+}
+
+void Ingestor::clearTranscriptBlocks(const QString& session) {
+    auto b = store_.beginBatch();
+    b.clearWindow<TranscriptBlock>(TranscriptBlockScope{session},
+                                   originFor(QStringLiteral("transcripts")));
+    b.commit();
+}
+
 void Ingestor::refetchSessionsForProfile(const QString& profileId) {
     if (profileId.isEmpty()) {
         return;

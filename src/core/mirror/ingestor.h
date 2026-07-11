@@ -112,6 +112,19 @@ public:
     // FleetChanged rung-1 skip-gate can skip a rev-unchanged event (§5.5).
     void deliverFleetUnits(const std::vector<FleetUnit>& items, bool isFinalPage, quint64 rev = 0);
 
+    // --- transcript window delivery (M4 sub-step 6, A7T) --------------------------------------
+    // The turn engine's app-local transcript stream re-homed onto w_transcript_blocks (scope =
+    // session, window key = seq). The engine coalesces (reasoning runs, todo suppression,
+    // tool-result folding) and hands ONE already-coalesced block per (session, seq); the ingestor
+    // stays the SINGLE writer (§5.1) — the engine feeds these, never the store directly. The
+    // upsert-by-seq mirrors the engine's `(session, seq)` cache upsert (reasoning re-checkpoints /
+    // journal replay re-write the same seq). No freshness change: the transcript window is fed by
+    // the app-local stream, not a scanned collection.
+    void deliverTranscriptBlock(const TranscriptBlock& block);
+    // Wipe a session's transcript window — the twin of the engine's journal-rebaseline
+    // clearTranscript() before it replays the durable generation.
+    void clearTranscriptBlocks(const QString& session);
+
     // --- routing refresh triggers (M3) --------------------------------------------------------
     // Re-list the routing pins into the mirror (RoutingListChats). Called on connect-ready and
     // after a node-acked routing mutation so the store reflects the node's authoritative state.

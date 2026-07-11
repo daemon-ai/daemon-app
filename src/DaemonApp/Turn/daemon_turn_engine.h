@@ -17,6 +17,8 @@ namespace daemonapp::daemon {
 class NodeApiClient;
 class DaemonCacheStore;
 class SubscriptionManager;
+class ITranscriptMirrorSink; // A7T: transcript dual-write into the mirror window
+struct CachedTranscriptBlockRow;
 struct DecodedLogEntry;
 } // namespace daemonapp::daemon
 
@@ -36,9 +38,14 @@ public:
     // `subscriptions` (optional) is the L3 feed consumer this engine self-registers with on
     // `setSessionId`, so a `SessionAdvanced` for its bound session nudges it (the per-tab focus
     // wiring) regardless of which front end owns the tab.
+    // `mirrorSink` (optional) dual-writes each coalesced transcript block into the mirror
+    // `w_transcript_blocks` window (A7T; single-writer §5.1 preserved — the sink feeds the
+    // ingestor, never the store directly). Null disables the mirror dual-write (mock / test /
+    // substrate-less stacks); the legacy cache write path is unconditional.
     explicit DaemonTurnEngine(daemonapp::daemon::NodeApiClient* client,
                               daemonapp::daemon::DaemonCacheStore* cache = nullptr,
                               daemonapp::daemon::SubscriptionManager* subscriptions = nullptr,
+                              daemonapp::daemon::ITranscriptMirrorSink* mirrorSink = nullptr,
                               QObject* parent = nullptr);
     ~DaemonTurnEngine() override;
 
@@ -113,6 +120,10 @@ private:
     // run (the next delta starts a new block).
     void checkpointReasoningBlock();
     void settleReasoningBlock();
+    // A7T: persist one coalesced transcript block to the durable cache AND (dual-write) the mirror
+    // window (if a sink is bound). The single point every transcript write funnels through so the
+    // two stores never diverge; a byte-parity harness (tst_mirror_transcript_parity) guards them.
+    void persistTranscriptBlock(const daemonapp::daemon::CachedTranscriptBlockRow& block);
 
     // Structured subagent strip (live delegation rows): fetch the session's UnitEvents (a one-shot
     // Call — the wire has no cursored subagent stream) and map the ManageEventView::Subagent arms
@@ -136,6 +147,7 @@ private:
     daemonapp::daemon::NodeApiClient* m_client = nullptr;
     daemonapp::daemon::DaemonCacheStore* m_cache = nullptr;
     daemonapp::daemon::SubscriptionManager* m_subscriptions = nullptr;
+    daemonapp::daemon::ITranscriptMirrorSink* m_mirrorSink = nullptr;
     QString m_sessionId;
     QString m_profile;    // optional profile binding for Submit (PRO-5)
     quint64 m_cursor = 0; // applied-seq watermark: reopen cursor + dedup floor (apply iff seq > it)

@@ -8,6 +8,11 @@
 
 #include <algorithm>
 #include <QDateTime>
+#include <QHash>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSet>
+#include <vector>
 
 namespace daemonapp::daemon {
 namespace {
@@ -70,6 +75,90 @@ domain::Session projectRow(const mirror::Session& s) {
         out.created = out.modified;
     }
     return out;
+}
+
+// A7T: the msg-fence transcript projection over mirror `TranscriptBlock` window items (seq order).
+// Ported grammar-for-grammar from `CachedSessionStore::content()` so a re-projection is byte-stable
+// and (for the representable block kinds) byte-IDENTICAL to the legacy cache projection. The one
+// unavoidable divergence is structural, not logical: the generated entity carries no `argsSummary`
+// (so the tool fence emits the always-present key as "") and no `detailKind`/`detailBody` (so a
+// structured tool result cannot be folded) — see LEDGER-a7t "ENTITY-FIELD GAP".
+QString projectMirrorTranscript(const std::vector<mirror::TranscriptBlock>& blocks) {
+    // Pre-pass: the `todo` tool's blocks are the composer status stack's feed, not transcript
+    // content (mirrors the engine's live suppression) — collect its call ids so results skip too.
+    // Every other ToolResult is folded into its ToolCall's fence (ok/error status).
+    QSet<QString> todoCalls;
+    QHash<QString, const mirror::TranscriptBlock*> resultByCall;
+    for (const mirror::TranscriptBlock& b : blocks) {
+        if (b.kind == QStringLiteral("ToolCall") && b.name == QStringLiteral("todo")) {
+            todoCalls.insert(b.call_id);
+        } else if (b.kind == QStringLiteral("ToolResult") && !resultByCall.contains(b.call_id)) {
+            resultByCall.insert(b.call_id, &b);
+        }
+    }
+
+    QString out;
+    QString openRole;
+    bool openedByAgentBlock = false;
+    const auto openMessage = [&out, &openRole](const QString& role, quint64 seq) {
+        openRole = role;
+        out += QStringLiteral("```msg\n{\"id\":\"cache-%1\",\"role\":\"%2\"}\n```\n\n")
+                   .arg(seq)
+                   .arg(role);
+    };
+    const auto openAssistantFor = [&openMessage, &openRole, &openedByAgentBlock](quint64 seq) {
+        if (openRole != QStringLiteral("assistant")) {
+            openMessage(QStringLiteral("assistant"), seq);
+            openedByAgentBlock = true;
+        }
+    };
+    const auto appendFence = [&out](const QString& info, const QJsonObject& meta) {
+        out +=
+            QStringLiteral("```%1\n%2\n```\n\n")
+                .arg(info, QString::fromUtf8(QJsonDocument(meta).toJson(QJsonDocument::Compact)));
+    };
+    for (const mirror::TranscriptBlock& b : blocks) {
+        if (b.kind == QStringLiteral("Message")) {
+            const QString role =
+                (b.role.isEmpty() ? QStringLiteral("Assistant") : b.role).toLower();
+            const bool continuesAgentTurn =
+                openedByAgentBlock && role == QStringLiteral("assistant") && openRole == role;
+            if (!continuesAgentTurn) {
+                openMessage(role, b.seq);
+            }
+            openedByAgentBlock = false;
+            out += b.text;
+            out += QStringLiteral("\n\n");
+        } else if (b.kind == QStringLiteral("Reasoning")) {
+            openAssistantFor(b.seq);
+            appendFence(QStringLiteral("reasoning"),
+                        QJsonObject{{QStringLiteral("status"), QStringLiteral("complete")},
+                                    {QStringLiteral("body"), b.text}});
+        } else if (b.kind == QStringLiteral("ToolCall")) {
+            if (todoCalls.contains(b.call_id)) {
+                continue;
+            }
+            openAssistantFor(b.seq);
+            const mirror::TranscriptBlock* result = resultByCall.value(b.call_id, nullptr);
+            const QString status = result == nullptr ? QStringLiteral("running")
+                                   : result->ok      ? QStringLiteral("ok")
+                                                     : QStringLiteral("error");
+            // The entity carries no `argsSummary`: emit the always-present legacy key as "" so an
+            // empty-args call matches byte-for-byte; a non-empty-args call is the documented gap.
+            QJsonObject tool{{QStringLiteral("callId"), b.call_id},
+                             {QStringLiteral("name"), b.name},
+                             {QStringLiteral("argsSummary"), QString()},
+                             {QStringLiteral("status"), status}};
+            if (result != nullptr && !result->summary.isEmpty()) {
+                tool.insert(QStringLiteral("summary"), result->summary);
+            }
+            // detailKind/detailBody have no home in the entity: omitted (matches legacy only when
+            // the result carried no structured detail).
+            appendFence(QStringLiteral("tool"), tool);
+        }
+        // ToolResult rows carry no standalone rendering: folded into their call's fence above.
+    }
+    return out.trimmed();
 }
 
 } // namespace
@@ -234,6 +323,25 @@ void MirrorSessionStore::setContent(const domain::SessionId& id, const QString& 
     if (m_legacy != nullptr) {
         m_legacy->setContent(id, markdown);
     }
+}
+
+QString MirrorSessionStore::mirrorContent(const domain::SessionId& id) const {
+    if (m_mirror == nullptr || id.isEmpty()) {
+        return {};
+    }
+    // The window items are stored cursor-ordered (by seq), so a straight copy is already in the
+    // seq order the projection expects.
+    const auto& windows = m_mirror->snapshot().transcripts;
+    const mirror::TranscriptBlockScope scope{id.toString()};
+    std::vector<mirror::TranscriptBlock> blocks;
+    if (windows.count(scope) != 0U) {
+        const mirror::Window<mirror::TranscriptBlock>& win = windows[scope];
+        blocks.reserve(win.items.size());
+        for (const auto& item : win.items) {
+            blocks.push_back(item.get());
+        }
+    }
+    return projectMirrorTranscript(blocks);
 }
 
 domain::SessionId MirrorSessionStore::newSession(const domain::UnitId& unitId) {

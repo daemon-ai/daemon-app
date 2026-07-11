@@ -156,8 +156,9 @@ QString RootWidget::runHeadlessChat(const QString& prompt, int timeoutMs) const 
         return {};
     }
     settle(600); // drain the on-ready refreshes first
-    auto* engine = new DaemonTurnEngine(m_services.nodeApi, m_services.cache,
-                                        m_services.subscriptions, const_cast<RootWidget*>(this));
+    auto* engine =
+        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions,
+                             m_services.transcriptMirrorSink, const_cast<RootWidget*>(this));
     engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
     QString answer;
     QEventLoop loop;

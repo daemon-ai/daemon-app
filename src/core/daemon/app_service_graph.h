@@ -112,6 +112,7 @@ class SessionRepository;
 class SubscriptionManager;
 class ToolRepository;        // [wave2:app-approvals-safety] D2
 class FingerprintRepository; // [wave2:app-approvals-safety] D4
+class ITranscriptMirrorSink; // A7T: engine transcript stream -> mirror window (substrate only)
 
 enum class ServiceMode {
     Mock,
@@ -239,6 +240,12 @@ struct AppServiceGraph {
     DaemonFetchExecutor* mirrorExecutor = nullptr; // Daemon mode only
     mirror::LocalDatabase* localDb = nullptr; // precious local-<id>.db (outbox + sidecar, §4.5)
     mirror::Outbox* outbox = nullptr;         // durable write queue (§6): ConvSend + turn-prompt
+    // A7T (spec 09 §13 wave M4 sub-step 6): the turn engine dual-writes its coalesced transcript
+    // blocks here so w_transcript_blocks tracks the live/rebaselined transcript. Non-null only in
+    // Daemon mode with the substrate; null (no-op) otherwise. The read facade
+    // (MirrorSessionStore::content) still delegates to the legacy cache — the flip is withheld on
+    // the entity-field gap (LEDGER-a7t).
+    ITranscriptMirrorSink* transcriptMirrorSink = nullptr;
 };
 
 // Resolve the service mode from the DAEMON_APP_SERVICE_MODE environment variable
