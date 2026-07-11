@@ -73,4 +73,47 @@ when a cache/repo/store's LAST reader is ported and its parity assert has been g
 
 ## Status / boundary (updated as sub-steps land)
 
-- Sub-step 0 (fetch/ingest vertical): see commits below.
+- **Sub-step 0 (fetch/ingest vertical) — DONE, gated green.** `sessions`/`fleet_units` mirror tables
+  are fed end-to-end in daemon mode, beside the legacy repos (dual-write). ctest 136→137.
+- **Parity infrastructure — DONE, gated green.** `parity::sessionKeys` / `parity::fleetUnitKeys`
+  extract the mirror row-set for comparison against the legacy `CachedSessionStore` /
+  `SessionRepository` / fleet-tree row-set (spec §13 M4 "parity asserts vs legacy roster until
+  deletion"). Covered in `tst_mirror_parity`.
+
+### Precise boundary handed to the next A7 continuation / A8
+
+The consumer cutover sub-gates (1 roster list → 2 sidebar → 3 pickers → 4 detail → 5 transcript
+chrome → 6 transcript-engine re-homing) are NOT yet landed. They are deliberately deferred rather
+than rushed: this is the highest-blast-radius surface and a half-finished cutover would break a
+large surface (the task's "honest partial with clean gates beats a broken total"). The precise
+seam that makes them a large, discrete step:
+
+- **Single shared store injection.** All session consumers bind to ONE context property
+  `SessionStore` (`application.cpp:253`, `engine.rootContext()->setContextProperty("SessionStore",
+  m_services.store)`) which is the legacy `CachedSessionStore`/`InMemorySessionStore`. The GUI QML
+  and the TUI both read the same object, so a per-consumer sub-gate CANNOT flip one consumer by
+  reassigning the shared property. The mechanism for the sub-gate protocol is: introduce a
+  mirror-backed `persistence::ISessionStore` (reads `Store::snapshot().sessions` + `fleet_units`,
+  re-derives on `Store::committed`), expose it as a SECOND context property, and rebind ONLY the
+  ported consumer's `store:` (QML) + its TUI wiring — keeping the legacy `SessionStore` live for the
+  unported consumers (dual-write) and for the parity assert. Delete the legacy store only when its
+  LAST reader is ported.
+- **Shape gaps the mirror Session does NOT carry (documented degradations, thin-client correct).**
+  The legacy `domain::Session` fused node facts with client-local + transcript data: `content`
+  (markdown snippet — that is the transcript/chat window, not a roster fact), `tagIds` (client-local
+  cross-cutting labels — sidecar, no node concept), and `unitId` (unit membership — derivable from
+  `fleet_units.session`). A mirror-backed roster renders snippet/tags empty until a client-local
+  sidecar (tags) and the `unitsByParent`/`sessionsByProfile` §3.5 relation indexes are added; this
+  matches the A5 canonical-shape degradation precedent. Mock mode has a null `Mirror` (A5/A6
+  precedent) so a ported surface renders empty in mock until A8's seeder feeds the mock mirror.
+- **Transcript re-homing (sub-step 6, LAST).** The turn-engine (`daemon_turn_engine.cpp`) is still
+  the single writer of transcript blocks; `TranscriptBlock`'s `map_transcript_block` remains a TODO
+  stub and the `w_transcript_blocks` legacy table is frozen (entity-map.toml note). Untouched here —
+  its own gate, per spec.
+
+### Provenance-landing decision
+
+Deferred (left for A8, as A6's LEDGER permits). This package did not touch the outbox landing seam
+(`Outbox::onProvenanceStamped` / `setProvenanceCapable`) — the session/fleet fetch vertical is a
+read path (ingestor deliver), it does not naturally cross the outbox provenance seam, so per the BR
+worker's instruction it is correctly left for A8.

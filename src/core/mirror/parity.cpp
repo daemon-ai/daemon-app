@@ -45,6 +45,22 @@ QSet<QString> contactKeys(const MirrorModel& snapshot, const QString& transport)
     return out;
 }
 
+QSet<QString> sessionKeys(const MirrorModel& snapshot) {
+    QSet<QString> out;
+    for (const Session& s : snapshot.sessions) {
+        out.insert(s.key().serialize());
+    }
+    return out;
+}
+
+QSet<QString> fleetUnitKeys(const MirrorModel& snapshot) {
+    QSet<QString> out;
+    for (const FleetUnit& u : snapshot.fleet_units) {
+        out.insert(u.key().serialize());
+    }
+    return out;
+}
+
 bool checkAndLog(const QString& domain, const Result& result) {
     if (result.matches()) {
         return true;
