@@ -4,14 +4,20 @@
 #include "connection/mock_connection_service.h"
 #include "daemon/app_service_graph.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/mock_scenario.h"
+#include "daemon/mock_scenario_host.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
 #include "fleet/idashboard.h"
 #include "mirror/chat_window_model.h"
 #include "mirror/mirror_service.h"
+#include "outbox.h"
 #include "persistence/isession_store.h"
 
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSettings>
+#include <QSignalSpy>
 #include <QStandardPaths>
 #include <QtTest/QtTest>
 
@@ -188,27 +194,47 @@ private slots:
                 QStringLiteral("hello"));
         }
 
-        // Mock mode: no mirror at M2 — the chat surfaces keep the legacy mock path (§9).
+        // mirror A8 (M5): mock mode now runs the LIVE mock mirror — in-memory (never persisted),
+        // scenario-seeded, with a live outbox. The A5 null-mirror fallback is deleted.
         {
             QObject owner;
             const auto graph = daemonapp::daemon::createAppServiceGraph(
                 daemonapp::daemon::ServiceMode::Mock, &owner);
-            QVERIFY(graph.mirrorService == nullptr);
-            QVERIFY(graph.outbox == nullptr);
+            QVERIFY(graph.mirrorService != nullptr);
+            QVERIFY(!graph.mirrorService->persistent());
+            QVERIFY(graph.outbox != nullptr);
+            QVERIFY(graph.mockHost != nullptr);
         }
     }
 
-    // mirror A7 (M4): the composition-time storeMirror invariant — NEVER null; in mock mode it
-    // ALIASES the legacy store (§9 "mock keeps working": ported consumers render the mock seed
-    // through the same binding until A8's seeder feeds the mock mirror); in daemon mode (with the
-    // substrate) it is the distinct MirrorSessionStore projection over the mirror tables.
-    void storeMirrorFallbackAliasesLegacyInMockOnly() {
+    // mirror A8 (M5): storeMirror is the REAL MirrorSessionStore projection in BOTH modes (the
+    // A7 mock aliasing fallback is deleted). The mock projection renders the scenario's seeded
+    // sessions, and its ids agree with the legacy delegate store's — the content() join.
+    void storeMirrorIsTheMirrorProjectionInBothModes() {
         {
             QObject owner;
             const auto graph = daemonapp::daemon::createAppServiceGraph(
                 daemonapp::daemon::ServiceMode::Mock, &owner);
             QVERIFY(graph.storeMirror != nullptr);
-            QCOMPARE(graph.storeMirror, graph.store); // the mock fallback IS the legacy store
+            QVERIFY(graph.storeMirror != graph.store); // no longer the legacy alias
+            const QList<domain::Session> mirrorRows =
+                graph.storeMirror->sessions(domain::ListScope{});
+            QVERIFY(!mirrorRows.isEmpty());
+            // Same row-set as the legacy delegate (both sides seeded from the ONE scenario).
+            const QList<domain::Session> legacyRows = graph.store->sessions(domain::ListScope{});
+            QSet<QString> mirrorIds;
+            for (const domain::Session& s : mirrorRows) {
+                mirrorIds.insert(s.sessionId.toString());
+            }
+            QSet<QString> legacyIds;
+            for (const domain::Session& s : legacyRows) {
+                legacyIds.insert(s.sessionId.toString());
+            }
+            QCOMPARE(mirrorIds, legacyIds);
+            // The delegated transcript join: a mirror row's content flows from the legacy store.
+            const domain::SessionId scratch{QStringLiteral("s-scratch")};
+            QVERIFY(!graph.storeMirror->content(scratch).isEmpty());
+            QCOMPARE(graph.storeMirror->content(scratch), graph.store->content(scratch));
         }
         {
             // (This suite assumes the substrate configuration, like the offline-reboot test
@@ -221,6 +247,150 @@ private slots:
             // The projection starts empty (no connection): reads answer, never crash.
             QCOMPARE(graph.storeMirror->sessionCount(domain::ListScope{}), 0);
         }
+    }
+
+    // mirror A8 (M5): the mock mirror renders the scenario's chat/conversation/routing seed —
+    // the surfaces that went EMPTY in mock at M2/M3 (chat timeline, routing manager) have data.
+    void mockMirrorSeedsScenarioData() {
+        QObject owner;
+        const auto graph =
+            daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
+        QVERIFY(graph.mirrorService != nullptr);
+        const auto& snap = graph.mirrorService->store().snapshot();
+        QVERIFY(snap.conversations.size() >= 2);
+        QVERIFY(snap.route_pins.size() >= 1);
+        QVERIFY(snap.rooms.size() >= 2);
+        QVERIFY(snap.transport_accounts.size() >= 1);
+
+        const mirror::ChatMessageScope scope{QStringLiteral("matrix/@you:matrix.org"),
+                                             QStringLiteral("!daemon-dev:matrix.org")};
+        QVERIFY(snap.chat.count(scope) != 0U);
+        mirror::ChatWindowModel timeline(graph.mirrorService->store(), scope);
+        QVERIFY(timeline.rowCount() >= 4);
+
+        // Every seeded journal record is stamped origin = seeder (§9 — no mock-only apply).
+        for (const mirror::JournalRecord& rec : graph.mirrorService->store().journal().records()) {
+            QCOMPARE(rec.origin, mirror::JournalOrigin::Seeder);
+        }
+    }
+
+    // mirror A8 (M5): the app-level api/<N> mock Hello — the DEFAULT scenario advertises api/39:
+    // ready ⇒ FULL mode (Bootstrap probe, no degraded scan) + auto-replay drains a pre-enqueued
+    // op, which then lands through the scripted ok-outcome's provenance echo (§5.6/§6.6/§6.8).
+    void mockFullModeBootstrapAndAutoReplayAtAppLevel() {
+        qunsetenv("DAEMON_APP_MOCK_SCENARIO");
+        QObject owner;
+        const auto graph =
+            daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
+        QCOMPARE(graph.mockHost->apiVersion(), 39);
+
+        // Enqueue BEFORE ready: durable, held (the gate requires a ready connection).
+        const QString opId = graph.outbox->enqueue(
+            QStringLiteral("ConvSend"),
+            QStringLiteral("matrix/@you:matrix.org\x1f!daemon-dev:matrix.org"),
+            QJsonDocument(
+                QJsonObject{{QStringLiteral("transport"), QStringLiteral("matrix/@you:matrix.org")},
+                            {QStringLiteral("conv"), QStringLiteral("!daemon-dev:matrix.org")},
+                            {QStringLiteral("message"), QStringLiteral("hello from mock")}})
+                .toJson(QJsonDocument::Compact),
+            QStringLiteral("hello from mock"));
+        QVERIFY(!opId.isEmpty());
+        graph.outbox->drain(); // gated: not ready yet
+        QCOMPARE(graph.outbox->op(opId).state, mirror::OpState::Pending);
+
+        // Drive the mock connection to ready ("mock"/"ready" is the deterministic liveness path).
+        graph.connection->connectTo(QStringLiteral("mock"), QStringLiteral("ready"));
+        QTRY_VERIFY_WITH_TIMEOUT(graph.connection->ready(), 5000);
+
+        // FULL mode: the Bootstrap probe was issued. (A SessionsQuery may ALSO run — the
+        // MirrorSessionStore's beginObserving("sessions") visibility declaration drives a §5.8
+        // staleness fetch in both modes; the Bootstrap probe is the mode discriminator.)
+        bool sawBootstrap = false;
+        for (const mirror::FetchJob& j : graph.mockHost->executedJobs()) {
+            sawBootstrap = sawBootstrap || j.op == mirror::FetchOp::Bootstrap;
+        }
+        QVERIFY(sawBootstrap);
+
+        // Auto-replay (§6.8) drained unattended; the scripted ok echo lands the op (§6.6).
+        QTRY_VERIFY_WITH_TIMEOUT(!graph.outbox->contains(opId), 5000);
+        // The echoed line is a provenance-stamped mirror row in the conversation's window.
+        const mirror::ChatMessageScope scope{QStringLiteral("matrix/@you:matrix.org"),
+                                             QStringLiteral("!daemon-dev:matrix.org")};
+        mirror::ChatWindowModel timeline(graph.mirrorService->store(), scope);
+        QCOMPARE(
+            timeline
+                .data(timeline.index(timeline.rowCount() - 1, 0), mirror::ChatWindowModel::TextRole)
+                .toString(),
+            QStringLiteral("hello from mock"));
+    }
+
+    // mirror A8 (M5): the api38 scenario — degraded reconnect (staleness scan, no Bootstrap) and
+    // the auto-replay gate HOLDS (manual drain only; a blind resend can duplicate at v38).
+    void mockDegradedModeHoldsAutoReplayAtAppLevel() {
+        qputenv("DAEMON_APP_MOCK_SCENARIO", "api38");
+        QObject owner;
+        const auto graph =
+            daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
+        qunsetenv("DAEMON_APP_MOCK_SCENARIO");
+        QCOMPARE(graph.mockHost->apiVersion(), 38);
+
+        const QString opId = graph.outbox->enqueue(
+            QStringLiteral("ConvSend"),
+            QStringLiteral("matrix/@you:matrix.org\x1f!design:matrix.org"),
+            QJsonDocument(
+                QJsonObject{{QStringLiteral("transport"), QStringLiteral("matrix/@you:matrix.org")},
+                            {QStringLiteral("conv"), QStringLiteral("!design:matrix.org")},
+                            {QStringLiteral("message"), QStringLiteral("held until tap")}})
+                .toJson(QJsonDocument::Compact),
+            QStringLiteral("held until tap"));
+
+        graph.connection->connectTo(QStringLiteral("mock"), QStringLiteral("ready"));
+        QTRY_VERIFY_WITH_TIMEOUT(graph.connection->ready(), 5000);
+
+        // DEGRADED mode: staleness scan ran; no Bootstrap probe.
+        bool sawBootstrap = false;
+        bool sawSessionsScan = false;
+        for (const mirror::FetchJob& j : graph.mockHost->executedJobs()) {
+            sawBootstrap = sawBootstrap || j.op == mirror::FetchOp::Bootstrap;
+            sawSessionsScan =
+                sawSessionsScan || (j.op == mirror::FetchOp::SessionsQuery && j.scope.isEmpty());
+        }
+        QVERIFY(!sawBootstrap);
+        QVERIFY(sawSessionsScan);
+
+        // The lane HELD (no unattended replay at api/38) — the op is still pending.
+        QTest::qWait(150); // give any (wrong) auto-drain a chance to surface
+        QCOMPARE(graph.outbox->op(opId).state, mirror::OpState::Pending);
+
+        // An explicit user tap always drains; against api/38 the ack is terminal (§6.6).
+        graph.outbox->drain();
+        QTRY_VERIFY_WITH_TIMEOUT(!graph.outbox->contains(opId), 5000);
+    }
+
+    // mirror A8 (M5): the MANDATORY rejection script at app level — "/reject" pauses the lane
+    // with the typed api-error (§6.5); retry/edit/discard affordances stay reachable.
+    void mockRejectionScriptPausesLaneAtAppLevel() {
+        qunsetenv("DAEMON_APP_MOCK_SCENARIO");
+        QObject owner;
+        const auto graph =
+            daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
+        graph.connection->connectTo(QStringLiteral("mock"), QStringLiteral("ready"));
+        QTRY_VERIFY_WITH_TIMEOUT(graph.connection->ready(), 5000);
+
+        const QString lane = QStringLiteral("matrix/@you:matrix.org\x1f!daemon-dev:matrix.org");
+        const QString opId = graph.outbox->enqueue(
+            QStringLiteral("ConvSend"), lane,
+            QJsonDocument(
+                QJsonObject{{QStringLiteral("transport"), QStringLiteral("matrix/@you:matrix.org")},
+                            {QStringLiteral("conv"), QStringLiteral("!daemon-dev:matrix.org")},
+                            {QStringLiteral("message"), QStringLiteral("/reject this")}})
+                .toJson(QJsonDocument::Compact),
+            QStringLiteral("/reject this"));
+        graph.outbox->drain();
+        QTRY_COMPARE_WITH_TIMEOUT(graph.outbox->op(opId).state, mirror::OpState::Rejected, 5000);
+        QVERIFY(graph.outbox->lanePaused(graph.outbox->op(opId).lane));
+        // lastError carries the typed api-error: "<kind>: <message>" (§6.5).
+        QVERIFY(graph.outbox->op(opId).lastError.startsWith(QStringLiteral("Forbidden: ")));
     }
 };
 

@@ -76,6 +76,8 @@
 #include "daemon/daemon_fetch_executor.h"
 #include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
 #include "daemon/mirror_session_store.h" // mirror A7 (M4): the 6->1 session store projection
+#include "daemon/mock_scenario.h"        // mirror A8 (M5): the mock seed-scenario catalog
+#include "daemon/mock_scenario_host.h"   // mirror A8 (M5): the mock scenario driver (Seeder)
 #include "local_database.h"
 #include "mirror/mirror_service.h"
 #include "outbox.h"
@@ -168,7 +170,18 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // deleted mock net's routing + transports-tree + patch-bay are gone). In daemon mode the
     // fleet/roster/store below are deleted + rebuilt daemon-backed, so this seed is used only in
     // mock mode; building it unconditionally keeps the pre-mode-branch surfaces simple.
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+    // mirror A8 (spec 09 §9, M5): the mock SCENARIO is the only mock seed source — resolved once,
+    // feeding BOTH the legacy delegate stores (its SeedBundle, here) and the mock mirror (its
+    // canonical seed, in the mirror block below), so the two sides' session ids provably agree
+    // (the delegated content() join depends on it). Daemon mode gets an empty placeholder (the
+    // pre-branch mock services it feeds are deleted + rebuilt daemon-backed below).
+    const MockScenario mockScenario =
+        mode == ServiceMode::Daemon ? MockScenario{} : mockScenarioFromEnvironment();
+    auto* fleetSource = new daemonnet::MockFleetSource(mockScenario.bundle, owner);
+#else
     auto* fleetSource = new daemonnet::MockFleetSource(owner);
+#endif
     graph.roster = new fleet::MockSessionRoster(fleetSource, owner);
     graph.fleetTree = new fleet::MockFleetTree(fleetSource, owner);
     graph.approvals = new fleet::MockApprovalsInbox(owner);
@@ -778,6 +791,60 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                  }
                              });
         }
+    } else {
+        // ---- mirror A8 (spec 09 §9, wave M5): the MOCK mirror — same store, same journal, same
+        // lenses, different feeder. The scenario's Seeder is the single Writer (§5.1); the A5/A7
+        // null-mirror fallbacks die here: Mirror/Outbox are LIVE in mock, so the chat surfaces
+        // read the window lens and route sends through the chat-send lane + scripted outcomes. ----
+        auto* svc = new mirror::MirrorService(owner);
+        // Mock state is throwaway by design (deterministic per run; the scenario is the only seed
+        // source): in-memory mirror, in-memory local db — nothing persisted, no migration surface.
+        svc->openInMemory();
+        graph.mirrorService = svc;
+        graph.localDb = new mirror::LocalDatabase(QStringLiteral(":memory:"), owner);
+        graph.outbox = new mirror::Outbox(graph.localDb, owner);
+        // Drain gate (§6.3): mutation lanes require the (mock) connection to be ready — the same
+        // predicate shape as the daemon branch, over the mock liveness state machine.
+        graph.outbox->setGate(
+            [conn = graph.connection](const QString& /*lane*/, mirror::VerbClass cls) {
+                return !mirror::requiresConnected(cls) || conn->ready();
+            });
+        graph.outbox->load();
+        // Provenance landing (§5.1/§6.6): identical wiring to the daemon branch — the scripted
+        // ok-outcome's echo lands ops through the SAME seam. (No boot reconciliation: the
+        // in-memory pair starts empty by construction.)
+        QObject::connect(svc, &mirror::MirrorService::provenanceStamped, graph.outbox,
+                         [outbox = graph.outbox](const QString& originOp) {
+                             outbox->onProvenanceStamped(originOp);
+                         });
+
+        // The scenario driver: seeds the mirror (one batch), plays the timeline, answers verbs
+        // from the script, and drives the ingestor's per-connection mode from the scenario's
+        // api/<N> at the mock connection's ready/lost transitions (§5.6/§6.8).
+        graph.mockHost = new MockScenarioHost(svc, graph.outbox, mockScenario, owner);
+        svc->setFetchExecutor(graph.mockHost->fetchExecutor());
+        {
+            auto wasReady = std::make_shared<bool>(false);
+            QObject::connect(graph.connection, &connection::IConnectionService::stateChanged,
+                             graph.mockHost,
+                             [conn = graph.connection, host = graph.mockHost, wasReady] {
+                                 const bool nowReady = conn->ready();
+                                 if (nowReady && !*wasReady) {
+                                     host->onConnectionReady();
+                                 } else if (!nowReady && *wasReady) {
+                                     host->onConnectionLost();
+                                 }
+                                 *wasReady = nowReady;
+                             });
+        }
+
+        // mirror A8 (M5): mock storeMirror is the REAL MirrorSessionStore over the seeded mirror —
+        // the A7 composition-time aliasing is deleted; the 6→1 projection now serves BOTH modes.
+        // content() + mutations keep DELEGATING to the legacy in-memory store (A7T re-homes that
+        // seam in parallel; the scenario derives the mirror ids from the same bundle so the
+        // delegated content() join holds).
+        graph.storeMirror =
+            new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
     }
 #endif
 

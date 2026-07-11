@@ -193,6 +193,8 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         # drives it (Seeder + timeline + scripted verb outcomes + the api/<N> mode select).
         mock_scenario.h
         mock_scenario.cpp
+        mock_scenario_host.h
+        mock_scenario_host.cpp
     )
     target_link_libraries(da_daemon_client PUBLIC
         daemon-app::mirror_ingestor
