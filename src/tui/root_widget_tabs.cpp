@@ -92,23 +92,23 @@ void RootWidget::previewSessionTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
-    m_tabModel->previewTranscript(sessionId,
-                                  rwdetail::resolveSessionTabTitle(m_services.store, sessionId));
+    m_tabModel->previewTranscript(
+        sessionId, rwdetail::resolveSessionTabTitle(m_services.storeMirror, sessionId));
 }
 
 void RootWidget::openSessionPinnedTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
-    m_tabModel->openTranscriptPinned(sessionId,
-                                     rwdetail::resolveSessionTabTitle(m_services.store, sessionId));
+    m_tabModel->openTranscriptPinned(
+        sessionId, rwdetail::resolveSessionTabTitle(m_services.storeMirror, sessionId));
 }
 
 void RootWidget::newTranscriptTab() {
-    if (m_services.store == nullptr || m_tabModel == nullptr) {
+    if (m_services.storeMirror == nullptr || m_tabModel == nullptr) {
         return;
     }
-    const QString id = m_services.store->newSessionId(domain::UnitId());
+    const QString id = m_services.storeMirror->newSessionId(domain::UnitId());
     m_tabModel->openTranscriptPinned(id, tr("New session"));
     // A new tab is a natural place to start typing.
     if (m_composer != nullptr) {

@@ -378,6 +378,35 @@ target_link_libraries(tui_tab_title_refresh_tests
 add_test(NAME tui_tab_title_refresh_tests COMMAND tui_tab_title_refresh_tests)
 set_tests_properties(tui_tab_title_refresh_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_tab_title_mirror (M4 sub-gate 3): the same tab-title wiring over the MIRROR-backed store -
+# a node-side retitle (keyed mirror upsert) re-titles the open transcript tab through
+# refreshTranscriptTabTitles, the exact RootWidget wiring flipped to storeMirror. Only built
+# with the substrate.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    qt_add_executable(tui_tab_title_mirror_tests
+        tst_tab_title_mirror.cpp
+        ${CMAKE_SOURCE_DIR}/src/tui/root_widget_detail.cpp
+        ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs/tab_model.cpp
+    )
+    set_target_properties(tui_tab_title_mirror_tests PROPERTIES AUTOMOC ON)
+    target_include_directories(tui_tab_title_mirror_tests PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/tui
+        ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs
+    )
+    target_link_libraries(tui_tab_title_mirror_tests
+        PRIVATE
+            Qt6::Test
+            Qt6::Qml
+            daemon-app::domain
+            daemon-app::persistence
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+    )
+    add_test(NAME tui_tab_title_mirror_tests COMMAND tui_tab_title_mirror_tests)
+    set_tests_properties(tui_tab_title_mirror_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
 # tst_chat_activation (A4 app/chat-tabs; wire v38): the activation-dispatch rewire -
 # activating a room/DM opens (or focuses) a native Chat tab for (transport, conv)
 # via rwdetail::openConversationTab, instead of the Channels page it fell back to
