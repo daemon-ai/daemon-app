@@ -579,6 +579,26 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     set_tests_properties(tst_routing_projection PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
 
+# tst_mirror_sessions_fleet: the M4 sessions/fleet fetch-ingest vertical on the MIRROR store - the
+# map_session/map_fleet_unit decode round-trip (SessionsQuery/Tree/SessionGet), the ingestor's
+# deliverSessions (global replace-and-prune over sessions), deliverFleetUnits (replace-and-prune
+# over fleet_units + rev record) and deliverSession (keyed hydration upsert). The M4 parity
+# infrastructure that unblocks the session/fleet consumer sub-gates. Only built where the immer
+# substrate is present.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    qt_add_executable(tst_mirror_sessions_fleet tst_mirror_sessions_fleet.cpp)
+    target_link_libraries(tst_mirror_sessions_fleet
+        PRIVATE
+            Qt6::Test
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+    )
+    add_test(NAME tst_mirror_sessions_fleet COMMAND tst_mirror_sessions_fleet)
+    set_tests_properties(tst_mirror_sessions_fleet PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
 # tst_graph_model: the reusable Daemon Kit graph model - generic node/edge ingestion, degree, the
 # normalized force layout, and edges()/nodeById/neighborsOf.
 qt_add_executable(tst_graph_model tst_graph_model.cpp)

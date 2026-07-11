@@ -44,6 +44,10 @@ private:
         // (TransportRooms) accumulate across the page loop, then land as one replace-and-prune.
         std::vector<mirror::RoutePin> routePinAccum;
         std::vector<mirror::Room> roomAccum;
+        // M4 sessions/fleet: SessionsQuery is a single full list; Tree pages over unit-id cursors
+        // and accumulates across the loop, then lands as one replace-and-prune (carrying the rev).
+        std::vector<mirror::Session> sessionAccum;
+        std::vector<mirror::FleetUnit> fleetAccum;
         // [api/39 §10.2] Delta-read accumulation across the page loop: the removed-id tombstones
         // and the collection rev (last page wins). Applied via the ingestor's deliver*Delta seam
         // when the job is a since_rev delta read (fullMode && sinceRev > 0).

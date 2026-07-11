@@ -242,4 +242,88 @@ bool decodeRoomsToMirror(const QByteArray& responseCbor, const QString& transpor
     return true;
 }
 
+bool decodeSessionsToMirror(const QByteArray& responseCbor, std::vector<mirror::Session>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_sessions_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_sessions& rs = response->api_response_response_sessions_m;
+    out->clear();
+    out->reserve(rs.response_sessions_Sessions_session_info_m_count);
+    for (size_t i = 0; i < rs.response_sessions_Sessions_session_info_m_count; ++i) {
+        out->push_back(mirror::map_session(rs.response_sessions_Sessions_session_info_m[i]));
+    }
+    return true;
+}
+
+bool decodeFleetUnitsToMirror(const QByteArray& responseCbor, std::vector<mirror::FleetUnit>* out,
+                              QString* next, quint64* rev) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_tree_m_c);
+    if (!response) {
+        return false;
+    }
+    const tree_report& tree = response->api_response_response_tree_m.response_tree_Tree;
+    out->clear();
+    out->reserve(tree.tree_report_nodes_unit_node_m_count);
+    for (size_t i = 0; i < tree.tree_report_nodes_unit_node_m_count; ++i) {
+        out->push_back(mirror::map_fleet_unit(tree.tree_report_nodes_unit_node_m[i]));
+    }
+    if (next != nullptr) {
+        const bool hasNext =
+            tree.tree_report_next_present && tree.tree_report_next.tree_report_next_choice ==
+                                                 tree_report_next_r::tree_report_next_tstr_c;
+        *next = hasNext ? codec_detail::fromZcbor(tree.tree_report_next.tree_report_next_tstr)
+                        : QString();
+    }
+    if (rev != nullptr) {
+        *rev = tree.tree_report_rev;
+    }
+    return true;
+}
+
+bool decodeSessionDetailToMirror(const QByteArray& responseCbor, mirror::Session* out,
+                                 bool* found) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_session_detail_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_session_detail& rsd = response->api_response_response_session_detail_m;
+    if (rsd.response_session_detail_SessionDetail_choice !=
+        response_session_detail::response_session_detail_SessionDetail_session_detail_m_c) {
+        if (found != nullptr) {
+            *found = false; // the null arm: the node does not know this session
+        }
+        return true;
+    }
+    const session_detail& detail = rsd.response_session_detail_SessionDetail_session_detail_m;
+    // Base fields from the embedded session-info, then the detail-only hydration (model,
+    // checkpoints) per entity-map provenance (session-detail.model / session-detail.checkpoints).
+    *out = mirror::map_session(detail.session_detail_info);
+    if (detail.session_detail_model_present &&
+        detail.session_detail_model.session_detail_model_choice ==
+            session_detail_model_r::session_detail_model_tstr_c) {
+        out->model = codec_detail::fromZcbor(detail.session_detail_model.session_detail_model_tstr);
+    }
+    if (detail.session_detail_checkpoints_present) {
+        out->checkpoints =
+            static_cast<int>(detail.session_detail_checkpoints.session_detail_checkpoints);
+    }
+    if (found != nullptr) {
+        *found = true;
+    }
+    return true;
+}
+
 } // namespace daemonapp::daemon

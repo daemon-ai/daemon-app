@@ -138,6 +138,87 @@ QString isolationPolicy(const ::isolation_policy_r& p) {
     return {};
 }
 
+// session-state enum → canonical string (entity-map provenance session-info.state). The Suspended
+// variant carries a job id on the wire; the mirror row keeps only the discriminator string (the
+// job id is not a Session field), consistent with the other union-discriminator mappings (§3.3).
+QString sessionState(const ::session_state_r& s) {
+    switch (s.session_state_choice) {
+    case ::session_state_r::session_state_Active_tstr_c:
+        return QStringLiteral("Active");
+    case ::session_state_r::session_state_suspended_m_c:
+        return QStringLiteral("Suspended");
+    case ::session_state_r::session_state_Ready_tstr_c:
+        return QStringLiteral("Ready");
+    case ::session_state_r::session_state_Completed_tstr_c:
+        return QStringLiteral("Completed");
+    case ::session_state_r::session_state_Unknown_tstr_c:
+        return QStringLiteral("Unknown");
+    }
+    return {};
+}
+
+// lifecycle enum → canonical string (session-info.lifecycle / unit-node context).
+QString lifecycleStr(const ::lifecycle_r& l) {
+    switch (l.lifecycle_choice) {
+    case ::lifecycle_r::lifecycle_Durable_tstr_c:
+        return QStringLiteral("Durable");
+    case ::lifecycle_r::lifecycle_Live_tstr_c:
+        return QStringLiteral("Live");
+    }
+    return {};
+}
+
+// session-role enum → canonical string (session-info.role / unit-node.role).
+QString sessionRole(const ::session_role_r& r) {
+    switch (r.session_role_choice) {
+    case ::session_role_r::session_role_Primary_tstr_c:
+        return QStringLiteral("Primary");
+    case ::session_role_r::session_role_ManagedChild_tstr_c:
+        return QStringLiteral("ManagedChild");
+    case ::session_role_r::session_role_EphemeralSubagent_tstr_c:
+        return QStringLiteral("EphemeralSubagent");
+    }
+    return {};
+}
+
+// unit-kind enum → canonical string (unit-node.kind).
+QString unitKind(const ::unit_kind_r& k) {
+    switch (k.unit_kind_choice) {
+    case ::unit_kind_r::unit_kind_Engine_tstr_c:
+        return QStringLiteral("Engine");
+    case ::unit_kind_r::unit_kind_Host_tstr_c:
+        return QStringLiteral("Host");
+    case ::unit_kind_r::unit_kind_Orchestrator_tstr_c:
+        return QStringLiteral("Orchestrator");
+    }
+    return {};
+}
+
+// unit-state enum → canonical string (unit-node.state). Finished carries an end_reason on the wire;
+// the mirror row keeps the discriminator (the reason is not a FleetUnit field), §3.3.
+QString unitState(const ::unit_state_r& s) {
+    switch (s.unit_state_choice) {
+    case ::unit_state_r::unit_state_Running_tstr_c:
+        return QStringLiteral("Running");
+    case ::unit_state_r::unit_state_finished_m_c:
+        return QStringLiteral("Finished");
+    case ::unit_state_r::unit_state_Unknown_tstr_c:
+        return QStringLiteral("Unknown");
+    }
+    return {};
+}
+
+// delegation-lifetime enum → canonical string (unit-node.lifetime).
+QString delegationLifetime(const ::delegation_lifetime_r& l) {
+    switch (l.delegation_lifetime_choice) {
+    case ::delegation_lifetime_r::delegation_lifetime_Persistent_tstr_c:
+        return QStringLiteral("Persistent");
+    case ::delegation_lifetime_r::delegation_lifetime_Ephemeral_tstr_c:
+        return QStringLiteral("Ephemeral");
+    }
+    return {};
+}
+
 } // namespace
 
 AccessUser map_access_user(const ::access_user& in) {
@@ -314,9 +395,44 @@ CustomProvider map_custom_provider(const ::custom_provider& in) {
 }
 
 FleetUnit map_fleet_unit(const ::unit_node& in) {
+    // A7 arm (M4): FleetChanged → Tree. The supervision-tree node flattened into a fleet_units row
+    // per entity-map.toml provenance (unit-node.*). Nullable-optional members decode to "" when the
+    // wire choice is null / the member is absent.
     FleetUnit out;
-    (void)in;
-    // TODO(mirror-map): populate FleetUnit from wire per entity-map.toml provenance.
+    out.id = qstr(in.unit_node_id);
+    out.kind = unitKind(in.unit_node_kind);
+    out.state = unitState(in.unit_node_state);
+    if (in.unit_node_work_choice == ::unit_node::unit_node_work_tstr_c) {
+        out.work = qstr(in.unit_node_work_tstr);
+    }
+    if (in.unit_node_profile_present &&
+        in.unit_node_profile.unit_node_profile_choice ==
+            ::unit_node_profile_r::unit_node_profile_profile_ref_m_c) {
+        out.profile = qstr(in.unit_node_profile.unit_node_profile_profile_ref_m);
+    }
+    if (in.unit_node_session_present &&
+        in.unit_node_session.unit_node_session_choice ==
+            ::unit_node_session_r::unit_node_session_session_id_m_c) {
+        out.session = qstr(in.unit_node_session.unit_node_session_session_id_m);
+    }
+    if (in.unit_node_title_present &&
+        in.unit_node_title.unit_node_title_choice == ::unit_node_title_r::unit_node_title_tstr_c) {
+        out.title = qstr(in.unit_node_title.unit_node_title_tstr);
+    }
+    // role (null => Primary, entity-map note): a null wire choice canonicalizes to Primary.
+    if (in.unit_node_role_present && in.unit_node_role.unit_node_role_choice ==
+                                         ::unit_node_role_r::unit_node_role_session_role_m_c) {
+        out.role = sessionRole(in.unit_node_role.unit_node_role_session_role_m);
+    } else {
+        out.role = QStringLiteral("Primary");
+    }
+    if (in.unit_node_lifetime_present &&
+        in.unit_node_lifetime.unit_node_lifetime_choice ==
+            ::unit_node_lifetime_r::unit_node_lifetime_delegation_lifetime_m_c) {
+        out.lifetime =
+            delegationLifetime(in.unit_node_lifetime.unit_node_lifetime_delegation_lifetime_m);
+    }
+    out.child_count = static_cast<int>(in.unit_node_children_unit_id_m_count);
     return out;
 }
 
@@ -464,9 +580,51 @@ SavedPresence map_saved_presence(const ::saved_presence& in) {
 }
 
 Session map_session(const ::session_info& in) {
+    // A7 arm (M4): RosterChanged → SessionsQuery (base fields); SessionMetaChanged → SessionGet
+    // hydrates model + checkpoints onto this base (decodeSessionDetailToMirror). Per
+    // entity-map.toml provenance (session-info.*). Nullable-optional members decode to "" / 0 when
+    // null/absent.
     Session out;
-    (void)in;
-    // TODO(mirror-map): populate Session from wire per entity-map.toml provenance.
+    out.session = qstr(in.session_info_session);
+    out.state = sessionState(in.session_info_state);
+    if (in.session_info_title_present && in.session_info_title.session_info_title_choice ==
+                                             ::session_info_title_r::session_info_title_tstr_c) {
+        out.title = qstr(in.session_info_title.session_info_title_tstr);
+    }
+    if (in.session_info_bound_profile_present &&
+        in.session_info_bound_profile.session_info_bound_profile_choice ==
+            ::session_info_bound_profile_r::session_info_bound_profile_profile_ref_m_c) {
+        out.bound_profile =
+            qstr(in.session_info_bound_profile.session_info_bound_profile_profile_ref_m);
+    }
+    if (in.session_info_last_activity_ms_present &&
+        in.session_info_last_activity_ms.session_info_last_activity_ms_choice ==
+            ::session_info_last_activity_ms_r::session_info_last_activity_ms_uint64_m_c) {
+        out.last_activity_ms =
+            in.session_info_last_activity_ms.session_info_last_activity_ms_uint64_m;
+    }
+    if (in.session_info_lifecycle_present) {
+        out.lifecycle = lifecycleStr(in.session_info_lifecycle.session_info_lifecycle);
+    }
+    if (in.session_info_role_present) {
+        out.role = sessionRole(in.session_info_role.session_info_role);
+    }
+    if (in.session_info_parent_present &&
+        in.session_info_parent.session_info_parent_choice ==
+            ::session_info_parent_r::session_info_parent_session_id_m_c) {
+        out.parent = qstr(in.session_info_parent.session_info_parent_session_id_m);
+    }
+    if (in.session_info_pinned_present) {
+        out.pinned = in.session_info_pinned.session_info_pinned;
+    }
+    if (in.session_info_archived_present) {
+        out.archived = in.session_info_archived.session_info_archived;
+    }
+    if (in.session_info_rewindable_present) {
+        out.rewindable = in.session_info_rewindable.session_info_rewindable;
+    }
+    // model + checkpoints are hydrated via SessionGet (session-detail); the base SessionsQuery row
+    // leaves them empty/0 until the detail read merges them (decodeSessionDetailToMirror).
     return out;
 }
 

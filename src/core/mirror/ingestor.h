@@ -85,6 +85,16 @@ public:
     // TransportRooms page (M3): a transport instance's bindable rooms — full-list
     // replace-and-prune scoped to `transport` (the rooms of OTHER transports are untouched).
     void deliverRooms(const QString& transport, const std::vector<Room>& items, bool isFinalPage);
+    // SessionsQuery page (M4): the session roster is a GLOBAL list — full-list replace-and-prune
+    // over all sessions on the final page (§5.3 PageLoop). A dropped key tombstones the row.
+    void deliverSessions(const std::vector<Session>& items, bool isFinalPage);
+    // SessionGet single session (M4, keyed hydration): upsert the fully-hydrated row (base fields +
+    // model + checkpoints). Never prunes siblings — a keyed patch, not a list.
+    void deliverSession(const Session& session);
+    // Tree page (M4): the supervision fleet is a GLOBAL list — full-list replace-and-prune over all
+    // fleet_units on the final page. `rev` (the tree revision) is recorded on markFresh so the
+    // FleetChanged rung-1 skip-gate can skip a rev-unchanged event (§5.5).
+    void deliverFleetUnits(const std::vector<FleetUnit>& items, bool isFinalPage, quint64 rev = 0);
 
     // --- routing refresh triggers (M3) --------------------------------------------------------
     // Re-list the routing pins into the mirror (RoutingListChats). Called on connect-ready and
@@ -153,6 +163,8 @@ private:
     void applyPersonFullList(const std::vector<Person>& items);
     void applyRoutePinFullList(const std::vector<RoutePin>& items);
     void applyRoomFullList(const QString& transport, const std::vector<Room>& items);
+    void applySessionFullList(const std::vector<Session>& items);
+    void applyFleetUnitFullList(const std::vector<FleetUnit>& items);
     void patchTransportAccount(const NodeEvent& e);
     void patchDownload(const NodeEvent& e);
 
