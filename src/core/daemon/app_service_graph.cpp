@@ -10,6 +10,7 @@
 #include "config/mock_daemon_config.h"
 #include "connection/iconnection_service.h"
 #include "connection/mock_connection_service.h"
+#include "daemon/channels_hub_model.h"
 #include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_auth_flow_service.h"
@@ -680,6 +681,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             mirrorStore->setOutbox(graph.outbox);
             graph.storeMirror = mirrorStore;
 
+            // AD (1a.3): the shared channels-hub projection (GUI + TUI hub read the SAME model).
+            graph.channelsHub = new ChannelsHubModel(&svc->store(), owner);
+
             // A7T (M4 sub-step 6) → AD: the turn engine's ONE mirror seam — coalesced transcript
             // blocks write through this sink into w_transcript_blocks (the ingestor stays the
             // single writer, §5.1; S1-S9 byte-parity), and the engine's roster enrichment reads
@@ -851,6 +855,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         QObject::connect(graph.mockHost, &MockScenarioHost::sessionCreated, mirrorStore,
                          &MirrorSessionStore::onNodeSessionCreated);
         graph.storeMirror = mirrorStore;
+
+        // AD (1a.3): the shared channels-hub projection over the scenario-seeded mirror.
+        graph.channelsHub = new ChannelsHubModel(&svc->store(), owner);
 
         // AD: the fleet TREE is the SAME mirror projection as daemon mode, over the scenario's
         // seeded fleet_units (child_ids edges derived from the ONE bundle). Null control seam —

@@ -39,6 +39,7 @@
 #include "session/icheckpoint_timeline.h"
 
 // [mirror M2] Complete types for the Mirror/Outbox context-property upcasts (spec 09 §2/§6).
+#include "daemon/channels_hub_model.h" // complete type for the ChannelsHub context property
 #include "mirror/mirror_service.h"
 #include "outbox.h"
 #include "session/isession_settings.h"
@@ -368,6 +369,10 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("Transports"),
                                              m_services.transportRegistry);
     engine.rootContext()->setContextProperty(QStringLiteral("Presence"), m_services.presence);
+    // AD (1a.3): the SHARED channels-hub projection — ChannelsPage's READS (accounts, adapters,
+    // rooms, contacts, connection state) come from the mirror through this model in BOTH modes;
+    // `Transports`/`Contacts` stay bound as the VERB sinks only.
+    engine.rootContext()->setContextProperty(QStringLiteral("ChannelsHub"), m_services.channelsHub);
     // [acct-mgmt] Transport contacts / roster (Phase D, wire v34): the per-account Contacts section
     // in ChannelsPage binds this seam (RosterList + contact ops).
     engine.rootContext()->setContextProperty(QStringLiteral("Contacts"), m_services.contacts);

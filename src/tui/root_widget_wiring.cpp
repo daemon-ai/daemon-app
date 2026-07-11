@@ -7,6 +7,7 @@
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "conv_send_controller.h"
+#include "daemon/channels_hub_model.h"        // AD (1a.3): the Channels page repaint source
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // live refresh of the Users & Access page
 #include "display_role_adapter.h"
@@ -192,32 +193,20 @@ void RootWidget::wirePageLiveRefresh() {
     // The Channels page projects the transports seams, which are plain signal
     // emitters (no row models): re-render the open page when the adapter list,
     // the configured accounts, an account's rooms or a connection state change
-    // (GUI parity: ChannelsPage.qml's Connections re-read on the same signals).
-    if (m_services.transportRegistry != nullptr) {
-        auto* reg = m_services.transportRegistry;
-        connect(reg, &transports::ITransportRegistry::adaptersChanged, this,
+    // (GUI parity: ChannelsPage.qml's Connections re-read on the same signals). AD (1a.3): the
+    // Channels page reads the SHARED mirror projection; its four change signals are the ONE
+    // repaint source (accounts/adapters/rooms/contacts — including presence, which rides the
+    // account rows now).
+    if (m_services.channelsHub != nullptr) {
+        auto* hub = m_services.channelsHub;
+        connect(hub, &daemonapp::daemon::ChannelsHubModel::adaptersChanged, this,
                 [this] { refreshPageIfActive(TabModel::Channels); });
-        connect(reg, &transports::ITransportRegistry::instancesChanged, this,
+        connect(hub, &daemonapp::daemon::ChannelsHubModel::accountsChanged, this,
                 [this] { refreshPageIfActive(TabModel::Channels); });
-        connect(reg, &transports::ITransportRegistry::conversationsChanged, this,
+        connect(hub, &daemonapp::daemon::ChannelsHubModel::conversationsChanged, this,
                 [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
-        // [waveB:app-v30] D2: the per-tab-enter ConvList refetch-all is RETIRED. Conversations are
-        // seeded once per connect (the connect-ready baseline in AppServiceGraph) and kept fresh by
-        // the ConversationsChanged / MembershipChanged feed events + the TransportChanged-connected
-        // seed — no client polling. The conversationsChanged wire above still repaints on arrival.
-    }
-    if (m_services.presence != nullptr) {
-        connect(m_services.presence, &transports::IPresenceService::presenceChanged, this,
+        connect(hub, &daemonapp::daemon::ChannelsHubModel::contactsChanged, this,
                 [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
-    }
-    // [acct-mgmt] The Contacts seam re-projects on a roster refresh / mutation / the node's
-    // ContactsChanged feed event; repaint the Channels page so the contact rows update (GUI
-    // parity: ChannelsPage's Connections re-read on contactsChanged).
-    if (m_services.contacts != nullptr) {
-        connect(m_services.contacts, &transports::IContactsService::contactsChanged, this,
-                [this](const QString&, const QVariantList&) {
-                    refreshPageIfActive(TabModel::Channels);
-                });
     }
     // The Settings page projects the daemon config + the app-pref store; re-render
     // it whenever either seam reports a write (an edit made on the page itself, or

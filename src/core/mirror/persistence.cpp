@@ -365,8 +365,9 @@ bool Persistence::writeBehind(const WriteBatch& batch) {
         QSqlQuery up(db_);
         up.prepare(QStringLiteral("INSERT OR REPLACE INTO m_adapters"
                                   "(key,family,display_name,directory,cap_rooms,"
-                                  "cap_direct_messages,cap_file_transfer,ops_json,last_rev,"
-                                  "fetched_at_ms) VALUES(?,?,?,?,?,?,?,?,?,?)"));
+                                  "cap_direct_messages,cap_file_transfer,ops_json,schema_json,"
+                                  "policies_json,last_rev,fetched_at_ms)"
+                                  " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)"));
         const QString key = a.key().serialize();
         up.addBindValue(key);
         up.addBindValue(a.family);
@@ -376,6 +377,8 @@ bool Persistence::writeBehind(const WriteBatch& batch) {
         up.addBindValue(a.cap_direct_messages ? 1 : 0);
         up.addBindValue(a.cap_file_transfer ? 1 : 0);
         up.addBindValue(a.ops_json);
+        up.addBindValue(a.schema_json);
+        up.addBindValue(a.policies_json);
         up.addBindValue(static_cast<qulonglong>(lastRevFor(key)));
         up.addBindValue(static_cast<qlonglong>(at));
         if (!up.exec()) {
@@ -634,7 +637,8 @@ bool Persistence::loadInto(MirrorModel& model, int chatWindowLimit) {
     }
     QSqlQuery aq(db_);
     if (aq.exec(QStringLiteral("SELECT family,display_name,directory,cap_rooms,"
-                               "cap_direct_messages,cap_file_transfer,ops_json FROM m_adapters"))) {
+                               "cap_direct_messages,cap_file_transfer,ops_json,schema_json,"
+                               "policies_json FROM m_adapters"))) {
         auto at2 = model.adapters.transient();
         while (aq.next()) {
             Adapter a;
@@ -645,6 +649,8 @@ bool Persistence::loadInto(MirrorModel& model, int chatWindowLimit) {
             a.cap_direct_messages = aq.value(4).toBool();
             a.cap_file_transfer = aq.value(5).toBool();
             a.ops_json = aq.value(6).toString();
+            a.schema_json = aq.value(7).toString();
+            a.policies_json = aq.value(8).toString();
             at2.insert(a);
         }
         model.adapters = at2.persistent();

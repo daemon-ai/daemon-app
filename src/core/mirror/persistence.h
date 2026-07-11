@@ -106,10 +106,11 @@ struct WriteBatch {
 class Persistence {
 public:
     // schema_version the generated DDL targets (mirror_schema_gen.sql / spec §4.5).
-    // v14 (AD 1a): m_person_endpoints gained presence_primitive (the endpoint contact-info's
-    // presence — the integrations tree's per-person dot); a mismatch drops-and-rebuilds
-    // (disposable cache), no migration.
-    static constexpr int kSchemaVersion = 14;
+    // v15 (AD 1a): m_person_endpoints gained presence_primitive (the tree's per-person dot) and
+    // m_adapters gained schema_json + policies_json (the add-account form + the node-labeled
+    // policy rows — the wizard/hub sources); a mismatch drops-and-rebuilds (disposable cache),
+    // no migration.
+    static constexpr int kSchemaVersion = 15;
 
     Persistence() = default;
     ~Persistence();

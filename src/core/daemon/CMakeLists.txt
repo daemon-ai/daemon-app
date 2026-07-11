@@ -182,6 +182,8 @@ target_link_libraries(da_daemon_client
         # (6->1 session-shape unification); BOTH modes since A8 (mock projects the seeded mirror).
         mirror_session_store.h
         mirror_session_store.cpp
+        channels_hub_model.h
+        channels_hub_model.cpp
         # A7T/G2: the ONE msg-fence transcript projection grammar (mirror TranscriptBlock ->
         # content markdown), shared by MirrorSessionStore::content() and the mock seeder's derived
         # legacy baseline so both sides are byte-equal by construction.

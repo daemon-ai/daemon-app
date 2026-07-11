@@ -16,6 +16,8 @@ CREATE TABLE m_adapters(
   cap_direct_messages INTEGER,
   cap_file_transfer INTEGER,
   ops_json TEXT,
+  schema_json TEXT,
+  policies_json TEXT,
   last_rev INTEGER NOT NULL, fetched_at_ms INTEGER NOT NULL);
 
 CREATE TABLE m_agent_entries(

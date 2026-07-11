@@ -271,8 +271,8 @@ RootWidget::RootWidget()
         .memGraph = m_memGraph,
         .settings = m_services.settings,
         .principal = m_services.principal,
+        .channelsHub = m_services.channelsHub, // AD (1a.3): the shared mirror projection
         .transportRegistry = m_services.transportRegistry,
-        .presence = m_services.presence,
         .contacts = m_services.contacts,
         .update = m_services.update,
         .caps = m_services.capsRepository,           // [wave2:app-delegation] F7/DEL-7

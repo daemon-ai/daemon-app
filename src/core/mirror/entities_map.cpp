@@ -7,6 +7,7 @@
 
 #include "entities_map_gen.h"
 
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QString>
@@ -367,6 +368,84 @@ Adapter map_adapter(const ::adapter_info& in) {
     }
     if (!ops.isEmpty()) {
         out.ops_json = QString::fromUtf8(QJsonDocument(ops).toJson(QJsonDocument::Compact));
+    }
+    // account-settings-schema → canonical JSON rows {key,label,required,kind,default,
+    // placeholder,choices} — the SAME shape the add/edit-account wizard consumed off the deleted
+    // registry rows (kind tokens = the codec's authFieldKindName vocabulary, "Text" default).
+    if (in.adapter_info_account_schema_present &&
+        in.adapter_info_account_schema.adapter_info_account_schema
+            .account_settings_schema_fields_present) {
+        const auto& fields = in.adapter_info_account_schema.adapter_info_account_schema
+                                 .account_settings_schema_fields;
+        QJsonArray schema;
+        for (size_t i = 0; i < fields.account_settings_schema_fields_auth_param_field_m_count;
+             ++i) {
+            const ::auth_param_field& f =
+                fields.account_settings_schema_fields_auth_param_field_m[i];
+            QJsonObject row;
+            row.insert(QStringLiteral("key"), qstr(f.auth_param_field_key));
+            row.insert(QStringLiteral("label"), qstr(f.auth_param_field_label));
+            row.insert(QStringLiteral("required"), f.auth_param_field_required);
+            QString kind = QStringLiteral("Text");
+            if (f.auth_param_field_kind_present) {
+                switch (f.auth_param_field_kind.auth_param_field_kind.auth_field_kind_choice) {
+                case ::auth_field_kind_r::auth_field_kind_Password_tstr_c:
+                    kind = QStringLiteral("Password");
+                    break;
+                case ::auth_field_kind_r::auth_field_kind_Number_tstr_c:
+                    kind = QStringLiteral("Number");
+                    break;
+                case ::auth_field_kind_r::auth_field_kind_Choice_tstr_c:
+                    kind = QStringLiteral("Choice");
+                    break;
+                case ::auth_field_kind_r::auth_field_kind_Text_tstr_c:
+                    break;
+                }
+            }
+            row.insert(QStringLiteral("kind"), kind);
+            if (f.auth_param_field_default_present &&
+                f.auth_param_field_default.auth_param_field_default_choice ==
+                    ::auth_param_field_default_r::auth_param_field_default_tstr_c) {
+                row.insert(QStringLiteral("default"),
+                           qstr(f.auth_param_field_default.auth_param_field_default_tstr));
+            }
+            if (f.auth_param_field_placeholder_present &&
+                f.auth_param_field_placeholder.auth_param_field_placeholder_choice ==
+                    ::auth_param_field_placeholder_r::auth_param_field_placeholder_tstr_c) {
+                row.insert(QStringLiteral("placeholder"),
+                           qstr(f.auth_param_field_placeholder.auth_param_field_placeholder_tstr));
+            }
+            if (f.auth_param_field_choices_present) {
+                QJsonArray choices;
+                for (size_t j = 0;
+                     j < f.auth_param_field_choices.auth_param_field_choices_tstr_count; ++j) {
+                    choices.append(
+                        qstr(f.auth_param_field_choices.auth_param_field_choices_tstr[j]));
+                }
+                row.insert(QStringLiteral("choices"), choices);
+            }
+            schema.append(row);
+        }
+        if (!schema.isEmpty()) {
+            out.schema_json =
+                QString::fromUtf8(QJsonDocument(schema).toJson(QJsonDocument::Compact));
+        }
+    }
+    // policy-entry rows {key,label,value} → canonical JSON (rendered verbatim, never keyed on).
+    if (in.adapter_info_policies_present) {
+        QJsonArray policies;
+        for (size_t i = 0; i < in.adapter_info_policies.adapter_info_policies_policy_entry_m_count;
+             ++i) {
+            const ::policy_entry& pe =
+                in.adapter_info_policies.adapter_info_policies_policy_entry_m[i];
+            policies.append(QJsonObject{{QStringLiteral("key"), qstr(pe.policy_entry_key)},
+                                        {QStringLiteral("label"), qstr(pe.policy_entry_label)},
+                                        {QStringLiteral("value"), qstr(pe.policy_entry_value)}});
+        }
+        if (!policies.isEmpty()) {
+            out.policies_json =
+                QString::fromUtf8(QJsonDocument(policies).toJson(QJsonDocument::Compact));
+        }
     }
     return out;
 }

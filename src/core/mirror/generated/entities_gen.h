@@ -152,6 +152,8 @@ struct Adapter {
     Q_PROPERTY(bool cap_direct_messages MEMBER cap_direct_messages)
     Q_PROPERTY(bool cap_file_transfer MEMBER cap_file_transfer)
     Q_PROPERTY(QString ops_json MEMBER ops_json)
+    Q_PROPERTY(QString schema_json MEMBER schema_json)
+    Q_PROPERTY(QString policies_json MEMBER policies_json)
 
 public:
     QString family;
@@ -161,6 +163,8 @@ public:
     bool cap_direct_messages = false;
     bool cap_file_transfer = false;
     QString ops_json;
+    QString schema_json;
+    QString policies_json;
 
     [[nodiscard]] AdapterKey key() const {
         return AdapterKey{family};

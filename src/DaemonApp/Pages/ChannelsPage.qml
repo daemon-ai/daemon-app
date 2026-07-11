@@ -7,21 +7,22 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
-// Channels / Events-IO account manager (story 04, read surface: EIO-1/3/8/9). Daemon-backed +
-// offline-first: the adapter picker (Transports.availableAdapters), the configured accounts with
-// Pidgin-style status dots (Presence), and each account's live rooms (Transports.conversations via
-// ConvList). Read-only this slice - connecting (EIO-2) and disconnecting (EIO-7) are deferred.
+// Channels / Events-IO account manager (story 04, read surface: EIO-1/3/8/9). AD (1a.3): every
+// READ comes from the SHARED ChannelsHub mirror projection (the same model the TUI channels hub
+// renders) — adapters, accounts (connection state rides the row), rooms, contacts — identical in
+// daemon and mock. `Transports`/`Contacts` remain bound as the VERB sinks (room lifecycle,
+// account management, contact ops); they are null in mock, so every verb call is null-guarded.
 Item {
     id: root
 
-    // Re-read the Q_INVOKABLE lists on the seams' change signals (they are not properties).
-    property var adapters: Transports.availableAdapters()
-    property var accounts: Transports.instances()
+    // Re-read the Q_INVOKABLE lists on the projection's change signals (they are not properties).
+    property var adapters: ChannelsHub.adapters()
+    property var accounts: ChannelsHub.accounts()
 
     Connections {
-        target: Transports
-        function onAdaptersChanged() { root.adapters = Transports.availableAdapters(); }
-        function onInstancesChanged() { root.accounts = Transports.instances(); }
+        target: ChannelsHub
+        function onAdaptersChanged() { root.adapters = ChannelsHub.adapters(); }
+        function onAccountsChanged() { root.accounts = ChannelsHub.accounts(); }
     }
 
     function dotColor(state) {
@@ -149,7 +150,8 @@ Item {
         acceptEnabled: addContactField.text.trim().length > 0
         onAccepted: {
             if (transport.length > 0)
-                Contacts.addContact(transport, addContactField.text.trim());
+                if (Contacts)
+                    Contacts.addContact(transport, addContactField.text.trim());
             transport = "";
         }
         onRejected: transport = ""
@@ -179,7 +181,8 @@ Item {
         acceptText: qsTr("Save")
         onAccepted: {
             if (transport.length > 0 && contactId.length > 0)
-                Contacts.setAlias(transport, contactId, aliasField.text.trim());
+                if (Contacts)
+                    Contacts.setAlias(transport, contactId, aliasField.text.trim());
             transport = ""; contactId = "";
         }
         onRejected: { transport = ""; contactId = ""; }
@@ -211,7 +214,8 @@ Item {
         destructive: true
         onAccepted: {
             if (transport.length > 0 && contactId.length > 0)
-                Contacts.removeContact(transport, contactId);
+                if (Contacts)
+                    Contacts.removeContact(transport, contactId);
             transport = ""; contactId = "";
         }
         onRejected: { transport = ""; contactId = ""; }
@@ -278,7 +282,8 @@ Item {
         destructive: true
         onAccepted: {
             if (transport.length > 0 && conv.length > 0)
-                Transports.leaveRoom(transport, conv);
+                if (Transports)
+                    Transports.leaveRoom(transport, conv);
             transport = ""; conv = "";
         }
         onRejected: { transport = ""; conv = ""; }
@@ -302,7 +307,8 @@ Item {
         destructive: true
         onAccepted: {
             if (transport.length > 0 && conv.length > 0)
-                Transports.deleteRoom(transport, conv);
+                if (Transports)
+                    Transports.deleteRoom(transport, conv);
             transport = ""; conv = "";
         }
         onRejected: { transport = ""; conv = ""; }
@@ -326,7 +332,8 @@ Item {
         destructive: true
         onAccepted: {
             if (transport.length > 0 && conv.length > 0 && contactId.length > 0)
-                Transports.memberKick(transport, conv, contactId);
+                if (Transports)
+                    Transports.memberKick(transport, conv, contactId);
             transport = ""; conv = ""; contactId = "";
         }
         onRejected: { transport = ""; conv = ""; contactId = ""; }
@@ -350,7 +357,8 @@ Item {
         destructive: true
         onAccepted: {
             if (transport.length > 0 && conv.length > 0 && contactId.length > 0)
-                Transports.memberBan(transport, conv, contactId);
+                if (Transports)
+                    Transports.memberBan(transport, conv, contactId);
             transport = ""; conv = ""; contactId = "";
         }
         onRejected: { transport = ""; conv = ""; contactId = ""; }
@@ -374,7 +382,8 @@ Item {
         acceptEnabled: inviteField.text.trim().length > 0
         onAccepted: {
             if (transport.length > 0 && conv.length > 0)
-                Transports.memberInvite(transport, conv, inviteField.text.trim());
+                if (Transports)
+                    Transports.memberInvite(transport, conv, inviteField.text.trim());
             transport = ""; conv = "";
         }
         onRejected: { transport = ""; conv = ""; }
@@ -418,7 +427,8 @@ Item {
         destructive: true
         onAccepted: {
             if (transport.length > 0)
-                Transports.remove(transport);
+                if (Transports)
+                    Transports.remove(transport);
             transport = "";
         }
         onRejected: transport = ""
@@ -458,7 +468,8 @@ Item {
         acceptText: qsTr("Save")
         onAccepted: {
             if (transport.length > 0)
-                Transports.setLabel(transport, renameAccountField.text.trim());
+                if (Transports)
+                    Transports.setLabel(transport, renameAccountField.text.trim());
             transport = "";
         }
         onRejected: transport = ""
@@ -533,7 +544,10 @@ Item {
                 delegate: Rectangle {
                     id: acctRow
                     required property var modelData
-                    property string conn: Presence.connectionState(modelData.transport)
+                    // The connection state rides the mirror account row (TransportChanged patches
+                    // it in place); onAccountsChanged re-reads the whole list above.
+                    property string conn: modelData.connection !== undefined
+                                          ? modelData.connection : "offline"
                     property bool expanded: false
                     property var rooms: []
                     // [acct-mgmt] The account's contact roster (RosterList), refreshed on expand +
@@ -546,29 +560,17 @@ Item {
                     color: Theme.surface
                     border.color: Theme.border
 
-                    // Live status dot: re-read on the presence seam's change for this transport.
+                    // Refresh the room / contact lists when a mirror delta lands for this
+                    // account (the ONE projection feeds both modes).
                     Connections {
-                        target: Presence
-                        function onPresenceChanged(transport) {
-                            if (transport === acctRow.modelData.transport)
-                                acctRow.conn = Presence.connectionState(acctRow.modelData.transport);
-                        }
-                    }
-                    // Refresh the room list when a live ConvList lands for this account.
-                    Connections {
-                        target: Transports
+                        target: ChannelsHub
                         function onConversationsChanged(transport) {
                             if (transport === acctRow.modelData.transport)
-                                acctRow.rooms = Transports.conversations(transport);
+                                acctRow.rooms = ChannelsHub.conversations(transport);
                         }
-                    }
-                    // [acct-mgmt] Refresh the contact roster when a live RosterList lands (the
-                    // Contacts seam re-projects on ContactsChanged / a mutation Ok).
-                    Connections {
-                        target: Contacts
-                        function onContactsChanged(transport, contacts) {
+                        function onContactsChanged(transport) {
                             if (transport === acctRow.modelData.transport)
-                                acctRow.contacts = contacts;
+                                acctRow.contacts = ChannelsHub.contacts(transport);
                         }
                     }
 
@@ -581,12 +583,14 @@ Item {
                             // Read the cached rooms (seeded once per connect; kept fresh by the
                             // ConversationsChanged / MembershipChanged feed) — no client poll.
                             if (acctRow.expanded) {
-                                acctRow.rooms = Transports.conversations(acctRow.modelData.transport);
-                                // [acct-mgmt] Contacts are fetched lazily on first expand (a roster
-                                // can be large); the ContactsChanged feed keeps them fresh after.
+                                acctRow.rooms = ChannelsHub.conversations(acctRow.modelData.transport);
+                                // [acct-mgmt] Contacts render from the mirror roster; the expand
+                                // nudges a live RosterList refetch through the verb seam where it
+                                // exists (daemon) — the ContactsChanged feed keeps rows fresh.
                                 if (root.canRosterOp(acctRow.modelData.family, "list")) {
-                                    acctRow.contacts = Contacts.contacts(acctRow.modelData.transport);
-                                    Contacts.refreshContacts(acctRow.modelData.transport);
+                                    acctRow.contacts = ChannelsHub.contacts(acctRow.modelData.transport);
+                                    if (Contacts)
+                                        Contacts.refreshContacts(acctRow.modelData.transport);
                                 }
                             }
                         }
@@ -646,7 +650,7 @@ Item {
                                 iconColor: Theme.accent
                                 iconPointSize: 11; implicitWidth: 30; implicitHeight: 26
                                 tooltipText: qsTr("Connect this account")
-                                onClicked: Transports.connectAccount(acctRow.modelData.transport)
+                                onClicked: if (Transports) Transports.connectAccount(acctRow.modelData.transport)
                             }
                             // Enabled: persist the desired state (TransportSetEnabled). Node-decides —
                             // re-assert the binding after toggling so the refetched state re-drives it.
@@ -657,7 +661,8 @@ Item {
                             Kit.Switch {
                                 checked: acctRow.modelData.enabled !== false
                                 onToggled: {
-                                    Transports.setEnabled(acctRow.modelData.transport, checked);
+                                    if (Transports)
+                                        Transports.setEnabled(acctRow.modelData.transport, checked);
                                     checked = Qt.binding(function() {
                                         return acctRow.modelData.enabled !== false;
                                     });
@@ -684,7 +689,7 @@ Item {
                                 icon: FontIcons.fa_circle_xmark
                                 iconPointSize: 12; implicitWidth: 30; implicitHeight: 26
                                 tooltipText: qsTr("Disconnect this account")
-                                onClicked: Transports.disconnect(acctRow.modelData.transport)
+                                onClicked: if (Transports) Transports.disconnect(acctRow.modelData.transport)
                             }
                             // Remove the account entirely (TransportRemove) — destructive, confirmed.
                             Kit.IconButton {
@@ -749,14 +754,14 @@ Item {
                                     visible: root.canConversationOp(acctRow.modelData.family,
                                                                     "joinChannel")
                                     text: qsTr("Join room…")
-                                    onClicked: Transports.conversationJoinDetails(
+                                    onClicked: if (Transports) Transports.conversationJoinDetails(
                                         acctRow.modelData.transport)
                                 }
                                 Kit.TextButton {
                                     visible: root.canConversationOp(acctRow.modelData.family,
                                                                     "create")
                                     text: qsTr("New room…")
-                                    onClicked: Transports.conversationCreateDetails(
+                                    onClicked: if (Transports) Transports.conversationCreateDetails(
                                         acctRow.modelData.transport)
                                 }
                             }
@@ -785,7 +790,7 @@ Item {
                                     // [wave2:app-channels-liveness] B2: badged when the node
                                     // surfaced this room after the operator's baseline.
                                     property bool isNew:
-                                        Transports.isNewConversation(transport, convId)
+                                        ChannelsHub.isNewConversation(transport, convId)
                                     Layout.fillWidth: true
                                     spacing: 3
 
@@ -798,13 +803,18 @@ Item {
                                         }
                                     }
                                     Connections {
-                                        target: Transports
+                                        target: ChannelsHub
                                         function onConversationsChanged(transport) {
                                             if (transport === roomItem.transport)
-                                                roomItem.isNew = Transports.isNewConversation(
+                                                roomItem.isNew = ChannelsHub.isNewConversation(
                                                     roomItem.transport, roomItem.convId);
                                         }
-                                        // [acct-mgmt] the ConvGet member list for this room lands.
+                                    }
+                                    Connections {
+                                        // [acct-mgmt] the ConvGet member list for this room lands
+                                        // (the member palette rides the VERB seam; daemon only).
+                                        target: Transports
+                                        enabled: Transports !== null
                                         function onMembersChanged(transport, conversation, members) {
                                             if (transport === roomItem.transport
                                                 && conversation === roomItem.convId)
@@ -828,7 +838,7 @@ Item {
                                             interactive: true
                                             tooltipText: qsTr("Newly joined room")
                                             onClicked: {
-                                                Transports.markConversationSeen(
+                                                ChannelsHub.markConversationSeen(
                                                     roomItem.transport, roomItem.convId);
                                                 roomItem.isNew = false;
                                             }
@@ -875,7 +885,8 @@ Item {
                                             onClicked: {
                                                 roomItem.membersExpanded = !roomItem.membersExpanded;
                                                 if (roomItem.membersExpanded)
-                                                    Transports.conversationMembers(
+                                                    if (Transports)
+                                                        Transports.conversationMembers(
                                                         roomItem.transport, roomItem.convId);
                                             }
                                         }
@@ -948,7 +959,8 @@ Item {
                                                     currentIndex: Math.max(0, roles.indexOf(modelData.role))
                                                     onActivated: function(index) {
                                                         if (roles[index] !== modelData.role)
-                                                            Transports.memberSetRole(
+                                                            if (Transports)
+                                                                Transports.memberSetRole(
                                                                 roomItem.transport, roomItem.convId,
                                                                 modelData.contactId, roles[index]);
                                                     }
@@ -1069,7 +1081,7 @@ Item {
                                     Kit.TextButton {
                                         visible: root.canConversationOp(contactItem.family, "create")
                                         text: qsTr("DM")
-                                        onClicked: Transports.createRoom(
+                                        onClicked: if (Transports) Transports.createRoom(
                                             contactItem.transport,
                                             { "participants": [contactItem.contactId] })
                                     }
@@ -1085,7 +1097,7 @@ Item {
                                     Kit.TextButton {
                                         visible: root.canContactOp(contactItem.family, "getProfile")
                                         text: qsTr("Profile")
-                                        onClicked: Contacts.getProfile(
+                                        onClicked: if (Contacts) Contacts.getProfile(
                                             contactItem.transport, contactItem.contactId)
                                     }
                                     // Remove (RosterRemove), confirmed, gated on roster_ops.remove.
