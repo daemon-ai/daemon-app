@@ -195,25 +195,16 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             }
         }
         break;
-    // [waveB:app-v30] D2: the conversation set for a transport changed (a room was added/removed).
-    // Refetch that transport's ConvList — invalidation pointer only; the node owns membership.
-    // This is what lets the client stop re-polling ConvList on tab-enter / expand.
+    // [waveB:app-v30] D2: the conversation set for a transport changed (a room was added/
+    // removed) or a room's membership changed (a join/leave can add or drop a visible room).
+    // Either way, refetch that transport's ConvList — invalidation pointer only; the node owns
+    // membership. On a self-removal the node already reconciled the routing pins; the pin-table
+    // + roster refetches are the mirror ingestor's MembershipChanged arm (AD).
     case DecodedNodeEvent::Kind::ConversationsChanged:
-        if (m_transports != nullptr) {
-            m_transports->refreshConversations(event.transport);
-        }
-        break;
-    // [waveB:app-v30] D2: a room's membership changed. Always refetch that transport's ConvList
-    // (a join/leave can add or drop a visible room). On a removal of THIS node's own identity
-    // (is_self + left/kicked/banned) the node has already reconciled the routing pins, so also
-    // re-list routing + nudge the roster so the routing-facing surfaces re-render — the client
-    // derives nothing itself.
     case DecodedNodeEvent::Kind::MembershipChanged:
         if (m_transports != nullptr) {
             m_transports->refreshConversations(event.transport);
         }
-        // On a removal of THIS node's own identity the node reconciled the routing pins; the
-        // pin-table + roster refetches are the mirror ingestor's MembershipChanged arm (AD).
         break;
     // [acct-mgmt] A transport's contact roster changed (wire v34). Refetch that transport's
     // RosterList — invalidation pointer only; the node owns the roster. Mirrors
