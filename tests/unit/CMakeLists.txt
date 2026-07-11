@@ -1371,6 +1371,43 @@ if(TARGET daemon-app::mirror_ingestor)
         set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif()
 
+    # tst_mirror_seeder (mirror A8): the mock-mode single Writer (spec 09 §9, §5.1) — seed() +
+    # scripted timeline write through the SAME apply/commit pipeline (journal origin = Seeder), a
+    # lens renders the seeded rows (parity by construction), and the verb script resolves
+    # ok/reject/timeout with an arg matcher (the MANDATORY rejection fixtures, §6.5). Links the
+    # ingestor (which hosts the seeder) + the lens (the parity-by-construction check).
+    if(TARGET daemon-app::mirror_lens)
+        qt_add_executable(tst_mirror_seeder tst_mirror_seeder.cpp)
+        target_link_libraries(tst_mirror_seeder
+            PRIVATE Qt6::Test daemon-app::mirror_ingestor daemon-app::mirror_lens)
+        add_test(NAME tst_mirror_seeder COMMAND tst_mirror_seeder)
+        set_tests_properties(tst_mirror_seeder PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
+    # tst_provenance_landing (mirror A8): the provenance-landing seam deferred to A8 by BR/A7
+    # (spec 09 §5.1/§6.6) — MirrorService::provenanceStamped re-emits each commit's journal
+    # origin_op, driving Outbox::onProvenanceStamped end-to-end (ack→echo→landed; rejection→paused
+    # lane; ack-without-echo→expire; api/38 ack terminal). Links the ingestor (the single-writer
+    # commit path) + the local (outbox) module.
+    if(TARGET daemon-app::local)
+        qt_add_executable(tst_provenance_landing tst_provenance_landing.cpp)
+        target_link_libraries(tst_provenance_landing
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::local)
+        add_test(NAME tst_provenance_landing COMMAND tst_provenance_landing)
+        set_tests_properties(tst_provenance_landing
+            PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+        # tst_mock_both_modes (mirror A8): both ingestor modes + the auto-replay gate in a MOCK
+        # (Seeder-fed) stack, selected by the scenario's configurable api/<N> Hello (§9/§5.6/§6.8)
+        # — full(39): Bootstrap + auto-replay drain; degraded(38): staleness scan + lanes hold.
+        qt_add_executable(tst_mock_both_modes tst_mock_both_modes.cpp)
+        target_link_libraries(tst_mock_both_modes
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::local)
+        add_test(NAME tst_mock_both_modes COMMAND tst_mock_both_modes)
+        set_tests_properties(tst_mock_both_modes
+            PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
     # The daemon bridge translation (DecodedNodeEvent → mirror::NodeEvent): the second compile-time
     # exhaustiveness layer tying the app's generated wire enum to the policy table (spec §5.1/§12).
     # Needs the daemon codec facade (node_api_codec.h) + the ingestor's policy table.

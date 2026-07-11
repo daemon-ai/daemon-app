@@ -12,6 +12,7 @@
 
 #include <QObject>
 #include <QSet>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <vector>
@@ -108,6 +109,25 @@ private slots:
         const parity::Result r = parity::compareKeys(
             parity::conversationKeys(svc.store().snapshot(), QStringLiteral("m")), legacy);
         QVERIFY(r.matches());
+    }
+
+    // §5.1/§6.6: the commit path re-emits each journal record's non-empty origin_op as
+    // provenanceStamped (the outbox's confirmation feed A8 wires to Outbox::onProvenanceStamped).
+    // An unstamped apply emits nothing; a stamped one emits exactly its op-id.
+    void provenanceStampedRelaysOriginOp() {
+        MirrorService svc;
+        svc.openInMemory();
+        QSignalSpy spy(&svc, &MirrorService::provenanceStamped);
+
+        // Unstamped apply (no origin_op): no provenance emission.
+        svc.ingestor().deliverConversations(QStringLiteral("m"), {conv("m", "!a", "A")},
+                                            /*isFinalPage=*/true);
+        QCOMPARE(spy.count(), 0);
+
+        // A keyed apply carrying origin_op emits exactly that op-id once.
+        svc.ingestor().deliverConversation(conv("m", "!b", "B"), QStringLiteral("op-xyz"));
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toString(), QStringLiteral("op-xyz"));
     }
 
     void inMemoryDoesNotPersist() {
