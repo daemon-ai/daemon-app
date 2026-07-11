@@ -620,6 +620,32 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     set_tests_properties(tst_mirror_session_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
 
+# tst_sessions_list_mirror (M4 sub-gate 1): the roster list consumer on the mirror path - the
+# shared SessionsListModel (GUI SessionsList/ArchivedSection + TUI SessionListView) over
+# MirrorSessionStore: mirror deliveries render + live-update, the Archived/Agent scopes drive the
+# ingestor's scoped SessionsQuery jobs and project the additively-delivered rows, and the
+# documented M4 degradations (no snippet/tags) hold. Only built with the substrate.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    qt_add_executable(tst_sessions_list_mirror tst_sessions_list_mirror.cpp)
+    target_include_directories(tst_sessions_list_mirror
+        PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/SessionsList"
+    )
+    target_link_libraries(tst_sessions_list_mirror
+        PRIVATE
+            Qt6::Test
+            Qt6::Qml
+            Qt6::Quick
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::persistence
+            daemon-app::domain
+            daemon-app::sessionslist
+    )
+    add_test(NAME tst_sessions_list_mirror COMMAND tst_sessions_list_mirror)
+    set_tests_properties(tst_sessions_list_mirror PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
 # tst_graph_model: the reusable Daemon Kit graph model - generic node/edge ingestion, degree, the
 # normalized force layout, and edges()/nodeById/neighborsOf.
 qt_add_executable(tst_graph_model tst_graph_model.cpp)

@@ -16,7 +16,7 @@ ColumnLayout {
 
     SessionsListModel {
         id: archived
-        store: SessionStore
+        store: SessionStoreMirror
         // NodeType::Archived == 1 (see domain/sidebar_node.h).
         Component.onCompleted: setScope(1, -1, "")
     }
@@ -24,7 +24,7 @@ ColumnLayout {
     // F6: the TopLevel roster excludes archived rows, so entering this section fetches the
     // SessionScope::Archived listing (no-op on the in-memory store; the daemon store merges
     // additively and the model re-projects on changed()).
-    Component.onCompleted: SessionStore.refreshArchivedSessions()
+    Component.onCompleted: SessionStoreMirror.refreshArchivedSessions()
 
     RowLayout {
         Layout.fillWidth: true
@@ -64,13 +64,13 @@ ColumnLayout {
                 }
                 Kit.TextButton {
                     text: qsTr("Unarchive")
-                    onClicked: SessionStore.setArchived(rowDelegate.sessionId, false)
+                    onClicked: SessionStoreMirror.setArchived(rowDelegate.sessionId, false)
                 }
                 Kit.IconButton {
                     icon: FontIcons.fa_trash; iconColor: Theme.danger; iconPointSize: 13
                     implicitWidth: 32; implicitHeight: 28
                     tooltipText: qsTr("Delete permanently")
-                    onClicked: SessionStore.deleteSession(rowDelegate.sessionId)
+                    onClicked: SessionStoreMirror.deleteSession(rowDelegate.sessionId)
                 }
             }
             HoverHandler { id: hover }

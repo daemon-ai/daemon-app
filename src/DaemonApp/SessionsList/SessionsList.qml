@@ -49,7 +49,7 @@ Rectangle {
 
     SessionsListModel {
         id: convModel
-        store: SessionStore
+        store: SessionStoreMirror
     }
 
     // --- Row actions (right-click): rename / pin / export / delete ----------
@@ -70,15 +70,15 @@ Rectangle {
         }
         Kit.MenuItem {
             text: rowMenu.targetPinned ? qsTr("Unpin") : qsTr("Pin")
-            onTriggered: SessionStore.setPinned(rowMenu.targetId, !rowMenu.targetPinned)
+            onTriggered: SessionStoreMirror.setPinned(rowMenu.targetId, !rowMenu.targetPinned)
         }
         Kit.MenuItem {
             text: qsTr("Move up")
-            onTriggered: SessionStore.moveSession(rowMenu.targetId, -1)
+            onTriggered: SessionStoreMirror.moveSession(rowMenu.targetId, -1)
         }
         Kit.MenuItem {
             text: qsTr("Move down")
-            onTriggered: SessionStore.moveSession(rowMenu.targetId, 1)
+            onTriggered: SessionStoreMirror.moveSession(rowMenu.targetId, 1)
         }
         Kit.MenuItem {
             text: qsTr("Export\u2026")
@@ -100,14 +100,14 @@ Rectangle {
 
         function openFor(sessionId) {
             renameDialog.targetId = sessionId;
-            renameField.text = SessionStore.title(sessionId);
+            renameField.text = SessionStoreMirror.title(sessionId);
             open();
             renameField.forceActiveFocus();
             renameField.selectAll();
         }
         onAccepted: {
             if (renameDialog.targetId !== "" && renameField.text.trim().length > 0)
-                SessionStore.renameSession(renameDialog.targetId, renameField.text.trim());
+                SessionStoreMirror.renameSession(renameDialog.targetId, renameField.text.trim());
         }
         contentItem: Kit.TextField {
             id: renameField
@@ -131,7 +131,7 @@ Rectangle {
         }
         onAccepted: {
             if (deleteDialog.targetId !== "")
-                SessionStore.deleteSession(deleteDialog.targetId);
+                SessionStoreMirror.deleteSession(deleteDialog.targetId);
         }
         contentItem: QQC.Label {
             text: qsTr("Permanently delete this session? This cannot be undone.")
@@ -151,13 +151,13 @@ Rectangle {
         defaultSuffix: "json"
 
         function openFor(sessionId) {
-            const t = SessionStore.title(sessionId);
+            const t = SessionStoreMirror.title(sessionId);
             const base = (t && t.length > 0 ? t : "session");
             if (Qt.platform.os === "wasm") {
                 // No shared filesystem with the node in the browser: skip the sandbox-only
                 // FileDialog and hand the serialized JSON to the wasm bridge, which triggers a
                 // real browser download of "<title-or-id>.json".
-                Exporter.exportToBrowser(SessionStore, sessionId, base + ".json");
+                Exporter.exportToBrowser(SessionStoreMirror, sessionId, base + ".json");
                 return;
             }
             exportDialog.targetId = sessionId;
@@ -166,7 +166,7 @@ Rectangle {
         }
         onAccepted: {
             if (exportDialog.targetId !== "")
-                Exporter.writeFile(selectedFile, Exporter.toJson(SessionStore, exportDialog.targetId));
+                Exporter.writeFile(selectedFile, Exporter.toJson(SessionStoreMirror, exportDialog.targetId));
         }
     }
 

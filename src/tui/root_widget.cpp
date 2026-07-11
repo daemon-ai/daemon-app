@@ -116,7 +116,9 @@ RootWidget::RootWidget()
     m_integrationsTree->setPersons(m_services.persons);
 
     m_list = new SessionsListModel(this);
-    m_list->setStore(m_services.store);
+    // M4 sub-gate 1: the roster list reads the mirror-backed store (in mock mode storeMirror
+    // aliases the legacy store — composition fallback, §9).
+    m_list->setStore(m_services.storeMirror);
 
     // The shared composer FSM - the same C++ class the QML composer drives. The
     // TUI binds its single-line input to it, gaining draft persistence, history,
