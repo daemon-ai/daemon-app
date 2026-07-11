@@ -43,6 +43,12 @@ qt_add_qml_module(daemon-app
         RightPanel.qml
 )
 
+# mirror A5 (spec 09 wave M2): application.cpp registers the Mirror/Outbox context properties
+# with complete types where the substrate is built (same define daemon_client uses).
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    target_compile_definitions(daemon-app PRIVATE DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1)
+endif()
+
 target_link_libraries(daemon-app
     PRIVATE
         Qt6::Quick

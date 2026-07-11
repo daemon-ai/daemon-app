@@ -1349,8 +1349,52 @@ hasta que se vuelva a registrar.</translation>
         <translation>No se pudo enviar el mensaje.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>Cargar mensajes anteriores</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Aún no hay mensajes</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Sin enviar (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Enviar las restantes de todos modos</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Fallido</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Enviando…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Enviado</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>En cola</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Reintentar</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Editar</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>Descartar</translation>
     </message>
 </context>
 <context>

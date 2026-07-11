@@ -1349,8 +1349,52 @@ until it is re-registered.</source>
         <translation>无法发送消息。</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>加载更早的消息</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>暂无消息</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>未发送 (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>发送</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>仍然发送其余消息</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>失败</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>发送中…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>已发送</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>已排队</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>重试</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>编辑</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>丢弃</translation>
     </message>
 </context>
 <context>

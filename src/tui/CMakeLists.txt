@@ -46,10 +46,13 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Session/subagent_model.cpp
     ../DaemonApp/Tabs/tab_model.h
     ../DaemonApp/Tabs/tab_model.cpp
-    # [integrations wire v38] Native-chat tab view-model, shared verbatim with the GUI
-    # (ChatPage.qml). Toolkit-agnostic: only QObject + the transports IChatService seam.
+    # [integrations wire v38 → mirror M2] Native-chat tab view-models, shared verbatim with the
+    # GUI (ChatPage.qml): the conversation controller (mirror-window read path where the substrate
+    # is built) + the ConvSend outbox-lane controller with its per-conversation pending strip.
     ../DaemonApp/Chat/chat_conversation_controller.h
     ../DaemonApp/Chat/chat_conversation_controller.cpp
+    ../DaemonApp/Chat/conv_send_controller.h
+    ../DaemonApp/Chat/conv_send_controller.cpp
     ../DaemonApp/Command/command_registry.h
     ../DaemonApp/Command/command_registry.cpp
     # File tree + editor view-models, shared verbatim with the GUI.
@@ -115,9 +118,22 @@ target_link_libraries(da_tui_viewmodels
         # ChatConversationController binds the transports IChatService seam.
         daemon-app::transports
         daemon-app::uimodels
+        # mirror A5: ConvSendController rides the durable outbox (always built); PUBLIC so the
+        # daemon-tui shell's includes of conv_send_controller.h resolve outbox_types.h.
+        daemon-app::local
     PRIVATE
         daemon-app::warnings
 )
+
+# mirror A5 (spec 09 wave M2): the shared chat controller reads the mirror window where the
+# substrate is built (same define daemon_client uses); substrate-less stacks keep the legacy path.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    target_link_libraries(da_tui_viewmodels PUBLIC
+        daemon-app::mirror_lens
+        daemon-app::mirror_ingestor
+    )
+    target_compile_definitions(da_tui_viewmodels PUBLIC DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1)
+endif()
 
 # ---------------------------------------------------------------------------
 # daemon-tui - the terminal application executable.
@@ -218,6 +234,9 @@ qt_add_executable(daemon-tui
     session_list_view.cpp
     queue_strip_view.h
     queue_strip_view.cpp
+    # [mirror M2] Chat pending strip: the ConvSend outbox lens beside the timeline (§8.4).
+    chat_pending_strip_view.h
+    chat_pending_strip_view.cpp
     attachment_bar_view.h
     attachment_bar_view.cpp
     status_bar_view.h

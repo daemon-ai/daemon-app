@@ -1349,8 +1349,52 @@ kadar başlatılamaz.</translation>
         <translation>Mesaj gönderilemedi.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>Önceki mesajları yükle</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Henüz mesaj yok</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Gönderilmemiş (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Gönder</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Kalanları yine de gönder</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Başarısız</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Gönderiliyor…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Gönderildi</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Kuyrukta</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Yeniden dene</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Düzenle</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>At</translation>
     </message>
 </context>
 <context>

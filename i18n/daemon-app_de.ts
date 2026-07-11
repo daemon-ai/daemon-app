@@ -1349,8 +1349,52 @@ bis er erneut registriert wird.</translation>
         <translation>Die Nachricht konnte nicht gesendet werden.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>Frühere Nachrichten laden</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Noch keine Nachrichten</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Nicht gesendet (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Senden</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Verbleibende trotzdem senden</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Wird gesendet…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Gesendet</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>In Warteschlange</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Erneut versuchen</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Bearbeiten</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>Verwerfen</translation>
     </message>
 </context>
 <context>

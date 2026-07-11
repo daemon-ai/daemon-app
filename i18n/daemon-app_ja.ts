@@ -1349,8 +1349,52 @@ until it is re-registered.</source>
         <translation>メッセージを送信できませんでした。</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>以前のメッセージを読み込む</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>メッセージはまだありません</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>未送信 (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>送信</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>残りを送信する</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>失敗</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>送信中…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>送信済み</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>キュー待ち</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>再試行</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>編集</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>破棄</translation>
     </message>
 </context>
 <context>

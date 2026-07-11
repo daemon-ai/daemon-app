@@ -1349,8 +1349,52 @@ until it is re-registered.</source>
         <translation>無法傳送訊息。</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>載入較早的訊息</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>尚無訊息</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>未傳送 (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>傳送</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>仍然傳送其餘訊息</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>失敗</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>傳送中…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>已傳送</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>已排入佇列</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>重試</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>編輯</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>捨棄</translation>
     </message>
 </context>
 <context>

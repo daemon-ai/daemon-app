@@ -78,8 +78,18 @@ class ITransportRegistry;
 namespace update {
 class UpdateManager;
 }
+// mirror A5 (spec 09 wave M2): the live mirror substrate wired beside the legacy paths
+// (dual-write). Forward-declared so this widely-included header stays free of the mirror headers;
+// the pointers are null when the immer substrate is not built.
+namespace mirror {
+class MirrorService;
+class LocalDatabase;
+class Outbox;
+} // namespace mirror
 
 namespace daemonapp::daemon {
+
+class DaemonFetchExecutor; // mirror A5: FetchExecutor over NodeApiClient (Daemon mode)
 
 class AgentRepository;
 class ContactsRepository; // [acct-mgmt] transport contacts / roster (wire v34)
@@ -215,6 +225,17 @@ struct AppServiceGraph {
     // The node-wide event feed consumer (L3): owns the single EventsSince stream + routes
     // notifications. Non-null only in Daemon mode.
     SubscriptionManager* subscriptions = nullptr;
+
+    // --- mirror A5 (spec 09 wave M2): the live mirror substrate, wired beside the legacy paths
+    // (dual-write, §13). The ingestor is the single writer; it is fed the node event stream through
+    // the daemon bridge and drives fetches over the DaemonFetchExecutor (Daemon mode). The M2 read
+    // lenses (ChatWindowModel / PersonListModel / ContactListModel / ConversationListModel) read
+    // this store; the outbox owns the ConvSend + turn-prompt lanes (§6). Null when the immer
+    // substrate is not built into this stack. ---
+    mirror::MirrorService* mirrorService = nullptr;
+    DaemonFetchExecutor* mirrorExecutor = nullptr; // Daemon mode only
+    mirror::LocalDatabase* localDb = nullptr; // precious local-<id>.db (outbox + sidecar, §4.5)
+    mirror::Outbox* outbox = nullptr;         // durable write queue (§6): ConvSend + turn-prompt
 };
 
 // Resolve the service mode from the DAEMON_APP_SERVICE_MODE environment variable

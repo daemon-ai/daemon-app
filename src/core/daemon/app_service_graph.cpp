@@ -73,7 +73,60 @@
 #include <QString>
 #include <QtGlobal>
 
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+#include "daemon/daemon_fetch_executor.h"
+#include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
+#include "local_database.h"
+#include "mirror/mirror_service.h"
+#include "outbox.h"
+#include "verb_class.h"
+
+#include <QCryptographicHash>
+#include <QDir>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QStandardPaths>
+#endif
+
 namespace daemonapp::daemon {
+
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+namespace {
+
+// Per-identity mirror-db paths (spec 09 §4.5), matching the DaemonCacheStore / LocalDatabase
+// convention EXACTLY (one namespace-hash convention across all three per-identity files):
+// SHA-256(userKey) hex truncated to 16, suffixed to the base name, in AppDataLocation beside
+// daemon_cache.db. An empty key = the shared/default file (pre-auth / local-trust).
+class MirrorDbPaths final : public mirror::DbPathProvider {
+public:
+    explicit MirrorDbPaths(QString userKey) : user_key_(std::move(userKey)) {}
+
+    [[nodiscard]] QString mirrorDbPath() const override {
+        QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        if (dir.isEmpty()) {
+            dir = QDir::tempPath();
+        }
+        QDir().mkpath(dir);
+        if (user_key_.isEmpty()) {
+            return QDir(dir).filePath(QStringLiteral("mirror.db"));
+        }
+        const QByteArray h =
+            QCryptographicHash::hash(user_key_.toUtf8(), QCryptographicHash::Sha256)
+                .toHex()
+                .left(16);
+        return QDir(dir).filePath(QStringLiteral("mirror-%1.db").arg(QString::fromLatin1(h)));
+    }
+
+    // The precious local-<id>.db manages its own namespaced path (LocalDatabase, same hash);
+    // Persistence never consumes this member (declared for the DbPathProvider contract).
+    [[nodiscard]] QString localDbPath() const override { return {}; }
+
+private:
+    QString user_key_;
+};
+
+} // namespace
+#endif
 
 ServiceMode serviceModeFromEnvironment(ServiceMode fallback) {
     const QByteArray raw = qgetenv("DAEMON_APP_SERVICE_MODE");
@@ -535,6 +588,129 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // hygiene and persists the ETag / dismissed-version / auto-check bookkeeping.
     graph.update = new update::UpdateManager(owner);
     graph.update->setSettings(graph.settings);
+
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+    // ---- mirror A5 (spec 09 wave M2): live-wire the ingestor beside the legacy paths ----
+    // Dual-write discipline (§13 M0–M2): the SubscriptionManager + repositories keep writing their
+    // caches; the mirror is fed in parallel and the M2 read lenses (chat/persons/contacts/
+    // conversation) read it. The ingestor is the single writer (§5.1). DAEMON MODE ONLY at M2:
+    // mock mode leaves mirrorService/outbox null so the chat surfaces fall back to the legacy
+    // mock seams (§9 "mock keeps working"); A8's seeder feeds the mirror in mock and removes the
+    // fallback.
+    if (daemonConnection != nullptr) {
+        auto* svc = new mirror::MirrorService(owner);
+        // Persistent per-identity boot (§4.5): mirror-<id>.db opens under the LAST authenticated
+        // identity (persisted in settings) so a cold offline boot renders that identity's
+        // last-known state (E1). The path convention matches the cache store / local-db exactly:
+        // SHA-256(userKey) hex, first 16, suffixed to the base filename, beside daemon_cache.db.
+        const QString lastIdentity =
+            graph.settings->value(QStringLiteral("mirror/lastIdentity")).toString();
+        {
+            const MirrorDbPaths paths(lastIdentity);
+            (void)svc->open(paths); // a failed open degrades to in-memory and logs
+        }
+        graph.mirrorService = svc;
+
+        // The precious local-<id>.db + the durable outbox (§6): the ConvSend + turn-prompt lanes.
+        // Same per-identity namespace at boot (LocalDatabase hashes the key identically).
+        graph.localDb = new mirror::LocalDatabase(QString(), owner);
+        if (!lastIdentity.isEmpty()) {
+            graph.localDb->setIdentityNamespace(lastIdentity);
+        }
+        graph.outbox = new mirror::Outbox(graph.localDb, owner);
+        // Drain gate (§6.3): mutation lanes require connected+authenticated; the turn-prompt
+        // dispatch lane is gated on session-idle by its own consumer, not the wire.
+        graph.outbox->setGate(
+            [nodeApi = graph.nodeApi](const QString& /*lane*/, mirror::VerbClass cls) {
+                return !mirror::requiresConnected(cls) || nodeApi->isAuthenticated();
+            });
+        graph.outbox->load();
+
+        // Identity switch (AuthOk): persist the key, then re-namespace BOTH durable stores —
+        // reopen only on an actual CHANGE (a plain reconnect of the same user must not rebase the
+        // live store under attached lenses; mid-run lens re-prime after a switch is the A6 seam).
+        {
+            auto currentIdentity = std::make_shared<QString>(lastIdentity);
+            QObject::connect(
+                graph.nodeApi, &NodeApiClient::authenticated, svc,
+                [svc, settings = graph.settings, localDb = graph.localDb, outbox = graph.outbox,
+                 currentIdentity](const DecodedPrincipalView& view) {
+                    settings->setValue(QStringLiteral("mirror/lastIdentity"), view.userId);
+                    if (*currentIdentity == view.userId) {
+                        return;
+                    }
+                    *currentIdentity = view.userId;
+                    const MirrorDbPaths paths(view.userId);
+                    (void)svc->open(paths);
+                    localDb->setIdentityNamespace(view.userId);
+                    outbox->load();
+                });
+        }
+
+        {
+            // Fulfil the ingestor's fetch jobs over the SAME NodeApiClient (shared pipeline).
+            graph.mirrorExecutor =
+                new DaemonFetchExecutor(graph.nodeApi, svc->ingestor(), svc->scheduler(), owner);
+            svc->setFetchExecutor(graph.mirrorExecutor);
+
+            // Feed the node event stream into the ingestor through the bridge. A per-session
+            // Subscribe item is not an events page (decode fails) so it is ignored — the mirror
+            // follows only the node-wide feed. Read-only, parallel to the SubscriptionManager
+            // (dual-write): neither owns the other's cursor.
+            QObject::connect(graph.nodeApi, &NodeApiClient::streamItem, svc,
+                             [svc](quint64 /*id*/, const QByteArray& cbor) {
+                                 DecodedEventsPage page;
+                                 if (!NodeApiCodec::decodeEventsPage(cbor, &page)) {
+                                     return;
+                                 }
+                                 for (const DecodedNodeEvent& e : page.events) {
+                                     svc->ingest(translateNodeEvent(e));
+                                 }
+                             });
+
+            // The outbox drains ConvSend to the wire on a MANUAL tap (§6.8 no auto-replay). The
+            // provenance-keyed confirm (§6.6) lands when the resulting MessagesChanged→ConvHistory
+            // delta reaches the ingestor; the ack/rejection below advances the lane state.
+            QObject::connect(
+                graph.outbox, &mirror::Outbox::sendRequested, graph.nodeApi,
+                [nodeApi = graph.nodeApi](const mirror::PendingOp& op) {
+                    if (op.verb != QStringLiteral("ConvSend")) {
+                        return; // other lanes are wired by their owners; turn-prompt is dispatch
+                    }
+                    const QJsonObject args = QJsonDocument::fromJson(op.payload).object();
+                    const QByteArray req = NodeApiCodec::encodeConvSendRequest(
+                        args.value(QStringLiteral("transport")).toString(),
+                        args.value(QStringLiteral("conv")).toString(),
+                        args.value(QStringLiteral("message")).toString());
+                    nodeApi->sendRequest(req, QStringLiteral("outbox/") + op.opId);
+                });
+            QObject::connect(graph.nodeApi, &NodeApiClient::responseReady, graph.outbox,
+                             [outbox = graph.outbox](const QString& corr, const QByteArray& cbor) {
+                                 if (!corr.startsWith(QStringLiteral("outbox/"))) {
+                                     return;
+                                 }
+                                 const QString opId = corr.mid(7);
+                                 // Ok → accepted/landed; a node rejection (api-error) pauses the
+                                 // lane (§6.5).
+                                 if (NodeApiCodec::responseKind(cbor) == ApiResponseKind::Error) {
+                                     DecodedApiError err;
+                                     NodeApiCodec::decodeError(cbor, &err);
+                                     outbox->onRejection(opId, err.kind, err.message);
+                                 } else {
+                                     outbox->onAck(opId);
+                                 }
+                             });
+            QObject::connect(graph.nodeApi, &NodeApiClient::failed, graph.outbox,
+                             [outbox = graph.outbox](const QString& corr, const QString& msg) {
+                                 if (corr.startsWith(QStringLiteral("outbox/"))) {
+                                     // A transport-level failure is transient — backoff, keep
+                                     // order.
+                                     outbox->onTransientFailure(corr.mid(7), msg);
+                                 }
+                             });
+        }
+    }
+#endif
     return graph;
 }
 

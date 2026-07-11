@@ -38,6 +38,12 @@
 #include "platform/wasm_contracts.h"
 #include "profiles/iprofile_store.h"
 #include "session/icheckpoint_timeline.h"
+
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+// [mirror M2] Complete types for the Mirror/Outbox context-property upcasts (spec 09 §2/§6).
+#include "mirror/mirror_service.h"
+#include "outbox.h"
+#endif
 #include "session/isession_settings.h"
 #include "settings/isettings_store.h"
 #include "setup/agent_setup_model.h"
@@ -369,6 +375,19 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // [integrations wire v38] Native chat (A4): ChatPage's ChatConversationController binds this
     // IChatService seam (ConvHistory transcript + ConvSend + MessagesChanged refresh).
     engine.rootContext()->setContextProperty(QStringLiteral("Chat"), m_services.chat);
+    // [mirror M2] The mirror composition root + durable outbox (spec 09 §2/§6). Daemon mode only
+    // at M2 (null in mock — the chat surfaces fall back to the legacy seams until A8's seeder):
+    // ChatPage reads the ChatWindowModel timeline via `Mirror` and routes sends through the
+    // ConvSend outbox lane via `Outbox` (manual drain; §6.8 auto-replay stays off).
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+    engine.rootContext()->setContextProperty(QStringLiteral("Mirror"), m_services.mirrorService);
+    engine.rootContext()->setContextProperty(QStringLiteral("Outbox"), m_services.outbox);
+#else
+    engine.rootContext()->setContextProperty(QStringLiteral("Mirror"),
+                                             static_cast<QObject*>(nullptr));
+    engine.rootContext()->setContextProperty(QStringLiteral("Outbox"),
+                                             static_cast<QObject*>(nullptr));
+#endif
 
     // The unified mock DaemonNet (actors/places + sessions-as-nodes); surfaces project from it. See
     // multi-protocol-client-surface.md §1 + the DaemonNet meta-plan.

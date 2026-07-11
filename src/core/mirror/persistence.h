@@ -120,8 +120,12 @@ public:
     bool writeBehind(const WriteBatch& batch);
 
     // Boot load: rebuild the M tables via transients + read watermarks/cursors, return the model.
-    // (Conversation is loaded; other M tables are the same mechanical shape.)
-    [[nodiscard]] bool loadInto(MirrorModel& model);
+    // (Conversation is loaded; other M tables are the same mechanical shape.) Class-W chat windows
+    // are rebuilt from w_chat_messages/window_meta as the persisted contiguous tail, bounded per
+    // scope by `chatWindowLimit` (the §4.6 chat policy max; <= 0 = unbounded) so a cold boot
+    // renders the last-known timeline offline (E1); forward-fill-on-demand remains the reconnect
+    // top-up path.
+    [[nodiscard]] bool loadInto(MirrorModel& model, int chatWindowLimit = 500);
 
     [[nodiscard]] quint64 loadWatermark(const QString& consumer) const;
     [[nodiscard]] quint64 loadCursor(const QString& name, quint64* epochOut = nullptr) const;

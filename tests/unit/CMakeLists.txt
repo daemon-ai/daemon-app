@@ -1001,6 +1001,56 @@ add_test(NAME tst_chat_conversation_controller COMMAND tst_chat_conversation_con
 set_tests_properties(tst_chat_conversation_controller
     PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_conv_send_lane (mirror A5): ConvSend routed through the durable outbox lane (spec 09 §7,
+# §6.4/§6.5/§6.8, §8.4) — the ConvSendController shared VM + the per-conversation PendingOpsModel
+# strip. Compiles the controller source directly and links the local (outbox) module.
+qt_add_executable(tst_conv_send_lane
+    tst_conv_send_lane.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/conv_send_controller.cpp
+)
+set_target_properties(tst_conv_send_lane PROPERTIES AUTOMOC ON)
+target_include_directories(tst_conv_send_lane
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat"
+)
+target_link_libraries(tst_conv_send_lane
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        Qt6::Sql
+        daemon-app::local
+)
+add_test(NAME tst_conv_send_lane COMMAND tst_conv_send_lane)
+set_tests_properties(tst_conv_send_lane PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_chat_conversation_mirror (mirror A5): the chat controller's MIRROR read path — window-lens
+# rebinding on open (visibility declaration → ingestor top-up), journal-delta re-projection,
+# per-conversation isolation, and demand-paging end-of-history mediation. Compiles the controller
+# source WITH the substrate define (the same shape da_chat_view / da_tui_viewmodels build).
+if(TARGET daemon-app::mirror_lens)
+    qt_add_executable(tst_chat_conversation_mirror
+        tst_chat_conversation_mirror.cpp
+        ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/chat_conversation_controller.cpp
+    )
+    set_target_properties(tst_chat_conversation_mirror PROPERTIES AUTOMOC ON)
+    target_include_directories(tst_chat_conversation_mirror
+        PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat"
+    )
+    target_compile_definitions(tst_chat_conversation_mirror
+        PRIVATE DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1
+    )
+    target_link_libraries(tst_chat_conversation_mirror
+        PRIVATE
+            Qt6::Test
+            Qt6::Qml
+            daemon-app::transports
+            daemon-app::mirror_lens
+            daemon-app::mirror_ingestor
+    )
+    add_test(NAME tst_chat_conversation_mirror COMMAND tst_chat_conversation_mirror)
+    set_tests_properties(tst_chat_conversation_mirror
+        PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
 # tst_session_orchestrator: the shared submit pipeline - submit starts the
 # turn + populates todos (and clears them after the turn settles), cancel resets,
 # and slash "/new" is handled while other commands surface via commandRequested.
@@ -1209,12 +1259,24 @@ endif()
 # and dual-write parity. Gated on the ingestor library (which is gated on the vendored substrate).
 if(TARGET daemon-app::mirror_ingestor)
     foreach(_itst tst_mirror_policy_table tst_mirror_fetch_scheduler tst_mirror_ingestor
-                  tst_mirror_write_behind tst_mirror_parity)
+                  tst_mirror_write_behind tst_mirror_parity tst_mirror_service)
         qt_add_executable(${_itst} ${_itst}.cpp)
         target_link_libraries(${_itst} PRIVATE Qt6::Test daemon-app::mirror_ingestor)
         add_test(NAME ${_itst} COMMAND ${_itst})
         set_tests_properties(${_itst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endforeach()
+
+    # tst_mirror_e1_offline (mirror A5): the E1 cold-boot-offline scenario (spec 09 §12) spanning
+    # BOTH DBs — mirror-<id>.db (last-known node truth) + local-<id>.db (surviving pending ops), no
+    # connection, no auto-replay. Links the ingestor (MirrorService) + the local (outbox) module.
+    if(TARGET daemon-app::local)
+        qt_add_executable(tst_mirror_e1_offline tst_mirror_e1_offline.cpp)
+        target_link_libraries(tst_mirror_e1_offline
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::mirror_lens
+                    daemon-app::local)
+        add_test(NAME tst_mirror_e1_offline COMMAND tst_mirror_e1_offline)
+        set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
 
     # The daemon bridge translation (DecodedNodeEvent → mirror::NodeEvent): the second compile-time
     # exhaustiveness layer tying the app's generated wire enum to the policy table (spec §5.1/§12).
@@ -1233,7 +1295,8 @@ endif()
 # ConversationListModel role-map demonstrator. Every model instantiation runs under
 # QAbstractItemModelTester (§12). Gated on the lens target being built (needs the substrate).
 if(TARGET daemon-app::mirror_lens)
-    foreach(_ltst tst_mirror_stable_id tst_mirror_table_model tst_mirror_window_model)
+    foreach(_ltst tst_mirror_stable_id tst_mirror_table_model tst_mirror_window_model
+                  tst_mirror_m2_lenses)
         qt_add_executable(${_ltst} ${_ltst}.cpp)
         target_link_libraries(${_ltst} PRIVATE Qt6::Test daemon-app::mirror_lens)
         add_test(NAME ${_ltst} COMMAND ${_ltst})

@@ -21,6 +21,7 @@ class ParticipantsModel;
 }
 
 class AttachmentBarView;
+class ChatPendingStripView;
 class CodeEditorView;
 class CompletionView;
 class ComposerChrome;
@@ -60,6 +61,9 @@ struct TuiShellWidgets {
     Tui::ZLabel* fileStatus = nullptr;
     ComposerChrome* composerChrome = nullptr;
     QueueStripView* queue = nullptr;
+    // [mirror M2] The chat pending strip (ConvSend outbox lens, §8.4): beside the timeline, above
+    // the composer — sibling of the queued-prompt strip; 0-height outside chat tabs.
+    ChatPendingStripView* chatPending = nullptr;
     Tui::ZLabel* subagents = nullptr;
     Tui::ZLabel* todos = nullptr;
     AttachmentBarView* attachments = nullptr;
