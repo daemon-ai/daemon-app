@@ -3,13 +3,13 @@
 
 #include "account_management_controller.h"
 #include "integrations_tree_model.h"
-#include "transports/ipersons_service.h"
+#include "mirror/mirror_service.h"
+#include "mirror/seeder.h"
 #include "transports/itransport_registry.h"
 
 #include <QSignalSpy>
 #include <QtTest>
 
-using transports::IPersonsService;
 using transports::ITransportRegistry;
 
 namespace {
@@ -92,14 +92,6 @@ public:
 };
 
 // A programmable IPersonsService: canned person rows with per-transport endpoints.
-class FakePersons : public IPersonsService {
-public:
-    using IPersonsService::IPersonsService;
-    QVariantList m_persons;
-    [[nodiscard]] QVariantList persons() const override { return m_persons; }
-    void refresh() override { emit personsChanged(m_persons); }
-};
-
 QVariantMap adapterRow(const QString& family, const QString& displayName, bool rooms, bool dms,
                        bool presence, bool rosterList, bool directory,
                        const QVariantList& schema = {}) {
@@ -144,10 +136,75 @@ QVariantMap person(const QString& id, const QString& alias, const QString& trans
     return p;
 }
 
-// A Matrix-shaped account (spaces + rooms + DMs + persons + directory) alongside a flat IRC-shaped
-// account (rooms only, no DMs, no persons, no directory) — enough to exercise every gating rule and
-// the space/parent nesting incl. the unknown-parent-as-root fallback.
-void seedTwoAccounts(FakeRegistry& reg, FakePersons& persons) {
+// The MIRROR twin of the two-account seed: a Matrix-shaped account (spaces + rooms + DMs +
+// persons + directory) alongside a flat IRC-shaped account (rooms only, no DMs, no persons, no
+// directory) — enough to exercise every gating rule and the space/parent nesting incl. the
+// unknown-parent-as-root fallback. Seeded through the same apply pipeline production feeds (§9).
+void seedTwoAccounts(mirror::MirrorService& svc) {
+    mirror::SeedSet seed;
+    const auto adapter = [](const char* family, const char* name, bool dms, bool directory) {
+        mirror::Adapter a;
+        a.family = QLatin1String(family);
+        a.display_name = QLatin1String(name);
+        a.cap_rooms = true;
+        a.cap_direct_messages = dms;
+        a.directory = directory;
+        return a;
+    };
+    seed.adapters = {adapter("matrix", "Matrix", true, true), adapter("irc", "IRC", false, false)};
+    const auto account = [](const char* transport, const char* family, const char* name,
+                            bool enabled, const char* reason) {
+        mirror::TransportAccount t;
+        t.transport = QLatin1String(transport);
+        t.family = QLatin1String(family);
+        t.display_name = QString::fromUtf8(name);
+        t.enabled = enabled;
+        t.reason = QLatin1String(reason);
+        return t;
+    };
+    seed.transportAccounts = {
+        account("matrix/@you", "matrix", "Matrix (@you)", true, "ready"),
+        account("irc/libera", "irc", "IRC (libera)", false, ""),
+    };
+    const auto conv = [](const char* transport, const char* id, const char* title, const char* kind,
+                         const char* parent) {
+        mirror::Conversation c;
+        c.transport = QLatin1String(transport);
+        c.id = QLatin1String(id);
+        c.title = QString::fromUtf8(title);
+        c.kind = QLatin1String(kind);
+        c.parent = QLatin1String(parent);
+        return c;
+    };
+    seed.conversations = {
+        conv("matrix/@you", "!space1", "Demo Server", "space", ""),
+        conv("matrix/@you", "!general", "general", "channel", "!space1"),
+        conv("matrix/@you", "!random", "random", "channel", "!space1"),
+        conv("matrix/@you", "!standalone", "standalone", "channel", ""),
+        conv("matrix/@you", "!orphan", "orphan", "channel", "!missing"),
+        conv("matrix/@you", "!dmAlice", "Alice", "dm", ""),
+        conv("matrix/@you", "!grpDesign", "Design", "group_dm", ""),
+        conv("irc/libera", "#daemon", "#daemon", "channel", ""),
+    };
+    mirror::Person bob;
+    bob.id = QStringLiteral("p-bob");
+    bob.alias = QStringLiteral("Bob");
+    bob.endpoint_count = 1;
+    seed.persons = {bob};
+    mirror::PersonEndpoint bobEp;
+    bobEp.person = QStringLiteral("p-bob");
+    bobEp.transport = QStringLiteral("matrix/@you");
+    bobEp.contact = QStringLiteral("@bob");
+    bobEp.display_name = QStringLiteral("Bob");
+    bobEp.presence_primitive = QStringLiteral("available");
+    seed.personEndpoints = {bobEp};
+    mirror::Seeder seeder(svc.store());
+    seeder.seed(seed);
+}
+
+// The registry-shaped seed the ACCOUNT-CONTROLLER cases still drive (the wizard reads schemas +
+// records verbs off the registry seam, which survives as the daemon verb/settings sink).
+void seedTwoAccounts(FakeRegistry& reg) {
     reg.m_adapters = QVariantList{
         adapterRow(QStringLiteral("matrix"), QStringLiteral("Matrix"), true, true, true, true,
                    true),
@@ -179,9 +236,6 @@ void seedTwoAccounts(FakeRegistry& reg, FakePersons& persons) {
         conv(QStringLiteral("irc/libera"), QStringLiteral("#daemon"), QStringLiteral("#daemon"),
              QStringLiteral("channel"), QString()),
     };
-    persons.m_persons = QVariantList{person(QStringLiteral("p-bob"), QStringLiteral("Bob"),
-                                            QStringLiteral("matrix/@you"), QStringLiteral("@bob"),
-                                            QStringLiteral("Bob"), QStringLiteral("available"))};
 }
 
 } // namespace
@@ -213,17 +267,18 @@ private slots:
     // Each configured account is a depth-0 ROOT row carrying family + enabled + connection token;
     // the two seeded accounts render in instances() order.
     void accountsAreRoots() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         const int matrix = findRow(model, QStringLiteral("Matrix (@you)"));
         const int irc = findRow(model, QStringLiteral("IRC (libera)"));
         QVERIFY(matrix >= 0 && irc >= 0);
-        QVERIFY2(matrix < irc, "accounts render in instances() order");
+        // AD (1a.3): the mirror projection orders accounts by transport id (deterministic —
+        // "irc/libera" < "matrix/@you"), replacing the legacy registry-listing order.
+        QVERIFY2(irc < matrix, "accounts render transport-sorted");
         QCOMPARE(roleAt<int>(model, matrix, IntegrationsTreeModel::DepthRole), 0);
         QCOMPARE(kindAt(model, matrix), QStringLiteral("account"));
         QCOMPARE(roleAt<QString>(model, matrix, IntegrationsTreeModel::FamilyRole),
@@ -240,12 +295,11 @@ private slots:
     // A space (kind=="space") nests its member conversations (those whose parent == its id) one
     // level deeper; the protocol governs this — flat protocols never emit spaces.
     void spaceNestsChildRooms() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         const int space = findRow(model, QStringLiteral("Demo Server"));
         QVERIFY(space >= 0);
@@ -268,12 +322,11 @@ private slots:
     // dropped): it lands under the standalone Channels group, next to the genuinely-parentless
     // channel.
     void unknownParentTreatedAsRoot() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         const int channels = findRow(model, QStringLiteral("Channels"));
         QVERIFY(channels >= 0);
@@ -295,12 +348,11 @@ private slots:
     // Direct messages (dm + groupdm) group under a "Direct Messages" section, gated on the
     // adapter's directMessages capability.
     void directMessagesGroup() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         const int dms = findRow(model, QStringLiteral("Direct Messages"));
         QVERIFY(dms >= 0);
@@ -310,18 +362,17 @@ private slots:
         QCOMPARE(roleAt<QString>(model, alice, IntegrationsTreeModel::ConvTypeRole),
                  QStringLiteral("dm"));
         QCOMPARE(roleAt<QString>(model, design, IntegrationsTreeModel::ConvTypeRole),
-                 QStringLiteral("groupdm"));
+                 QStringLiteral("group_dm")); // the mirror vocabulary (map_conversation)
     }
 
     // The Persons section renders the endpoints reachable on THIS transport (a cross-transport
     // identity). It appears only for the account whose transport an endpoint names.
     void personsSectionScopedToTransport() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         const int personsHeader = findRow(model, QStringLiteral("Persons"));
         QVERIFY(personsHeader >= 0);
@@ -338,12 +389,11 @@ private slots:
     // shows a Channels group but NO Direct Messages / Persons / Browse sections, while Matrix shows
     // all of them. "Each protocol governs how its tree is rendered."
     void protocolGovernsSections() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         // Collapse Matrix so only IRC's subtree remains for the negative assertions.
         model.toggleExpand(findRow(model, QStringLiteral("Matrix (@you)")));
@@ -364,12 +414,11 @@ private slots:
     // Collapsing an account hides its ENTIRE subtree (sections, spaces, rooms, DMs); the sibling
     // account is untouched; re-expanding restores it.
     void collapsingAccountHidesSubtree() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         QVERIFY(findRow(model, QStringLiteral("Demo Server")) >= 0);
         model.toggleExpand(findRow(model, QStringLiteral("Matrix (@you)")));
@@ -387,12 +436,11 @@ private slots:
     // Collapsing a space hides only its child rooms (the space row stays); a sibling section is
     // unaffected.
     void collapsingSpaceHidesRooms() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         model.toggleExpand(findRow(model, QStringLiteral("Demo Server")));
         QVERIFY(findRow(model, QStringLiteral("Demo Server")) >= 0);
@@ -404,12 +452,11 @@ private slots:
 
     // expandAll / collapseAll fold every account+space+section; anyExpanded tracks it.
     void expandAllCollapseAll() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         QVERIFY(model.anyExpanded());
         model.collapseAll();
@@ -429,12 +476,11 @@ private slots:
     // Activating a conversation node (room / channel / DM) emits conversationActivated with its
     // transport + conversation id — the single "user activated a conversation" seam A4 consumes.
     void activatingConversationEmitsActivated() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         QSignalSpy opened(&model, &IntegrationsTreeModel::conversationActivated);
         model.activate(findRow(model, QStringLiteral("general")));
@@ -451,12 +497,11 @@ private slots:
     // Activating an account root emits accountActivated (highlight/scope), not
     // conversationActivated; activating the Browse action emits browseRequested.
     void activatingAccountAndBrowse() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         QSignalSpy account(&model, &IntegrationsTreeModel::accountActivated);
         QSignalSpy conv(&model, &IntegrationsTreeModel::conversationActivated);
@@ -474,12 +519,11 @@ private slots:
 
     // A section header (Persons / Channels / Direct Messages) is not selectable and routes nothing.
     void sectionHeadersInert() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         const int channels = findRow(model, QStringLiteral("Channels"));
         QVERIFY(!roleAt<bool>(model, channels, IntegrationsTreeModel::SelectableRole));
@@ -492,12 +536,13 @@ private slots:
     // requestEditAccount -> editAccountRequested, requestAddAccount -> addAccountRequested, while
     // connect/enable go straight to the registry (ControlApi-level).
     void accountContextIntents() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
+        FakeRegistry reg; // the VERB sink (connect/enable route here; reads never do)
         IntegrationsTreeModel model;
+        model.setMirror(&svc);
         model.setRegistry(&reg);
-        model.setPersons(&persons);
 
         QSignalSpy add(&model, &IntegrationsTreeModel::addAccountRequested);
         QSignalSpy edit(&model, &IntegrationsTreeModel::editAccountRequested);
@@ -515,21 +560,23 @@ private slots:
         QCOMPARE(reg.enabledCalls.value(QStringLiteral("irc/libera")), true);
     }
 
-    // The tree re-composes when the registry publishes a change (instancesChanged /
-    // conversationsChanged) — no manual refresh.
-    void rebuildsOnRegistrySignal() {
-        FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+    // The tree re-composes when a mirror delta lands for a tree-relevant kind (journal-filtered
+    // committed wiring) — no manual refresh, identical in daemon and mock (§9).
+    void rebuildsOnMirrorDelta() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTwoAccounts(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         QVERIFY(findRow(model, QStringLiteral("#daemon")) >= 0);
-        reg.m_conversations[QStringLiteral("irc/libera")].append(
-            conv(QStringLiteral("irc/libera"), QStringLiteral("#new"), QStringLiteral("#new"),
-                 QStringLiteral("channel"), QString()));
-        emit reg.conversationsChanged(QStringLiteral("irc/libera"));
+        mirror::Conversation fresh;
+        fresh.transport = QStringLiteral("irc/libera");
+        fresh.id = QStringLiteral("#new");
+        fresh.title = QStringLiteral("#new");
+        fresh.kind = QStringLiteral("channel");
+        mirror::Seeder seeder(svc.store());
+        seeder.upsertConversation(fresh);
         QVERIFY(findRow(model, QStringLiteral("#new")) >= 0);
     }
 
@@ -538,8 +585,7 @@ private slots:
     // The protocol picker lists every adapter family (family + displayName).
     void availableFamiliesFromAdapters() {
         FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        seedTwoAccounts(reg);
         AccountManagementController ctrl;
         ctrl.setRegistry(&reg);
 
@@ -693,8 +739,7 @@ private slots:
     // removeAccount tears the account down through the registry and reports it.
     void removeAccountTearsDown() {
         FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        seedTwoAccounts(reg);
         AccountManagementController ctrl;
         ctrl.setRegistry(&reg);
 
@@ -707,8 +752,7 @@ private slots:
     // cancel returns the controller to idle.
     void cancelReturnsToIdle() {
         FakeRegistry reg;
-        FakePersons persons;
-        seedTwoAccounts(reg, persons);
+        seedTwoAccounts(reg);
         AccountManagementController ctrl;
         ctrl.setRegistry(&reg);
         ctrl.beginAdd(QStringLiteral("matrix"));

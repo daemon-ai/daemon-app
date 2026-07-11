@@ -46,6 +46,7 @@ target_link_libraries(tui_integrations_tree_tests
         daemon-app::uimodels
         daemon-app::presentation
         daemon-app::theme_core
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tui_integrations_tree_tests COMMAND tui_integrations_tree_tests)
 set_tests_properties(tui_integrations_tree_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -457,6 +458,7 @@ target_link_libraries(tui_integrations_activation_tests
         daemon-app::transports
         daemon-app::domain
         daemon-app::persistence
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tui_integrations_activation_tests COMMAND tui_integrations_activation_tests)
 set_tests_properties(tui_integrations_activation_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

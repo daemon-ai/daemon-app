@@ -10,6 +10,7 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // capability provider for the command palette
+#include "mirror/mirror_service.h" // complete type for the tree setMirror upcast (AD 1a.3)
 // [wave2:app-delegation] F7/DEL-7 CapsRepository::refresh(); RoutingRepository IS-A
 // daemonnet::IRoutingActions (hub dep).
 #include "daemon/repositories.h"
@@ -115,8 +116,8 @@ RootWidget::RootWidget()
     // from the transport registry (accounts/adapters/conversations) + the cross-transport persons
     // seam. Rendered through the Integrations display adapter in its own sidebar TreeListView.
     m_integrationsTree = new IntegrationsTreeModel(this);
-    m_integrationsTree->setRegistry(m_services.transportRegistry);
-    m_integrationsTree->setPersons(m_services.persons);
+    m_integrationsTree->setMirror(m_services.mirrorService); // AD (1a.3): the mirror projection
+    m_integrationsTree->setRegistry(m_services.transportRegistry); // verb sink only
 
     m_list = new SessionsListModel(this);
     // M4 sub-gate 1: the roster list reads the mirror-backed store (in mock mode storeMirror

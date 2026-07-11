@@ -942,6 +942,7 @@ target_link_libraries(tst_integrations_tree
         daemon-app::transports
         daemon-app::uimodels
         daemon-app::sidebar
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tst_integrations_tree COMMAND tst_integrations_tree)
 set_tests_properties(tst_integrations_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

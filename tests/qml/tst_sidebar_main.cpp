@@ -8,8 +8,6 @@
 #include "mirror/mirror_service.h"
 #include "mirror/seeder.h"
 #include "profiles/mock_profile_store.h"
-#include "transports/mock_persons_service.h"
-#include "transports/mock_transport_registry.h"
 
 #include <QtCore/qstandardpaths.h>
 #include <QtCore/qstring.h>
@@ -27,10 +25,11 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_PagesPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_SidebarPlugin)
 
 // The Sidebar binds the app-global context-property seams (injected by Application::registerContext
-// in production). The test injects the in-repo mocks: the mock fleet seed backs the session store,
-// and the dedicated IntegrationsTree renders from the transport registry + persons seams (the
-// legacy transports-tree sidebar section was deleted in M3). The AuthFlowController is serviceless
-// so the mounted AuthFlowSheet never binds a redirect sink offscreen.
+// in production). The test seeds the default-scenario MIRROR: the session store projects it and
+// the dedicated IntegrationsTree renders the same mirror through the `Mirror` context property
+// (AD 1a.3 — the registry/persons read seams are gone; the verb-sink `Transports` stays unbound
+// offscreen). The AuthFlowController is serviceless so the mounted AuthFlowSheet never binds a
+// redirect sink offscreen.
 class SidebarTestSetup : public QObject {
     Q_OBJECT
 
@@ -56,16 +55,13 @@ public slots:
                 &m_mirror->store(), &m_mirror->ingestor(), nullptr, this);
             m_profiles = new profiles::MockProfileStore(this);
             m_approvals = new fleet::MockApprovalsInbox(this);
-            m_registry = new transports::MockTransportRegistry(this);
-            m_persons = new transports::MockPersonsService(this);
             m_authFlow = new auth::AuthFlowController(nullptr, this);
         }
         auto* ctx = engine->rootContext();
         ctx->setContextProperty(QStringLiteral("SessionStoreMirror"), m_store);
+        ctx->setContextProperty(QStringLiteral("Mirror"), m_mirror);
         ctx->setContextProperty(QStringLiteral("Profiles"), m_profiles);
         ctx->setContextProperty(QStringLiteral("Approvals"), m_approvals);
-        ctx->setContextProperty(QStringLiteral("Transports"), m_registry);
-        ctx->setContextProperty(QStringLiteral("Persons"), m_persons);
         ctx->setContextProperty(QStringLiteral("AuthFlow"), m_authFlow);
     }
 
@@ -74,8 +70,6 @@ private:
     daemonapp::daemon::MirrorSessionStore* m_store = nullptr;
     profiles::MockProfileStore* m_profiles = nullptr;
     fleet::MockApprovalsInbox* m_approvals = nullptr;
-    transports::MockTransportRegistry* m_registry = nullptr;
-    transports::MockPersonsService* m_persons = nullptr;
     auth::AuthFlowController* m_authFlow = nullptr;
 };
 

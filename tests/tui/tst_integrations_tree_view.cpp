@@ -3,66 +3,52 @@
 
 #include "display_role_adapter.h"
 #include "integrations_tree_model.h"
-#include "transports/ipersons_service.h"
-#include "transports/itransport_registry.h"
+#include "mirror/mirror_service.h"
+#include "mirror/seeder.h"
 
 #include <QtTest>
 #include <Tui/ZCommon.h>
 
-using transports::IPersonsService;
-using transports::ITransportRegistry;
-
 namespace {
 
-QVariantMap conv(const QString& transport, const QString& id, const QString& title,
-                 const QString& kind, const QString& parent) {
-    return {{QStringLiteral("transport"), transport},
-            {QStringLiteral("id"), id},
-            {QStringLiteral("title"), title},
-            {QStringLiteral("kind"), kind},
-            {QStringLiteral("parent"), parent}};
+// A minimal seeded MIRROR: one Matrix account, a space nesting a room, and a DM — the same
+// apply pipeline production feeds (§9; the legacy registry/persons fakes died with the read
+// port).
+void seedTree(mirror::MirrorService& svc) {
+    mirror::SeedSet seed;
+    mirror::Adapter matrix;
+    matrix.family = QStringLiteral("matrix");
+    matrix.display_name = QStringLiteral("Matrix");
+    matrix.cap_rooms = true;
+    matrix.cap_direct_messages = true;
+    seed.adapters = {matrix};
+    mirror::TransportAccount acct;
+    acct.transport = QStringLiteral("matrix/@you");
+    acct.family = QStringLiteral("matrix");
+    acct.display_name = QStringLiteral("Matrix (@you)");
+    acct.enabled = true;
+    acct.reason = QStringLiteral("ready");
+    seed.transportAccounts = {acct};
+    mirror::Conversation space;
+    space.transport = acct.transport;
+    space.id = QStringLiteral("!space1");
+    space.title = QStringLiteral("Demo Server");
+    space.kind = QStringLiteral("space");
+    mirror::Conversation general;
+    general.transport = acct.transport;
+    general.id = QStringLiteral("!general");
+    general.title = QStringLiteral("general");
+    general.kind = QStringLiteral("channel");
+    general.parent = QStringLiteral("!space1");
+    mirror::Conversation dm;
+    dm.transport = acct.transport;
+    dm.id = QStringLiteral("!dm");
+    dm.title = QStringLiteral("Alice");
+    dm.kind = QStringLiteral("dm");
+    seed.conversations = {space, general, dm};
+    mirror::Seeder seeder(svc.store());
+    seeder.seed(seed);
 }
-
-class FakeRegistry : public ITransportRegistry {
-public:
-    using ITransportRegistry::ITransportRegistry;
-    [[nodiscard]] QVariantList availableAdapters() const override {
-        QVariantMap caps{{QStringLiteral("rooms"), true},
-                         {QStringLiteral("directMessages"), true},
-                         {QStringLiteral("presence"), true}};
-        QVariantMap m{{QStringLiteral("family"), QStringLiteral("matrix")},
-                      {QStringLiteral("displayName"), QStringLiteral("Matrix")},
-                      {QStringLiteral("capabilities"), caps},
-                      {QStringLiteral("directory"), false},
-                      {QStringLiteral("schema"), QVariantList{}}};
-        return {m};
-    }
-    [[nodiscard]] QVariantList instances() const override {
-        QVariantMap m{{QStringLiteral("transport"), QStringLiteral("matrix/@you")},
-                      {QStringLiteral("family"), QStringLiteral("matrix")},
-                      {QStringLiteral("displayName"), QStringLiteral("Matrix (@you)")},
-                      {QStringLiteral("enabled"), true},
-                      {QStringLiteral("connectionReason"), QStringLiteral("ready")}};
-        return {m};
-    }
-    [[nodiscard]] QVariantList conversations(const QString& transport) const override {
-        if (transport != QStringLiteral("matrix/@you")) {
-            return {};
-        }
-        return {conv(transport, QStringLiteral("!space1"), QStringLiteral("Demo Server"),
-                     QStringLiteral("space"), QString()),
-                conv(transport, QStringLiteral("!general"), QStringLiteral("general"),
-                     QStringLiteral("channel"), QStringLiteral("!space1")),
-                conv(transport, QStringLiteral("!dm"), QStringLiteral("Alice"),
-                     QStringLiteral("dm"), QString())};
-    }
-};
-
-class FakePersons : public IPersonsService {
-public:
-    using IPersonsService::IPersonsService;
-    [[nodiscard]] QVariantList persons() const override { return {}; }
-};
 
 } // namespace
 
@@ -87,11 +73,11 @@ private slots:
     // The account root renders its label with a disclosure marker and a connection decoration dot;
     // a nested room is indented under its space; a section header renders as a foldable divider.
     void rendersSharedModelInTui() {
-        FakeRegistry reg;
-        FakePersons persons;
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTree(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         DisplayRoleAdapter adapter(DisplayRoleAdapter::Kind::Integrations);
         adapter.setSourceModel(&model);
@@ -121,11 +107,11 @@ private slots:
     // The account row carries a connection decoration glyph (proving the model's connection role
     // maps onto a Tui LeftDecoration, the TUI analogue of the GUI presence dot).
     void accountCarriesConnectionDecoration() {
-        FakeRegistry reg;
-        FakePersons persons;
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTree(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
         DisplayRoleAdapter adapter(DisplayRoleAdapter::Kind::Integrations);
         adapter.setSourceModel(&model);
 

@@ -216,6 +216,8 @@ target_link_libraries(tst_integrations
         da_sidebarplugin
         daemon-app::transports
         daemon-app::auth
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 target_compile_definitions(tst_integrations
     PRIVATE
