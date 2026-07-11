@@ -829,13 +829,17 @@ target_link_libraries(tst_profile_store
 add_test(NAME tst_profile_store COMMAND tst_profile_store)
 set_tests_properties(tst_profile_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_fleet_ops: the Phase 6 ops mocks - roster state transitions, fleet
-# pause/resume, approvals resolve, and the dashboard's derived live counters.
+# tst_fleet_ops: the surviving ops mocks after M5 - fleet pause/resume, approvals resolve, and
+# MockDashboard's derived live counters over the ONE roster implementation both modes run
+# (DaemonSessionRoster over an ISessionStore; MockSessionRoster died with the M5 cutover).
 qt_add_executable(tst_fleet_ops tst_fleet_ops.cpp)
 target_link_libraries(tst_fleet_ops
     PRIVATE
         Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
         daemon-app::fleet
+        daemon-app::persistence
         daemon-app::uimodels
 )
 add_test(NAME tst_fleet_ops COMMAND tst_fleet_ops)
