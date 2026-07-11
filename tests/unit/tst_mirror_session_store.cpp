@@ -24,6 +24,7 @@
 #include "mirror/parity.h"
 #include "mirror/store.h"
 #include "session_controller.h"
+#include "transcript_exporter.h"
 
 #include <QSet>
 #include <QSignalSpy>
@@ -317,6 +318,24 @@ private slots:
         const int before = static_cast<int>(legacy.contentReads.size());
         emit legacy.changed();
         QVERIFY(static_cast<int>(legacy.contentReads.size()) > before);
+    }
+
+    // M4 sub-gate 5: the transcript chrome consumer — the shared TranscriptExporter (GUI Exporter
+    // context property + the TUI exportToPath) composes the export from the mirror store: the
+    // TITLE is the mirror row's, the CONTENT the delegated legacy transcript (until sub-gate 6).
+    void transcriptExporterComposesMirrorTitleAndDelegatedContent() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        StubLegacyStore legacy;
+        MirrorSessionStore store(&svc.store(), &svc.ingestor(), &legacy);
+        svc.ingestor().deliverSessions(
+            {sess(QStringLiteral("s-a"), QStringLiteral("Mirror title"))},
+            /*isFinalPage=*/true);
+
+        const TranscriptExporter exporter;
+        const QString json = exporter.toJson(&store, QStringLiteral("s-a"));
+        QVERIFY(json.contains(QStringLiteral("Mirror title")));      // mirror row title
+        QVERIFY(json.contains(QStringLiteral("legacy transcript"))); // delegated content
     }
 };
 

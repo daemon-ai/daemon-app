@@ -620,6 +620,7 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
             daemon-app::persistence
             daemon-app::domain
             daemon-app::session_view
+            daemon-app::export
     )
     add_test(NAME tst_mirror_session_store COMMAND tst_mirror_session_store)
     set_tests_properties(tst_mirror_session_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

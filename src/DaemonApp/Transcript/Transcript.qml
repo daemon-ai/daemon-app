@@ -102,7 +102,7 @@ Rectangle {
         _loadedSessionId = root.sessionId
         // Drive the document from the session's SessionLogEntry sequence (decomposed
         // from its stored markdown) rather than the markdown blob (roadmap P4).
-        editor.loadTranscript(SessionStore, root.sessionId)
+        editor.loadTranscript(SessionStoreMirror, root.sessionId)
         if (UiSettings.showRawMarkdown)
             _loadRaw(md)
         // Open at the bottom (latest message), like a chat transcript. A reset
