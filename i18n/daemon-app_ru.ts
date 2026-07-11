@@ -8750,12 +8750,6 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Каналы недоступны: слой транспортов не подключён в этом режиме._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8822,6 +8816,12 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Disconnected</source>
         <translation>Отключено</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Каналы недоступны: проекция хаба каналов не подключена в этом режиме._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6

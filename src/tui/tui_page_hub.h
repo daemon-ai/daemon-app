@@ -67,7 +67,6 @@ class IToolInventory; // [wave2:app-approvals-safety] D2
 }
 namespace transports {
 class IContactsService;
-class IPresenceService;
 class ITransportRegistry;
 } // namespace transports
 namespace update {

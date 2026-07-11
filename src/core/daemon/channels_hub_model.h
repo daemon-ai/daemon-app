@@ -4,7 +4,7 @@
 #pragma once
 // AD (1a.3) — the SHARED channels-hub view-model: the ONE mirror projection the GUI ChannelsPage
 // (context property `ChannelsHub`) and the TUI channels hub page both render. Replaces the
-// ITransportRegistry/IPresenceService/IContactsService READS those surfaces composed from (the
+// legacy transport registry/presence/contacts READS those surfaces composed from (the
 // registry/contacts seams survive as VERB sinks only): accounts, adapters (capabilities +
 // per-verb ops + schema + policies re-hydrated from the canonical JSON columns), per-transport
 // conversations and contacts — all read from the mirror snapshot, identical in daemon (ingestor-
@@ -49,6 +49,11 @@ public:
     // A transport's roster contacts: {id, displayName, presence, permission}.
     [[nodiscard]] Q_INVOKABLE QVariantList contacts(const QString& transport) const;
 
+    // The pins targeting `sessionId` as rows {key, transport, label} — the session-header route
+    // chip (B6/EIO-12; the deleted daemonnet facade's read, re-homed onto the mirror pin table).
+    // Labels derive from the canonical origin key (@user / chat / api:key / internal).
+    [[nodiscard]] Q_INVOKABLE QVariantList pinsForSession(const QString& sessionId) const;
+
     // B2 "new room" (client-local §8.5): true for a conversation that surfaced after the
     // operator's baseline for its transport and has not been viewed yet.
     [[nodiscard]] Q_INVOKABLE bool isNewConversation(const QString& transport,
@@ -60,6 +65,7 @@ signals:
     void accountsChanged();
     void conversationsChanged(const QString& transport);
     void contactsChanged(const QString& transport);
+    void pinsChanged(); // a RoutePin delta landed (the route chips re-read)
 
 private:
     void onCommitted();

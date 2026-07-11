@@ -91,7 +91,6 @@ public:
     }
 };
 
-// A programmable IPersonsService: canned person rows with per-transport endpoints.
 QVariantMap adapterRow(const QString& family, const QString& displayName, bool rooms, bool dms,
                        bool presence, bool rosterList, bool directory,
                        const QVariantList& schema = {}) {

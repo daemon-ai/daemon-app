@@ -68,8 +68,6 @@ class IToolInventory; // [wave2:app-approvals-safety] D2
 namespace transports {
 class IChatService;
 class IContactsService;
-class IPersonsService;
-class IPresenceService;
 class ITransportRegistry;
 } // namespace transports
 namespace update {
@@ -93,7 +91,6 @@ class MockScenarioHost; // mirror A8: the mock scenario driver (Mock mode; §9)
 class AgentRepository;
 class ContactsRepository; // [acct-mgmt] transport contacts / roster (wire v34)
 class ChatRepository;     // [integrations wire v38] native chat (ConvHistory / ConvSend)
-class PersonsRepository;  // [integrations wire v38] person registry (PersonList)
 class EngineIdentity;
 class ApprovalRepository;
 class AuthRepository;
@@ -161,14 +158,12 @@ struct AppServiceGraph {
     tools::IToolInventory* tools = nullptr;
     fleet::IDashboard* dashboard = nullptr;
     automation::ICronStore* cron = nullptr;
+    // AD (1a.4): the transport-registry + contacts seams are VERB SINKS only (room lifecycle,
+    // account management, contact ops) — daemon mode builds them; mock leaves them null and the
+    // surfaces read the mirror. The presence/persons READ seams died with the tree/hub port
+    // (connection+presence ride the mirror account rows; persons × endpoints are mirror tables).
     transports::ITransportRegistry* transportRegistry = nullptr;
-    transports::IPresenceService* presence = nullptr;
-    // [acct-mgmt] Transport contacts / roster (Phase D). Mock-backed by default; a
-    // DaemonContactsService replaces it in Daemon mode (projects ContactsRepository).
     transports::IContactsService* contacts = nullptr;
-    // [integrations wire v38] Person registry + native chat seams. Mock-backed by default; the
-    // Daemon* services replace them in Daemon mode (projecting PersonsRepository / ChatRepository).
-    transports::IPersonsService* persons = nullptr;
     transports::IChatService* chat = nullptr;
     session::ISessionSettings* sessionSettings = nullptr;
     session::ICheckpointTimeline* checkpoints = nullptr;
@@ -203,10 +198,9 @@ struct AppServiceGraph {
     // [acct-mgmt] Transport contacts / roster (RosterList/Add/Update/Remove + contact ops, wire
     // v34); Daemon mode only (the DaemonContactsService projects it).
     ContactsRepository* contactsRepository = nullptr;
-    // [integrations wire v38] Person registry (PersonList) + native chat (ConvHistory / ConvSend);
-    // Daemon mode only (the DaemonPersonsService / DaemonChatService project them). The
-    // SubscriptionManager routes PersonsChanged / MessagesChanged into them.
-    PersonsRepository* personsRepository = nullptr;
+    // [integrations wire v38] Native chat (ConvHistory / ConvSend); Daemon mode only (the
+    // DaemonChatService projects it). The SubscriptionManager routes MessagesChanged into it.
+    // (PersonsRepository died with the tree port — PersonList feeds the mirror via the ingestor.)
     ChatRepository* chatRepository = nullptr;
     RoutingRepository* routingRepository = nullptr; // Routing pins (B6/ROU); Daemon mode only
     // The foreign-agent catalog (foreign engines; wire v29): backs the new-agent dialog's engine

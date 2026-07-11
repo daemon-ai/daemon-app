@@ -50,6 +50,7 @@ void ChannelsHubModel::onCommitted() {
 
     bool adapters = false;
     bool accounts = false;
+    bool pins = false;
     QSet<QString> convTransports;
     QSet<QString> contactTransports;
     for (const auto& r : deltas) {
@@ -65,6 +66,9 @@ void ChannelsHubModel::onCommitted() {
             break;
         case mirror::EntityKind::Contact:
             contactTransports.insert(r.key.section(QChar(0x1f), 0, 0));
+            break;
+        case mirror::EntityKind::RoutePin:
+            pins = true;
             break;
         default:
             break;
@@ -84,6 +88,9 @@ void ChannelsHubModel::onCommitted() {
     }
     for (const QString& t : contactTransports) {
         emit contactsChanged(t);
+    }
+    if (pins) {
+        emit pinsChanged();
     }
 }
 
@@ -202,6 +209,35 @@ QVariantList ChannelsHubModel::contacts(const QString& transport) const {
         out.append(row);
     }
     return out;
+}
+
+QVariantList ChannelsHubModel::pinsForSession(const QString& sessionId) const {
+    QVariantList rows;
+    if (m_mirror == nullptr) {
+        return rows;
+    }
+    for (const mirror::RoutePin& p : m_mirror->snapshot().route_pins) {
+        if (p.session != sessionId) {
+            continue;
+        }
+        // origin_key formats: `t|dm|user`, `t|group|chat|thread`, `t|api|key`, `t|internal`.
+        const QStringList parts = p.origin_key.split(QLatin1Char('|'));
+        const QString kind = parts.value(1);
+        QString label;
+        if (kind == QStringLiteral("dm")) {
+            label = QStringLiteral("@") + parts.value(2);
+        } else if (kind == QStringLiteral("group")) {
+            label = parts.value(2);
+        } else if (kind == QStringLiteral("api")) {
+            label = QStringLiteral("api:") + parts.value(2);
+        } else {
+            label = QStringLiteral("internal");
+        }
+        rows.append(QVariantMap{{QStringLiteral("key"), p.origin_key},
+                                {QStringLiteral("transport"), p.transport},
+                                {QStringLiteral("label"), label}});
+    }
+    return rows;
 }
 
 bool ChannelsHubModel::isNewConversation(const QString& transport,

@@ -8742,12 +8742,6 @@ _Nenhum agente selecionado._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Os canais estão indisponíveis: a costura de transportes não está conectada neste modo._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8814,6 +8808,12 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
     <message>
         <source>Disconnected</source>
         <translation>Desconectado</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Os canais estão indisponíveis: a projeção do hub de canais não está conectada neste modo._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6

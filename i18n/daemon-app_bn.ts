@@ -8742,12 +8742,6 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_চ্যানেল উপলব্ধ নয়: এই মোডে ট্রান্সপোর্ট সিম যুক্ত করা নেই।_
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8814,6 +8808,12 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Disconnected</source>
         <translation>সংযোগ বিচ্ছিন্ন</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_চ্যানেল উপলব্ধ নয়: এই মোডে চ্যানেল-হাব প্রজেকশন সংযুক্ত নেই।_
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6

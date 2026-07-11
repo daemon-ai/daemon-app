@@ -114,7 +114,7 @@ target_link_libraries(da_tui_viewmodels
         # The memory view-models talk to the memory-inspection seam.
         daemon-app::memory
         # [integrations wire v38] IntegrationsTreeModel / AccountManagementController bind the
-        # transport-adapter + person registry seams (ITransportRegistry / IPersonsService);
+        # transport-adapter VERB seam (ITransportRegistry; reads live on the mirror);
         # ChatConversationController binds the transports IChatService seam.
         daemon-app::transports
         daemon-app::uimodels
@@ -312,7 +312,7 @@ target_link_libraries(daemon-tui
         daemon-app::profiles
         daemon-app::fleet
         daemon-app::automation
-        # The Channels hub page projects the transport-registry + presence seams.
+        # The Channels hub page renders the shared ChannelsHubModel mirror projection.
         daemon-app::transports
         daemon-app::session
         daemon-app::daemon_client

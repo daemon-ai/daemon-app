@@ -107,11 +107,12 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      "FsWatchPoll cursor loop (reset -> re-list). Wired in daemon mode; mock keeps "
      "LocalDiskFsService.",
      SeamMigrationStatus::DaemonAligned},
-    {"ITransportRegistry + IPresenceService", "TransportAdapters / TransportInstances / ConvList",
-     "LANDED (Phase 6a, story 04): DaemonTransportRegistry projects the node's TransportAdapters "
-     "(the 'Add channel' picker) + the offline-first daemon_transport_instances cache; "
-     "DaemonPresenceService derives the EIO-9 status dots from the same instances (connection is "
-     "coarse + poll/refresh today - real live presence is a deferred backend follow-up). ConvList "
+    {"ITransportRegistry (verbs) + mirror reads",
+     "TransportAdapters / TransportInstances / ConvList",
+     "LANDED (Phase 6a → AD 1a): the tree/hub/channels READS project the mirror "
+     "(adapters/transport_accounts/conversations/persons+endpoints; the EIO-9 status dots ride "
+     "the account rows). DaemonTransportRegistry survives as the VERB seam (room lifecycle, "
+     "account management, settings/two-phase forms). ConvList "
      "(EIO-8) enumerates live rooms per account. Read-only: connect (EIO-2)/disconnect (EIO-7) "
      "deferred.",
      SeamMigrationStatus::DaemonAligned},

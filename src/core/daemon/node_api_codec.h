@@ -491,22 +491,6 @@ struct DecodedChatMessage {
 // [integrations wire v38] One transport-scoped endpoint of a person (person-endpoint): the
 // transport instance + the contact reachable there. Backs the Persons section (a person's reach
 // across transports).
-struct DecodedPersonEndpoint {
-    QString transport;
-    DecodedContact contact;
-};
-
-// [integrations wire v38] One person / metacontact (PersonList -> Persons; re-listed on
-// PersonsChanged). Auto-minted `id`, an optional user `alias`, and contact endpoints across
-// transports. The avatar (a content-addressed image blob) is intentionally not projected here (out
-// of scope; a later avatar surface can add it). `hasAlias` marks the optional alias.
-struct DecodedPerson {
-    QString id;
-    bool hasAlias = false;
-    QString alias;
-    QList<DecodedPersonEndpoint> endpoints;
-};
-
 // [acct-mgmt] The node-described join form (ConvJoinDetails -> ChannelJoinDetails). Honor the
 // *_supported flags (hide unsupported fields) and *_max_length (input constraints) when rendering.
 struct DecodedChannelJoinDetails {
@@ -1813,7 +1797,6 @@ public:
     // omitted ⇒ a full-list read (v38 behavior).
     [[nodiscard]] static QByteArray encodePersonListRequest(bool hasSinceRev = false,
                                                             quint64 sinceRev = 0);
-    static bool decodePersons(const QByteArray& responseCbor, QList<DecodedPerson>* out);
 
     // --- [api/39 §10.3] Bootstrap probe -------------------------------------------------------
     // A race-free reconnect baseline (§5.6 full step 1): one request returns every collection's

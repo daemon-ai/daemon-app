@@ -8734,12 +8734,6 @@ _未选择智能体。_
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_频道不可用：此模式下未接通传输接缝。_
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8806,6 +8800,12 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Disconnected</source>
         <translation>已断开连接</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_频道不可用：此模式下未接入频道中枢投影。_
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6

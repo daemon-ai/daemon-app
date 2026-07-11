@@ -101,12 +101,8 @@ add_library(da_daemon_client STATIC
     daemon_transport_registry.cpp
     daemon_contacts_service.h
     daemon_contacts_service.cpp
-    daemon_persons_service.h
-    daemon_persons_service.cpp
     daemon_chat_service.h
     daemon_chat_service.cpp
-    daemon_presence_service.h
-    daemon_presence_service.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
     app_service_graph.h

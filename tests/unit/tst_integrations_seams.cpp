@@ -16,7 +16,6 @@
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_chat_service.h"
 #include "daemon/daemon_fetch_executor.h"
-#include "daemon/daemon_persons_service.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
 #include "daemon/mirror_decode.h"
@@ -30,8 +29,6 @@
 #include "mirror/fetch_job.h"
 #include "mirror/mirror_service.h"
 #include "transports/ichat_service.h"
-#include "transports/ipersons_service.h"
-#include "transports/mock_persons_service.h"
 #include "wire_mux_fixture.h"
 
 #include <memory>
@@ -51,11 +48,9 @@ using daemonapp::daemon::DecodedChatMessage;
 using daemonapp::daemon::DecodedConversation;
 using daemonapp::daemon::DecodedEventsPage;
 using daemonapp::daemon::DecodedNodeEvent;
-using daemonapp::daemon::DecodedPerson;
 using daemonapp::daemon::ModelRepository;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::NodeApiCodec;
-using daemonapp::daemon::PersonsRepository;
 using daemonapp::daemon::SessionRepository;
 using daemonapp::daemon::SubscriptionManager;
 using daemonapp::daemon::TransportRepository;
@@ -719,16 +714,20 @@ private slots:
         QVERIFY(decodeReq(req, decoded.get()));
         QCOMPARE(decoded->api_request_choice, api_request_r::api_request_request_person_list_m_c);
 
-        QList<DecodedPerson> out;
-        QVERIFY(NodeApiCodec::decodePersons(personsResponse(), &out));
-        QCOMPARE(out.size(), 1);
-        QCOMPARE(out.at(0).id, QStringLiteral("person-1"));
-        QVERIFY(out.at(0).hasAlias);
-        QCOMPARE(out.at(0).alias, QStringLiteral("Bob (all accounts)"));
-        QCOMPARE(out.at(0).endpoints.size(), 1);
-        QCOMPARE(out.at(0).endpoints.at(0).transport, QStringLiteral("demo/acct"));
-        QCOMPARE(out.at(0).endpoints.at(0).contact.id, QStringLiteral("@bob:demo"));
-        QCOMPARE(out.at(0).endpoints.at(0).contact.displayName, QStringLiteral("Bob"));
+        // AD (1a): the ONE production decode path — persons + their endpoint rows land as
+        // mirror entities (the endpoint stamped with its owning person id).
+        std::vector<mirror::Person> persons;
+        std::vector<mirror::PersonEndpoint> endpoints;
+        QVERIFY(daemonapp::daemon::decodePersonsToMirror(personsResponse(), &persons, nullptr,
+                                                         nullptr, &endpoints));
+        QCOMPARE(persons.size(), std::size_t(1));
+        QCOMPARE(persons.at(0).id, QStringLiteral("person-1"));
+        QCOMPARE(persons.at(0).alias, QStringLiteral("Bob (all accounts)"));
+        QCOMPARE(endpoints.size(), std::size_t(1));
+        QCOMPARE(endpoints.at(0).person, QStringLiteral("person-1"));
+        QCOMPARE(endpoints.at(0).transport, QStringLiteral("demo/acct"));
+        QCOMPARE(endpoints.at(0).contact, QStringLiteral("@bob:demo"));
+        QCOMPARE(endpoints.at(0).display_name, QStringLiteral("Bob"));
     }
 
     // ----- codec: TransportSettings read + TransportConfigure -----
@@ -864,23 +863,6 @@ private slots:
                  quint64(9));
     }
 
-    // ----- PersonsRepository over the mux -----
-    void personsRepositoryRefresh() {
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock(QStringLiteral("persons.sock"))), "listen");
-        fake.setReplyPayload(personsResponse());
-        DaemonTransport tx;
-        tx.setSocketPath(sock(QStringLiteral("persons.sock")));
-        NodeApiClient client(&tx);
-        DaemonCacheStore cache(db(QStringLiteral("persons.db")));
-        PersonsRepository repo(&client, &cache);
-        QSignalSpy refreshed(&repo, &PersonsRepository::personsRefreshed);
-        repo.refresh();
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-        QCOMPARE(repo.persons().size(), 1);
-        QCOMPARE(repo.persons().at(0).id, QStringLiteral("person-1"));
-    }
-
     // ----- TransportRepository: settings read + configure over the mux -----
     void transportSettingsRepository() {
         WireMuxServer fake;
@@ -932,30 +914,6 @@ private slots:
                  QStringLiteral("Bob"));
     }
 
-    // ----- DaemonPersonsService projects PersonsRepository into IPersonsService rows -----
-    void daemonPersonsServiceProjects() {
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock(QStringLiteral("personsvc.sock"))), "listen");
-        fake.setReplyPayload(personsResponse());
-        DaemonTransport tx;
-        tx.setSocketPath(sock(QStringLiteral("personsvc.sock")));
-        NodeApiClient client(&tx);
-        DaemonCacheStore cache(db(QStringLiteral("personsvc.db")));
-        PersonsRepository repo(&client, &cache);
-        transports::DaemonPersonsService svc(&repo);
-        QSignalSpy changed(&svc, &transports::IPersonsService::personsChanged);
-        svc.refresh();
-        QTRY_COMPARE_WITH_TIMEOUT(changed.count(), 1, 3000);
-        const QVariantList rows = svc.persons();
-        QCOMPARE(rows.size(), 1);
-        QCOMPARE(rows.at(0).toMap().value(QStringLiteral("id")).toString(),
-                 QStringLiteral("person-1"));
-        const QVariantList eps = rows.at(0).toMap().value(QStringLiteral("endpoints")).toList();
-        QCOMPARE(eps.size(), 1);
-        QCOMPARE(eps.at(0).toMap().value(QStringLiteral("transport")).toString(),
-                 QStringLiteral("demo/acct"));
-    }
-
     // ----- DaemonTransportRegistry: settings surface + accountSchema projection -----
     void daemonRegistrySettings() {
         WireMuxServer fake;
@@ -987,15 +945,6 @@ private slots:
                  QStringLiteral("Password"));
     }
 
-    // ----- Mocks: canned rows + emit on refresh/send (dev stand-ins for the seams) -----
-    void mockPersonsService() {
-        transports::MockPersonsService svc;
-        QSignalSpy changed(&svc, &transports::IPersonsService::personsChanged);
-        svc.refresh();
-        QCOMPARE(changed.count(), 1);
-        QVERIFY(!svc.persons().isEmpty());
-    }
-
     // ----- SubscriptionManager fan-out: MessagesChanged -> ChatRepository, PersonsChanged ->
     // Persons
     void messagesChangedRoutesToChat() {
@@ -1019,27 +968,6 @@ private slots:
             daemonapp::test::buildEventsPage({neMessagesChanged("demo/acct", "!room:demo")}, 1, 1));
         // The routed applyMessagesChanged() issues a ConvHistory Call whose Journal reply
         // refreshes.
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-    }
-
-    void personsChangedRoutesToPersons() {
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock(QStringLiteral("subpers.sock"))), "listen");
-        fake.setReplyPayload(personsResponse());
-        DaemonTransport tx;
-        tx.setSocketPath(sock(QStringLiteral("subpers.sock")));
-        NodeApiClient client(&tx);
-        DaemonCacheStore cache(db(QStringLiteral("subpers.db")));
-        SessionRepository sessions(&client, &cache);
-        ApprovalRepository approvals(&client, &cache);
-        ModelRepository models(&client, &cache);
-        PersonsRepository persons(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
-        mgr.setPersonsRepository(&persons);
-        QSignalSpy refreshed(&persons, &PersonsRepository::personsRefreshed);
-        mgr.start();
-        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
-        fake.pushItem(daemonapp::test::buildEventsPage({nePersonsChanged()}, 1, 1));
         QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
     }
 

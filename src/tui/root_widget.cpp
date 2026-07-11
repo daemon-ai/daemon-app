@@ -39,7 +39,6 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
-#include "transports/ipersons_service.h"
 #include "transports/itransport_registry.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"

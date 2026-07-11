@@ -40,7 +40,6 @@
 #include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2: live-refresh the inventory
 #include "transcript_exporter.h"
 #include "transports/icontacts_service.h"
-#include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"

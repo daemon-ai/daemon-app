@@ -19,7 +19,7 @@ namespace transports {
 // and emits the same rows; the UI never sees the codec. The mock returns canned data so the surface
 // can be built UI-first.
 //
-// Skeleton: the live per-account connection/presence state is owned by IPresenceService (sibling
+// Skeleton: the live per-account connection/presence state rides the mirror account rows (sibling
 // seam); this registry carries only identity + capabilities + binding.
 class ITransportRegistry : public QObject {
     Q_OBJECT

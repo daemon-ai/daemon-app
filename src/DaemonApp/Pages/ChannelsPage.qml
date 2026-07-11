@@ -404,10 +404,12 @@ Item {
     }
 
     // Pin a room to an agent/session (B4/B6): the same RouteDialog the routing manager uses,
-    // driven by a page-local controller over the shared DaemonNet.
+    // driven by a page-local controller over the mirror pin table + the node-authoritative
+    // routing actions seam (AD: the deleted daemonnet facade's reads live on the mirror).
     RoutingManagerController {
         id: channelsRouting
-        daemonNet: typeof DaemonNet !== "undefined" ? DaemonNet : null
+        mirror: typeof Mirror !== "undefined" ? Mirror : null
+        actions: typeof RoutingActions !== "undefined" ? RoutingActions : null
     }
     RouteDialog {
         id: pinDialog
@@ -786,7 +788,7 @@ Item {
                                     property var members: []
                                     // The room's routing pin (B6/EIO-12): re-read on pin changes.
                                     property string pinnedSession:
-                                        DaemonNet.pinnedSessionFor(transport, convId)
+                                        channelsRouting.pinnedSessionFor(transport, convId)
                                     // [wave2:app-channels-liveness] B2: badged when the node
                                     // surfaced this room after the operator's baseline.
                                     property bool isNew:
@@ -795,11 +797,11 @@ Item {
                                     spacing: 3
 
                                     Connections {
-                                        target: DaemonNet
-                                        function onChanged() {
+                                        target: channelsRouting
+                                        function onPinsChanged() {
                                             roomItem.pinnedSession =
-                                                DaemonNet.pinnedSessionFor(roomItem.transport,
-                                                                           roomItem.convId);
+                                                channelsRouting.pinnedSessionFor(
+                                                    roomItem.transport, roomItem.convId);
                                         }
                                     }
                                     Connections {

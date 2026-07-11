@@ -2106,7 +2106,7 @@ void TransportRepository::applyTransportChanged(const QString& transport, const 
         refreshInstances();
         return;
     }
-    // The DaemonPresenceService re-projects on this signal and emits presenceChanged(transport);
+    // The mirror TransportChanged patch renders the same state on the account rows;
     // the GUI/TUI Channels status dots re-read reactively (no poll).
     emit instancesRefreshed();
 }
@@ -3124,50 +3124,6 @@ void TransportRepository::handleConfigureResponse(const QString& transport,
         emit operationFailed(err.message);
     } else {
         emit operationFailed(tr("Failed to apply the account settings"));
-    }
-}
-
-// --- [integrations wire v38] Persons registry (PersonList) --------------------------------------
-PersonsRepository::PersonsRepository(NodeApiClient* client, DaemonCacheStore* cache,
-                                     QObject* parent)
-    : RepositoryBase(client, cache, parent) {
-    if (this->client() != nullptr) {
-        connect(this->client(), &NodeApiClient::responseReady, this,
-                &PersonsRepository::handleResponse);
-        connect(this->client(), &NodeApiClient::failed, this, &PersonsRepository::handleFailure);
-    }
-}
-
-void PersonsRepository::refresh() {
-    if (client() == nullptr) {
-        emit operationFailed(QStringLiteral("No NodeApi client configured"));
-        return;
-    }
-    client()->sendRequest(NodeApiCodec::encodePersonListRequest(), QLatin1String(kListCorrelation));
-}
-
-void PersonsRepository::handleResponse(const QString& correlationId,
-                                       const QByteArray& responseCbor) {
-    if (correlationId != QLatin1String(kListCorrelation)) {
-        return;
-    }
-    QList<DecodedPerson> persons;
-    if (!NodeApiCodec::decodePersons(responseCbor, &persons)) {
-        DecodedApiError err;
-        if (NodeApiCodec::decodeError(responseCbor, &err)) {
-            emit operationFailed(err.message);
-        } else {
-            emit operationFailed(QStringLiteral("Failed to decode Persons response"));
-        }
-        return;
-    }
-    m_persons = persons;
-    emit personsRefreshed();
-}
-
-void PersonsRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kListCorrelation)) {
-        emit operationFailed(message);
     }
 }
 

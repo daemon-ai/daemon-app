@@ -251,46 +251,6 @@ QByteArray NodeApiCodec::encodePersonListRequest(bool hasSinceRev, quint64 since
         });
 }
 
-bool NodeApiCodec::decodePersons(const QByteArray& responseCbor, QList<DecodedPerson>* out) {
-    if (out == nullptr) {
-        return false;
-    }
-    const auto response =
-        decodeChecked(responseCbor, api_response_r::api_response_response_persons_m_c);
-    if (!response) {
-        return false;
-    }
-    const response_persons& rp = response->api_response_response_persons_m;
-    out->clear();
-    // [api/39] Persons became a rev+delta list: the roster now lives under `items`, alongside a
-    // per-collection `rev` and optional `removed`/`origin_ops` deltas. The v38-behaving client only
-    // consumes the full `items` snapshot (re-fetched on PersonsChanged); rev/removed/origin_ops are
-    // decoded-and-ignored until the later SyncState flip wires them.
-    for (size_t i = 0; i < rp.Persons_items_person_m_count; ++i) {
-        const person& p = rp.Persons_items_person_m[i];
-        DecodedPerson d;
-        d.id = fromZcbor(p.person_id);
-        if (p.person_alias_present &&
-            p.person_alias.person_alias_choice == person_alias_r::person_alias_tstr_c) {
-            d.hasAlias = true;
-            d.alias = fromZcbor(p.person_alias.person_alias_tstr);
-        }
-        if (p.person_endpoints_present) {
-            for (size_t j = 0; j < p.person_endpoints.person_endpoints_person_endpoint_m_count;
-                 ++j) {
-                const person_endpoint& ep =
-                    p.person_endpoints.person_endpoints_person_endpoint_m[j];
-                DecodedPersonEndpoint dep;
-                dep.transport = fromZcbor(ep.person_endpoint_transport);
-                dep.contact = decodeContactInfoStruct(ep.person_endpoint_contact);
-                d.endpoints.append(dep);
-            }
-        }
-        out->append(d);
-    }
-    return true;
-}
-
 QByteArray NodeApiCodec::encodeTransportSettingsRequest(const QString& transport) {
     const QByteArray t = transport.toUtf8();
     return encodeWithFill(

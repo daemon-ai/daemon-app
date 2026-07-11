@@ -16,7 +16,7 @@ Q_LOGGING_CATEGORY(lcScenario, "daemon.mirror.mock")
 
 const QChar kSep = QChar(0x1f);
 
-// The demo transport instance — the SAME id the (surviving) MockTransportRegistry advertises, so
+// The demo transport instance id every seeded kind shares, so
 // tree-activated chats open the scenario's seeded windows. When the tree/channels surfaces port
 // onto the mirror, the registry demo folds into this scenario too.
 QString mockTransport() {
@@ -166,7 +166,7 @@ mirror::Contact contactRow(const QString& id, const QString& name) {
 
 // The demo mirror seed: the chat/persons/contacts/routing/channels demo content that used to be
 // scattered across the per-seam data mocks, collapsed into the ONE declarative seed (§9). The
-// (transport, conv) ids match the surviving MockTransportRegistry demo rooms so tree activation
+// (transport, conv) ids match the seeded demo rooms so tree activation
 // opens these windows.
 void fillDefaultMirrorSeed(mirror::SeedSet& seed, const daemonnet::SeedBundle& bundle) {
     const QString t = mockTransport();
@@ -217,9 +217,9 @@ void fillDefaultMirrorSeed(mirror::SeedSet& seed, const daemonnet::SeedBundle& b
     acct.enabled = true;
     seed.transportAccounts = {acct};
 
-    // AD (1a): the adapter catalog — the canned families the deleted MockTransportRegistry
-    // advertised (matrix = the full verb set + directory; the internal Rooms loopback =
-    // deliberately narrower), as canonical mirror rows (ops_json in map_adapter's shape).
+    // AD (1a): the adapter catalog — the canned demo families (matrix = the full verb set +
+    // directory; the internal Rooms loopback = deliberately narrower), as canonical mirror rows
+    // (ops_json in map_adapter's shape).
     mirror::Adapter matrix;
     matrix.family = QStringLiteral("matrix");
     matrix.display_name = QStringLiteral("Matrix");

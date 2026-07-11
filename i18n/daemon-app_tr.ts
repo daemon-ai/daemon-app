@@ -8734,12 +8734,6 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Kanallar kullanılamıyor: bu modda taşıma katmanı bağlanmamış._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8806,6 +8800,12 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>Disconnected</source>
         <translation>Bağlantı kesildi</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Kanallar kullanılamıyor: kanal merkezi projeksiyonu bu modda bağlı değil._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6

@@ -489,7 +489,7 @@ set_tests_properties(tst_file_finder_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 
 # tst_daemon_transports: the Phase 6a Channels read surface - the transport codec facade round-trips
 # (Adapters/TransportInstances/Conversations via cbor_encode_api_response), and DaemonTransportRegistry
-# + DaemonPresenceService render offline-first from cache and populate over the WireMuxServer fixture.
+# render offline-first from cache and populate over the WireMuxServer fixture.
 qt_add_executable(tst_daemon_transports tst_daemon_transports.cpp)
 target_link_libraries(tst_daemon_transports
     PRIVATE
@@ -505,8 +505,8 @@ set_tests_properties(tst_daemon_transports PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 # tst_integrations_seams (A1 app/core-seams; wire v38): the integrations foundation the later app
 # packages consume — the v38 codec wrappers (enriched auth-param-field, AuthFlowKind::UserPassword,
 # ConversationInfo.parent + Space, AdapterInfo.account_schema, ConvSend/ConvHistory, PersonList,
-# TransportSettings/Configure, MessagesChanged/PersonsChanged), the ChatRepository / PersonsRepository
-# + transport-settings repository surface, the daemon + mock IChatService/IPersonsService seams, and
+# TransportSettings/Configure, MessagesChanged/PersonsChanged), the ChatRepository
+# + transport-settings repository surface, the daemon IChatService seam, and
 # the SubscriptionManager fan-out — over the vendored zcbor codec + the WireMuxServer fixture.
 qt_add_executable(tst_integrations_seams tst_integrations_seams.cpp)
 target_link_libraries(tst_integrations_seams
@@ -926,7 +926,7 @@ add_test(NAME tst_sidebar_model COMMAND tst_sidebar_model)
 set_tests_properties(tst_sidebar_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_integrations_tree (A2 app/tree-ui): the integrations tree view-model composed directly from
-# ITransportRegistry + IPersonsService (account roots -> capability-gated sections -> space/parent
+# the mirror projection (account roots -> capability-gated sections -> space/parent
 # nesting -> rooms/DMs/persons, unknown-parent-as-root), its activation intents (conversation ->
 # A4's activation seam), and the schema-driven AccountManagementController (add hand-off to the auth
 # flow, edit merge-configure with masked-field omission, remove).
