@@ -1396,6 +1396,16 @@ if(TARGET daemon-app::mirror_ingestor)
         add_test(NAME tst_provenance_landing COMMAND tst_provenance_landing)
         set_tests_properties(tst_provenance_landing
             PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+        # tst_mock_both_modes (mirror A8): both ingestor modes + the auto-replay gate in a MOCK
+        # (Seeder-fed) stack, selected by the scenario's configurable api/<N> Hello (§9/§5.6/§6.8)
+        # — full(39): Bootstrap + auto-replay drain; degraded(38): staleness scan + lanes hold.
+        qt_add_executable(tst_mock_both_modes tst_mock_both_modes.cpp)
+        target_link_libraries(tst_mock_both_modes
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::local)
+        add_test(NAME tst_mock_both_modes COMMAND tst_mock_both_modes)
+        set_tests_properties(tst_mock_both_modes
+            PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif()
 
     # The daemon bridge translation (DecodedNodeEvent → mirror::NodeEvent): the second compile-time

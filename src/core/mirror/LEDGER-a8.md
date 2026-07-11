@@ -150,5 +150,23 @@ data-mock deletion, (6) mock e2e parity.
   deterministic scripted timeline, and `VerbScript` resolves ok/reject/timeout with an arg matcher
   (the MANDATORY rejection fixtures). `tst_mirror_seeder`: seed+timeline stamp Seeder only, a lens
   renders seeded rows (parity by construction), verb-script outcomes. ctest 142→143. NOT yet wired
-  into the mock composition (the flip + data-mock deletion + api/<N> Hello are the remaining M5
-  slices).
+  into the mock composition (the flip + data-mock deletion are the remaining M5 slices).
+- **Both-ingestor-modes + auto-replay gate in mock — DONE.** `tst_mock_both_modes` drives a
+  Seeder-fed stack (Store+Seeder+Ingestor+Outbox) from `Scenario::apiVersion` (the configurable
+  api/<N> Hello): full(39) → Bootstrap probe + auto-replay drain fires; degraded(38) → staleness
+  scan + no Bootstrap + lanes hold (manual tap only). Proves both §5.6 modes and the §6.8 gate run
+  in mock. ctest 143→144.
+
+## Remaining M5 slices (not yet landed — for the parent / a resume)
+
+- Wire the mock composition: install `Seeder` as the mock `mirror::Writer` in `app_service_graph`
+  (mock branch), flip `storeMirror` in mock to a `MirrorSessionStore` over the seeded store
+  (honoring A7T's content-delegation caveat — mock transcript content keeps flowing through the
+  legacy/mock content source), and source the mock connection's api/<N> Hello from the scenario /
+  `DAEMON_APP_MOCK_INTEGRATIONS` (which collapses into a seed-scenario selector).
+- Delete the data mocks the seeder replaces (MockChatService / MockPersonsService /
+  MockContactsService / MockTransportRegistry+MockPresenceService / MockFleetSource +
+  InMemorySessionStore + MockSessionRoster + MockFleetTree) once every surface they feed is
+  seeder-served in GUI + TUI and parity-green.
+- Mock e2e parity suite (§13 M5 gate): the offscreen TUI + qml scenario suites run the SAME
+  scenarios in mock and daemon and render equivalently.
