@@ -2,10 +2,11 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #pragma once
-// A7T: the substrate-gated adapter behind ITranscriptMirrorSink. Maps a coalesced
+// A7T/G2: the substrate-gated adapter behind ITranscriptMirrorSink. Maps a coalesced
 // CachedTranscriptBlockRow onto the generated mirror::TranscriptBlock and feeds the ingestor
-// (the single mirror writer, §5.1). The one lossy step is structural, not logical: the generated
-// entity carries no argsSummary / detailKind / detailBody (see LEDGER-a7t "ENTITY-FIELD GAP").
+// (the single mirror writer, §5.1). Lossless since G2 closed the A7T "ENTITY-FIELD GAP": the
+// entity carries args_summary + detail_kind/detail_body, so the mirror projection reproduces
+// tool fences byte-for-byte (S1-S9 parity).
 
 #include "daemon/transcript_mirror_sink.h"
 

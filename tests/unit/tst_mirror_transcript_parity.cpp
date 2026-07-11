@@ -19,6 +19,7 @@
 #include "daemon/daemon_cache_store.h"
 #include "daemon/mirror_session_store.h"
 #include "daemon/mirror_transcript_sink.h"
+#include "mirror/generated/entities_map_gen.h"
 #include "mirror/mirror_service.h"
 
 #include <QTemporaryDir>
@@ -79,6 +80,23 @@ CachedTranscriptBlockRow toolResult(quint64 seq, const QString& callId, bool ok,
     r.detailKind = detailKind;
     r.detailBody = detailBody;
     return r;
+}
+
+void setStr(zcbor_string& z, const QByteArray& b) {
+    z.value = reinterpret_cast<const uint8_t*>(b.constData());
+    z.len = static_cast<size_t>(b.size());
+}
+
+// A decoded wire ::journal_record carrying a Block payload (the SessionHistory reply entry the
+// map_transcript_block wire-decode feed maps; §3.6). The caller stamps `session` from the request
+// scope, so the record itself carries only seq/origin_op/payload.
+::journal_record blockRecord(quint64 seq) {
+    ::journal_record rec{};
+    rec.journal_record_seq = seq;
+    rec.journal_record_origin_op_present = false;
+    rec.journal_record_payload.journal_record_payload_t_choice =
+        ::journal_record_payload_t_r::journal_record_payload_t_journal_record_payload_block_m_c;
+    return rec;
 }
 
 // One run through both projections over the same block stream.
@@ -233,29 +251,122 @@ private slots:
         QCOMPARE(store.mirrorContent(id), legacy.content(id));
     }
 
-    // --- The documented ENTITY-FIELD GAP: these DIVERGE, pinning the flip blocker -------------
-    // S7: a tool call with NON-EMPTY args. The legacy fence carries the args; the mirror entity
-    // has no argsSummary field, so the projections differ. (When the entity is enriched node-side,
-    // this test flips to QCOMPARE and the facade flip can land — the intended signal.)
-    void s7_toolCallNonEmptyArgsDiverges() {
+    // --- G2 (M5): the ENTITY-FIELD GAP is CLOSED — these now go byte-identical (the flip signal)
+    // -- S7: a tool call with NON-EMPTY args. The mirror entity now carries `args_summary`, so the
+    // fence reproduces the legacy args byte-for-byte.
+    void s7_toolCallNonEmptyArgsParity() {
         const Projections p = project(
             {toolCall(1, QStringLiteral("c1"), QStringLiteral("shell"), QStringLiteral("ls -la")),
              toolResult(2, QStringLiteral("c1"), true, QStringLiteral("out"))});
-        QVERIFY(p.legacy.contains(QStringLiteral("ls -la")));  // legacy carries the args
-        QVERIFY(!p.mirror.contains(QStringLiteral("ls -la"))); // the entity cannot
-        QVERIFY(p.mirror != p.legacy);
+        QVERIFY(p.legacy.contains(QStringLiteral("ls -la"))); // legacy carries the args
+        QVERIFY(p.mirror.contains(QStringLiteral("ls -la"))); // the entity now does too
+        QCOMPARE(p.mirror, p.legacy);
     }
 
-    // S8: a tool result with a structured detail (detailKind/detailBody). The legacy fence folds
-    // it in; the mirror entity has no detail fields, so the projections differ.
-    void s8_toolResultStructuredDetailDiverges() {
+    // S8: a tool result with a structured detail (detailKind/detailBody). The mirror entity now
+    // carries `detail_kind`/`detail_body`, so the fence folds the detail byte-for-byte.
+    void s8_toolResultStructuredDetailParity() {
         const Projections p =
             project({toolCall(1, QStringLiteral("c1"), QStringLiteral("edit"), QString()),
                      toolResult(2, QStringLiteral("c1"), true, QStringLiteral("patched"),
                                 QStringLiteral("fs.diff"), QByteArrayLiteral("{\"path\":\"a\"}"))});
         QVERIFY(p.legacy.contains(QStringLiteral("fs.diff"))); // legacy folds the detail
-        QVERIFY(!p.mirror.contains(QStringLiteral("fs.diff")));
-        QVERIFY(p.mirror != p.legacy);
+        QVERIFY(p.mirror.contains(QStringLiteral("fs.diff"))); // the entity now folds it too
+        QCOMPARE(p.mirror, p.legacy);
+    }
+
+    // --- map_transcript_block (G2): the wire-decode / offline-reload feed ----------------------
+    // The mapper's DTO is the SessionHistory reply's ::journal_record (its Block payload carries
+    // the transcript-block union). The sink twin above covers the app-local stream; these cover
+    // the wire arms, including the G2 enrichment (args_summary + tool-detail kind/body).
+
+    void mapsWireMessageBlock() {
+        static const QByteArray text = QByteArrayLiteral("hello from the wire");
+        ::journal_record rec = blockRecord(4);
+        static const QByteArray op = QByteArrayLiteral("op-123");
+        rec.journal_record_origin_op_present = true;
+        rec.journal_record_origin_op.journal_record_origin_op_choice =
+            ::journal_record_origin_op_r::journal_record_origin_op_origin_op_m_c;
+        setStr(rec.journal_record_origin_op.journal_record_origin_op_origin_op_m, op);
+        auto& block = rec.journal_record_payload
+                          .journal_record_payload_t_journal_record_payload_block_m.Block_block;
+        block.transcript_block_choice = ::transcript_block_r::transcript_block_message_m_c;
+        block.transcript_block_message_m.Message_role.transcript_role_choice =
+            ::transcript_role_r::transcript_role_User_tstr_c;
+        setStr(block.transcript_block_message_m.Message_text, text);
+
+        const mirror::TranscriptBlock out = mirror::map_transcript_block(rec);
+        QCOMPARE(out.seq, quint64{4});
+        QCOMPARE(out.kind, QStringLiteral("Message"));
+        QCOMPARE(out.role, QStringLiteral("User"));
+        QCOMPARE(out.text, QStringLiteral("hello from the wire"));
+        QCOMPARE(out.origin_op, QStringLiteral("op-123"));
+        QVERIFY(out.session.isEmpty()); // the caller stamps the request scope (§3.6)
+    }
+
+    void mapsWireToolCallWithArgs() {
+        static const QByteArray cid = QByteArrayLiteral("c-9");
+        static const QByteArray name = QByteArrayLiteral("shell");
+        static const QByteArray args = QByteArrayLiteral("ls -la");
+        ::journal_record rec = blockRecord(5);
+        auto& block = rec.journal_record_payload
+                          .journal_record_payload_t_journal_record_payload_block_m.Block_block;
+        block.transcript_block_choice = ::transcript_block_r::transcript_block_tool_call_m_c;
+        ::transcript_block_tool_call& tc = block.transcript_block_tool_call_m;
+        setStr(tc.ToolCall_call_id, cid);
+        setStr(tc.ToolCall_name, name);
+        setStr(tc.ToolCall_args_summary, args); // the G2 enrichment: args ride the entity
+        tc.ToolCall_detail_present = false;
+
+        const mirror::TranscriptBlock out = mirror::map_transcript_block(rec);
+        QCOMPARE(out.kind, QStringLiteral("ToolCall"));
+        QCOMPARE(out.call_id, QStringLiteral("c-9"));
+        QCOMPARE(out.name, QStringLiteral("shell"));
+        QCOMPARE(out.args_summary, QStringLiteral("ls -la"));
+        QVERIFY(out.detail_kind.isEmpty());
+    }
+
+    void mapsWireToolResultWithStructuredDetail() {
+        static const QByteArray cid = QByteArrayLiteral("c-9");
+        static const QByteArray summary = QByteArrayLiteral("patched");
+        static const QByteArray dkind = QByteArrayLiteral("fs.diff");
+        static const QByteArray dbody = QByteArrayLiteral("{\"path\":\"a\"}");
+        ::journal_record rec = blockRecord(6);
+        auto& block = rec.journal_record_payload
+                          .journal_record_payload_t_journal_record_payload_block_m.Block_block;
+        block.transcript_block_choice = ::transcript_block_r::transcript_block_tool_result_m_c;
+        ::transcript_block_tool_result& tr = block.transcript_block_tool_result_m;
+        setStr(tr.ToolResult_call_id, cid);
+        tr.ToolResult_ok = true;
+        setStr(tr.ToolResult_summary, summary);
+        tr.ToolResult_detail_present = true;
+        tr.ToolResult_detail.ToolResult_detail_choice =
+            ::ToolResult_detail_r::ToolResult_detail_tool_detail_m_c;
+        setStr(tr.ToolResult_detail.ToolResult_detail_tool_detail_m.tool_detail_kind, dkind);
+        setStr(tr.ToolResult_detail.ToolResult_detail_tool_detail_m.tool_detail_body, dbody);
+
+        const mirror::TranscriptBlock out = mirror::map_transcript_block(rec);
+        QCOMPARE(out.kind, QStringLiteral("ToolResult"));
+        QCOMPARE(out.call_id, QStringLiteral("c-9"));
+        QVERIFY(out.ok);
+        QCOMPARE(out.summary, QStringLiteral("patched"));
+        // The G2 enrichment: the structured tool-detail rides the entity, body decoded as UTF-8
+        // (the exact transform the fence projection folds in).
+        QCOMPARE(out.detail_kind, QStringLiteral("fs.diff"));
+        QCOMPARE(out.detail_body, QStringLiteral("{\"path\":\"a\"}"));
+    }
+
+    void mapsNonBlockPayloadToKindlessRow() {
+        static const QByteArray detail = QByteArrayLiteral("gc");
+        ::journal_record rec = blockRecord(7);
+        rec.journal_record_payload.journal_record_payload_t_choice = ::journal_record_payload_t_r::
+            journal_record_payload_t_journal_record_payload_management_m_c;
+        setStr(rec.journal_record_payload
+                   .journal_record_payload_t_journal_record_payload_management_m.Management_detail,
+               detail);
+        const mirror::TranscriptBlock out = mirror::map_transcript_block(rec);
+        QVERIFY(out.kind.isEmpty()); // a Management/Chat record is not transcript content
+        QCOMPARE(out.seq, quint64{7});
     }
 };
 

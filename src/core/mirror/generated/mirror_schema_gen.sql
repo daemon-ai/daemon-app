@@ -118,6 +118,9 @@ CREATE TABLE m_fleet_units(
   role TEXT,
   lifetime TEXT,
   child_count INTEGER,
+  engine TEXT,
+  engine_agent TEXT,
+  child_ids TEXT,
   last_rev INTEGER NOT NULL, fetched_at_ms INTEGER NOT NULL);
 
 CREATE TABLE m_installed_models(

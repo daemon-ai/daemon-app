@@ -681,6 +681,9 @@ struct FleetUnit {
     Q_PROPERTY(QString role MEMBER role)
     Q_PROPERTY(QString lifetime MEMBER lifetime)
     Q_PROPERTY(int child_count MEMBER child_count)
+    Q_PROPERTY(QString engine MEMBER engine)
+    Q_PROPERTY(QString engine_agent MEMBER engine_agent)
+    Q_PROPERTY(QString child_ids MEMBER child_ids)
 
 public:
     QString id;
@@ -693,6 +696,9 @@ public:
     QString role;
     QString lifetime;
     int child_count = 0;
+    QString engine;
+    QString engine_agent;
+    QString child_ids;
 
     [[nodiscard]] FleetUnitKey key() const {
         return FleetUnitKey{id};
@@ -1394,6 +1400,9 @@ struct TranscriptBlock {
     Q_PROPERTY(QString summary MEMBER summary)
     Q_PROPERTY(bool ok MEMBER ok)
     Q_PROPERTY(QString origin_op MEMBER origin_op)
+    Q_PROPERTY(QString args_summary MEMBER args_summary)
+    Q_PROPERTY(QString detail_kind MEMBER detail_kind)
+    Q_PROPERTY(QString detail_body MEMBER detail_body)
 
 public:
     QString session;
@@ -1406,6 +1415,9 @@ public:
     QString summary;
     bool ok = false;
     QString origin_op;
+    QString args_summary;
+    QString detail_kind;
+    QString detail_body;
 
     [[nodiscard]] TranscriptBlockScope scope() const {
         return TranscriptBlockScope{session};

@@ -95,7 +95,9 @@ struct WriteBatch {
 class Persistence {
 public:
     // schema_version the generated DDL targets (mirror_schema_gen.sql / spec §4.5).
-    static constexpr int kSchemaVersion = 11;
+    // v12 (G2/M5): m_fleet_units gained engine/engine_agent/child_ids (the tree edge + engine
+    // identity); a mismatch drops-and-rebuilds (disposable cache), no migration.
+    static constexpr int kSchemaVersion = 12;
 
     Persistence() = default;
     ~Persistence();

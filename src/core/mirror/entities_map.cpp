@@ -8,6 +8,7 @@
 #include "entities_map_gen.h"
 
 #include <QString>
+#include <QStringList>
 
 namespace mirror {
 namespace {
@@ -204,6 +205,19 @@ QString unitState(const ::unit_state_r& s) {
         return QStringLiteral("Finished");
     case ::unit_state_r::unit_state_Unknown_tstr_c:
         return QStringLiteral("Unknown");
+    }
+    return {};
+}
+
+// transcript-role enum → canonical string (transcript-block-message.role).
+QString transcriptRole(const ::transcript_role_r& r) {
+    switch (r.transcript_role_choice) {
+    case ::transcript_role_r::transcript_role_Assistant_tstr_c:
+        return QStringLiteral("Assistant");
+    case ::transcript_role_r::transcript_role_User_tstr_c:
+        return QStringLiteral("User");
+    case ::transcript_role_r::transcript_role_System_tstr_c:
+        return QStringLiteral("System");
     }
     return {};
 }
@@ -433,6 +447,29 @@ FleetUnit map_fleet_unit(const ::unit_node& in) {
             delegationLifetime(in.unit_node_lifetime.unit_node_lifetime_delegation_lifetime_m);
     }
     out.child_count = static_cast<int>(in.unit_node_children_unit_id_m_count);
+    // G2 (M5): the ordered children edge (0x1f-joined) — the §3.5 unitsByParent relation the fleet
+    // TREE render reconstructs pre-order (root = a node no child list names). Kept verbatim off the
+    // wire so a straight join preserves the node's listed child order.
+    QStringList kids;
+    kids.reserve(static_cast<qsizetype>(in.unit_node_children_unit_id_m_count));
+    for (size_t i = 0; i < in.unit_node_children_unit_id_m_count; ++i) {
+        kids.push_back(qstr(in.unit_node_children_unit_id_m[i]));
+    }
+    out.child_ids = kids.join(QChar(0x1f));
+    // engine identity (v29 engine-selector): "Core" | "Foreign" + the foreign agent name, so the
+    // tree renders the engine chip without a per-node profile join.
+    if (in.unit_node_engine_present &&
+        in.unit_node_engine.unit_node_engine_choice ==
+            ::unit_node_engine_r::unit_node_engine_engine_selector_m_c) {
+        const ::engine_selector_r& es = in.unit_node_engine.unit_node_engine_engine_selector_m;
+        if (es.engine_selector_choice == ::engine_selector_r::engine_selector_Core_tstr_c) {
+            out.engine = QStringLiteral("Core");
+        } else {
+            out.engine = QStringLiteral("Foreign");
+            out.engine_agent = qstr(es.engine_selector_engine_foreign_m.engine_foreign_Foreign
+                                        .engine_foreign_agent_agent);
+        }
+    }
     return out;
 }
 
@@ -636,9 +673,63 @@ ToolInfo map_tool_info(const ::tool_info& in) {
 }
 
 TranscriptBlock map_transcript_block(const ::journal_record& in) {
+    // G2 (M5): the wire-decode / offline-reload feed (SessionHistory → journal-record → Block
+    // payload). The twin of MirrorTranscriptSink::toMirrorBlock (which sources the engine's
+    // coalesced cache row). `session` is the SessionHistory request scope — the decode caller
+    // stamps it (§3.6 merging rule), like map_chat_message's transport/conv scope. Only the Block
+    // payload carries a transcript block; a Management/Chat record maps to an empty (kind-less) row
+    // the caller skips.
     TranscriptBlock out;
-    (void)in;
-    // TODO(mirror-map): populate TranscriptBlock from wire per entity-map.toml provenance.
+    out.seq = in.journal_record_seq;
+    if (in.journal_record_origin_op_present &&
+        in.journal_record_origin_op.journal_record_origin_op_choice ==
+            ::journal_record_origin_op_r::journal_record_origin_op_origin_op_m_c) {
+        out.origin_op = qstr(in.journal_record_origin_op.journal_record_origin_op_origin_op_m);
+    }
+    if (in.journal_record_payload.journal_record_payload_t_choice !=
+        ::journal_record_payload_t_r::journal_record_payload_t_journal_record_payload_block_m_c) {
+        return out;
+    }
+    const ::transcript_block_r& block =
+        in.journal_record_payload.journal_record_payload_t_journal_record_payload_block_m
+            .Block_block;
+    switch (block.transcript_block_choice) {
+    case ::transcript_block_r::transcript_block_message_m_c:
+        out.kind = QStringLiteral("Message");
+        out.role = transcriptRole(block.transcript_block_message_m.Message_role);
+        out.text = qstr(block.transcript_block_message_m.Message_text);
+        break;
+    case ::transcript_block_r::transcript_block_tool_call_m_c:
+        out.kind = QStringLiteral("ToolCall");
+        out.call_id = qstr(block.transcript_block_tool_call_m.ToolCall_call_id);
+        out.name = qstr(block.transcript_block_tool_call_m.ToolCall_name);
+        out.args_summary = qstr(block.transcript_block_tool_call_m.ToolCall_args_summary);
+        break;
+    case ::transcript_block_r::transcript_block_tool_result_m_c: {
+        out.kind = QStringLiteral("ToolResult");
+        const ::transcript_block_tool_result& tr = block.transcript_block_tool_result_m;
+        out.call_id = qstr(tr.ToolResult_call_id);
+        out.ok = tr.ToolResult_ok;
+        out.summary = qstr(tr.ToolResult_summary);
+        // Structured detail (tool-detail = {kind, body}); the body byte-array is UTF-8 text (JSON
+        // by convention) — decode once here so the fence projection emits it verbatim (matches
+        // legacy).
+        if (tr.ToolResult_detail_present &&
+            tr.ToolResult_detail.ToolResult_detail_choice ==
+                ::ToolResult_detail_r::ToolResult_detail_tool_detail_m_c) {
+            const ::tool_detail& d = tr.ToolResult_detail.ToolResult_detail_tool_detail_m;
+            out.detail_kind = qstr(d.tool_detail_kind);
+            out.detail_body = qstr(d.tool_detail_body);
+        }
+        break;
+    }
+    case ::transcript_block_r::transcript_block_request_m_c:
+        out.kind = QStringLiteral("Request");
+        break;
+    case ::transcript_block_r::transcript_block_content_m_c:
+        out.kind = QStringLiteral("Content");
+        break;
+    }
     return out;
 }
 

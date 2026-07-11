@@ -77,12 +77,12 @@ domain::Session projectRow(const mirror::Session& s) {
     return out;
 }
 
-// A7T: the msg-fence transcript projection over mirror `TranscriptBlock` window items (seq order).
-// Ported grammar-for-grammar from `CachedSessionStore::content()` so a re-projection is byte-stable
-// and (for the representable block kinds) byte-IDENTICAL to the legacy cache projection. The one
-// unavoidable divergence is structural, not logical: the generated entity carries no `argsSummary`
-// (so the tool fence emits the always-present key as "") and no `detailKind`/`detailBody` (so a
-// structured tool result cannot be folded) — see LEDGER-a7t "ENTITY-FIELD GAP".
+// A7T/G2: the msg-fence transcript projection over mirror `TranscriptBlock` window items (seq
+// order). Ported grammar-for-grammar from `CachedSessionStore::content()` so a re-projection is
+// byte-stable and byte-IDENTICAL to the legacy cache projection. G2 (M5) enriched the entity with
+// `args_summary` + `detail_kind`/`detail_body`, closing the A7T "ENTITY-FIELD GAP": tool fences
+// with args and structured results now reproduce exactly (S7/S8 parity), so `content()` reads the
+// mirror.
 QString projectMirrorTranscript(const std::vector<mirror::TranscriptBlock>& blocks) {
     // Pre-pass: the `todo` tool's blocks are the composer status stack's feed, not transcript
     // content (mirrors the engine's live suppression) — collect its call ids so results skip too.
@@ -143,17 +143,23 @@ QString projectMirrorTranscript(const std::vector<mirror::TranscriptBlock>& bloc
             const QString status = result == nullptr ? QStringLiteral("running")
                                    : result->ok      ? QStringLiteral("ok")
                                                      : QStringLiteral("error");
-            // The entity carries no `argsSummary`: emit the always-present legacy key as "" so an
-            // empty-args call matches byte-for-byte; a non-empty-args call is the documented gap.
+            // The ToolCall row carries the args key the legacy fence always emits (G2 entity gap
+            // closed); QJsonObject sorts keys alphabetically, matching the legacy compact JSON.
             QJsonObject tool{{QStringLiteral("callId"), b.call_id},
                              {QStringLiteral("name"), b.name},
-                             {QStringLiteral("argsSummary"), QString()},
+                             {QStringLiteral("argsSummary"), b.args_summary},
                              {QStringLiteral("status"), status}};
-            if (result != nullptr && !result->summary.isEmpty()) {
-                tool.insert(QStringLiteral("summary"), result->summary);
+            // Fold the result: full content in `summary`, typed detail (kind + UTF-8 body) — the
+            // exact shape (and order) the legacy CachedSessionStore::content() emitted (D1).
+            if (result != nullptr) {
+                if (!result->summary.isEmpty()) {
+                    tool.insert(QStringLiteral("summary"), result->summary);
+                }
+                if (!result->detail_kind.isEmpty()) {
+                    tool.insert(QStringLiteral("detailKind"), result->detail_kind);
+                    tool.insert(QStringLiteral("detailBody"), result->detail_body);
+                }
             }
-            // detailKind/detailBody have no home in the entity: omitted (matches legacy only when
-            // the result carried no structured detail).
             appendFence(QStringLiteral("tool"), tool);
         }
         // ToolResult rows carry no standalone rendering: folded into their call's fence above.
@@ -202,15 +208,21 @@ void MirrorSessionStore::onCommitted() {
         return;
     }
     // Re-derive only when session/fleet deltas landed above the watermark (§8.1 discipline —
-    // chat pages and routing churn must not thrash the roster consumers).
+    // chat pages and routing churn must not thrash the roster consumers). G2 (M5): a
+    // TranscriptBlock delta also fires changed() so the flipped content() read (now mirror-served)
+    // refreshes on an engine transcript write / offline reload — without a session-row rebuild.
     const auto sessionDeltas = m_mirror->journal().since(m_watermark, mirror::EntityKind::Session);
     const auto fleetDeltas = m_mirror->journal().since(m_watermark, mirror::EntityKind::FleetUnit);
+    const auto transcriptDeltas =
+        m_mirror->journal().since(m_watermark, mirror::EntityKind::TranscriptBlock);
     m_watermark = m_mirror->journal().headRev();
     m_mirror->journal().advanceWatermark(QLatin1String(kConsumer), m_watermark);
-    if (sessionDeltas.empty() && fleetDeltas.empty()) {
+    if (sessionDeltas.empty() && fleetDeltas.empty() && transcriptDeltas.empty()) {
         return;
     }
-    rebuildFromSnapshot();
+    if (!sessionDeltas.empty() || !fleetDeltas.empty()) {
+        rebuildFromSnapshot();
+    }
     emit changed();
 }
 
@@ -314,9 +326,10 @@ QList<domain::Participant> MirrorSessionStore::participants() const {
 }
 
 QString MirrorSessionStore::content(const domain::SessionId& id) const {
-    // Transcript blocks join the mirror LAST (sub-gate 6); until the engine stream re-homes, the
-    // legacy cache projection is the one transcript source.
-    return m_legacy != nullptr ? m_legacy->content(id) : QString();
+    // G2 (M5): the facade flip. Transcript content now projects the mirror `w_transcript_blocks`
+    // window (fed by the engine dual-write via MirrorTranscriptSink), byte-identical to the legacy
+    // cache projection (S1-S9 parity green). The legacy delegation is retired here.
+    return mirrorContent(id);
 }
 
 void MirrorSessionStore::setContent(const domain::SessionId& id, const QString& markdown) {
