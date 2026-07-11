@@ -44,7 +44,6 @@
 #include "fleet/mock_approvals_inbox.h"
 #include "fleet/mock_dashboard.h"
 #include "fleet/mock_fleet_tree.h"
-#include "fleet/mock_session_roster.h"
 #include "fs/local_disk_fs_service.h"
 #include "memory/mock_memory_service.h"
 #include "models/mock_model_catalog.h"
@@ -57,7 +56,6 @@
 #include "settings/qt_settings_store.h"
 #include "setup/agent_setup_model.h"
 #include "tools/mock_tool_inventory.h" // [wave2:app-approvals-safety] D2
-#include "transports/mock_chat_service.h"
 #include "transports/mock_contacts_service.h"
 #include "transports/mock_persons_service.h"
 #include "transports/mock_presence_service.h"
@@ -77,6 +75,8 @@
 #include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
 #include "daemon/mirror_session_store.h"   // mirror A7 (M4): the 6->1 session store projection
 #include "daemon/mirror_transcript_sink.h" // A7T (M4 sub-step 6): engine transcript -> mirror
+#include "daemon/mock_scenario.h"          // mirror A8 (M5): the mock seed-scenario catalog
+#include "daemon/mock_scenario_host.h"     // mirror A8 (M5): the mock scenario driver (Seeder)
 #include "local_database.h"
 #include "mirror/mirror_service.h"
 #include "outbox.h"
@@ -169,15 +169,26 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // deleted mock net's routing + transports-tree + patch-bay are gone). In daemon mode the
     // fleet/roster/store below are deleted + rebuilt daemon-backed, so this seed is used only in
     // mock mode; building it unconditionally keeps the pre-mode-branch surfaces simple.
+#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
+    // mirror A8 (spec 09 §9, M5): the mock SCENARIO is the only mock seed source — resolved once,
+    // feeding BOTH the legacy delegate stores (its SeedBundle, here) and the mock mirror (its
+    // canonical seed, in the mirror block below), so the two sides' session ids provably agree
+    // (the delegated content() join depends on it). Daemon mode gets an empty placeholder (the
+    // pre-branch mock services it feeds are deleted + rebuilt daemon-backed below).
+    const MockScenario mockScenario =
+        mode == ServiceMode::Daemon ? MockScenario{} : mockScenarioFromEnvironment();
+    auto* fleetSource = new daemonnet::MockFleetSource(mockScenario.bundle, owner);
+#else
     auto* fleetSource = new daemonnet::MockFleetSource(owner);
-    graph.roster = new fleet::MockSessionRoster(fleetSource, owner);
+#endif
+    // mirror A8 (M5): roster + dashboard are built at the END of this factory in BOTH modes — the
+    // roster projects the final storeMirror (the 6→1 read everywhere; MockSessionRoster died with
+    // the cutover) and the dashboard observes the FINAL seam pointers.
     graph.fleetTree = new fleet::MockFleetTree(fleetSource, owner);
     graph.approvals = new fleet::MockApprovalsInbox(owner);
     // [wave2:app-approvals-safety] D2: tool inventory starts as the canned mock; the daemon branch
     // below REPLACES it with the repo-backed DaemonToolInventory (ToolList).
     graph.tools = new tools::MockToolInventory(owner);
-    graph.dashboard =
-        new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner);
     // Cron has NO node wire op yet (the daemon-api codec subset carries none), so in Daemon mode
     // it must render EMPTY rather than pass its illustrative demo rows off as node-backed data
     // (render honesty; see seam_migration.h). Mock mode keeps the demo seed. (Routing moved to the
@@ -192,10 +203,14 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // [acct-mgmt] Transport contacts / roster (Phase D): inert canned mock until a daemon adapter
     // decodes the node's roster ops (replaced in the Daemon branch below).
     graph.contacts = new transports::MockContactsService(owner);
-    // [integrations wire v38] Person registry + native chat: inert canned mocks until a daemon
-    // adapter decodes the node's PersonList / ConvHistory (replaced in the Daemon branch below).
+    // [integrations wire v38] Person registry: inert canned mock until the integrations tree's
+    // persons sections port onto the mirror (post-M5; the tree composes directly from
+    // IPersonsService). The Daemon branch below replaces it with the DaemonPersonsService.
     graph.persons = new transports::MockPersonsService(owner);
-    graph.chat = new transports::MockChatService(owner);
+    // mirror A8 (M5): NO mock chat seam. The chat surfaces read the seeded mock MIRROR (window
+    // lens) and send through the ConvSend outbox lane + scripted outcomes — MockChatService died
+    // with the M5 cutover. `chat` stays null in mock; daemon mode builds DaemonChatService below
+    // (the dual-write legacy path until A9 retires the seam).
     // sessionSettings is constructed per-mode below (the daemon variant needs nodeApi to send
     // SetSessionMode); checkpoints starts as the mock and is REPLACED in the daemon branch with
     // the repo-backed DaemonCheckpointTimeline (CheckpointList/CheckpointRewind; E4/TOOL-9).
@@ -342,17 +357,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         }
         delete graph.persons;
         graph.persons = new transports::DaemonPersonsService(graph.personsRepository, owner);
-        delete graph.chat;
+        // (chat is null outside daemon mode since M5 — no mock to delete.)
         graph.chat = new transports::DaemonChatService(graph.chatRepository, owner);
         // Daemon-backed, offline-first session roster + dashboard (replaces the mock pair). The
         // roster projects the (offline-first) CachedSessionStore; the dashboard derives its
         // counters from the FINAL seam pointers (DaemonFleetTree + DaemonApprovalsInbox) and its
-        // health from the connection. Delete the mock dashboard FIRST (it observes the mock roster
-        // + the now-swapped fleet tree), then the mock roster, then build the daemon pair over the
-        // final pointers — otherwise the mock dashboard keeps a dangling fleet-tree pointer (a
-        // confirmed use-after-free / SIGSEGV in MockDashboard::runningAgents()).
-        delete graph.dashboard;
-        delete graph.roster;
+        // health from the connection. Both are constructed at the END of this factory (M5: in
+        // both modes), so nothing here observes a swapped-out seam pointer.
         // The real routing manager (M3): RoutingRepository is the node-authoritative DIRECT
         // mutation seam (RoutingBindChat/Unbind — it IS-A daemonnet::IRoutingActions the routing
         // manager view-model drives). Reads no longer flow through it: the routing pin table lives
@@ -365,12 +376,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         if (graph.subscriptions != nullptr) {
             graph.subscriptions->setRoutingRepository(graph.routingRepository);
         }
-        // The daemon roster + dashboard are constructed AFTER the mirror block (end of this
-        // factory): the ops-hub Sessions roster binds the mirror-backed storeMirror (M4), which
-        // does not exist yet here. Nothing between the deletes above and that construction reads
-        // graph.roster/graph.dashboard; null them for hygiene meanwhile.
-        graph.roster = nullptr;
-        graph.dashboard = nullptr;
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -786,21 +791,76 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                  }
                              });
         }
+    } else {
+        // ---- mirror A8 (spec 09 §9, wave M5): the MOCK mirror — same store, same journal, same
+        // lenses, different feeder. The scenario's Seeder is the single Writer (§5.1); the A5/A7
+        // null-mirror fallbacks die here: Mirror/Outbox are LIVE in mock, so the chat surfaces
+        // read the window lens and route sends through the chat-send lane + scripted outcomes. ----
+        auto* svc = new mirror::MirrorService(owner);
+        // Mock state is throwaway by design (deterministic per run; the scenario is the only seed
+        // source): in-memory mirror, in-memory local db — nothing persisted, no migration surface.
+        svc->openInMemory();
+        graph.mirrorService = svc;
+        graph.localDb = new mirror::LocalDatabase(QStringLiteral(":memory:"), owner);
+        graph.outbox = new mirror::Outbox(graph.localDb, owner);
+        // Drain gate (§6.3): mutation lanes require the (mock) connection to be ready — the same
+        // predicate shape as the daemon branch, over the mock liveness state machine.
+        graph.outbox->setGate(
+            [conn = graph.connection](const QString& /*lane*/, mirror::VerbClass cls) {
+                return !mirror::requiresConnected(cls) || conn->ready();
+            });
+        graph.outbox->load();
+        // Provenance landing (§5.1/§6.6): identical wiring to the daemon branch — the scripted
+        // ok-outcome's echo lands ops through the SAME seam. (No boot reconciliation: the
+        // in-memory pair starts empty by construction.)
+        QObject::connect(svc, &mirror::MirrorService::provenanceStamped, graph.outbox,
+                         [outbox = graph.outbox](const QString& originOp) {
+                             outbox->onProvenanceStamped(originOp);
+                         });
+
+        // The scenario driver: seeds the mirror (one batch), plays the timeline, answers verbs
+        // from the script, and drives the ingestor's per-connection mode from the scenario's
+        // api/<N> at the mock connection's ready/lost transitions (§5.6/§6.8).
+        graph.mockHost = new MockScenarioHost(svc, graph.outbox, mockScenario, owner);
+        svc->setFetchExecutor(graph.mockHost->fetchExecutor());
+        {
+            auto wasReady = std::make_shared<bool>(false);
+            QObject::connect(graph.connection, &connection::IConnectionService::stateChanged,
+                             graph.mockHost,
+                             [conn = graph.connection, host = graph.mockHost, wasReady] {
+                                 const bool nowReady = conn->ready();
+                                 if (nowReady && !*wasReady) {
+                                     host->onConnectionReady();
+                                 } else if (!nowReady && *wasReady) {
+                                     host->onConnectionLost();
+                                 }
+                                 *wasReady = nowReady;
+                             });
+        }
+
+        // mirror A8 (M5): mock storeMirror is the REAL MirrorSessionStore over the seeded mirror —
+        // the A7 composition-time aliasing is deleted; the 6→1 projection now serves BOTH modes.
+        // content() + mutations keep DELEGATING to the legacy in-memory store (A7T re-homes that
+        // seam in parallel; the scenario derives the mirror ids from the same bundle so the
+        // delegated content() join holds).
+        graph.storeMirror =
+            new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
     }
 #endif
 
-    if (daemonConnection != nullptr) {
-        // Daemon-backed, offline-first session roster + dashboard (replacing the mock pair
-        // deleted in the daemon branch above). M4: the roster projects the mirror-backed
-        // storeMirror (the 6→1 session read; = graph.store on substrate-less stacks), so the
-        // ops-hub Sessions page reads the same ONE entity as the roster list/sidebar. The
-        // dashboard derives its counters from the FINAL seam pointers; the repository rides
-        // along for the operator steer/startTurn/interrupt ops (F4) and the archived-scope
-        // refetch (F6).
-        graph.roster = new fleet::DaemonSessionRoster(graph.storeMirror, graph.sessions, owner);
-        graph.dashboard = new fleet::DaemonDashboard(graph.roster, graph.fleetTree, graph.approvals,
-                                                     graph.connection, owner);
-    }
+    // The ops-hub session roster projects storeMirror in BOTH modes (M4 daemon; M5 mock — the
+    // seeded MirrorSessionStore, or the legacy alias on substrate-less stacks): the 6→1 session
+    // read everywhere, MockSessionRoster deleted. The repository rides along for the operator
+    // steer/startTurn/interrupt ops (F4; inert without a connection) and the archived-scope
+    // refetch (F6). The dashboard observes the FINAL seam pointers; mock keeps the MockDashboard
+    // presentation (seeded activity feed) over the same interfaces.
+    graph.roster = new fleet::DaemonSessionRoster(graph.storeMirror, graph.sessions, owner);
+    graph.dashboard =
+        daemonConnection != nullptr
+            ? static_cast<fleet::IDashboard*>(new fleet::DaemonDashboard(
+                  graph.roster, graph.fleetTree, graph.approvals, graph.connection, owner))
+            : static_cast<fleet::IDashboard*>(
+                  new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner));
     return graph;
 }
 

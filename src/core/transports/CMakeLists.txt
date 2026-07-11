@@ -17,8 +17,6 @@ add_library(da_transports STATIC
     mock_contacts_service.cpp
     mock_persons_service.h
     mock_persons_service.cpp
-    mock_chat_service.h
-    mock_chat_service.cpp
 )
 add_library(daemon-app::transports ALIAS da_transports)
 

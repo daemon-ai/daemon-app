@@ -38,7 +38,18 @@ class MockFleetSource : public QObject {
     Q_OBJECT
 
 public:
+    // Projects the canonical demo bundle (defaultSeed()).
     explicit MockFleetSource(QObject* parent = nullptr);
+    // Projects a caller-supplied bundle — the mock scenario (A8/M5) is the seed source; this
+    // class only PROJECTS (fleet tree + roster rows) and hands the bundle to the session store.
+    explicit MockFleetSource(const SeedBundle& bundle, QObject* parent = nullptr);
+
+    // The canonical fleet-of-fleets demo content (units + sessions + tags + participants) — the
+    // single source the default mock scenario builds on (its mirror rows are derived from this,
+    // so the mirror session ids and the delegated transcript store's ids provably agree). A
+    // static member (not a free function) so the tr() context of the participant labels is
+    // unchanged for the i18n catalogs.
+    [[nodiscard]] static SeedBundle defaultSeed();
 
     // Fleet projection: the delegation spanning tree (pre-order), rows
     // { depth, id, name, kind(orchestrator|worker), status, model } — the IFleetTree row contract.
@@ -51,11 +62,6 @@ public:
     [[nodiscard]] SeedBundle seed() const;
 
 private:
-    void buildSeed();
-    void seedTagsAndParticipants();
-    void seedUnits();
-    void seedSessions();
-
     void computeProjections();
     void projectFleet();
     void projectSessions();

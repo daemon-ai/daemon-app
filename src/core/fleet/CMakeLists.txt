@@ -5,8 +5,6 @@ add_library(da_fleet STATIC
     ifleet_tree.h
     iapprovals_inbox.h
     idashboard.h
-    mock_session_roster.h
-    mock_session_roster.cpp
     mock_fleet_tree.h
     mock_fleet_tree.cpp
     mock_approvals_inbox.h

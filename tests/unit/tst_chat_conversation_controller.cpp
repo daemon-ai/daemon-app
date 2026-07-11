@@ -7,25 +7,23 @@
 // contract independent of either surface: history load on open, the oldest-first
 // markdown projection of ConvHistory rows, send-without-local-echo, authoritative
 // MessagesChanged refresh application (foreground AND background), per-conversation
-// signal filtering, and sendFailed surfacing. Driven against MockChatService plus a
-// controllable recording double (to assert the no-echo seam precisely).
+// signal filtering, and sendFailed surfacing. Driven against a controllable
+// recording IChatService double (a test-local fixture — the app-level MockChatService
+// died in M5: mock mode reads the seeded mirror; this LEGACY rows path remains for
+// substrate-less stacks and the daemon dual-write window until A9 deletes the seam).
 
 #include "chat_conversation_controller.h"
 #include "transports/ichat_service.h"
-#include "transports/mock_chat_service.h"
 
 #include <QSignalSpy>
 #include <QtTest>
 
-using transports::MockChatService;
-
 namespace {
 
 // A test double with full control over emissions: records send()/refreshHistory()
-// calls and emits messagesChanged/sendFailed only when the test drives it. Unlike
-// MockChatService (which echoes on send), it never emits on its own — so a test can
-// prove the CONTROLLER performs no local echo (the row appears only when the node's
-// authoritative MessagesChanged round-trips).
+// calls and emits messagesChanged/sendFailed only when the test drives it (never
+// on its own) — so a test can prove the CONTROLLER performs no local echo (the row
+// appears only when the node's authoritative MessagesChanged round-trips).
 class RecordingChatService : public transports::IChatService {
     Q_OBJECT
 
@@ -43,6 +41,10 @@ public:
         sendCalls.append(std::make_tuple(transport, conv, text));
     }
 
+    // Store rows WITHOUT emitting (the "already cached" precondition open() projects).
+    void preload(const QString& transport, const QString& conv, const QVariantList& rows) {
+        m_store.insert(key(transport, conv), rows);
+    }
     // Test driver: replace the stored rows and fire the authoritative feed event.
     void deliver(const QString& transport, const QString& conv, const QVariantList& rows) {
         m_store.insert(key(transport, conv), rows);
@@ -104,10 +106,10 @@ private slots:
     // The authoritative rows (delivered via messagesChanged) project oldest-first
     // into one markdown document, carrying each author + message body in order.
     void projectsOldestFirstMarkdown() {
-        MockChatService svc;
-        svc.seed(kT, kC,
-                 {msg(QStringLiteral("Alice"), QStringLiteral("hello")),
-                  msg(QStringLiteral("Bob"), QStringLiteral("hi there"))});
+        RecordingChatService svc;
+        svc.preload(kT, kC,
+                    {msg(QStringLiteral("Alice"), QStringLiteral("hello")),
+                     msg(QStringLiteral("Bob"), QStringLiteral("hi there"))});
         ChatConversationController convo;
         convo.setService(&svc);
 
@@ -128,8 +130,8 @@ private slots:
     // a normal row gets its author emphasised — so the transcript styles events vs
     // messages. Guards the projection shape without over-fitting exact syntax.
     void systemAndNoticeRowsRenderDistinctly() {
-        MockChatService svc;
-        svc.seed(
+        RecordingChatService svc;
+        svc.preload(
             kT, kC,
             {msg(QStringLiteral("system"), QStringLiteral("Alice joined the room"), true, false),
              msg(QStringLiteral("Bob"), QStringLiteral("welcome"))});
@@ -235,10 +237,10 @@ private slots:
     // Rebinding to a new conversation clears the prior projection and refreshes the
     // new one (a controller reused across tab reassignment must not leak rows).
     void rebindClearsPriorTranscript() {
-        MockChatService svc;
-        svc.seed(kT, kC, {msg(QStringLiteral("Alice"), QStringLiteral("first"))});
-        svc.seed(kT, QStringLiteral("!second:demo"),
-                 {msg(QStringLiteral("Carol"), QStringLiteral("second"))});
+        RecordingChatService svc;
+        svc.preload(kT, kC, {msg(QStringLiteral("Alice"), QStringLiteral("first"))});
+        svc.preload(kT, QStringLiteral("!second:demo"),
+                    {msg(QStringLiteral("Carol"), QStringLiteral("second"))});
         ChatConversationController convo;
         convo.setService(&svc);
 

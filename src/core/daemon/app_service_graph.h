@@ -87,6 +87,7 @@ class Outbox;
 namespace daemonapp::daemon {
 
 class DaemonFetchExecutor; // mirror A5: FetchExecutor over NodeApiClient (Daemon mode)
+class MockScenarioHost;    // mirror A8: the mock scenario driver (Mock mode; §9)
 
 class AgentRepository;
 class ContactsRepository; // [acct-mgmt] transport contacts / roster (wire v34)
@@ -246,6 +247,10 @@ struct AppServiceGraph {
     // (MirrorSessionStore::content) still delegates to the legacy cache — the flip is withheld on
     // the entity-field gap (LEDGER-a7t).
     ITranscriptMirrorSink* transcriptMirrorSink = nullptr;
+    // mirror A8 (spec 09 §9, wave M5): the mock scenario driver — the Seeder (the mock single
+    // Writer) + scripted timeline + scripted verb outcomes + the api/<N> mock Hello. Mock mode
+    // with the substrate only; null everywhere else.
+    MockScenarioHost* mockHost = nullptr;
 };
 
 // Resolve the service mode from the DAEMON_APP_SERVICE_MODE environment variable

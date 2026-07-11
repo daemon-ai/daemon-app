@@ -31,7 +31,6 @@
 #include "mirror/mirror_service.h"
 #include "transports/ichat_service.h"
 #include "transports/ipersons_service.h"
-#include "transports/mock_chat_service.h"
 #include "transports/mock_persons_service.h"
 #include "wire_mux_fixture.h"
 
@@ -995,18 +994,6 @@ private slots:
         svc.refresh();
         QCOMPARE(changed.count(), 1);
         QVERIFY(!svc.persons().isEmpty());
-    }
-
-    void mockChatService() {
-        transports::MockChatService svc;
-        QSignalSpy changed(&svc, &transports::IChatService::messagesChanged);
-        svc.send(QStringLiteral("demo/acct"), QStringLiteral("!room:demo"), QStringLiteral("hi"));
-        QCOMPARE(changed.count(), 1);
-        const QVariantList rows =
-            svc.messages(QStringLiteral("demo/acct"), QStringLiteral("!room:demo"));
-        QVERIFY(!rows.isEmpty());
-        QCOMPARE(rows.last().toMap().value(QStringLiteral("text")).toString(),
-                 QStringLiteral("hi"));
     }
 
     // ----- SubscriptionManager fan-out: MessagesChanged -> ChatRepository, PersonsChanged ->

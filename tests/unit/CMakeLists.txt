@@ -850,13 +850,17 @@ target_link_libraries(tst_profile_store
 add_test(NAME tst_profile_store COMMAND tst_profile_store)
 set_tests_properties(tst_profile_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_fleet_ops: the Phase 6 ops mocks - roster state transitions, fleet
-# pause/resume, approvals resolve, and the dashboard's derived live counters.
+# tst_fleet_ops: the surviving ops mocks after M5 - fleet pause/resume, approvals resolve, and
+# MockDashboard's derived live counters over the ONE roster implementation both modes run
+# (DaemonSessionRoster over an ISessionStore; MockSessionRoster died with the M5 cutover).
 qt_add_executable(tst_fleet_ops tst_fleet_ops.cpp)
 target_link_libraries(tst_fleet_ops
     PRIVATE
         Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
         daemon-app::fleet
+        daemon-app::persistence
         daemon-app::uimodels
 )
 add_test(NAME tst_fleet_ops COMMAND tst_fleet_ops)
@@ -1096,7 +1100,7 @@ set_tests_properties(tst_tab_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offsc
 # view-model BOTH surfaces bind — history load on open, the oldest-first markdown projection
 # of ConvHistory rows, send-without-local-echo, authoritative MessagesChanged refresh (fg + bg),
 # per-conversation signal filtering, and sendFailed surfacing. Compiles the controller source
-# directly and links the transports seam (IChatService + MockChatService).
+# directly and links the transports seam (IChatService; a test-local recording fixture).
 qt_add_executable(tst_chat_conversation_controller
     tst_chat_conversation_controller.cpp
     ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/chat_conversation_controller.cpp
@@ -1390,6 +1394,33 @@ if(TARGET daemon-app::mirror_ingestor)
                     daemon-app::local)
         add_test(NAME tst_mirror_e1_offline COMMAND tst_mirror_e1_offline)
         set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
+    # tst_mock_daemon_parity (mirror A8, M5 exit gate): the SAME MockScenario through both
+    # feeders — the real mock graph (Seeder) vs a daemon-shaped ingestor delivery — renders
+    # equivalently at the shared-VM layer (tables via parity helpers, ConversationListModel/
+    # ChatWindowModel lenses, the MirrorSessionStore projection); journal origins record the
+    # feeder (seeder vs refetch_diff) while the state is identical (§9/§13).
+    if(TARGET daemon-app::daemon_client)
+        qt_add_executable(tst_mock_daemon_parity tst_mock_daemon_parity.cpp)
+        target_link_libraries(tst_mock_daemon_parity
+            PRIVATE Qt6::Test Qt6::Network daemon-app::daemon_client daemon-app::persistence
+                    daemon-app::domain)
+        add_test(NAME tst_mock_daemon_parity COMMAND tst_mock_daemon_parity)
+        set_tests_properties(tst_mock_daemon_parity
+            PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
+    # tst_mock_scenario (mirror A8, M5): the mock scenario catalog (spec 09 §9) — mirror rows
+    # derived from the ONE SeedBundle (id agreement), canonical string vocabulary, seeded chat
+    # windows scope seeded conversations, the MANDATORY rejection/timeout verb rules, the api38/
+    # empty variants, and the DAEMON_APP_MOCK_SCENARIO selector.
+    if(TARGET daemon-app::daemon_client)
+        qt_add_executable(tst_mock_scenario tst_mock_scenario.cpp)
+        target_link_libraries(tst_mock_scenario
+            PRIVATE Qt6::Test daemon-app::daemon_client)
+        add_test(NAME tst_mock_scenario COMMAND tst_mock_scenario)
+        set_tests_properties(tst_mock_scenario PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif()
 
     # tst_mirror_seeder (mirror A8): the mock-mode single Writer (spec 09 §9, §5.1) — seed() +

@@ -157,16 +157,118 @@ data-mock deletion, (6) mock e2e parity.
   scan + no Bootstrap + lanes hold (manual tap only). Proves both §5.6 modes and the §6.8 gate run
   in mock. ctest 143→144.
 
-## Remaining M5 slices (not yet landed — for the parent / a resume)
+## The mock-composition cutover (second checkpoint — design + verified census)
 
-- Wire the mock composition: install `Seeder` as the mock `mirror::Writer` in `app_service_graph`
-  (mock branch), flip `storeMirror` in mock to a `MirrorSessionStore` over the seeded store
-  (honoring A7T's content-delegation caveat — mock transcript content keeps flowing through the
-  legacy/mock content source), and source the mock connection's api/<N> Hello from the scenario /
-  `DAEMON_APP_MOCK_INTEGRATIONS` (which collapses into a seed-scenario selector).
-- Delete the data mocks the seeder replaces (MockChatService / MockPersonsService /
-  MockContactsService / MockTransportRegistry+MockPresenceService / MockFleetSource +
-  InMemorySessionStore + MockSessionRoster + MockFleetTree) once every surface they feed is
-  seeder-served in GUI + TUI and parity-green.
-- Mock e2e parity suite (§13 M5 gate): the offscreen TUI + qml scenario suites run the SAME
-  scenarios in mock and daemon and render equivalently.
+**Program directive applied**: clean refactor — no dead code, no migration/compat with pre-mirror
+versions, scenarios are the only seed source, no aliases.
+
+### `DAEMON_APP_MOCK_INTEGRATIONS` — already collapsed on this branch (verified)
+
+`rg DAEMON_APP_MOCK_INTEGRATIONS` over this repo returns ONLY ledger prose — the env var, its
+demo-tree opt-in, and its `tst_app_service_graph` cases were deleted in the earlier integration
+waves (the M3 `IDaemonNet` deletion took the demo tree with it). The references that remain live
+in the SUPERPROJECT's pinned (older) `daemon-app` submodule copy and its architecture docs — not
+in this repo, and the superproject is out of A8's write scope. Nothing to alias; nothing to keep.
+The scenario selector (`DAEMON_APP_MOCK_SCENARIO`, below) is the replacement mechanism.
+
+### Composition design (slices 1–3)
+
+- `daemonnet::defaultSeedBundle()` — the canned fleet/session/tags/participants demo content
+  MOVES out of `MockFleetSource::buildSeed()` into a free function; `MockFleetSource` keeps its
+  default ctor (delegating) so its surviving consumers and tests are untouched. The bundle is the
+  single source for the session/fleet DOMAIN data; the default scenario derives its mirror rows
+  from it (one declaration → two projections; ids provably agree, which the delegated
+  `content()` join requires).
+- `daemonapp::daemon::MockScenario` (`mock_scenario.{h,cpp}`, substrate-gated): `{name, bundle,
+  mirror::Scenario}`. Built-ins: `default` (api/39, full seed, scripted timeline + verb script
+  incl. the MANDATORY rejection rule), `api38` (same data, api/38 — degraded mode + auto-replay
+  hold at app level), `empty` (nothing seeded — onboarding/empty-state demos).
+  `DAEMON_APP_MOCK_SCENARIO` selects; unknown names warn + fall back to `default`.
+- `daemonapp::daemon::MockScenarioHost` (`mock_scenario_host.{h,cpp}`): the mock-mode driver.
+  Owns `mirror::Seeder` + `mirror::ScenarioPlayer`; plays the seed at construction; a QTimer +
+  QElapsedTimer advance the timeline deterministically. Answers `Outbox::sendRequested` from the
+  scenario's VerbScript (ok → delayed ack + provenance ECHO through the seeder with
+  `origin_op = op_id`; reject → `onRejection` → lane pause §6.5; timeout → delayed
+  `onTransientFailure` → backoff §6.3). Installs a scripted-pager `FetchExecutor` that records +
+  async-completes every job (the mirror is seeder-authoritative; the recording is the app-level
+  §5.6 mode evidence). `onConnectionReady()` = the mock Hello: `ingestor().onConnected(api,
+  true)` + `setProvenanceCapable(autoReplayEnabled(api))` + auto-replay drain at 39 — the same
+  wiring the daemon branch does from AuthOk.
+- Graph mock branch (`app_service_graph.cpp`): `MirrorService::openInMemory()` (mock state is
+  throwaway — nothing persisted, no migration surface, per the directive); `LocalDatabase
+  (":memory:")` + `Outbox` (gate: mutation lanes require `connection->ready()`); the
+  provenance-landing wiring (same as daemon); `storeMirror = MirrorSessionStore(mirror store,
+  ingestor, legacy InMemorySessionStore)` — the A7 aliasing fallback DELETED. content()/mutations
+  keep delegating to the legacy store (A7T's seam, untouched). Mock-ready/lost transitions drive
+  the host.
+
+### Mock census — the verified truth (per-consumer grep, this branch)
+
+DELETED this checkpoint (last consumer flips with the deletion, same commit):
+- `MockChatService` — read path: the chat surfaces bind `Mirror` (non-null in mock now) → the
+  window lens; send path: `ConvSendController.laneActive` (outbox non-null in mock now) → the
+  chat-send lane + scripted outcomes. The graph was its last app consumer (it was never even
+  seeded there — mock chat rendered EMPTY pre-cutover; the scenario seeds real timelines).
+  Its unit-test uses move to a test-local `IChatService` fixture (the controller's legacy path
+  stays COMPILED for substrate-less stacks + the daemon dual-write window; A9 deletes it with
+  the legacy seams).
+- `MockSessionRoster` — the ops-hub roster in mock becomes `DaemonSessionRoster` over the seeded
+  `storeMirror` (the same projection daemon mode uses — 6→1 in BOTH modes). MockDashboard keeps
+  observing the interfaces (rebuild order honors the dashboard-observes-deleted-roster SIGSEGV
+  precedent).
+
+SURVIVORS (each with its blocking dependency, re-verified by consumer grep):
+- `MockTransportRegistry`/`MockPresenceService`/`MockPersonsService`/`MockContactsService` — the
+  integrations tree (`IntegrationsTreeModel` composes DIRECTLY from ITransportRegistry +
+  IPersonsService — its header says so), the TUI channels hub, and the TUI contact/room flows
+  read the legacy seams in BOTH modes (daemon serves them via the Daemon* adapters over the
+  repositories). The mirror cannot serve those surfaces yet: `Adapter`/instances have NO fetch
+  arm (TransportChanged patches only), person ENDPOINTS (the tree's per-transport person
+  sections) have no deliver path, and the registry mocks carry the room-lifecycle/member VERB
+  flows (join/create/kick/ban) the mirror write path doesn't own. The enabling work is a
+  consumer port + ingestor fetch arms — a post-M5 vertical (it was never in the M2–M4 waves).
+  The 07§9.10 census assumed these would be mirror-served by M5; the executed waves left the
+  tree/channels on the seams. NOT deletable without breaking both modes' rendering.
+- `MockFleetSource` + `InMemorySessionStore` — the delegated transcript-content + mutation source
+  behind `MirrorSessionStore` (A7T is re-homing content in parallel; forbidden seam) and the
+  fleet TREE's mock seed. They die with A7T + the mutation outbox lane (A9's deletion order).
+- `MockFleetTree` — the fleet TREE cannot be mirror-served: `FleetUnit` carries no
+  parent/children edges (G-series codegen change; A7's documented degradation, not mine to fix).
+- `MockConnectionService` (the transport stand-in — A8 drives the ingestor's mode select from
+  the scenario at its ready transition), `MockAuthFlowService`, `MockCronStore` (no wire op),
+  `MockDashboard` (derives counters from interfaces), and the post-M5 domain mocks
+  (models/providers/accounts/profiles/session-settings/checkpoints/tools/config/memory/
+  approvals/feedback) whose consumers don't read the mirror yet.
+
+### Aligned degradations (mock now matches daemon — the fork IS the deletion)
+
+- Mock participants/tags panes render like daemon mode renders them (MirrorSessionStore returns
+  empty tags()/participants() — the legacy mock-only seeded rows were a mock/daemon shape fork).
+- Mock transcript content still flows through the legacy delegate (A7T's seam) — unchanged.
+- Mock dashboard tokensToday reports 0 (the shared roster projection carries no client-side token
+  data — the mock-only token fiction died with MockSessionRoster).
+
+## Status (second checkpoint — all landed, gates green per commit)
+
+- **C1 `8dd7ca4` scenario catalog.** `MockScenario` (default | api38 | empty) +
+  `DAEMON_APP_MOCK_SCENARIO` selector; `MockFleetSource::defaultSeed()` extraction (tr() context
+  preserved — i18n-drift green); mirror rows derived from the ONE bundle. `tst_mock_scenario`
+  (9 cases). ctest 144→145.
+- **C2 `3837d4d` mock composition cutover.** Mock graph = MirrorService(in-memory) +
+  LocalDatabase(":memory:") + Outbox(ready-gate) + provenance wiring + `MockScenarioHost`
+  (seed + timeline + scripted verb outcomes + recording scripted-pager + the api/<N> mock Hello
+  at ready/lost) + `storeMirror` = real MirrorSessionStore (A7 aliasing deleted). App-level
+  evidence in tst_app_service_graph (13 cases): full(39) Bootstrap + auto-replay → landed via
+  scripted echo; api38 degraded scan + lanes hold → manual drain; "/reject" pauses the lane;
+  all-seeder journal; id agreement + content() delegation. ctest 145 (cases +5).
+- **C3 `ac0118c` MockChatService deleted** (class + CMake + seam test case + graph construction;
+  controller tests moved to a test-local recording fixture). ctest 145.
+- **C4 `96f7f99` MockSessionRoster deleted.** One roster projection (DaemonSessionRoster over
+  storeMirror) in BOTH modes; dashboard built over final seam pointers at the end of the factory
+  in both modes (mock keeps MockDashboard presentation). tst_fleet_ops reworked over the shared
+  roster. ctest 145.
+- **C5 mock↔daemon parity suite** (`tst_mock_daemon_parity`): the SAME scenario through the
+  Seeder (real mock graph) and through the ingestor deliver* seams (daemon shape) renders
+  equivalently — table parity via the shared parity helpers, lens parity
+  (ConversationListModel/ChatWindowModel), MirrorSessionStore projection parity; journal origins
+  record the feeder (seeder vs refetch_diff) while the state is identical. ctest 145→146.
