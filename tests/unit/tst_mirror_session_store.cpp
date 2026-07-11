@@ -20,12 +20,17 @@
 #include "daemon/node_api_codec.h"
 #include "daemon_api_client_encode.h"
 #include "daemon_api_client_types.h"
+#include "local_database.h"
 #include "mirror/mirror_service.h"
 #include "mirror/parity.h"
 #include "mirror/store.h"
+#include "outbox.h"
 #include "session_controller.h"
 #include "transcript_exporter.h"
+#include "verb_class.h"
 
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSet>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -271,23 +276,47 @@ private slots:
         QCOMPARE(store.sessionCount(all), 1);
     }
 
-    // Mutations delegate to the legacy store (ONE node-authoritative wire path); the wire
-    // round-trip signals are relayed; the scoped refreshes hit BOTH sides. G2 (M5): content()
-    // no longer delegates — it projects the mirror transcript window (the flip), so the legacy
-    // content path sees ZERO reads.
-    void mutationsDelegateAndContentProjectsMirror() {
+    // AD (§6.4/§7): pin/archive/rename route through the session-meta OUTBOX lane — durable
+    // before any send, op_id minted (§6.2), lane scope = the session — never a legacy delegation
+    // and never an optimistic mirror write. Create/refresh still delegate (their direct seams are
+    // the next sub-step). content() projects the mirror transcript window (the G2 flip).
+    void metaMutationsEnqueueToSessionMetaLane() {
         mirror::MirrorService svc;
         svc.openInMemory();
         StubLegacyStore legacy;
         MirrorSessionStore store(&svc.store(), &svc.ingestor(), &legacy);
+        mirror::LocalDatabase db(QStringLiteral(":memory:"));
+        mirror::Outbox outbox(&db);
+        outbox.load();
+        store.setOutbox(&outbox);
 
         store.setPinned(domain::SessionId(QStringLiteral("s-a")), true);
         store.renameSession(domain::SessionId(QStringLiteral("s-a")), QStringLiteral("T"));
+        store.setArchived(domain::SessionId(QStringLiteral("s-b")), true);
+
+        // Three durable ops in the per-session session-meta lanes; the legacy path saw NOTHING.
+        QVERIFY(legacy.calls.isEmpty());
+        const QList<mirror::PendingOp> ops = outbox.ops();
+        QCOMPARE(ops.size(), 3);
+        const QString laneA =
+            mirror::buildLane(mirror::VerbClass::SessionMeta, QStringLiteral("s-a"));
+        QCOMPARE(ops.at(0).lane, laneA);
+        QCOMPARE(ops.at(0).verb, QStringLiteral("SessionUpdateMeta"));
+        const QJsonObject pin = QJsonDocument::fromJson(ops.at(0).payload).object();
+        QCOMPARE(pin.value(QStringLiteral("session")).toString(), QStringLiteral("s-a"));
+        QVERIFY(pin.value(QStringLiteral("pinned")).toBool());
+        QVERIFY(!pin.contains(QStringLiteral("archived"))); // tri-state: only the touched key
+        QVERIFY(!pin.contains(QStringLiteral("title")));
+        const QJsonObject rename = QJsonDocument::fromJson(ops.at(1).payload).object();
+        QCOMPARE(rename.value(QStringLiteral("title")).toString(), QStringLiteral("T"));
+        const QJsonObject archive = QJsonDocument::fromJson(ops.at(2).payload).object();
+        QVERIFY(archive.value(QStringLiteral("archived")).toBool());
+
+        // Create/refresh remain delegated until their direct seams land (AD 1b.2).
         store.requestNewSession(QStringLiteral("prof-1"));
         store.refreshArchivedSessions();
         QCOMPARE(legacy.calls,
-                 (QStringList{QStringLiteral("pin:s-a:1"), QStringLiteral("rename:s-a:T"),
-                              QStringLiteral("create:prof-1"), QStringLiteral("refreshArchived")}));
+                 (QStringList{QStringLiteral("create:prof-1"), QStringLiteral("refreshArchived")}));
 
         // The flip: content() serves the mirror w_transcript_blocks projection, never the legacy.
         mirror::TranscriptBlock b;
@@ -303,11 +332,81 @@ private slots:
         QVERIFY(legacy.contentReads.isEmpty());              // zero legacy content reads post-flip
 
         QSignalSpy created(&store, &persistence::ISessionStore::sessionCreated);
-        QSignalSpy failed(&store, &persistence::ISessionStore::metaUpdateFailed);
         emit legacy.sessionCreated(QStringLiteral("s-new"), QStringLiteral("prof-1"));
-        emit legacy.metaUpdateFailed(QStringLiteral("s-a"), QStringLiteral("denied"));
         QCOMPARE(created.count(), 1);
+    }
+
+    // §6.5: a session-meta lane rejection pauses the lane AND reaches the initiating surface
+    // through the verb seam's failure signal — the SAME metaUpdateFailed the GUI toast + TUI
+    // notification already bind (no new surface wiring needed for the failure signal).
+    void sessionMetaRejectionRelaysMetaUpdateFailed() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        MirrorSessionStore store(&svc.store(), &svc.ingestor(), nullptr);
+        mirror::LocalDatabase db(QStringLiteral(":memory:"));
+        mirror::Outbox outbox(&db);
+        outbox.load();
+        outbox.setProvenanceCapable(true);
+        store.setOutbox(&outbox);
+        QSignalSpy failed(&store, &persistence::ISessionStore::metaUpdateFailed);
+
+        store.setPinned(domain::SessionId(QStringLiteral("s-a")), true);
+        const QList<mirror::PendingOp> ops = outbox.ops();
+        QCOMPARE(ops.size(), 1);
+        // drain() was nudged (gate default-permissive here): the op went inflight; reject it.
+        QCOMPARE(outbox.op(ops.first().opId).state, mirror::OpState::Inflight);
+        outbox.onRejection(ops.first().opId, QStringLiteral("Forbidden"),
+                           QStringLiteral("not the owner"));
+
         QCOMPARE(failed.count(), 1);
+        QCOMPARE(failed.first().at(0).toString(), QStringLiteral("s-a")); // the lane scope tail
+        QVERIFY(failed.first().at(1).toString().contains(QStringLiteral("Forbidden")));
+        QVERIFY(outbox.lanePaused(
+            mirror::buildLane(mirror::VerbClass::SessionMeta, QStringLiteral("s-a"))));
+    }
+
+    // §6.6/§10.3: the provenance landing — the node-acked op goes `accepted`, and the
+    // SessionMetaChanged-threaded SessionGet apply (deliverSession carrying origin_op) lands it
+    // (row deleted). The roster row reflects the node's authoritative state in the same commit.
+    void sessionMetaOpLandsViaProvenanceStampedApply() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        MirrorSessionStore store(&svc.store(), &svc.ingestor(), nullptr);
+        mirror::LocalDatabase db(QStringLiteral(":memory:"));
+        mirror::Outbox outbox(&db);
+        outbox.load();
+        outbox.setProvenanceCapable(true); // api/39: ack ⇒ accepted, awaiting the echo
+        store.setOutbox(&outbox);
+        // The graph's provenance wiring (§5.1 read-side coupling), reproduced.
+        QObject::connect(
+            &svc, &mirror::MirrorService::provenanceStamped, &outbox,
+            [&outbox](const QString& originOp) { outbox.onProvenanceStamped(originOp); });
+
+        svc.ingestor().deliverSessions({sess(QStringLiteral("s-a"), QStringLiteral("A"))},
+                                       /*isFinalPage=*/true);
+        store.setPinned(domain::SessionId(QStringLiteral("s-a")), true);
+        const QString opId = outbox.ops().first().opId;
+        outbox.onAck(opId);
+        QCOMPARE(outbox.op(opId).state, mirror::OpState::Accepted);
+
+        // The node's read-path echo: SessionGet hydration carrying origin_op == op_id.
+        mirror::Session patched = sess(QStringLiteral("s-a"), QStringLiteral("A"));
+        patched.pinned = true;
+        svc.ingestor().deliverSession(patched, opId);
+
+        QVERIFY(!outbox.contains(opId)); // landed — terminal success, row deleted (§6.6)
+        QVERIFY(store.isPinned(domain::SessionId(QStringLiteral("s-a"))));
+
+        // The delta-read carrier (§10.3 carrier 2) lands identically via the origin_ops map.
+        store.renameSession(domain::SessionId(QStringLiteral("s-a")), QStringLiteral("B"));
+        const QString op2 = outbox.ops().first().opId;
+        outbox.onAck(op2);
+        mirror::Session renamed = patched;
+        renamed.title = QStringLiteral("B");
+        svc.ingestor().deliverSessionsDelta({renamed}, {}, /*rev=*/7, /*isFinalPage=*/true,
+                                            {{QStringLiteral("s-a"), op2}});
+        QVERIFY(!outbox.contains(op2));
+        QCOMPARE(store.title(domain::SessionId(QStringLiteral("s-a"))), QStringLiteral("B"));
     }
 
     // M4 sub-gate 4 / G2 flip: the detail pane consumer — a SessionController (the VM

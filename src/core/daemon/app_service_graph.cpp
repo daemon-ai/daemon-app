@@ -63,12 +63,14 @@
 #include "update/update_manager.h"
 
 #include <memory>
+#include <optional>
 #include <QByteArray>
 #include <QDateTime>
 #include <QDebug>
 #include <QFile>
 #include <QString>
 #include <QtGlobal>
+#include <QTimer>
 
 #ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
 #include "daemon/daemon_fetch_executor.h"
@@ -719,12 +721,14 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             }
 
             // mirror A7 (M4): the mirror-backed session store the ported consumers bind. Session
-            // ROWS project the mirror `sessions` table; mutations + transcript reads delegate to
-            // the legacy CachedSessionStore (one wire mutation path; transcript re-homing is the
-            // wave's LAST sub-gate). The legacy `store` stays live for unported consumers
-            // (dual-write; parity asserts guard the two row-sets until deletion).
-            graph.storeMirror =
+            // ROWS project the mirror `sessions` table; content() projects the mirror transcript
+            // window (G2). AD: pin/archive/rename go through the session-meta OUTBOX lane
+            // (offline-durable, §6.4/§6.6) — bound below; the legacy `store` remains only the
+            // create/refresh delegate until the direct seams land (AD Phase 1b.2).
+            auto* mirrorStore =
                 new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
+            mirrorStore->setOutbox(graph.outbox);
+            graph.storeMirror = mirrorStore;
 
             // A7T (M4 sub-step 6) + G2 (M5): the turn engine dual-writes its coalesced transcript
             // blocks into w_transcript_blocks through this sink (the ingestor stays the single
@@ -757,22 +761,43 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                  }
                              });
 
-            // The outbox drains ConvSend to the wire on a manual tap (always) and unattended on an
-            // api/39 reconnect (§6.8). The send carries the op_id (§10.3) so a retry/replay is
-            // dedup-safe: the node returns the original result for a duplicate (principal, op_id),
-            // and stamps `origin_op` provenance for the eventual confirm (§6.6). The ack/rejection
-            // below advances the lane state.
+            // The outbox drains its mutation lanes to the wire on a manual tap (always) and
+            // unattended on an api/39 reconnect (§6.8). Every send carries the op_id (§10.3) so a
+            // retry/replay is dedup-safe: the node returns the original result for a duplicate
+            // (principal, op_id), and stamps `origin_op` provenance for the eventual confirm
+            // (§6.6). The ack/rejection below advances the lane state, verb-agnostic.
             QObject::connect(
                 graph.outbox, &mirror::Outbox::sendRequested, graph.nodeApi,
                 [nodeApi = graph.nodeApi](const mirror::PendingOp& op) {
-                    if (op.verb != QStringLiteral("ConvSend")) {
+                    const QJsonObject args = QJsonDocument::fromJson(op.payload).object();
+                    QByteArray req;
+                    if (op.verb == QStringLiteral("ConvSend")) {
+                        req = NodeApiCodec::encodeConvSendRequest(
+                            args.value(QStringLiteral("transport")).toString(),
+                            args.value(QStringLiteral("conv")).toString(),
+                            args.value(QStringLiteral("message")).toString(), op.opId);
+                    } else if (op.verb == QStringLiteral("SessionUpdateMeta")) {
+                        // AD (§6.4 session-meta lane): the tri-state patch — only the touched
+                        // key(s) ride the wire SessionMetaPatch (key presence = Some).
+                        const QJsonObject& a = args;
+                        std::optional<bool> pinned;
+                        std::optional<bool> archived;
+                        std::optional<QString> title;
+                        if (a.contains(QStringLiteral("pinned"))) {
+                            pinned = a.value(QStringLiteral("pinned")).toBool();
+                        }
+                        if (a.contains(QStringLiteral("archived"))) {
+                            archived = a.value(QStringLiteral("archived")).toBool();
+                        }
+                        if (a.contains(QStringLiteral("title"))) {
+                            title = a.value(QStringLiteral("title")).toString();
+                        }
+                        req = NodeApiCodec::encodeSessionUpdateMetaRequest(
+                            a.value(QStringLiteral("session")).toString(), pinned, archived, title,
+                            op.opId);
+                    } else {
                         return; // other lanes are wired by their owners; turn-prompt is dispatch
                     }
-                    const QJsonObject args = QJsonDocument::fromJson(op.payload).object();
-                    const QByteArray req = NodeApiCodec::encodeConvSendRequest(
-                        args.value(QStringLiteral("transport")).toString(),
-                        args.value(QStringLiteral("conv")).toString(),
-                        args.value(QStringLiteral("message")).toString(), op.opId);
                     nodeApi->sendRequest(req, QStringLiteral("outbox/") + op.opId);
                 });
             QObject::connect(graph.nodeApi, &NodeApiClient::responseReady, graph.outbox,
@@ -799,6 +824,21 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                      outbox->onTransientFailure(corr.mid(7), msg);
                                  }
                              });
+
+            // Accepted-state disposition sweep (§6.6): an acked op whose provenance echo was
+            // superseded (or coalesced away) is disposed after the grace window instead of
+            // lingering in the lens forever. Same policy/cadence as the mock host's sweep.
+            {
+                auto* expirySweep = new QTimer(owner);
+                expirySweep->setInterval(60'000);
+                QObject::connect(expirySweep, &QTimer::timeout, graph.outbox,
+                                 [outbox = graph.outbox] {
+                                     constexpr qint64 kAcceptedGraceMs = 10LL * 60 * 1000;
+                                     outbox->expireAcceptedOps(QDateTime::currentMSecsSinceEpoch(),
+                                                               kAcceptedGraceMs);
+                                 });
+                expirySweep->start();
+            }
         }
     } else {
         // ---- mirror A8 (spec 09 §9, wave M5): the MOCK mirror — same store, same journal, same
@@ -849,11 +889,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
 
         // mirror A8 (M5): mock storeMirror is the REAL MirrorSessionStore over the seeded mirror —
         // the A7 composition-time aliasing is deleted; the 6→1 projection now serves BOTH modes.
-        // content() + mutations keep DELEGATING to the legacy in-memory store (A7T re-homes that
-        // seam in parallel; the scenario derives the mirror ids from the same bundle so the
-        // delegated content() join holds).
-        graph.storeMirror =
+        // AD: pin/archive/rename ride the SAME session-meta outbox lane as daemon mode — the mock
+        // host answers from the scenario's VerbScript and echoes the patched row provenance-
+        // stamped (§6.6), so the mock roster updates event-driven, exactly like the node path.
+        auto* mirrorStore =
             new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
+        mirrorStore->setOutbox(graph.outbox);
+        graph.storeMirror = mirrorStore;
     }
 #endif
 

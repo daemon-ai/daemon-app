@@ -447,6 +447,13 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
             decoded.kind = DecodedNodeEvent::Kind::SessionMetaChanged;
             decoded.session = fromZcbor(m.SessionMetaChanged_session);
             decoded.rev = m.SessionMetaChanged_rev;
+            // [api/39 §10.3 carrier 3] the causing op's client op_id (null/absent ⇒ empty).
+            if (m.SessionMetaChanged_origin_op_present &&
+                m.SessionMetaChanged_origin_op.SessionMetaChanged_origin_op_choice ==
+                    SessionMetaChanged_origin_op_r::SessionMetaChanged_origin_op_origin_op_m_c) {
+                decoded.originOp = fromZcbor(
+                    m.SessionMetaChanged_origin_op.SessionMetaChanged_origin_op_origin_op_m);
+            }
             break;
         }
         case node_event_r::node_event_roster_changed_m_c:
@@ -533,6 +540,14 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
                                          conv_change_r::conv_change_Added_tstr_c
                                      ? QStringLiteral("added")
                                      : QStringLiteral("removed");
+            // [api/39 §10.3 carrier 3] the causing op's client op_id (null/absent ⇒ empty).
+            if (m.ConversationsChanged_origin_op_present &&
+                m.ConversationsChanged_origin_op.ConversationsChanged_origin_op_choice ==
+                    ConversationsChanged_origin_op_r::
+                        ConversationsChanged_origin_op_origin_op_m_c) {
+                decoded.originOp = fromZcbor(
+                    m.ConversationsChanged_origin_op.ConversationsChanged_origin_op_origin_op_m);
+            }
             break;
         }
         case node_event_r::node_event_membership_changed_m_c: {

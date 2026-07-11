@@ -58,6 +58,7 @@ public:
     quint64 upsertConversation(const Conversation& c, const QString& originOp = QString());
     quint64 appendMessage(const ChatMessage& m, const QString& originOp = QString());
     quint64 upsertContact(const Contact& c);
+    quint64 upsertSession(const Session& s, const QString& originOp = QString());
     quint64 upsertPerson(const Person& p);
     quint64 upsertRoom(const Room& r);
     quint64 upsertRoutePin(const RoutePin& p);

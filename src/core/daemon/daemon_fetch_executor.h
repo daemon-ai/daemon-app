@@ -53,6 +53,9 @@ private:
         // when the job is a since_rev delta read (fullMode && sinceRev > 0).
         QStringList removedAccum;
         quint64 rev = 0;
+        // [api/39 §10.3 carrier 2] the page-side provenance map (item key → origin op_id),
+        // accumulated across the loop and stamped per-row by the delta apply (§6.6 landing).
+        QHash<QString, QString> originOpsAccum;
     };
 
     void onResponse(const QString& correlationId, const QByteArray& responseCbor);

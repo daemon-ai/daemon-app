@@ -113,6 +113,10 @@ void MockScenarioHost::onSendRequested(const mirror::PendingOp& op) {
             QTimer::singleShot(outcome.delayMs + outcome.echoDelayMs, this,
                                [this, op] { applyConvSendEcho(op); });
         }
+        if (outcome.echoDelayMs > 0 && op.verb == QStringLiteral("SessionUpdateMeta")) {
+            QTimer::singleShot(outcome.delayMs + outcome.echoDelayMs, this,
+                               [this, op] { applySessionMetaEcho(op); });
+        }
         return;
     }
 }
@@ -134,6 +138,35 @@ void MockScenarioHost::applyConvSendEcho(const mirror::PendingOp& op) {
     m.timestamp = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
     m.origin_op = op.opId;
     m_seeder.appendMessage(m, op.opId);
+}
+
+void MockScenarioHost::applySessionMetaEcho(const mirror::PendingOp& op) {
+    // The mock twin of the node's authoritative read-path echo for a session-meta patch (§6.6 /
+    // §10.3): apply the acked patch fields to the CURRENT mirror row through the seeder, stamped
+    // origin_op = op_id — the same landing path the daemon's SessionMetaChanged → SessionGet
+    // apply drives, so the outbox op goes accepted → landed identically and the roster
+    // re-projects event-driven (never an optimistic local write).
+    const QJsonObject args = QJsonDocument::fromJson(op.payload).object();
+    const QString sessionId = args.value(QStringLiteral("session")).toString();
+    if (sessionId.isEmpty()) {
+        return;
+    }
+    const mirror::Session* existing =
+        m_svc->store().snapshot().sessions.find(mirror::SessionKey{sessionId});
+    if (existing == nullptr) {
+        return; // an unknown session acks Ok but echoes nothing (node parity: nothing to patch)
+    }
+    mirror::Session patched = *existing;
+    if (args.contains(QStringLiteral("pinned"))) {
+        patched.pinned = args.value(QStringLiteral("pinned")).toBool();
+    }
+    if (args.contains(QStringLiteral("archived"))) {
+        patched.archived = args.value(QStringLiteral("archived")).toBool();
+    }
+    if (args.contains(QStringLiteral("title"))) {
+        patched.title = args.value(QStringLiteral("title")).toString();
+    }
+    m_seeder.upsertSession(patched, op.opId);
 }
 
 quint64 MockScenarioHost::nextChatCursor(const QString& transport, const QString& conv) const {

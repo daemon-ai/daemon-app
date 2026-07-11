@@ -6,10 +6,13 @@
 #include "daemon/transcript_projection.h"
 #include "mirror/ingestor.h"
 #include "mirror/store.h"
+#include "outbox.h"
+#include "verb_class.h"
 
 #include <algorithm>
 #include <QDateTime>
 #include <QHash>
+#include <QJsonDocument>
 #include <QSet>
 #include <vector>
 
@@ -110,6 +113,45 @@ MirrorSessionStore::MirrorSessionStore(mirror::Store* store, mirror::Ingestor* i
                 &persistence::ISessionStore::metaUpdateFailed);
     }
     rebuildFromSnapshot();
+}
+
+void MirrorSessionStore::setOutbox(mirror::Outbox* outbox) {
+    if (m_outbox == outbox) {
+        return;
+    }
+    if (m_outbox != nullptr) {
+        disconnect(m_outbox, nullptr, this, nullptr);
+    }
+    m_outbox = outbox;
+    if (m_outbox == nullptr) {
+        return;
+    }
+    // §6.5: a session-meta lane rejection reaches the initiating surface through the verb seam's
+    // typed failure signal — the SAME metaUpdateFailed relay the GUI toast + TUI notification
+    // already bind. The rejected row additionally stays visible in the outbox lens (durable
+    // affordance); the lane pauses until retry/discard.
+    connect(m_outbox, &mirror::Outbox::opChanged, this, [this](const QString& opId) {
+        const mirror::PendingOp op = m_outbox->op(opId);
+        if (op.state != mirror::OpState::Rejected ||
+            mirror::verbClass(op.verb) != mirror::VerbClass::SessionMeta) {
+            return;
+        }
+        const qsizetype sep = op.lane.indexOf(QChar(0x1f));
+        const QString session = sep >= 0 ? op.lane.mid(sep + 1) : QString();
+        emit metaUpdateFailed(session, op.lastError);
+    });
+}
+
+void MirrorSessionStore::enqueueSessionMeta(const domain::SessionId& id, const QJsonObject& patch,
+                                            const QString& display) {
+    QJsonObject args = patch;
+    args.insert(QStringLiteral("session"), id.toString());
+    const QByteArray payload = QJsonDocument(args).toJson(QJsonDocument::Compact);
+    // Durable BEFORE any send (§6.6); lane scope = the session (§6.3/§6.4 "per session for
+    // session-meta"). The drain nudge is the user's own action (the send-now tap, §6.8's manual
+    // path) — offline it simply holds: the gate keeps the op pending until connected.
+    m_outbox->enqueue(QStringLiteral("SessionUpdateMeta"), id.toString(), payload, display);
+    m_outbox->drain();
 }
 
 void MirrorSessionStore::onCommitted() {
@@ -270,13 +312,32 @@ domain::SessionId MirrorSessionStore::newSession(const domain::UnitId& unitId) {
     return m_legacy != nullptr ? m_legacy->newSession(unitId) : domain::SessionId();
 }
 
+// --- session-meta mutations (AD, §6.4): the durable outbox lane -------------------------------
+// The node owns pin/archive/title; each mutation is a SessionUpdateMeta intent enqueued to the
+// per-session `session-meta` lane (offline-durable, §6.6; op_id dedup makes replay safe, §10.3).
+// The mirror row changes ONLY when the node's authoritative read lands (SessionMetaChanged →
+// SessionGet / roster delta) — never an optimistic local write (§14.7). The legacy delegation
+// survives solely for outbox-less test stacks until the delegate parameter dies (AD Phase 2).
+
 void MirrorSessionStore::setArchived(const domain::SessionId& id, bool archived) {
+    if (m_outbox != nullptr && !id.isEmpty()) {
+        enqueueSessionMeta(
+            id, QJsonObject{{QStringLiteral("archived"), archived}},
+            QStringLiteral(u"%1 \u2014 %2")
+                .arg(archived ? QStringLiteral("archive") : QStringLiteral("restore"), title(id)));
+        return;
+    }
     if (m_legacy != nullptr) {
         m_legacy->setArchived(id, archived);
     }
 }
 
 void MirrorSessionStore::renameSession(const domain::SessionId& id, const QString& title) {
+    if (m_outbox != nullptr && !id.isEmpty()) {
+        enqueueSessionMeta(id, QJsonObject{{QStringLiteral("title"), title}},
+                           QStringLiteral(u"rename \u2014 %1").arg(title));
+        return;
+    }
     if (m_legacy != nullptr) {
         m_legacy->renameSession(id, title);
     }
@@ -289,6 +350,13 @@ void MirrorSessionStore::deleteSession(const domain::SessionId& id) {
 }
 
 void MirrorSessionStore::setPinned(const domain::SessionId& id, bool pinned) {
+    if (m_outbox != nullptr && !id.isEmpty()) {
+        enqueueSessionMeta(
+            id, QJsonObject{{QStringLiteral("pinned"), pinned}},
+            QStringLiteral(u"%1 \u2014 %2")
+                .arg(pinned ? QStringLiteral("pin") : QStringLiteral("unpin"), title(id)));
+        return;
+    }
     if (m_legacy != nullptr) {
         m_legacy->setPinned(id, pinned);
     }

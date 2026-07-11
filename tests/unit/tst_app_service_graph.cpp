@@ -14,6 +14,7 @@
 #include "outbox.h"
 #include "persistence/isession_store.h"
 
+#include <algorithm>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSettings>
@@ -365,6 +366,49 @@ private slots:
         // An explicit user tap always drains; against api/38 the ack is terminal (§6.6).
         graph.outbox->drain();
         QTRY_VERIFY_WITH_TIMEOUT(!graph.outbox->contains(opId), 5000);
+    }
+
+    // AD (§6.4 session-meta lane) at app level in MOCK: a pin routes through the durable outbox
+    // lane; the scripted ok acks + echoes the patched row provenance-stamped (§6.6), so the op
+    // LANDS and the roster re-projects event-driven — never an optimistic local write. A
+    // "/reject" rename pauses the lane (§6.5) and relays metaUpdateFailed — the exact signal the
+    // GUI toast + TUI notification already bind.
+    void mockSessionMetaLaneRoundTripAndRejection() {
+        qunsetenv("DAEMON_APP_MOCK_SCENARIO");
+        QObject owner;
+        const auto graph =
+            daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
+        graph.connection->connectTo(QStringLiteral("mock"), QStringLiteral("ready"));
+        QTRY_VERIFY_WITH_TIMEOUT(graph.connection->ready(), 5000);
+
+        const QList<domain::Session> rows = graph.storeMirror->sessions(domain::ListScope{});
+        QVERIFY(!rows.isEmpty());
+        const domain::SessionId id = rows.first().sessionId;
+        const bool target = !graph.storeMirror->isPinned(id);
+
+        graph.storeMirror->setPinned(id, target);
+        // The scripted ok (delay 0) acks; the 120 ms echo applies the patched row through the
+        // seeder with origin_op = op_id → the mirror row flips AND the op lands (§6.6).
+        QTRY_COMPARE_WITH_TIMEOUT(graph.storeMirror->isPinned(id), target, 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(
+            [&] {
+                const QList<mirror::PendingOp> ops = graph.outbox->ops();
+                return std::none_of(ops.cbegin(), ops.cend(), [](const mirror::PendingOp& o) {
+                    return o.verb == QStringLiteral("SessionUpdateMeta");
+                });
+            }(),
+            5000);
+
+        // The MANDATORY rejection fixture (§9): "/reject" rename → Forbidden → lane pause +
+        // the verb seam's failure signal; the title never changes (no local mutation to undo).
+        QSignalSpy failed(graph.storeMirror, &persistence::ISessionStore::metaUpdateFailed);
+        graph.storeMirror->renameSession(id, QStringLiteral("/reject me"));
+        QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 5000);
+        QCOMPARE(failed.first().at(0).toString(), id.toString());
+        QVERIFY(failed.first().at(1).toString().startsWith(QStringLiteral("Forbidden")));
+        QVERIFY(
+            graph.outbox->lanePaused(QStringLiteral("session-meta") + QChar(0x1f) + id.toString()));
+        QVERIFY(graph.storeMirror->title(id) != QStringLiteral("/reject me"));
     }
 
     // mirror A8 (M5): the MANDATORY rejection script at app level — "/reject" pauses the lane

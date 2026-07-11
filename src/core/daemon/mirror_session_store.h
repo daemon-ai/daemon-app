@@ -33,12 +33,14 @@
 #include "persistence/isession_store.h"
 
 #include <QHash>
+#include <QJsonObject>
 #include <QList>
 #include <QSet>
 #include <QString>
 
 namespace mirror {
 class Ingestor;
+class Outbox;
 class Store;
 } // namespace mirror
 
@@ -53,6 +55,13 @@ public:
     // last step of the wave). Ownership stays with the caller (the app service graph).
     MirrorSessionStore(mirror::Store* store, mirror::Ingestor* ingestor,
                        persistence::ISessionStore* legacy, QObject* parent = nullptr);
+
+    // AD (§6.4/§7): bind the durable outbox — the session-meta mutation lane. Once bound,
+    // pin/archive/rename enqueue `SessionUpdateMeta` ops (op_id minted per §6.2, offline-durable,
+    // dedup-safe replay per §10.3) instead of delegating to the legacy wire path; a lane
+    // rejection is relayed as metaUpdateFailed (§6.5 — the verb seam's failure signal). Bound in
+    // BOTH modes by the composition (the mock host answers the lane from the scenario script).
+    void setOutbox(mirror::Outbox* outbox);
 
     // --- pure mirror reads -------------------------------------------------------------------
     [[nodiscard]] QList<domain::Session> sessions(const domain::ListScope& scope) const override;
@@ -105,9 +114,15 @@ private:
     void onCommitted();
     void rebuildFromSnapshot();
     [[nodiscard]] bool matchesScope(const domain::Session& s, const domain::ListScope& scope) const;
+    // Enqueue one SessionUpdateMeta patch to the session-meta lane (§6.4) and nudge a drain (the
+    // user's own action is the manual tap; gates hold it offline). `patch` carries only the
+    // touched key(s) — the tri-state wire SessionMetaPatch shape as JSON.
+    void enqueueSessionMeta(const domain::SessionId& id, const QJsonObject& patch,
+                            const QString& display);
 
     mirror::Store* m_mirror = nullptr;
     mirror::Ingestor* m_ingestor = nullptr;
+    mirror::Outbox* m_outbox = nullptr;
     persistence::ISessionStore* m_legacy = nullptr;
 
     // The sorted mirror projection (pinned first, then last-activity desc, then id — a

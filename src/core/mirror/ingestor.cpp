@@ -105,6 +105,9 @@ void Ingestor::dispatchFetch(const NodeEvent& e, const PolicyRow& p) {
     job.priority = prio;
     job.reason = nextReason();
     job.fullMode = (state_.collection(collection).mode == StampingMode::WireDelta);
+    // [§10.3 carrier 3] thread the event's provenance into the fetch so the resulting apply
+    // stamps origin_op (SessionMetaChanged → SessionGet is the session-meta landing path).
+    job.originOp = e.originOp;
     if (e.kind == NodeEventKind::MessagesChanged) {
         // The rung-0 cursor fix (§13 M1): page from the stored per-conv cursor, never from 0.
         job.afterCursor = state_.convCursor(scope);
@@ -703,16 +706,19 @@ void Ingestor::deliverTransportSessions(const QString& transportId,
 }
 
 void Ingestor::deliverSessionsDelta(const std::vector<Session>& changed, const QStringList& removed,
-                                    quint64 rev, bool isFinalPage) {
+                                    quint64 rev, bool isFinalPage,
+                                    const QHash<QString, QString>& originOps) {
     const JournalOrigin origin = originFor(QStringLiteral("sessions"));
     auto b = store_.beginBatch();
     for (const Session& s : changed) {
-        b.upsert(s, origin);
+        // [§10.3 carrier 2] per-row provenance off the page-side origin_ops map: the journal
+        // record's origin_op is what MirrorService::provenanceStamped relays to land the op.
+        b.upsert(s, origin, originOps.value(s.session));
     }
     // Delta semantics: only the node-reported `removed` ids are tombstoned — absent keys are
     // unchanged, never pruned (the essential difference from the full-list path).
     for (const QString& id : removed) {
-        b.tombstone<Session>(SessionKey{id}, origin);
+        b.tombstone<Session>(SessionKey{id}, origin, originOps.value(id));
     }
     b.commit();
     if (isFinalPage) {
@@ -720,9 +726,9 @@ void Ingestor::deliverSessionsDelta(const std::vector<Session>& changed, const Q
     }
 }
 
-void Ingestor::deliverSession(const Session& session) {
+void Ingestor::deliverSession(const Session& session, const QString& originOp) {
     auto b = store_.beginBatch();
-    b.upsert(session, originFor(QStringLiteral("sessions")));
+    b.upsert(session, originFor(QStringLiteral("sessions")), originOp);
     b.commit();
     state_.markFresh(QStringLiteral("sessions"), 0, nowMs());
 }

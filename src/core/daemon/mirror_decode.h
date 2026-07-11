@@ -15,6 +15,7 @@
 #include "mirror/generated/entities_gen.h"
 
 #include <QByteArray>
+#include <QHash>
 #include <QString>
 #include <QStringList>
 #include <vector>
@@ -63,10 +64,13 @@ bool decodeRoomsToMirror(const QByteArray& responseCbor, const QString& transpor
 // SessionsQuery → SessionPage → Session entities (M4). `next` (if non-null) receives the roster
 // page resume cursor ("" = last page; the executor page-loops full reads like the legacy
 // SessionRepository). [api/39 §10.2] `rev`/`removed` (if non-null) receive the roster revision +
-// the delta-read tombstone id list (absent/empty on a v38 full-page reply).
+// the delta-read tombstone id list (absent/empty on a v38 full-page reply). [api/39 §10.3]
+// `originOps` (if non-null) receives the page-side provenance map (session id → the causing op's
+// client op_id) so the delta apply stamps `origin_op` and the outbox lands the op (§6.6).
 bool decodeSessionsToMirror(const QByteArray& responseCbor, std::vector<mirror::Session>* out,
                             QString* next = nullptr, quint64* rev = nullptr,
-                            QStringList* removed = nullptr);
+                            QStringList* removed = nullptr,
+                            QHash<QString, QString>* originOps = nullptr);
 
 // Tree → TreeReport page → FleetUnit entities (M4). `next` (if non-null) receives the unit-id page
 // resume cursor ("" = last page); `rev` (if non-null) receives the tree revision recorded for the

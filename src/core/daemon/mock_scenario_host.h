@@ -77,6 +77,10 @@ private:
 
     void onSendRequested(const mirror::PendingOp& op);
     void applyConvSendEcho(const mirror::PendingOp& op);
+    // AD (§6.4 session-meta lane): the mock twin of the node's SessionMetaChanged → SessionGet
+    // read-path echo — apply the acked patch to the mirror Session row through the seeder,
+    // provenance-stamped (origin_op = op_id) so the outbox op lands (§6.6).
+    void applySessionMetaEcho(const mirror::PendingOp& op);
     [[nodiscard]] quint64 nextChatCursor(const QString& transport, const QString& conv) const;
 
     mirror::MirrorService* m_svc = nullptr;

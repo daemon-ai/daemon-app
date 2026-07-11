@@ -243,7 +243,8 @@ bool decodeRoomsToMirror(const QByteArray& responseCbor, const QString& transpor
 }
 
 bool decodeSessionsToMirror(const QByteArray& responseCbor, std::vector<mirror::Session>* out,
-                            QString* next, quint64* rev, QStringList* removed) {
+                            QString* next, quint64* rev, QStringList* removed,
+                            QHash<QString, QString>* originOps) {
     if (out == nullptr) {
         return false;
     }
@@ -283,6 +284,20 @@ bool decodeSessionsToMirror(const QByteArray& responseCbor, std::vector<mirror::
                  i < page.session_page_removed.session_page_removed_session_id_m_count; ++i) {
                 removed->append(codec_detail::fromZcbor(
                     page.session_page_removed.session_page_removed_session_id_m[i]));
+            }
+        }
+    }
+    // [api/39 §10.3 carrier 2] the page-side provenance map: session id → causing op's op_id,
+    // present only for items whose latest reflected mutation carried an op_id.
+    if (originOps != nullptr) {
+        originOps->clear();
+        if (page.session_page_origin_ops_present) {
+            const ::origin_ops& ops = page.session_page_origin_ops.session_page_origin_ops;
+            for (size_t i = 0; i < ops.origin_ops_origin_op_m_count; ++i) {
+                originOps->insert(
+                    codec_detail::fromZcbor(
+                        ops.origin_ops_origin_op_m[i].origin_ops_origin_op_m_key),
+                    codec_detail::fromZcbor(ops.origin_ops_origin_op_m[i].origin_ops_origin_op_m));
             }
         }
     }

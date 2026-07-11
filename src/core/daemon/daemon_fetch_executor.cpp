@@ -265,7 +265,8 @@ void DaemonFetchExecutor::onResponse(const QString& correlationId, const QByteAr
         QString next;
         quint64 rev = 0;
         QStringList removed;
-        if (!decodeSessionsToMirror(responseCbor, &page, &next, &rev, &removed)) {
+        QHash<QString, QString> originOps;
+        if (!decodeSessionsToMirror(responseCbor, &page, &next, &rev, &removed, &originOps)) {
             finish(correlationId);
             return;
         }
@@ -274,6 +275,10 @@ void DaemonFetchExecutor::onResponse(const QString& correlationId, const QByteAr
         }
         f.removedAccum += removed;
         f.rev = rev;
+        // [§10.3 carrier 2] accumulate the page-side provenance map across the loop.
+        for (auto it = originOps.constBegin(); it != originOps.constEnd(); ++it) {
+            f.originOpsAccum.insert(it.key(), it.value());
+        }
         const bool scoped = !f.transport.isEmpty();
         const bool fallbackFull = deltaRead && f.rev < f.job.sinceRev;
         const bool asDelta = deltaRead && !fallbackFull;
@@ -289,7 +294,7 @@ void DaemonFetchExecutor::onResponse(const QString& correlationId, const QByteAr
             }
         } else if (asDelta) {
             m_ingestor.deliverSessionsDelta(f.sessionAccum, f.removedAccum, f.rev,
-                                            /*isFinalPage=*/true);
+                                            /*isFinalPage=*/true, f.originOpsAccum);
         } else {
             m_ingestor.deliverSessions(f.sessionAccum, /*isFinalPage=*/true, f.rev);
         }
@@ -297,11 +302,13 @@ void DaemonFetchExecutor::onResponse(const QString& correlationId, const QByteAr
         return;
     }
     case mirror::FetchOp::SessionGet: {
-        // M4: one session's hydrated detail — keyed upsert (never prunes siblings).
+        // M4: one session's hydrated detail — keyed upsert (never prunes siblings). [§10.3
+        // carrier 3] the triggering SessionMetaChanged's origin_op rides the job so this apply
+        // stamps provenance and the session-meta outbox op lands (§6.6).
         mirror::Session session;
         bool found = false;
         if (decodeSessionDetailToMirror(responseCbor, &session, &found) && found) {
-            m_ingestor.deliverSession(session);
+            m_ingestor.deliverSession(session, f.job.originOp);
         }
         finish(correlationId);
         return;

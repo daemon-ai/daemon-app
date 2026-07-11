@@ -315,6 +315,19 @@ mirror::VerbScript defaultVerbScript() {
     script.add(timeout);
 
     script.add(mirror::VerbScript::ok(QStringLiteral("ConvSend"), /*echoDelayMs=*/400));
+
+    // AD (§6.4 session-meta lane): the MANDATORY rejection fixture — a rename whose title starts
+    // "/reject" is Forbidden (drives the §6.5 lane pause + the metaUpdateFailed toast in mock);
+    // every other SessionUpdateMeta acks and echoes the patched row (§6.6 landing, roster
+    // re-projects event-driven).
+    mirror::VerbRule metaReject = mirror::VerbScript::reject(
+        QStringLiteral("SessionUpdateMeta"), QStringLiteral("Forbidden"),
+        QStringLiteral("Rejected by the mock scenario script (\"/reject\")"));
+    metaReject.matcher = [](const QJsonObject& args) {
+        return args.value(QStringLiteral("title")).toString().startsWith(QStringLiteral("/reject"));
+    };
+    script.add(metaReject);
+    script.add(mirror::VerbScript::ok(QStringLiteral("SessionUpdateMeta"), /*echoDelayMs=*/120));
     return script;
 }
 
