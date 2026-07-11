@@ -109,8 +109,6 @@ add_library(da_daemon_client STATIC
     daemon_presence_service.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
-    cached_session_store.h
-    cached_session_store.cpp
     app_service_graph.h
     app_service_graph.cpp
     client_cache_schema.h
@@ -175,11 +173,8 @@ target_link_libraries(da_daemon_client
         daemon-app::warnings
 )
 
-# mirror A5: live-wire the ingestor over NodeApiClient (spec 09 §5, wave M2). The DaemonFetchExecutor
-# + MirrorService graph wiring + the outbox (local-<id>.db) are built only when the immer substrate
-# is vendored (the ingestor/lens/outbox targets exist). A substrate-less stack (bare platform port)
-# still builds daemon_client without the live mirror path.
-if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+# mirror A5 → AD: the ingestor over NodeApiClient (spec 09 §5) + the mirror-backed stores +
+# the mock scenario host. UNCONDITIONAL (AD, ratified): the mirror is the only data path.
     target_sources(da_daemon_client PRIVATE
         daemon_fetch_executor.h
         daemon_fetch_executor.cpp
@@ -214,5 +209,3 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         daemon-app::mirror_lens
         daemon-app::local
     )
-    target_compile_definitions(da_daemon_client PRIVATE DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1)
-endif()

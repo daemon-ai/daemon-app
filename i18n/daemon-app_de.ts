@@ -4203,17 +4203,6 @@ Danke — es geht weiter mit: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Benutzer</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -6290,16 +6279,8 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>SessionDetail-Antwort konnte nicht dekodiert werden</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Nicht mit einem Daemon verbunden</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Die Sitzung hat den Befehl abgelehnt</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta fehlgeschlagen</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9380,16 +9361,8 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
         <translation>SessionDetail-Antwort konnte nicht dekodiert werden</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Nicht mit einem Daemon verbunden</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Die Sitzung hat den Befehl abgelehnt</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta fehlgeschlagen</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9460,17 +9433,6 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Kontoeinstellungen konnten nicht angewendet werden</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Benutzer</translation>
     </message>
 </context>
 <context>

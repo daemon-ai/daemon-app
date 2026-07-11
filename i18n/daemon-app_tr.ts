@@ -4199,17 +4199,6 @@ Teşekkürler — şununla devam ediliyor: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Aracı</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Kullanıcı</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -6286,16 +6275,8 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>SessionDetail yanıtı çözülemedi</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Bir daemon&apos;a bağlı değil</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Oturum komutu reddetti</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta başarısız oldu</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9372,16 +9353,8 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
         <translation>SessionDetail yanıtı çözülemedi</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Bir daemon&apos;a bağlı değil</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Oturum komutu reddetti</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta başarısız oldu</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9452,17 +9425,6 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Hesap ayarları uygulanamadı</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Aracı</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Kullanıcı</translation>
     </message>
 </context>
 <context>

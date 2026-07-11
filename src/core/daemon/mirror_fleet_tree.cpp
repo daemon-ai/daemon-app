@@ -55,12 +55,12 @@ MirrorFleetTree::MirrorFleetTree(mirror::Store* store, mirror::Ingestor* ingesto
     if (m_control != nullptr) {
         connect(m_control, &daemonapp::daemon::FleetRepository::controlFailed, this,
                 &MirrorFleetTree::onControlRejected);
-        // A control Ok re-fetches the legacy repo tree and emits treeRefreshed (the legacy tree's
-        // rebuild trigger). Route it to a mirror refetch so the post-control-ack refresh reaches
-        // the read model deterministically (belt-and-braces beside the FleetChanged event arm; the
-        // scheduler's coalesce key dedups the overlap).
+        // A control Ok (controlAcked) re-fetches the Tree into the MIRROR so the post-ack
+        // refresh reaches the read model deterministically (belt-and-braces beside the
+        // FleetChanged event arm; the scheduler's coalesce key dedups the overlap). AD: the
+        // legacy repo tree refetch died with the tree feed.
         if (m_ingestor != nullptr) {
-            connect(m_control, &daemonapp::daemon::FleetRepository::treeRefreshed, this,
+            connect(m_control, &daemonapp::daemon::FleetRepository::controlAcked, this,
                     [this] { m_ingestor->refetchFleet(); });
         }
     }
@@ -162,23 +162,25 @@ void MirrorFleetTree::rebuild() {
 }
 
 void MirrorFleetTree::pause(const QString& id) {
-    if (m_control == nullptr) {
-        return;
-    }
+    // The paused overlay is CLIENT-LOCAL presentation state (§8.5) — applied in both modes so
+    // the surfaces render identically (AD: the mock tree is this same class with a null control
+    // seam). The wire op goes out only where the control seam exists; a daemon rejection
+    // reverts the overlay via controlFailed.
     m_lastControlId = id;
     m_paused.insert(id); // optimistic; reverted on controlFailed
     rebuild();
-    m_control->pause(id);
+    if (m_control != nullptr) {
+        m_control->pause(id);
+    }
 }
 
 void MirrorFleetTree::resume(const QString& id) {
-    if (m_control == nullptr) {
-        return;
-    }
     m_lastControlId = id;
     m_paused.remove(id);
     rebuild();
-    m_control->resume(id);
+    if (m_control != nullptr) {
+        m_control->resume(id);
+    }
 }
 
 void MirrorFleetTree::scale(const QString& id, int n) {

@@ -33,7 +33,8 @@ namespace fleet {
 //
 // There is no session-lifecycle wire op today, so the client suspend/resume buttons keep a
 // client-local cosmetic overlay (m_suspended) over the wire state; close archives client-side
-// (CachedSessionStore::setArchived), which drops the row from the AllSessions scope. A durable
+// (the session-meta lane's SessionUpdateMeta), which drops the row from the AllSessions scope
+// once the node's echo lands. A durable
 // Suspend/Close op is a follow-up.
 class DaemonSessionRoster : public ISessionRoster {
     Q_OBJECT

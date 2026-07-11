@@ -1,34 +1,33 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-// A7T — M4 sub-step 6 transcript re-homing parity harness (spec 09 §13; LEDGER-a7t).
+// A7T/G2 → AD — the transcript byte-stability suite (spec 09 §13; LEDGER-a7t/LEDGER-ad).
 //
-// Drives the SAME coalesced transcript block stream through BOTH transcript paths:
-//   legacy:  CachedTranscriptBlockRow -> DaemonCacheStore -> CachedSessionStore::content()
-//   mirror:  CachedTranscriptBlockRow -> MirrorTranscriptSink -> ingestor -> w_transcript_blocks
-//            -> MirrorSessionStore::mirrorContent()
-// and asserts byte-equality of the msg-fence projection per representative scenario.
-//
-// The mirror path uses the PRODUCTION sink adapter (MirrorTranscriptSink) — the very mapping the
-// live turn engine dual-writes through — so the harness proves the real re-homing, not a test
-// fixture. Scenarios S1-S6/S9 prove byte-IDENTICAL parity; S7/S8 PIN the one structural divergence
-// (the generated mirror::TranscriptBlock carries no argsSummary/detailKind/detailBody), which is
-// exactly why the facade flip is withheld (LEDGER-a7t "ENTITY-FIELD GAP" / "Flip decision").
+// Drives coalesced transcript block streams through the PRODUCTION path:
+//   CachedTranscriptBlockRow -> MirrorTranscriptSink -> ingestor -> w_transcript_blocks
+//   -> MirrorSessionStore::mirrorContent()
+// and asserts:
+//  - GOLDEN byte literals pin the msg-fence grammar (bubble markers, assistant grouping,
+//    reasoning fences, tool fences incl. args + structured detail) — the byte-stability contract
+//    the deleted legacy-oracle comparison proved (the oracle, CachedSessionStore::content(),
+//    died with the legacy store; the grammar is now pinned directly, equal strength);
+//  - pipeline integrity: the sink→window→projection output equals projecting the same blocks
+//    directly (no window reordering/loss);
+//  - the structural rules: todo suppression, rebaseline clear+replay, reasoning re-checkpoint
+//    in-place, out-of-order sorted insert.
+// The wire-decode mapper (map_transcript_block) coverage is unchanged.
 
-#include "daemon/cached_session_store.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/mirror_session_store.h"
 #include "daemon/mirror_transcript_sink.h"
+#include "daemon/transcript_projection.h"
 #include "mirror/generated/entities_map_gen.h"
 #include "mirror/mirror_service.h"
 
-#include <QTemporaryDir>
 #include <QtTest/QtTest>
 #include <vector>
 
-using daemonapp::daemon::CachedSessionStore;
 using daemonapp::daemon::CachedTranscriptBlockRow;
-using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::MirrorSessionStore;
 using daemonapp::daemon::MirrorTranscriptSink;
 
@@ -99,28 +98,44 @@ void setStr(zcbor_string& z, const QByteArray& b) {
     return rec;
 }
 
-// One run through both projections over the same block stream.
+// Feed the stream through the PRODUCTION sink and return the mirror projection + the direct
+// projection of the same mapped blocks (the pipeline-integrity pair).
 struct Projections {
-    QString legacy;
-    QString mirror;
+    QString mirror; // sink -> window -> MirrorSessionStore::mirrorContent
+    QString direct; // projectTranscriptBlocks over the sink's own mapping, no window
 };
 
 Projections project(const std::vector<CachedTranscriptBlockRow>& blocks) {
-    QTemporaryDir dir;
-    // Legacy path.
-    DaemonCacheStore cache(dir.filePath(QStringLiteral("cache.db")));
-    // Mirror path.
     mirror::MirrorService svc;
     svc.openInMemory();
     MirrorTranscriptSink sink(&svc.ingestor());
     for (const CachedTranscriptBlockRow& b : blocks) {
-        cache.upsertTranscriptBlock(b);
         sink.deliverBlock(b);
     }
-    CachedSessionStore legacy(&cache, nullptr);
-    MirrorSessionStore store(&svc.store(), &svc.ingestor(), &legacy);
-    return {legacy.content(domain::SessionId(QLatin1String(kSession))),
-            store.mirrorContent(domain::SessionId(QLatin1String(kSession)))};
+    MirrorSessionStore store(&svc.store(), &svc.ingestor());
+
+    // The direct leg re-reads the WINDOW's rows back out in seq order... no — it must be
+    // window-independent: map each row the way the sink does and project straight.
+    std::vector<mirror::TranscriptBlock> mapped;
+    mapped.reserve(blocks.size());
+    for (const CachedTranscriptBlockRow& b : blocks) {
+        mirror::TranscriptBlock t;
+        t.session = b.sessionId;
+        t.seq = b.seq;
+        t.kind = b.kind;
+        t.role = b.role;
+        t.text = b.text;
+        t.call_id = b.callId;
+        t.name = b.toolName;
+        t.args_summary = b.argsSummary;
+        t.summary = b.summary;
+        t.ok = b.ok;
+        t.detail_kind = b.detailKind;
+        t.detail_body = QString::fromUtf8(b.detailBody);
+        mapped.push_back(t);
+    }
+    return {store.mirrorContent(domain::SessionId(QLatin1String(kSession))),
+            daemonapp::daemon::projectTranscriptBlocks(mapped)};
 }
 
 } // namespace
@@ -129,45 +144,65 @@ class TstMirrorTranscriptParity : public QObject {
     Q_OBJECT
 
 private slots:
-    // S1: a single user message bubble.
-    void s1_singleUserMessage() {
+    // S1: a single user message bubble — the GOLDEN grammar literal.
+    void s1_singleUserMessageGolden() {
         const Projections p =
             project({message(1, QStringLiteral("User"), QStringLiteral("hello"))});
-        QVERIFY(!p.legacy.isEmpty());
-        QCOMPARE(p.mirror, p.legacy);
+        QCOMPARE(p.mirror, QStringLiteral("```msg\n{\"id\":\"cache-1\",\"role\":\"user\"}\n```\n\n"
+                                          "hello"));
+        QCOMPARE(p.mirror, p.direct);
     }
 
     // S2: user + final assistant message (two bubbles).
-    void s2_userThenAssistant() {
+    void s2_userThenAssistantGolden() {
         const Projections p =
             project({message(1, QStringLiteral("User"), QStringLiteral("hi")),
                      message(2, QStringLiteral("Assistant"), QStringLiteral("there"))});
-        QCOMPARE(p.mirror, p.legacy);
+        QCOMPARE(p.mirror,
+                 QStringLiteral("```msg\n{\"id\":\"cache-1\",\"role\":\"user\"}\n```\n\nhi\n\n"
+                                "```msg\n{\"id\":\"cache-2\",\"role\":\"assistant\"}\n```\n\n"
+                                "there"));
+        QCOMPARE(p.mirror, p.direct);
     }
 
-    // S3: reasoning (opens an assistant group) then the final assistant message CONTINUES it.
-    void s3_reasoningThenAssistantGroup() {
+    // S3: reasoning (opens an assistant group) then the final assistant message CONTINUES it —
+    // ONE assistant bubble marker, keys of the reasoning fence sorted (body before status).
+    void s3_reasoningThenAssistantGroupGolden() {
         const Projections p =
             project({message(1, QStringLiteral("User"), QStringLiteral("q")),
                      reasoning(2, QStringLiteral("thinking about it")),
                      message(3, QStringLiteral("Assistant"), QStringLiteral("answer"))});
-        QCOMPARE(p.mirror, p.legacy);
+        QCOMPARE(p.mirror,
+                 QStringLiteral("```msg\n{\"id\":\"cache-1\",\"role\":\"user\"}\n```\n\nq\n\n"
+                                "```msg\n{\"id\":\"cache-2\",\"role\":\"assistant\"}\n```\n\n"
+                                "```reasoning\n{\"body\":\"thinking about it\","
+                                "\"status\":\"complete\"}\n```\n\n"
+                                "answer"));
+        QCOMPARE(p.mirror, p.direct);
     }
 
-    // S4: tool call with EMPTY args + a plain-text ok result folded into the fence.
-    void s4_toolCallEmptyArgsPlainResult() {
+    // S4: tool call with EMPTY args + a plain-text ok result folded into the fence (QJsonObject
+    // key sort: argsSummary, callId, name, status, summary).
+    void s4_toolCallEmptyArgsPlainResultGolden() {
         const Projections p =
             project({message(1, QStringLiteral("User"), QStringLiteral("run it")),
                      toolCall(2, QStringLiteral("c1"), QStringLiteral("build"), QString()),
                      toolResult(3, QStringLiteral("c1"), true, QStringLiteral("done"))});
-        QCOMPARE(p.mirror, p.legacy);
+        QCOMPARE(p.mirror,
+                 QStringLiteral("```msg\n{\"id\":\"cache-1\",\"role\":\"user\"}\n```\n\nrun it\n\n"
+                                "```msg\n{\"id\":\"cache-2\",\"role\":\"assistant\"}\n```\n\n"
+                                "```tool\n{\"argsSummary\":\"\",\"callId\":\"c1\","
+                                "\"name\":\"build\",\"status\":\"ok\",\"summary\":\"done\"}"
+                                "\n```"));
+        QCOMPARE(p.mirror, p.direct);
     }
 
     // S5: a tool call still running (no result) -> status "running".
     void s5_toolCallRunning() {
         const Projections p =
             project({toolCall(1, QStringLiteral("c1"), QStringLiteral("search"), QString())});
-        QCOMPARE(p.mirror, p.legacy);
+        QVERIFY(p.mirror.contains(QStringLiteral("\"status\":\"running\"")));
+        QCOMPARE(p.mirror, p.direct);
     }
 
     // S6: the `todo` tool call + result are suppressed (status-stack feed, not transcript).
@@ -177,41 +212,59 @@ private slots:
                      toolCall(2, QStringLiteral("t1"), QStringLiteral("todo"), QString()),
                      toolResult(3, QStringLiteral("t1"), true, QStringLiteral("[]")),
                      message(4, QStringLiteral("Assistant"), QStringLiteral("planned"))});
-        QCOMPARE(p.mirror, p.legacy);
-        // The suppressed todo call must not leak a ```tool fence into either projection.
+        QCOMPARE(p.mirror, p.direct);
         QVERIFY(!p.mirror.contains(QStringLiteral("\"name\":\"todo\"")));
-        QVERIFY(!p.legacy.contains(QStringLiteral("\"name\":\"todo\"")));
     }
 
-    // S9: a journal rebaseline (clear + replay) yields the same projection as a direct feed, and
-    // the mirror window is fully replaced (no stale-generation blocks survive the clear).
+    // S7 (the G2 entity-gap closure): a tool call with NON-EMPTY args reproduces the args key.
+    void s7_toolCallNonEmptyArgsGolden() {
+        const Projections p = project(
+            {toolCall(1, QStringLiteral("c1"), QStringLiteral("shell"), QStringLiteral("ls -la")),
+             toolResult(2, QStringLiteral("c1"), true, QStringLiteral("out"))});
+        QCOMPARE(p.mirror,
+                 QStringLiteral("```msg\n{\"id\":\"cache-1\",\"role\":\"assistant\"}\n```\n\n"
+                                "```tool\n{\"argsSummary\":\"ls -la\",\"callId\":\"c1\","
+                                "\"name\":\"shell\",\"status\":\"ok\",\"summary\":\"out\"}"
+                                "\n```"));
+        QCOMPARE(p.mirror, p.direct);
+    }
+
+    // S8 (the G2 entity-gap closure): a structured detail folds detailKind + detailBody
+    // (key sort: argsSummary, callId, detailBody, detailKind, name, status, summary).
+    void s8_toolResultStructuredDetailGolden() {
+        const Projections p =
+            project({toolCall(1, QStringLiteral("c1"), QStringLiteral("edit"), QString()),
+                     toolResult(2, QStringLiteral("c1"), true, QStringLiteral("patched"),
+                                QStringLiteral("fs.diff"), QByteArrayLiteral("{\"path\":\"a\"}"))});
+        QCOMPARE(p.mirror,
+                 QStringLiteral("```msg\n{\"id\":\"cache-1\",\"role\":\"assistant\"}\n```\n\n"
+                                "```tool\n{\"argsSummary\":\"\",\"callId\":\"c1\","
+                                "\"detailBody\":\"{\\\"path\\\":\\\"a\\\"}\","
+                                "\"detailKind\":\"fs.diff\",\"name\":\"edit\","
+                                "\"status\":\"ok\",\"summary\":\"patched\"}\n```"));
+        QCOMPARE(p.mirror, p.direct);
+    }
+
+    // S9: a journal rebaseline (clear + replay) fully replaces the window — no stale-generation
+    // blocks survive the clear.
     void s9_rebaselineClearReplay() {
-        QTemporaryDir dir;
-        DaemonCacheStore cache(dir.filePath(QStringLiteral("cache.db")));
         mirror::MirrorService svc;
         svc.openInMemory();
         MirrorTranscriptSink sink(&svc.ingestor());
-
-        // Stale generation.
         for (const CachedTranscriptBlockRow& b :
              {message(5, QStringLiteral("User"), QStringLiteral("stale")),
               message(6, QStringLiteral("Assistant"), QStringLiteral("old"))}) {
-            cache.upsertTranscriptBlock(b);
             sink.deliverBlock(b);
         }
-        // Rebaseline: clear both, replay the durable generation.
-        cache.clearTranscript(QLatin1String(kSession));
         sink.clear(QLatin1String(kSession));
         for (const CachedTranscriptBlockRow& b :
              {message(1, QStringLiteral("User"), QStringLiteral("fresh")),
               message(2, QStringLiteral("Assistant"), QStringLiteral("new"))}) {
-            cache.upsertTranscriptBlock(b);
             sink.deliverBlock(b);
         }
-        CachedSessionStore legacy(&cache, nullptr);
-        MirrorSessionStore store(&svc.store(), &svc.ingestor(), &legacy);
+        MirrorSessionStore store(&svc.store(), &svc.ingestor());
         const domain::SessionId id{QLatin1String(kSession)};
-        QCOMPARE(store.mirrorContent(id), legacy.content(id));
+        QVERIFY(store.mirrorContent(id).contains(QStringLiteral("fresh")));
         QVERIFY(!store.mirrorContent(id).contains(QStringLiteral("stale")));
         QVERIFY(!store.mirrorContent(id).contains(QStringLiteral("old")));
     }
@@ -221,16 +274,14 @@ private slots:
     void reasoningReCheckpointUpsertsInPlace() {
         const Projections p =
             project({reasoning(2, QStringLiteral("abc")), reasoning(2, QStringLiteral("abcdef"))});
-        QCOMPARE(p.mirror, p.legacy);
         QCOMPARE(p.mirror.count(QStringLiteral("```reasoning")), 1);
         QVERIFY(p.mirror.contains(QStringLiteral("abcdef")));
+        QVERIFY(!p.mirror.contains(QStringLiteral("\"body\":\"abc\"")));
     }
 
-    // upsertWindow is cursor-ordered: blocks delivered out of seq order land sorted, matching the
-    // legacy cache's ORDER BY seq. (Defensive — the engine delivers in seq order.)
+    // upsertWindow is cursor-ordered: blocks delivered out of seq order land sorted (the window
+    // projection equals projecting the IN-ORDER stream directly).
     void outOfOrderDeliverySortsBySeq() {
-        QTemporaryDir dir;
-        DaemonCacheStore cache(dir.filePath(QStringLiteral("cache.db")));
         mirror::MirrorService svc;
         svc.openInMemory();
         MirrorTranscriptSink sink(&svc.ingestor());
@@ -238,41 +289,12 @@ private slots:
             message(1, QStringLiteral("User"), QStringLiteral("one")),
             message(2, QStringLiteral("Assistant"), QStringLiteral("two")),
             message(3, QStringLiteral("User"), QStringLiteral("three"))};
-        for (const CachedTranscriptBlockRow& b : inOrder) {
-            cache.upsertTranscriptBlock(b);
-        }
-        // Deliver to the mirror OUT of order.
         sink.deliverBlock(inOrder[2]);
         sink.deliverBlock(inOrder[0]);
         sink.deliverBlock(inOrder[1]);
-        CachedSessionStore legacy(&cache, nullptr);
-        MirrorSessionStore store(&svc.store(), &svc.ingestor(), &legacy);
+        MirrorSessionStore store(&svc.store(), &svc.ingestor());
         const domain::SessionId id{QLatin1String(kSession)};
-        QCOMPARE(store.mirrorContent(id), legacy.content(id));
-    }
-
-    // --- G2 (M5): the ENTITY-FIELD GAP is CLOSED — these now go byte-identical (the flip signal)
-    // -- S7: a tool call with NON-EMPTY args. The mirror entity now carries `args_summary`, so the
-    // fence reproduces the legacy args byte-for-byte.
-    void s7_toolCallNonEmptyArgsParity() {
-        const Projections p = project(
-            {toolCall(1, QStringLiteral("c1"), QStringLiteral("shell"), QStringLiteral("ls -la")),
-             toolResult(2, QStringLiteral("c1"), true, QStringLiteral("out"))});
-        QVERIFY(p.legacy.contains(QStringLiteral("ls -la"))); // legacy carries the args
-        QVERIFY(p.mirror.contains(QStringLiteral("ls -la"))); // the entity now does too
-        QCOMPARE(p.mirror, p.legacy);
-    }
-
-    // S8: a tool result with a structured detail (detailKind/detailBody). The mirror entity now
-    // carries `detail_kind`/`detail_body`, so the fence folds the detail byte-for-byte.
-    void s8_toolResultStructuredDetailParity() {
-        const Projections p =
-            project({toolCall(1, QStringLiteral("c1"), QStringLiteral("edit"), QString()),
-                     toolResult(2, QStringLiteral("c1"), true, QStringLiteral("patched"),
-                                QStringLiteral("fs.diff"), QByteArrayLiteral("{\"path\":\"a\"}"))});
-        QVERIFY(p.legacy.contains(QStringLiteral("fs.diff"))); // legacy folds the detail
-        QVERIFY(p.mirror.contains(QStringLiteral("fs.diff"))); // the entity now folds it too
-        QCOMPARE(p.mirror, p.legacy);
+        QCOMPARE(store.mirrorContent(id), project(inOrder).direct);
     }
 
     // --- map_transcript_block (G2): the wire-decode / offline-reload feed ----------------------

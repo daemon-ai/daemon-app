@@ -4203,17 +4203,6 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>এজেন্ট</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ব্যবহারকারী</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -6290,16 +6279,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>SessionDetail প্রতিক্রিয়া ডিকোড করতে ব্যর্থ</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>কোনো daemon-এর সাথে সংযুক্ত নয়</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>সেশন কমান্ডটি প্রত্যাখ্যান করেছে</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta ব্যর্থ হয়েছে</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9380,16 +9361,8 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
         <translation>SessionDetail প্রতিক্রিয়া ডিকোড করতে ব্যর্থ</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>কোনো daemon-এর সাথে সংযুক্ত নয়</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>সেশন কমান্ডটি প্রত্যাখ্যান করেছে</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta ব্যর্থ হয়েছে</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9460,17 +9433,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Failed to apply the account settings</source>
         <translation>অ্যাকাউন্ট সেটিংস প্রয়োগ করতে ব্যর্থ হয়েছে</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>এজেন্ট</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ব্যবহারকারী</translation>
     </message>
 </context>
 <context>

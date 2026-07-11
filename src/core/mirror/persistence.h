@@ -80,6 +80,10 @@ struct WriteBatch {
     std::vector<PersonKey> personTombstones;
     std::vector<WindowRowWrite> windowUpserts;
     std::vector<WindowMetaWrite> windowMeta;
+    // AD (1b.3): a clearWindow scope tombstone (the engine's journal-rebaseline transcript wipe)
+    // drops the scope's persisted rows + meta BEFORE this batch's upserts apply, so a wiped
+    // generation never survives a reboot. Scope keys of w_transcript_blocks.
+    std::vector<QString> transcriptWindowClears;
     std::vector<JournalRecord> journalRecords;
 
     bool advanceWatermark = false;
@@ -95,9 +99,10 @@ struct WriteBatch {
 class Persistence {
 public:
     // schema_version the generated DDL targets (mirror_schema_gen.sql / spec §4.5).
-    // v12 (G2/M5): m_fleet_units gained engine/engine_agent/child_ids (the tree edge + engine
-    // identity); a mismatch drops-and-rebuilds (disposable cache), no migration.
-    static constexpr int kSchemaVersion = 12;
+    // v13 (AD): m_fleet_units gained end_reason (the node's terminal reason for a Finished
+    // child — the engine's childEndReason mirror source); a mismatch drops-and-rebuilds
+    // (disposable cache), no migration.
+    static constexpr int kSchemaVersion = 13;
 
     Persistence() = default;
     ~Persistence();

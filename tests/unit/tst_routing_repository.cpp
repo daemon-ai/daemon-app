@@ -152,6 +152,18 @@ DecodedOrigin groupOrigin(const QString& transport, const QString& chat) {
 
 } // namespace
 
+namespace {
+domain::Origin domainGroupOrigin(const QString& transport, const QString& chat) {
+    domain::Origin o;
+    o.transport = domain::TransportId(transport);
+    o.scope.kind = domain::OriginScopeKind::Group;
+    o.scope.chat = chat;
+    return o;
+}
+} // namespace
+
+// AD: the routing repo is the MUTATION seam only — reads live on the mirror pin table
+// (RoutingListChats → route_pins via the ingestor; the dead in-memory routes/rooms cache died).
 class TestRoutingRepository : public QObject {
     Q_OBJECT
 
@@ -159,57 +171,31 @@ private:
     QTemporaryDir m_tmp;
 
 private slots:
-    // RoutingListChats round-trip: routes() populates with the decoded origins/sessions/profiles.
-    void refreshChatsPopulates() {
-        const QString sock = m_tmp.filePath(QStringLiteral("rt.sock"));
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock), "listen");
-        fake.setReplyPayload(chatRoutesResponse());
-        DaemonTransport transport;
-        transport.setSocketPath(sock);
-        NodeApiClient client(&transport);
-        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("rt.db")));
-        RoutingRepository repo(&client, &cache);
-
-        QSignalSpy refreshed(&repo, &RoutingRepository::routesRefreshed);
-        repo.refreshChats();
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-        QCOMPARE(repo.routes().size(), 2);
-        const DecodedChatRoute& pin = repo.routes().at(0);
-        QCOMPARE(pin.origin.transport, QStringLiteral("matrix/@bot:hs.org"));
-        QCOMPARE(pin.origin.scopeKind, QStringLiteral("group"));
-        QCOMPARE(pin.origin.chat, QStringLiteral("#secops"));
-        QCOMPARE(pin.session, QStringLiteral("s-secops"));
-        QCOMPARE(pin.profile, QStringLiteral("prof-2"));
-        QCOMPARE(repo.routes().at(1).origin.scopeKind, QStringLiteral("dm"));
-        QCOMPARE(repo.routes().at(1).origin.user, QStringLiteral("@bob:hs.org"));
-        // The outgoing request was the canonical encoder output.
-        QCOMPARE(fake.callPayloads().first(), NodeApiCodec::encodeRoutingListChatsRequest());
-    }
-
-    // A bind goes out as RoutingBindChat and, on Ok, triggers the authoritative re-list.
-    void bindChatRelistsOnOk() {
+    // A bind goes out as RoutingBindChat (byte-identical to the encoder) and, on Ok,
+    // mutationApplied fires — the graph's hook for the mirror pin-table refetch.
+    void bindChatAcksViaMutationApplied() {
         const QString sock = m_tmp.filePath(QStringLiteral("rt-bind.sock"));
         WireMuxServer fake;
         QVERIFY2(fake.start(sock), "listen");
-        fake.setReplySequence({okResponse(), chatRoutesResponse()});
+        fake.setReplyPayload(okResponse());
         DaemonTransport transport;
         transport.setSocketPath(sock);
         NodeApiClient client(&transport);
         DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("rt-bind.db")));
         RoutingRepository repo(&client, &cache);
 
-        QSignalSpy refreshed(&repo, &RoutingRepository::routesRefreshed);
-        repo.bindChat(groupOrigin(QStringLiteral("matrix/@bot:hs.org"), QStringLiteral("#ops")),
-                      QStringLiteral("s-ops"), QStringLiteral("prof-1"));
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-        QCOMPARE(repo.routes().size(), 2); // the re-listed table
+        QSignalSpy applied(&repo, &RoutingRepository::mutationApplied);
+        repo.routingBindChat(
+            domainGroupOrigin(QStringLiteral("matrix/@bot:hs.org"), QStringLiteral("#ops")),
+            domain::SessionId(QStringLiteral("s-ops")),
+            domain::ProfileRef(QStringLiteral("prof-1")));
+        QTRY_COMPARE_WITH_TIMEOUT(applied.count(), 1, 3000);
         const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 1); // the mutation itself; the refetch is the ingestor's
         QCOMPARE(calls.at(0),
                  NodeApiCodec::encodeRoutingBindChatRequest(
                      groupOrigin(QStringLiteral("matrix/@bot:hs.org"), QStringLiteral("#ops")),
                      QStringLiteral("s-ops"), QStringLiteral("prof-1")));
-        QCOMPARE(calls.at(1), NodeApiCodec::encodeRoutingListChatsRequest());
     }
 
     // An unbind rejection (Error) surfaces via operationFailed — never a silent no-op.
@@ -231,33 +217,10 @@ private slots:
         RoutingRepository repo(&client, &cache);
 
         QSignalSpy failed(&repo, &RoutingRepository::operationFailed);
-        repo.unbindChat(groupOrigin(QStringLiteral("matrix/@x"), QStringLiteral("#gone")));
+        repo.routingUnbindChat(
+            domainGroupOrigin(QStringLiteral("matrix/@x"), QStringLiteral("#gone")));
         QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 3000);
         QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("no such pin"));
-    }
-
-    // TransportRooms round-trip: roomsFor(transport) populates (name fallback + pinned session).
-    void roomsPopulate() {
-        const QString sock = m_tmp.filePath(QStringLiteral("rt-rooms.sock"));
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock), "listen");
-        fake.setReplyPayload(roomsResponse());
-        DaemonTransport transport;
-        transport.setSocketPath(sock);
-        NodeApiClient client(&transport);
-        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("rt-rooms.db")));
-        RoutingRepository repo(&client, &cache);
-
-        QSignalSpy refreshed(&repo, &RoutingRepository::roomsRefreshed);
-        repo.refreshRooms(QStringLiteral("matrix/@bot:hs.org"));
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-        const auto rooms = repo.roomsFor(QStringLiteral("matrix/@bot:hs.org"));
-        QCOMPARE(rooms.size(), 2);
-        QCOMPARE(rooms.at(0).room, QStringLiteral("#ops"));
-        QCOMPARE(rooms.at(0).name, QStringLiteral("Ops room"));
-        QCOMPARE(rooms.at(0).session, QStringLiteral("s-ops"));
-        QVERIFY(rooms.at(1).name.isEmpty());
-        QVERIFY(rooms.at(1).session.isEmpty());
     }
 };
 

@@ -674,6 +674,7 @@ struct FleetUnit {
     Q_PROPERTY(QString id MEMBER id)
     Q_PROPERTY(QString kind MEMBER kind)
     Q_PROPERTY(QString state MEMBER state)
+    Q_PROPERTY(QString end_reason MEMBER end_reason)
     Q_PROPERTY(QString work MEMBER work)
     Q_PROPERTY(QString profile MEMBER profile)
     Q_PROPERTY(QString session MEMBER session)
@@ -689,6 +690,7 @@ public:
     QString id;
     QString kind;
     QString state;
+    QString end_reason;
     QString work;
     QString profile;
     QString session;

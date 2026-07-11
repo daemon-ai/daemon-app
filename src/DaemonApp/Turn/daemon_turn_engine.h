@@ -33,15 +33,15 @@ class DaemonTurnEngine : public ITurnEngine {
     Q_OBJECT
 
 public:
-    // `cache` (optional) persists the durable render-from-cache transcript + per-session resync
-    // cursors (epoch/watermark/journal); null disables persistence (mock/test paths).
+    // `cache` (optional) persists the per-session resync cursors (epoch/watermark) and serves
+    // the child title/end-reason roster reads; null disables those (mock/test paths).
     // `subscriptions` (optional) is the L3 feed consumer this engine self-registers with on
     // `setSessionId`, so a `SessionAdvanced` for its bound session nudges it (the per-tab focus
     // wiring) regardless of which front end owns the tab.
-    // `mirrorSink` (optional) dual-writes each coalesced transcript block into the mirror
-    // `w_transcript_blocks` window (A7T; single-writer §5.1 preserved — the sink feeds the
-    // ingestor, never the store directly). Null disables the mirror dual-write (mock / test /
-    // substrate-less stacks); the legacy cache write path is unconditional.
+    // `mirrorSink` (optional) is the SINGLE transcript write path (AD; §5.1 — the sink feeds the
+    // ingestor's `w_transcript_blocks` window, never the store directly; the write-behind
+    // persists it for the offline cold-boot render). Null disables transcript persistence
+    // entirely (mock / bare test stacks — the mock TurnController simulator never writes one).
     explicit DaemonTurnEngine(daemonapp::daemon::NodeApiClient* client,
                               daemonapp::daemon::DaemonCacheStore* cache = nullptr,
                               daemonapp::daemon::SubscriptionManager* subscriptions = nullptr,

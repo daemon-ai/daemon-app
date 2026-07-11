@@ -113,6 +113,10 @@ void MockScenarioHost::onSendRequested(const mirror::PendingOp& op) {
             QTimer::singleShot(outcome.delayMs + outcome.echoDelayMs, this,
                                [this, op] { applyConvSendEcho(op); });
         }
+        if (outcome.echoDelayMs > 0 && op.verb == QStringLiteral("SessionUpdateMeta")) {
+            QTimer::singleShot(outcome.delayMs + outcome.echoDelayMs, this,
+                               [this, op] { applySessionMetaEcho(op); });
+        }
         return;
     }
 }
@@ -134,6 +138,62 @@ void MockScenarioHost::applyConvSendEcho(const mirror::PendingOp& op) {
     m.timestamp = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
     m.origin_op = op.opId;
     m_seeder.appendMessage(m, op.opId);
+}
+
+void MockScenarioHost::onCreateSessionRequested(const QString& profileId) {
+    // The mock twin of the DIRECT SessionCreate seam (§7): scripted outcome at the verb boundary
+    // (§9 — nothing mock-only below it). On ok, the host mints the id (the node's role), seeds
+    // the blank row through the seeder, and reports sessionCreated for the adoption relay. A
+    // scripted rejection is silent, matching the daemon repo's decode-miss posture (creation has
+    // no ISessionStore failure signal; the surface simply keeps its current session).
+    const QJsonObject args{{QStringLiteral("profile"), profileId}};
+    const mirror::VerbOutcome outcome =
+        m_player.scenario().verbScript.outcomeFor(QStringLiteral("SessionCreate"), args);
+    if (outcome.kind == mirror::VerbOutcomeKind::Reject ||
+        outcome.kind == mirror::VerbOutcomeKind::Timeout) {
+        return;
+    }
+    const QString id = QStringLiteral("s-mock-%1").arg(m_nextSessionSeq++);
+    QTimer::singleShot(outcome.delayMs, this, [this, id, profileId] {
+        mirror::Session s;
+        s.session = id;
+        s.state = QStringLiteral("Ready"); // a blank, un-run session (node parity)
+        s.bound_profile = profileId;
+        s.lifecycle = QStringLiteral("Durable");
+        s.role = QStringLiteral("Primary");
+        s.last_activity_ms = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
+        m_seeder.upsertSession(s);
+        emit sessionCreated(id, profileId);
+    });
+}
+
+void MockScenarioHost::applySessionMetaEcho(const mirror::PendingOp& op) {
+    // The mock twin of the node's authoritative read-path echo for a session-meta patch (§6.6 /
+    // §10.3): apply the acked patch fields to the CURRENT mirror row through the seeder, stamped
+    // origin_op = op_id — the same landing path the daemon's SessionMetaChanged → SessionGet
+    // apply drives, so the outbox op goes accepted → landed identically and the roster
+    // re-projects event-driven (never an optimistic local write).
+    const QJsonObject args = QJsonDocument::fromJson(op.payload).object();
+    const QString sessionId = args.value(QStringLiteral("session")).toString();
+    if (sessionId.isEmpty()) {
+        return;
+    }
+    const mirror::Session* existing =
+        m_svc->store().snapshot().sessions.find(mirror::SessionKey{sessionId});
+    if (existing == nullptr) {
+        return; // an unknown session acks Ok but echoes nothing (node parity: nothing to patch)
+    }
+    mirror::Session patched = *existing;
+    if (args.contains(QStringLiteral("pinned"))) {
+        patched.pinned = args.value(QStringLiteral("pinned")).toBool();
+    }
+    if (args.contains(QStringLiteral("archived"))) {
+        patched.archived = args.value(QStringLiteral("archived")).toBool();
+    }
+    if (args.contains(QStringLiteral("title"))) {
+        patched.title = args.value(QStringLiteral("title")).toString();
+    }
+    m_seeder.upsertSession(patched, op.opId);
 }
 
 quint64 MockScenarioHost::nextChatCursor(const QString& transport, const QString& conv) const {

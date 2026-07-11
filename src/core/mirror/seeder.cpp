@@ -51,6 +51,12 @@ quint64 Seeder::upsertContact(const Contact& c) {
     return b.commit();
 }
 
+quint64 Seeder::upsertSession(const Session& s, const QString& originOp) {
+    Batch b = store_.beginBatch();
+    b.upsert(s, JournalOrigin::Seeder, originOp);
+    return b.commit();
+}
+
 quint64 Seeder::upsertPerson(const Person& p) {
     Batch b = store_.beginBatch();
     b.upsert(p, JournalOrigin::Seeder);

@@ -195,8 +195,9 @@ QString unitKind(const ::unit_kind_r& k) {
     return {};
 }
 
-// unit-state enum → canonical string (unit-node.state). Finished carries an end_reason on the wire;
-// the mirror row keeps the discriminator (the reason is not a FleetUnit field), §3.3.
+// unit-state enum → canonical string (unit-node.state). Finished additionally carries an
+// end_reason on the wire, mapped into the sibling end_reason field (AD; the engine's child
+// end-reason read re-homed off the legacy fleet cache), §3.3.
 QString unitState(const ::unit_state_r& s) {
     switch (s.unit_state_choice) {
     case ::unit_state_r::unit_state_Running_tstr_c:
@@ -416,6 +417,11 @@ FleetUnit map_fleet_unit(const ::unit_node& in) {
     out.id = qstr(in.unit_node_id);
     out.kind = unitKind(in.unit_node_kind);
     out.state = unitState(in.unit_node_state);
+    // unit-state-finished.end_reason ("" unless the state is the Finished arm) — the node's
+    // terminal reason for a child session (AD: the engine's childEndReason mirror source).
+    if (in.unit_node_state.unit_state_choice == ::unit_state_r::unit_state_finished_m_c) {
+        out.end_reason = qstr(in.unit_node_state.unit_state_finished_m.Finished_end_reason);
+    }
     if (in.unit_node_work_choice == ::unit_node::unit_node_work_tstr_c) {
         out.work = qstr(in.unit_node_work_tstr);
     }

@@ -20,13 +20,13 @@ class QAbstractItemModel;
 // (RootWidget chat tabs) bind: it owns one conversation's transcript projection
 // and the send intent.
 //
-// READ PATH (M2, spec 09 §8): when a mirror service is bound (daemon mode), the
-// timeline reads the mirror's ChatWindowModel — journal-delta row ops off the one
-// canonical ChatMessage entity — and open() only DECLARES visibility
-// (beginObserving, §5.8); the ingestor owns the top-up fetch. Demand paging rides
-// loadEarlier() → olderRequested → Ingestor::requestOlder. Without a mirror (mock
-// mode until A8's seeder; substrate-less stacks) the legacy IChatService rows path
-// remains: open() asks refreshHistory() and messagesChanged() re-projects.
+// READ PATH (M2 → AD, spec 09 §8): the timeline reads the mirror's ChatWindowModel
+// — journal-delta row ops off the one canonical ChatMessage entity — and open()
+// only DECLARES visibility (beginObserving, §5.8); the ingestor owns the top-up
+// fetch. Demand paging rides loadEarlier() → olderRequested →
+// Ingestor::requestOlder. Both modes bind a live mirror (daemon: ingestor-fed;
+// mock: scenario-seeded); the legacy IChatService rows path survives only as the
+// bare-test fallback until the seam dies with the tree/hub vertical (AD 1a).
 //
 // It re-derives NO domain state — the node owns the transcript; rows are projected
 // oldest-first into one markdown document rendered by the EXISTING BlockEditor
@@ -41,9 +41,8 @@ class ChatConversationController : public QObject {
     // `Chat` context property. Held as QObject* so QML can assign the context property
     // without a registered pointer metatype (mirrors SessionController::store).
     Q_PROPERTY(QObject* service READ service WRITE setService NOTIFY serviceChanged)
-    // The mirror composition root (`Mirror` context property; null in mock mode at M2
-    // and on substrate-less stacks). Opaque QObject* here — the concrete type is bound
-    // in the .cpp behind the substrate define, so this header never forks layouts.
+    // The mirror composition root (`Mirror` context property; live in BOTH modes since
+    // A8/AD). Opaque QObject* so QML can assign it without a registered pointer metatype.
     Q_PROPERTY(QObject* mirror READ mirror WRITE setMirror NOTIFY mirrorChanged)
     Q_PROPERTY(QString transport READ transport NOTIFY conversationChanged)
     Q_PROPERTY(QString conversation READ conversation NOTIFY conversationChanged)

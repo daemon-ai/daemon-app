@@ -4203,17 +4203,6 @@ Salamat — magpapatuloy sa: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>User</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -6290,16 +6279,8 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Nabigo sa pag-decode ng tugon ng SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Hindi nakakonekta sa isang daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Tinanggihan ng session ang command</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Nabigo ang SessionUpdateMeta</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9380,16 +9361,8 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
         <translation>Nabigo sa pag-decode ng tugon ng SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Hindi nakakonekta sa isang daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Tinanggihan ng session ang command</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Nabigo ang SessionUpdateMeta</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9460,17 +9433,6 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Nabigong ilapat ang mga setting ng account</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>User</translation>
     </message>
 </context>
 <context>

@@ -20,39 +20,60 @@
 //    land too (dual-write, both live).
 //  - Documented degradations (07§9.3 / LEDGER-a7): row `content` snippets and `tagIds` are empty
 //    (transcript re-homing / client-local tag sidecar are later waves); `unitId` stays empty
-//    (parity with the legacy daemon CachedSessionStore, which never sets it).
+//    (parity with the deleted legacy daemon store, which never set it either).
 //
-// Signals: changed() = mirror session/fleet deltas ∪ relayed legacy changed() (the delegated
-// transcript reads refresh through the legacy signal until sub-gate 6); sessionCreated /
-// metaUpdateFailed are relayed from the legacy store (the wire round-trip lives there).
+// Signals: changed() = mirror session/fleet/transcript journal deltas; sessionCreated is relayed
+// from the direct create seam (daemon: SessionRepository::createSession; mock: the scenario
+// host's scripted create via onNodeSessionCreated); metaUpdateFailed is the session-meta lane's
+// §6.5 rejection relay.
 //
-// Mock mode does NOT construct this class: composition (app_service_graph) points the mirror
-// store slot at the legacy in-memory store instead (§9 "mock keeps working"; A8's seeder feeds
-// the mock mirror and flips that).
+// AD: the legacy ISessionStore delegate is GONE — every mutation rides its §7-declared path
+// (session-meta lane / direct SessionCreate), every read is a pure mirror projection, and the
+// node-owned no-verb operations (delete/move/setContent) are no-ops on BOTH modes (the mock
+// aligns to daemon; the fork was the deletion — A8 precedent).
 
 #include "persistence/isession_store.h"
 
 #include <QHash>
+#include <QJsonObject>
 #include <QList>
 #include <QSet>
 #include <QString>
 
 namespace mirror {
 class Ingestor;
+class Outbox;
 class Store;
 } // namespace mirror
 
 namespace daemonapp::daemon {
 
+class SessionRepository;
+
 class MirrorSessionStore : public persistence::ISessionStore {
     Q_OBJECT
 
 public:
-    // `store`/`ingestor` are the mirror substrate (required); `legacy` is the delegated
-    // mutation/transcript source (required during the dual-write window; its deletion is the
-    // last step of the wave). Ownership stays with the caller (the app service graph).
+    // `store`/`ingestor` are the mirror substrate (required). `sessions` is the daemon-mode
+    // DIRECT create seam (§7: SessionCreate is a direct verb — the node mints the id and the
+    // repo's sessionCreated relays it); null in mock mode, where requestNewSession emits
+    // createRequested and the scenario host answers (scripted outcome + seeded row +
+    // onNodeSessionCreated). Ownership stays with the caller (the app service graph).
     MirrorSessionStore(mirror::Store* store, mirror::Ingestor* ingestor,
-                       persistence::ISessionStore* legacy, QObject* parent = nullptr);
+                       SessionRepository* sessions = nullptr, QObject* parent = nullptr);
+
+    // AD (§6.4/§7): bind the durable outbox — the session-meta mutation lane. Once bound,
+    // pin/archive/rename enqueue `SessionUpdateMeta` ops (op_id minted per §6.2, offline-durable,
+    // dedup-safe replay per §10.3); a lane rejection is relayed as metaUpdateFailed (§6.5 — the
+    // verb seam's failure signal). Bound in BOTH modes by the composition (the mock host answers
+    // the lane from the scenario script). Without an outbox (bare test stacks) the meta mutations
+    // are no-ops — there is no legacy fallback path anymore.
+    void setOutbox(mirror::Outbox* outbox);
+
+    // The composition callback for a created session (mock: the scenario host's scripted
+    // SessionCreate answer; the daemon repo relays through its own signal instead): re-emits
+    // ISessionStore::sessionCreated so the initiating surface adopts the id (open + auto-select).
+    void onNodeSessionCreated(const QString& sessionId, const QString& profileId);
 
     // --- pure mirror reads -------------------------------------------------------------------
     [[nodiscard]] QList<domain::Session> sessions(const domain::ListScope& scope) const override;
@@ -85,7 +106,10 @@ public:
     // serves this; kept as a named method for the parity harness.
     [[nodiscard]] QString mirrorContent(const domain::SessionId& id) const;
 
-    // --- node-authoritative mutations: delegated to the legacy wire path ----------------------
+    // --- node-authoritative mutations: §7-declared paths --------------------------------------
+    // Pin/archive/rename → the session-meta outbox lane (§6.4). Create → the direct SessionCreate
+    // seam (§7). newSession/delete/move/setContent are node-owned with NO v39 wire verb: no-ops
+    // on both modes (creation is async via requestNewSession + sessionCreated).
     domain::SessionId newSession(const domain::UnitId& unitId) override;
     void setArchived(const domain::SessionId& id, bool archived) override;
     void renameSession(const domain::SessionId& id, const QString& title) override;
@@ -96,19 +120,32 @@ public:
     domain::UnitId createUnit(const domain::UnitId& parentId, domain::UnitKind kind) override;
     int createTag(const QString& name, const QString& color) override;
 
-    // --- scoped refreshes: legacy wire refresh (cache) + mirror scoped fetch (dual-write) -----
+    // --- scoped refreshes: the ingestor's mirror scoped fetches -------------------------------
     void refreshSessionsForProfile(const QString& profileId) override;
     void refreshArchivedSessions() override;
     void refreshSessionsForTransport(const QString& transportId) override;
+
+signals:
+    // Mock-mode direct-create seam (§7/§9): no SessionRepository is bound, so the store asks the
+    // composition to answer the create — the scenario host scripts the outcome, seeds the row
+    // (origin = seeder), and calls onNodeSessionCreated. Never emitted in daemon mode (the repo
+    // seam answers directly).
+    void createRequested(const QString& profileId);
 
 private:
     void onCommitted();
     void rebuildFromSnapshot();
     [[nodiscard]] bool matchesScope(const domain::Session& s, const domain::ListScope& scope) const;
+    // Enqueue one SessionUpdateMeta patch to the session-meta lane (§6.4) and nudge a drain (the
+    // user's own action is the manual tap; gates hold it offline). `patch` carries only the
+    // touched key(s) — the tri-state wire SessionMetaPatch shape as JSON.
+    void enqueueSessionMeta(const domain::SessionId& id, const QJsonObject& patch,
+                            const QString& display);
 
     mirror::Store* m_mirror = nullptr;
     mirror::Ingestor* m_ingestor = nullptr;
-    persistence::ISessionStore* m_legacy = nullptr;
+    mirror::Outbox* m_outbox = nullptr;
+    SessionRepository* m_sessions = nullptr; // daemon direct-create seam (null in mock)
 
     // The sorted mirror projection (pinned first, then last-activity desc, then id — a
     // deterministic order where the legacy cache's insertion order was arbitrary). The list index

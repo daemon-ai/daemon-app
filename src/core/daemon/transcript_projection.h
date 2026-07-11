@@ -3,7 +3,7 @@
 
 #pragma once
 // The msg-fence transcript projection over mirror `TranscriptBlock` window items (seq order),
-// ported grammar-for-grammar from the legacy `CachedSessionStore::content()` and enriched by G2
+// ported grammar-for-grammar from the deleted legacy cache projection and enriched by G2
 // (args_summary + detail_kind/detail_body). Factored out of MirrorSessionStore so the ONE
 // projection grammar has a single home: `MirrorSessionStore::content()` reads it, and the mock
 // seeder derives the legacy delegate's baseline content from the SAME blocks through it — so the

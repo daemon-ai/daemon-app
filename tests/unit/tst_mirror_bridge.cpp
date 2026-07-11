@@ -36,6 +36,29 @@ private slots:
         QCOMPARE(out.scope, QStringLiteral("profiles"));
     }
 
+    // AD (§10.3 carrier 3): the single-mutation event arms carry the causing op's client op_id;
+    // the translate preserves it so the ingestor threads it into the triggered fetch and the
+    // resulting apply lands the outbox op (§6.6).
+    void sessionMetaChangedCarriesOriginOp() {
+        DecodedNodeEvent in;
+        in.kind = DecodedNodeEvent::Kind::SessionMetaChanged;
+        in.session = QStringLiteral("s-1");
+        in.rev = 7;
+        in.originOp = QStringLiteral("op-abc");
+        const mirror::NodeEvent out = translateNodeEvent(in);
+        QCOMPARE(out.kind, mirror::NodeEventKind::SessionMetaChanged);
+        QCOMPARE(out.session, QStringLiteral("s-1"));
+        QCOMPARE(out.originOp, QStringLiteral("op-abc"));
+
+        DecodedNodeEvent conv;
+        conv.kind = DecodedNodeEvent::Kind::ConversationsChanged;
+        conv.transport = QStringLiteral("m");
+        conv.conv = QStringLiteral("!c");
+        conv.convChange = QStringLiteral("removed");
+        conv.originOp = QStringLiteral("op-def");
+        QCOMPARE(translateNodeEvent(conv).originOp, QStringLiteral("op-def"));
+    }
+
     void membershipSelfRemovalPreserved() {
         DecodedNodeEvent in;
         in.kind = DecodedNodeEvent::Kind::MembershipChanged;

@@ -5,6 +5,7 @@
 
 #include "mirror/generated/entities_gen.h"
 #include "mirror/ingestor.h"
+#include "mirror/store.h"
 
 namespace daemonapp::daemon {
 
@@ -47,6 +48,28 @@ void MirrorTranscriptSink::clear(const QString& sessionId) {
         return;
     }
     m_ingestor->clearTranscriptBlocks(sessionId);
+}
+
+QString MirrorTranscriptSink::sessionTitle(const QString& sessionId) const {
+    if (m_store == nullptr || sessionId.isEmpty()) {
+        return {};
+    }
+    const mirror::Session* s = m_store->snapshot().sessions.find(mirror::SessionKey{sessionId});
+    return s != nullptr ? s->title : QString();
+}
+
+QString MirrorTranscriptSink::unitEndReason(const QString& sessionId) const {
+    if (m_store == nullptr || sessionId.isEmpty()) {
+        return {};
+    }
+    // UnitId == SessionId on the durable path, but scan by the unit's session field (the
+    // authoritative join) so a diverging id scheme still resolves.
+    for (const mirror::FleetUnit& u : m_store->snapshot().fleet_units) {
+        if (u.session == sessionId) {
+            return u.end_reason;
+        }
+    }
+    return {};
 }
 
 } // namespace daemonapp::daemon

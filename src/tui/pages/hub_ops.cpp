@@ -11,16 +11,13 @@
 #include "fleet/idashboard.h"
 #include "fleet/ifleet_tree.h"
 #include "fleet/isession_roster.h"
+#include "mirror/mirror_service.h"
+#include "mirror/store.h"
 #include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2
 #include "tui_page_hub.h"
 #include "uimodels/variant_list_model.h"
 
 #include <QCoreApplication>
-
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
-#include "mirror/mirror_service.h"
-#include "mirror/store.h"
-#endif
 
 namespace {
 // [wave2:integration] F3 + C3/ENG-7: the TUI projection of the GUI fleet engine chip, off the
@@ -278,7 +275,6 @@ void packOriginKey(const QString& key, QVariantMap& row) {
 
 QList<QVariantMap> TuiPageHub::routingPinRows() const {
     QList<QVariantMap> rows;
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
     if (m_deps.mirror == nullptr) {
         return rows;
     }
@@ -296,7 +292,6 @@ QList<QVariantMap> TuiPageHub::routingPinRows() const {
         row[QStringLiteral("isolation")] = pin.isolation;
         rows.append(row);
     }
-#endif
     return rows;
 }
 

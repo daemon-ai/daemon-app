@@ -63,6 +63,17 @@ public:
     // Deterministic manual timeline advance (tests); the live QTimer drives the same path.
     void advanceTimelineTo(qint64 elapsedMs);
 
+    // AD (§7 direct create, mock side): answer MirrorSessionStore::createRequested from the
+    // scenario's VerbScript — on ok, mint a deterministic id, seed the blank Session row through
+    // the seeder (the node-parity shape: untitled, Ready, bound to `profileId`), and emit
+    // sessionCreated so the composition relays it into the store's adoption path.
+    void onCreateSessionRequested(const QString& profileId);
+
+signals:
+    // A scripted SessionCreate resolved: `sessionId` is the host-minted id (the mock twin of the
+    // node's SessionCreated reply), `profileId` echoes the request.
+    void sessionCreated(const QString& sessionId, const QString& profileId);
+
 private:
     // Records + async-completes every job: the mirror is seeder-authoritative, so a fetch has
     // nothing to fetch — but the scheduler's slots must be freed (async to avoid re-entrant
@@ -77,6 +88,10 @@ private:
 
     void onSendRequested(const mirror::PendingOp& op);
     void applyConvSendEcho(const mirror::PendingOp& op);
+    // AD (§6.4 session-meta lane): the mock twin of the node's SessionMetaChanged → SessionGet
+    // read-path echo — apply the acked patch to the mirror Session row through the seeder,
+    // provenance-stamped (origin_op = op_id) so the outbox op lands (§6.6).
+    void applySessionMetaEcho(const mirror::PendingOp& op);
     [[nodiscard]] quint64 nextChatCursor(const QString& transport, const QString& conv) const;
 
     mirror::MirrorService* m_svc = nullptr;
@@ -88,6 +103,7 @@ private:
     QTimer m_timelineTimer;
     QTimer m_expirySweep;
     QElapsedTimer m_elapsed;
+    int m_nextSessionSeq = 1; // deterministic ids for scripted SessionCreate answers
 };
 
 } // namespace daemonapp::daemon

@@ -302,6 +302,9 @@ wire_read = ["Tree"]
   [entity.FleetUnit.fields.state]
   wire = "unit-node.state"                         # unit-state enum -> string
   type = "QString"
+  [entity.FleetUnit.fields.end_reason]
+  wire = "unit-node.state#end_reason"              # unit-state-finished.end_reason ("" unless Finished)
+  type = "QString"
   [entity.FleetUnit.fields.work]
   wire = "unit-node.work"
   type = "QString"

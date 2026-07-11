@@ -4199,17 +4199,6 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>代理</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>使用者</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -6286,16 +6275,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>解碼 SessionDetail 回應失敗</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>尚未連線到 daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>工作階段拒絕了此命令</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>更新工作階段中繼資料失敗</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9372,16 +9353,8 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
         <translation>解碼 SessionDetail 回應失敗</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>尚未連線到 daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>工作階段拒絕了此命令</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>更新工作階段中繼資料失敗</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9452,17 +9425,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Failed to apply the account settings</source>
         <translation>套用帳戶設定失敗</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>代理</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>使用者</translation>
     </message>
 </context>
 <context>

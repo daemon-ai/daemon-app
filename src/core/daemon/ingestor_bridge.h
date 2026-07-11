@@ -39,6 +39,7 @@ namespace daemonapp::daemon {
         out.session = in.session;
         out.rev = in.rev;
         out.hasRev = (in.rev != 0);
+        out.originOp = in.originOp; // §10.3 carrier 3: threads into the SessionGet fetch
         break;
     case WK::RosterChanged:
         out.kind = MK::RosterChanged;
@@ -91,6 +92,7 @@ namespace daemonapp::daemon {
         out.convChange = in.convChange;
         out.rev = in.rev;
         out.hasRev = (in.rev != 0);
+        out.originOp = in.originOp; // §10.3 carrier 3: stamps the removed-tombstone / ConvGet
         break;
     case WK::MembershipChanged:
         out.kind = MK::MembershipChanged;

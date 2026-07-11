@@ -111,6 +111,7 @@ CREATE TABLE m_fleet_units(
   id TEXT NOT NULL,
   kind TEXT,
   state TEXT,
+  end_reason TEXT,
   work TEXT,
   profile TEXT,
   session TEXT,

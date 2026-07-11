@@ -124,6 +124,7 @@ inline constexpr FieldProvenance kProvenanceTable[] = {
     { EntityKind::FleetUnit, "FleetUnit", "id", "unit-node.id", false },
     { EntityKind::FleetUnit, "FleetUnit", "kind", "unit-node.kind", false },
     { EntityKind::FleetUnit, "FleetUnit", "state", "unit-node.state", false },
+    { EntityKind::FleetUnit, "FleetUnit", "end_reason", "unit-node.state#end_reason", false },
     { EntityKind::FleetUnit, "FleetUnit", "work", "unit-node.work", false },
     { EntityKind::FleetUnit, "FleetUnit", "profile", "unit-node.profile", false },
     { EntityKind::FleetUnit, "FleetUnit", "session", "unit-node.session", false },

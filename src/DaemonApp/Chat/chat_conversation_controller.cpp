@@ -3,17 +3,13 @@
 
 #include "chat_conversation_controller.h"
 
+#include "mirror/chat_window_model.h"
+#include "mirror/mirror_service.h"
 #include "transports/ichat_service.h"
 
 #include <QAbstractItemModel>
-#include <QStringList>
-
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
-#include "mirror/chat_window_model.h"
-#include "mirror/mirror_service.h"
-
 #include <QChar>
-#endif
+#include <QStringList>
 
 namespace {
 
@@ -171,10 +167,8 @@ QString ChatConversationController::projectMarkdown(const QVariantList& rows) {
 }
 
 // ---------------------------------------------------------------------------
-// Mirror read path (M2) — compiled only where the substrate is built; the
-// legacy service path above is the fallback everywhere else (mock until A8).
+// Mirror read path (M2 → AD): unconditional — the mirror is the only data path.
 // ---------------------------------------------------------------------------
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
 
 bool ChatConversationController::canLoadEarlier() const {
     const auto* wm = static_cast<const mirror::ChatWindowModel*>(m_timeline);
@@ -263,15 +257,3 @@ void ChatConversationController::reprojectFromTimeline() {
     m_markdown = blocks.join(QStringLiteral("\n\n"));
     emit markdownChanged();
 }
-
-#else // !DAEMON_APP_HAVE_MIRROR_SUBSTRATE — legacy-only stacks (no mirror lens available)
-
-bool ChatConversationController::canLoadEarlier() const {
-    return false;
-}
-void ChatConversationController::loadEarlier() {}
-void ChatConversationController::rebindTimeline() {}
-void ChatConversationController::teardownTimeline() {}
-void ChatConversationController::reprojectFromTimeline() {}
-
-#endif

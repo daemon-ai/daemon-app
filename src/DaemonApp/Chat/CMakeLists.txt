@@ -29,13 +29,9 @@ target_link_libraries(da_chat_view
         daemon-app::warnings
 )
 
-# mirror A5 (spec 09 wave M2): the chat timeline reads the mirror's ChatWindowModel where the
-# substrate is built; substrate-less stacks keep the legacy IChatService rows path (the .cpp
-# forks on this define — the header layout never changes).
-if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
-    target_link_libraries(da_chat_view PRIVATE
-        daemon-app::mirror_lens
-        daemon-app::mirror_ingestor
-    )
-    target_compile_definitions(da_chat_view PRIVATE DAEMON_APP_HAVE_MIRROR_SUBSTRATE=1)
-endif()
+# mirror A5 → AD: the chat timeline reads the mirror's ChatWindowModel (unconditional — the
+# mirror is the only data path; the substrate-less legacy rows fork was deleted).
+target_link_libraries(da_chat_view PRIVATE
+    daemon-app::mirror_lens
+    daemon-app::mirror_ingestor
+)

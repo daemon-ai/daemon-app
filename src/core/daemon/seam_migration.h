@@ -77,7 +77,7 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      SeamMigrationStatus::DaemonAligned},
     {"ISessionRoster + IDashboard + IApprovalsInbox", "SessionsQuery / Tree / ApprovalsPending",
      "LANDED (Phase 5): DaemonApprovalsInbox + DaemonSessionRoster (offline-first over the "
-     "CachedSessionStore projection) + DaemonDashboard (counters derived from roster/fleet/"
+     "MirrorSessionStore projection) + DaemonDashboard (counters derived from roster/fleet/"
      "approvals, health from the connection). Wired in daemon mode. Degraded (presentation only, "
      "not domain re-derivation): suspend/resume is a client-local cosmetic overlay and "
      "tokens/rewindable are placeholders - no session-lifecycle / per-session-token wire op yet.",

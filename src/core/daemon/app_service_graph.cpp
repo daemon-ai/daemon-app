@@ -10,7 +10,6 @@
 #include "config/mock_daemon_config.h"
 #include "connection/iconnection_service.h"
 #include "connection/mock_connection_service.h"
-#include "daemon/cached_session_store.h"
 #include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_auth_flow_service.h"
@@ -20,6 +19,7 @@
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_contacts_service.h"
 #include "daemon/daemon_dashboard.h"
+#include "daemon/daemon_fetch_executor.h"
 #include "daemon/daemon_fs_service.h"
 #include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_persons_service.h"
@@ -33,23 +33,28 @@
 #include "daemon/daemon_transport_registry.h"
 #include "daemon/engine_identity.h"
 #include "daemon/feedback_repository.h"
+#include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
 #include "daemon/mirror_fleet_tree.h" // G2 (M5): mirror-projected fleet TREE (replaces DaemonFleetTree)
+#include "daemon/mirror_session_store.h"   // mirror A7 (M4): the 6->1 session store projection
+#include "daemon/mirror_transcript_sink.h" // A7T (M4 sub-step 6): engine transcript -> mirror
+#include "daemon/mock_scenario.h"          // mirror A8 (M5): the mock seed-scenario catalog
+#include "daemon/mock_scenario_host.h"     // mirror A8 (M5): the mock scenario driver (Seeder)
 #include "daemon/node_api_client.h"
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
 #include "daemon/subscription_manager.h"
-#include "daemonnet/mock_fleet_source.h"
 #include "feedback/mock_feedback.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/mock_approvals_inbox.h"
 #include "fleet/mock_dashboard.h"
-#include "fleet/mock_fleet_tree.h"
 #include "fs/local_disk_fs_service.h"
+#include "local_database.h"
 #include "memory/mock_memory_service.h"
+#include "mirror/mirror_service.h"
 #include "models/mock_model_catalog.h"
 #include "models/mock_provider_catalog.h"
 #include "nav/nav_controller.h"
-#include "persistence/in_memory_session_store.h"
+#include "outbox.h"
 #include "profiles/mock_profile_store.h"
 #include "session/mock_checkpoint_timeline.h"
 #include "session/mock_session_settings.h"
@@ -61,37 +66,25 @@
 #include "transports/mock_presence_service.h"
 #include "transports/mock_transport_registry.h"
 #include "update/update_manager.h"
-
-#include <memory>
-#include <QByteArray>
-#include <QDateTime>
-#include <QDebug>
-#include <QFile>
-#include <QString>
-#include <QtGlobal>
-
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
-#include "daemon/daemon_fetch_executor.h"
-#include "daemon/ingestor_bridge.h" // translateNodeEvent (DecodedNodeEvent -> mirror::NodeEvent)
-#include "daemon/mirror_session_store.h"   // mirror A7 (M4): the 6->1 session store projection
-#include "daemon/mirror_transcript_sink.h" // A7T (M4 sub-step 6): engine transcript -> mirror
-#include "daemon/mock_scenario.h"          // mirror A8 (M5): the mock seed-scenario catalog
-#include "daemon/mock_scenario_host.h"     // mirror A8 (M5): the mock scenario driver (Seeder)
-#include "local_database.h"
-#include "mirror/mirror_service.h"
-#include "outbox.h"
 #include "verb_class.h"
 
+#include <memory>
+#include <optional>
+#include <QByteArray>
 #include <QCryptographicHash>
+#include <QDateTime>
+#include <QDebug>
 #include <QDir>
+#include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
-#endif
+#include <QString>
+#include <QtGlobal>
+#include <QTimer>
 
 namespace daemonapp::daemon {
 
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
 namespace {
 
 // Per-identity mirror-db paths (spec 09 §4.5), matching the DaemonCacheStore / LocalDatabase
@@ -127,7 +120,6 @@ private:
 };
 
 } // namespace
-#endif
 
 ServiceMode serviceModeFromEnvironment(ServiceMode fallback) {
     const QByteArray raw = qgetenv("DAEMON_APP_SERVICE_MODE");
@@ -164,27 +156,16 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // firstRun + accounts + modelCatalog + profiles are constructed per-mode below (after the
     // repositories the daemon-backed services need); firstRun binds the resulting modelCatalog for
     // inference readiness.
-    // The mock fleet/roster/session seed (MockFleetSource): the source the fleet/roster mocks + the
-    // mock session store project from (M3 — routing/integrations now live on the mirror; the
-    // deleted mock net's routing + transports-tree + patch-bay are gone). In daemon mode the
-    // fleet/roster/store below are deleted + rebuilt daemon-backed, so this seed is used only in
-    // mock mode; building it unconditionally keeps the pre-mode-branch surfaces simple.
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
-    // mirror A8 (spec 09 §9, M5): the mock SCENARIO is the only mock seed source — resolved once,
-    // feeding BOTH the legacy delegate stores (its SeedBundle, here) and the mock mirror (its
-    // canonical seed, in the mirror block below), so the two sides' session ids provably agree
-    // (the delegated content() join depends on it). Daemon mode gets an empty placeholder (the
-    // pre-branch mock services it feeds are deleted + rebuilt daemon-backed below).
+    // mirror A8 (spec 09 §9, M5) → AD: the mock SCENARIO is the only mock seed source — resolved
+    // once; its canonical mirror seed (derived from the ONE SeedBundle declaration) feeds the
+    // mock mirror in the mirror block below. The legacy delegate stores died in AD; the fleet
+    // TREE is a MirrorFleetTree over the seeded/ingested store in BOTH modes (built per mode in
+    // the mirror blocks). Daemon mode gets an empty placeholder scenario.
     const MockScenario mockScenario =
         mode == ServiceMode::Daemon ? MockScenario{} : mockScenarioFromEnvironment();
-    auto* fleetSource = new daemonnet::MockFleetSource(mockScenario.bundle, owner);
-#else
-    auto* fleetSource = new daemonnet::MockFleetSource(owner);
-#endif
     // mirror A8 (M5): roster + dashboard are built at the END of this factory in BOTH modes — the
     // roster projects the final storeMirror (the 6→1 read everywhere; MockSessionRoster died with
     // the cutover) and the dashboard observes the FINAL seam pointers.
-    graph.fleetTree = new fleet::MockFleetTree(fleetSource, owner);
     graph.approvals = new fleet::MockApprovalsInbox(owner);
     // [wave2:app-approvals-safety] D2: tool inventory starts as the canned mock; the daemon branch
     // below REPLACES it with the repo-backed DaemonToolInventory (ToolList).
@@ -252,10 +233,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.authRepository = new AuthRepository(graph.nodeApi, graph.cache, owner);
 
     if (daemonConnection != nullptr) {
-        // Daemon mode reads sessions through the cache projection rather than the local sqlite
-        // store, and kicks a SessionsQuery once the Health probe reports the daemon is ready so
-        // the cache (and therefore the UI) populates end-to-end.
-        graph.store = new CachedSessionStore(graph.cache, graph.sessions, owner);
         // User feedback + telemetry consent (wire v32): replace the mock seam with the
         // daemon-backed adapter over FeedbackSubmit / TelemetryConsentGet/Set. The mock built above
         // is parented to `owner`; drop it for the daemon one. Consent is seeded on connect-ready
@@ -307,12 +284,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // FleetRepository stays as the node-authoritative control seam (pause/resume/scale) the
         // MirrorFleetTree delegates to; the mock fleetTree built above is swapped there.
         // L3 node-wide event feed (daemon-sync-protocol §5): one EventsSince stream that routes
-        // out-of-focus changes (roster/meta -> debounced roster refetch + tree re-query, approvals
-        // -> badge, downloads -> models, session-advanced -> focused-engine nudge, resync ->
-        // baseline) so the client stops polling and stops full-refetching on every change.
-        graph.subscriptions = new SubscriptionManager(
-            graph.nodeApi, graph.sessions, graph.approvalRepository, graph.models, graph.cache,
-            graph.fleetRepository, graph.profileRepository, owner);
+        // out-of-focus changes for the NON-MIGRATED repo domains (approvals badge, downloads,
+        // catalog, profiles, session-detail rehydrate, focused-engine nudges). The mirror
+        // ingestor consumes the SAME wire events for every migrated domain (roster/fleet/routing/
+        // chat/persons/contacts — AD).
+        graph.subscriptions =
+            new SubscriptionManager(graph.nodeApi, graph.sessions, graph.approvalRepository,
+                                    graph.models, graph.cache, graph.profileRepository, owner);
         // Daemon-backed filesystem: replace the dev local-disk seam over the NodeApi fs_* ops - the
         // only path that reaches a remote/embedded host's workspace. The common LocalDiskFsService
         // built above is parented to `owner`; drop it for the daemon one.
@@ -371,11 +349,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // re-listed on the routing refresh triggers wired in the mirror block below. Its own
         // in-memory cache is now dead (residual debt; see LEDGER-a6).
         graph.routingRepository = new RoutingRepository(graph.nodeApi, graph.cache, owner);
-        // [waveB:app-v30] D2: the feed's MembershipChanged (self removal) re-lists the routing pins
-        // (the node reconciled them); wired now that the routing repo exists.
-        if (graph.subscriptions != nullptr) {
-            graph.subscriptions->setRoutingRepository(graph.routingRepository);
-        }
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -403,12 +376,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         auto wasReady = std::make_shared<bool>(false);
         QObject::connect(
             graph.connection, &connection::IConnectionService::stateChanged, graph.sessions,
-            [conn = graph.connection, sessions = graph.sessions, profiles = graph.profileRepository,
+            [conn = graph.connection, profiles = graph.profileRepository,
              credentials = graph.credentialRepository, models = graph.models,
              providers = graph.providerRepository, approvals = graph.approvalRepository,
-             subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
-             transports = graph.transportRepository, routing = graph.routingRepository,
-             agents = graph.agents, authRepo = graph.authRepository,
+             subscriptions = graph.subscriptions, fs = graph.fs,
+             transports = graph.transportRepository, agents = graph.agents,
+             authRepo = graph.authRepository,
              toolRepo = graph.toolRepository,   // [wave2:app-approvals-safety] D2
              gateway = graph.gatewayRepository, // Phase F: node OpenAI-gateway status
              feedback = daemonFeedback,         // wire v32: seed telemetry consent
@@ -419,7 +392,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
                     // surfaces fresh incrementally instead of re-running this storm on every
                     // change.
-                    sessions->refreshSessions();
                     profiles->refreshProfiles();
                     credentials->refreshList();
                     models->refreshModels();
@@ -428,7 +400,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     approvals->refreshPending();
                     toolRepo->refreshTools(); // [wave2:app-approvals-safety] D2 tool inventory
                     fs->listRoots();          // populate the daemon-backed file roots
-                    fleet->refreshTree(QStringLiteral("baseline")); // PRO-9: baseline the tree
                     // Channels: the adapter picker + configured accounts/status dots (EIO-1/3/9).
                     transports->refreshAdapters();
                     transports->refreshInstances();
@@ -439,12 +410,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // [integrations wire v38] The node's person/metacontact registry (the Persons
                     // tree section); refetched incrementally on the PersonsChanged feed event.
                     persons->refresh();
-                    // Routing (M3): the reconnect staleness scan already fetches the pin table into
-                    // the mirror (routing is a scanned collection); this repo re-list only keeps
-                    // the dead cache warm + fires routesRefreshed → the mirror re-fetch wired
-                    // below. Per-account rooms follow the instances refresh (wired in the mirror
-                    // block).
-                    routing->refreshChats();
+                    // Roster/fleet/routing baselines are the mirror ingestor's (the reconnect
+                    // staleness scan / Bootstrap covers every scanned collection — AD).
                     // Foreign engines: the catalog for the engine picker + Agents settings.
                     agents->refreshCatalog();
                     // Interactive-auth family discovery (the AuthFlowSheet's provider list).
@@ -476,10 +443,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                "still mock: daemonConfig, memory; node-blocked (NO wire op yet - rendered EMPTY, "
                "not mock demo data): cron, routing delivery/handover panel.";
     } else {
-        // Mock mode: a non-persisted in-memory store re-seeded fresh from the mock fleet seed each
-        // run (deterministic, always matches the current seed - no stale-db drift). The sidebar /
-        // list / transcript and the Fleet/Sessions pages all reflect the one MockFleetSource seed.
-        graph.store = new persistence::InMemorySessionStore(fleetSource, owner);
         graph.modelCatalog = new models::MockModelCatalog(owner);
         graph.providerCatalog = new models::MockProviderCatalog(graph.modelCatalog, owner);
         graph.accounts = new accounts::MockAccountsService(owner);
@@ -582,20 +545,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.update = new update::UpdateManager(owner);
     graph.update->setSettings(graph.settings);
 
-    // mirror A7 (M4): the ported session/fleet consumers bind `storeMirror`. The composition-time
-    // fallback IS the legacy store — mock mode (null mirror until A8's seeder) and substrate-less
-    // stacks keep rendering with zero per-consumer conditionals (§9 "mock keeps working"). The
-    // daemon+substrate branch below overrides it with the MirrorSessionStore projection.
-    graph.storeMirror = graph.store;
-
-#ifdef DAEMON_APP_HAVE_MIRROR_SUBSTRATE
-    // ---- mirror A5 (spec 09 wave M2): live-wire the ingestor beside the legacy paths ----
-    // Dual-write discipline (§13 M0–M2): the SubscriptionManager + repositories keep writing their
-    // caches; the mirror is fed in parallel and the M2 read lenses (chat/persons/contacts/
-    // conversation) read it. The ingestor is the single writer (§5.1). DAEMON MODE ONLY at M2:
-    // mock mode leaves mirrorService/outbox null so the chat surfaces fall back to the legacy
-    // mock seams (§9 "mock keeps working"); A8's seeder feeds the mirror in mock and removes the
-    // fallback.
+    // ---- the mirror data path (spec 09 §5; AD: unconditional, no null-mirror fallback) ----
+    // Daemon mode: the ingestor is the single writer over the live wire (§5.1); mock mode: the
+    // scenario host's Seeder is the single writer (§9). Both branches bind `storeMirror` to the
+    // real MirrorSessionStore projection — every session/fleet consumer reads the ONE mirror.
     if (daemonConnection != nullptr) {
         auto* svc = new mirror::MirrorService(owner);
         // Persistent per-identity boot (§4.5): mirror-<id>.db opens under the LAST authenticated
@@ -698,13 +651,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                 new DaemonFetchExecutor(graph.nodeApi, svc->ingestor(), svc->scheduler(), owner);
             svc->setFetchExecutor(graph.mirrorExecutor);
 
-            // Routing (M3): the pin table lives on the mirror store. A node-acked routing mutation
-            // (or the connect-ready re-list) fires RoutingRepository::routesRefreshed → re-fetch
-            // the pin table into the mirror (single writer: the ingestor, not the repo, writes
-            // rows). Per-account bindable rooms follow the transport instance list
-            // (TransportRooms).
+            // Routing (M3 → AD): the pin table lives on the mirror store. A node-acked routing
+            // mutation fires RoutingRepository::mutationApplied → re-fetch the pin table into
+            // the mirror (single writer: the ingestor, not the repo, writes rows). Per-account
+            // bindable rooms follow the transport instance list (TransportRooms).
             if (graph.routingRepository != nullptr) {
-                QObject::connect(graph.routingRepository, &RoutingRepository::routesRefreshed, svc,
+                QObject::connect(graph.routingRepository, &RoutingRepository::mutationApplied, svc,
                                  [svc] { svc->ingestor().refetchRouting(); });
             }
             if (graph.transportRepository != nullptr) {
@@ -718,20 +670,23 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                  });
             }
 
-            // mirror A7 (M4): the mirror-backed session store the ported consumers bind. Session
-            // ROWS project the mirror `sessions` table; mutations + transcript reads delegate to
-            // the legacy CachedSessionStore (one wire mutation path; transcript re-homing is the
-            // wave's LAST sub-gate). The legacy `store` stays live for unported consumers
-            // (dual-write; parity asserts guard the two row-sets until deletion).
-            graph.storeMirror =
-                new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
+            // mirror A7 (M4) → AD: the mirror-backed session store every consumer binds. Session
+            // ROWS project the mirror `sessions` table; content() projects the mirror transcript
+            // window (G2); pin/archive/rename ride the session-meta OUTBOX lane (§6.4/§6.6);
+            // create rides the DIRECT SessionCreate seam through the repository (§7). The legacy
+            // ISessionStore delegation is GONE.
+            auto* mirrorStore =
+                new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.sessions, owner);
+            mirrorStore->setOutbox(graph.outbox);
+            graph.storeMirror = mirrorStore;
 
-            // A7T (M4 sub-step 6) + G2 (M5): the turn engine dual-writes its coalesced transcript
-            // blocks into w_transcript_blocks through this sink (the ingestor stays the single
-            // writer, §5.1). G2 closed the entity-field gap (args_summary +
-            // detail_kind/detail_body), so MirrorSessionStore::content() now projects the mirror
-            // window (S1-S9 parity green).
-            graph.transcriptMirrorSink = new MirrorTranscriptSink(&svc->ingestor(), owner);
+            // A7T (M4 sub-step 6) → AD: the turn engine's ONE mirror seam — coalesced transcript
+            // blocks write through this sink into w_transcript_blocks (the ingestor stays the
+            // single writer, §5.1; S1-S9 byte-parity), and the engine's roster enrichment reads
+            // (child title / end-reason) answer from the mirror snapshot (the legacy
+            // roster/fleet cache reads died with AD).
+            graph.transcriptMirrorSink =
+                new MirrorTranscriptSink(&svc->ingestor(), &svc->store(), owner);
 
             // G2 (M5): the fleet TREE now projects the ONE mirror FleetUnit entity (the 6→1 tree
             // half), replacing the legacy DaemonFleetTree/daemon_fleet_units cache. Reads are pure
@@ -757,22 +712,43 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                  }
                              });
 
-            // The outbox drains ConvSend to the wire on a manual tap (always) and unattended on an
-            // api/39 reconnect (§6.8). The send carries the op_id (§10.3) so a retry/replay is
-            // dedup-safe: the node returns the original result for a duplicate (principal, op_id),
-            // and stamps `origin_op` provenance for the eventual confirm (§6.6). The ack/rejection
-            // below advances the lane state.
+            // The outbox drains its mutation lanes to the wire on a manual tap (always) and
+            // unattended on an api/39 reconnect (§6.8). Every send carries the op_id (§10.3) so a
+            // retry/replay is dedup-safe: the node returns the original result for a duplicate
+            // (principal, op_id), and stamps `origin_op` provenance for the eventual confirm
+            // (§6.6). The ack/rejection below advances the lane state, verb-agnostic.
             QObject::connect(
                 graph.outbox, &mirror::Outbox::sendRequested, graph.nodeApi,
                 [nodeApi = graph.nodeApi](const mirror::PendingOp& op) {
-                    if (op.verb != QStringLiteral("ConvSend")) {
+                    const QJsonObject args = QJsonDocument::fromJson(op.payload).object();
+                    QByteArray req;
+                    if (op.verb == QStringLiteral("ConvSend")) {
+                        req = NodeApiCodec::encodeConvSendRequest(
+                            args.value(QStringLiteral("transport")).toString(),
+                            args.value(QStringLiteral("conv")).toString(),
+                            args.value(QStringLiteral("message")).toString(), op.opId);
+                    } else if (op.verb == QStringLiteral("SessionUpdateMeta")) {
+                        // AD (§6.4 session-meta lane): the tri-state patch — only the touched
+                        // key(s) ride the wire SessionMetaPatch (key presence = Some).
+                        const QJsonObject& a = args;
+                        std::optional<bool> pinned;
+                        std::optional<bool> archived;
+                        std::optional<QString> title;
+                        if (a.contains(QStringLiteral("pinned"))) {
+                            pinned = a.value(QStringLiteral("pinned")).toBool();
+                        }
+                        if (a.contains(QStringLiteral("archived"))) {
+                            archived = a.value(QStringLiteral("archived")).toBool();
+                        }
+                        if (a.contains(QStringLiteral("title"))) {
+                            title = a.value(QStringLiteral("title")).toString();
+                        }
+                        req = NodeApiCodec::encodeSessionUpdateMetaRequest(
+                            a.value(QStringLiteral("session")).toString(), pinned, archived, title,
+                            op.opId);
+                    } else {
                         return; // other lanes are wired by their owners; turn-prompt is dispatch
                     }
-                    const QJsonObject args = QJsonDocument::fromJson(op.payload).object();
-                    const QByteArray req = NodeApiCodec::encodeConvSendRequest(
-                        args.value(QStringLiteral("transport")).toString(),
-                        args.value(QStringLiteral("conv")).toString(),
-                        args.value(QStringLiteral("message")).toString(), op.opId);
                     nodeApi->sendRequest(req, QStringLiteral("outbox/") + op.opId);
                 });
             QObject::connect(graph.nodeApi, &NodeApiClient::responseReady, graph.outbox,
@@ -799,6 +775,21 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                      outbox->onTransientFailure(corr.mid(7), msg);
                                  }
                              });
+
+            // Accepted-state disposition sweep (§6.6): an acked op whose provenance echo was
+            // superseded (or coalesced away) is disposed after the grace window instead of
+            // lingering in the lens forever. Same policy/cadence as the mock host's sweep.
+            {
+                auto* expirySweep = new QTimer(owner);
+                expirySweep->setInterval(60'000);
+                QObject::connect(expirySweep, &QTimer::timeout, graph.outbox,
+                                 [outbox = graph.outbox] {
+                                     constexpr qint64 kAcceptedGraceMs = 10LL * 60 * 1000;
+                                     outbox->expireAcceptedOps(QDateTime::currentMSecsSinceEpoch(),
+                                                               kAcceptedGraceMs);
+                                 });
+                expirySweep->start();
+            }
         }
     } else {
         // ---- mirror A8 (spec 09 §9, wave M5): the MOCK mirror — same store, same journal, same
@@ -847,22 +838,32 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                              });
         }
 
-        // mirror A8 (M5): mock storeMirror is the REAL MirrorSessionStore over the seeded mirror —
-        // the A7 composition-time aliasing is deleted; the 6→1 projection now serves BOTH modes.
-        // content() + mutations keep DELEGATING to the legacy in-memory store (A7T re-homes that
-        // seam in parallel; the scenario derives the mirror ids from the same bundle so the
-        // delegated content() join holds).
-        graph.storeMirror =
-            new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
-    }
-#endif
+        // mirror A8 (M5) → AD: mock storeMirror is the REAL MirrorSessionStore over the seeded
+        // mirror. Pin/archive/rename ride the SAME session-meta outbox lane as daemon mode — the
+        // mock host answers from the scenario's VerbScript and echoes the patched row provenance-
+        // stamped (§6.6); create rides the createRequested → scripted-SessionCreate seam (the
+        // host mints + seeds + reports back). No legacy delegate anywhere.
+        auto* mirrorStore = new MirrorSessionStore(&svc->store(), &svc->ingestor(),
+                                                   /*sessions=*/nullptr, owner);
+        mirrorStore->setOutbox(graph.outbox);
+        QObject::connect(mirrorStore, &MirrorSessionStore::createRequested, graph.mockHost,
+                         &MockScenarioHost::onCreateSessionRequested);
+        QObject::connect(graph.mockHost, &MockScenarioHost::sessionCreated, mirrorStore,
+                         &MirrorSessionStore::onNodeSessionCreated);
+        graph.storeMirror = mirrorStore;
 
-    // The ops-hub session roster projects storeMirror in BOTH modes (M4 daemon; M5 mock — the
-    // seeded MirrorSessionStore, or the legacy alias on substrate-less stacks): the 6→1 session
-    // read everywhere, MockSessionRoster deleted. The repository rides along for the operator
-    // steer/startTurn/interrupt ops (F4; inert without a connection) and the archived-scope
-    // refetch (F6). The dashboard observes the FINAL seam pointers; mock keeps the MockDashboard
-    // presentation (seeded activity feed) over the same interfaces.
+        // AD: the fleet TREE is the SAME mirror projection as daemon mode, over the scenario's
+        // seeded fleet_units (child_ids edges derived from the ONE bundle). Null control seam —
+        // pause/resume/scale are inert in mock (matching the deleted MockFleetTree's posture);
+        // refresh() rides the ingestor no-op pager.
+        graph.fleetTree =
+            new fleet::MirrorFleetTree(&svc->store(), &svc->ingestor(), nullptr, owner);
+    }
+
+    // The ops-hub session roster projects storeMirror in BOTH modes: the 6→1 session read
+    // everywhere. The repository rides along for the operator steer/startTurn/interrupt ops
+    // (F4; inert without a connection). The dashboard observes the FINAL seam pointers; mock
+    // keeps the MockDashboard presentation (seeded activity feed) over the same interfaces.
     graph.roster = new fleet::DaemonSessionRoster(graph.storeMirror, graph.sessions, owner);
     graph.dashboard =
         daemonConnection != nullptr

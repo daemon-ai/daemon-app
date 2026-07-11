@@ -4203,17 +4203,6 @@ Obrigado — prosseguindo com: %1
     </message>
 </context>
 <context>
-    <name>MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agente</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Usuário</translation>
-    </message>
-</context>
-<context>
     <name>MockToolInventory</name>
     <message>
         <source>Read and edit workspace files</source>
@@ -6290,16 +6279,8 @@ Uma página genérica, não relacionada a transcrições, hospedada pela mesma f
         <translation>Falha ao decodificar a resposta de SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Não conectado a um daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>A sessão rejeitou o comando</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Falha ao atualizar os metadados da sessão</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9380,16 +9361,8 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
         <translation>Falha ao decodificar a resposta de SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Não conectado a um daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>A sessão rejeitou o comando</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Falha ao atualizar os metadados da sessão</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9460,17 +9433,6 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Falha ao aplicar as configurações da conta</translation>
-    </message>
-</context>
-<context>
-    <name>daemonnet::MockFleetSource</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agente</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Usuário</translation>
     </message>
 </context>
 <context>

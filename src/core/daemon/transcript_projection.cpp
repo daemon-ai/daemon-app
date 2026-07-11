@@ -11,7 +11,7 @@
 namespace daemonapp::daemon {
 
 // A7T/G2: the msg-fence transcript projection over mirror `TranscriptBlock` window items (seq
-// order). Ported grammar-for-grammar from `CachedSessionStore::content()` so a re-projection is
+// order). Ported grammar-for-grammar from the deleted legacy cache projection so a re-projection is
 // byte-stable and byte-IDENTICAL to the legacy cache projection. G2 (M5) enriched the entity with
 // `args_summary` + `detail_kind`/`detail_body`, closing the A7T "ENTITY-FIELD GAP": tool fences
 // with args and structured results now reproduce exactly (S7/S8 parity).
@@ -82,7 +82,7 @@ QString projectTranscriptBlocks(const std::vector<mirror::TranscriptBlock>& bloc
                              {QStringLiteral("argsSummary"), b.args_summary},
                              {QStringLiteral("status"), status}};
             // Fold the result: full content in `summary`, typed detail (kind + UTF-8 body) — the
-            // exact shape (and order) the legacy CachedSessionStore::content() emitted (D1).
+            // exact shape (and order) the deleted legacy cache projection emitted (D1).
             if (result != nullptr) {
                 if (!result->summary.isEmpty()) {
                     tool.insert(QStringLiteral("summary"), result->summary);

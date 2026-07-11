@@ -102,11 +102,15 @@ public:
                                   bool isFinalPage);
     // [api/39 §10.2] SessionsQuery since_rev delta: upsert changed + tombstone `removed`, no
     // replace-and-prune; records the roster `rev` on markFresh (mirrors deliverConversationsDelta).
+    // [§10.3 carrier 2] `originOps` (session id → op_id) stamps per-row provenance so the outbox
+    // lands the matching ops (§6.6).
     void deliverSessionsDelta(const std::vector<Session>& changed, const QStringList& removed,
-                              quint64 rev, bool isFinalPage);
+                              quint64 rev, bool isFinalPage,
+                              const QHash<QString, QString>& originOps = {});
     // SessionGet single session (M4, keyed hydration): upsert the fully-hydrated row (base fields +
-    // model + checkpoints). Never prunes siblings — a keyed patch, not a list.
-    void deliverSession(const Session& session);
+    // model + checkpoints). Never prunes siblings — a keyed patch, not a list. [§10.3 carrier 3]
+    // `originOp` is the triggering SessionMetaChanged's provenance, threaded through the fetch job.
+    void deliverSession(const Session& session, const QString& originOp = QString());
     // Tree page (M4): the supervision fleet is a GLOBAL list — full-list replace-and-prune over all
     // fleet_units on the final page. `rev` (the tree revision) is recorded on markFresh so the
     // FleetChanged rung-1 skip-gate can skip a rev-unchanged event (§5.5).

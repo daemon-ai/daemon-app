@@ -2,11 +2,15 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "daemon/daemon_session_roster.h"
-#include "daemonnet/mock_fleet_source.h"
+#include "daemon/mirror_fleet_tree.h"
+#include "daemon/mirror_session_store.h"
+#include "daemon/mock_scenario.h"
 #include "fleet/mock_approvals_inbox.h"
 #include "fleet/mock_dashboard.h"
-#include "fleet/mock_fleet_tree.h"
-#include "persistence/in_memory_session_store.h"
+#include "local_database.h"
+#include "mirror/mirror_service.h"
+#include "mirror/seeder.h"
+#include "outbox.h"
 #include "uimodels/variant_list_model.h"
 
 #include <QtTest/QtTest>
@@ -14,11 +18,12 @@
 using namespace fleet;
 using uimodels::VariantListModel;
 
-// Guards the surviving Phase 6 ops mocks after the M5 cutover: fleet pause/resume
-// (MockFleetTree), approvals approve/deny, and the MockDashboard counter derivation —
-// now observed over the SAME roster implementation both modes run (DaemonSessionRoster
-// projecting an ISessionStore; MockSessionRoster died with M5). The fleet/session rows
-// derive from the one seed bundle, so the tests reference its ids (`s-help`, `n-coder`).
+// Guards the surviving Phase 6 ops surfaces after AD: fleet pause/resume (the client-local
+// overlay on the MIRROR fleet tree), approvals approve/deny, and the MockDashboard counter
+// derivation — observed over the SAME roster + tree implementations both modes run
+// (DaemonSessionRoster + MirrorFleetTree over the scenario-seeded mirror; the legacy
+// InMemory/MockFleet fixtures died with AD). Row ids reference the one seed bundle
+// (`s-help`, `n-coder`).
 class TestFleetOps : public QObject {
     Q_OBJECT
 
@@ -26,8 +31,12 @@ class TestFleetOps : public QObject {
 
 private slots:
     void fleetPauseResume() {
-        daemonnet::MockFleetSource net;
-        MockFleetTree f(&net);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        mirror::Seeder seeder(svc.store());
+        seeder.seed(daemonapp::daemon::mockScenarioByName(QStringLiteral("default")).mirror.seed);
+        fleet::MirrorFleetTree f(&svc.store(), &svc.ingestor(), nullptr);
+
         f.pause(QStringLiteral("n-coder"));
         QCOMPARE(asModel(f.nodes())
                      ->at(asModel(f.nodes())->indexOfId(QStringLiteral("n-coder")))
@@ -51,13 +60,20 @@ private slots:
     }
 
     // The mock dashboard derives its counters live from the seam interfaces — observed over the
-    // one roster implementation (DaemonSessionRoster over the seeded in-memory store, exactly the
-    // mock graph's composition since M5).
+    // one roster implementation (DaemonSessionRoster over the scenario-seeded MIRROR store,
+    // exactly the mock graph's composition since AD).
     void dashboardDerivesCounters() {
-        daemonnet::MockFleetSource net;
-        persistence::InMemorySessionStore store(&net);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        mirror::Seeder seeder(svc.store());
+        seeder.seed(daemonapp::daemon::mockScenarioByName(QStringLiteral("default")).mirror.seed);
+        daemonapp::daemon::MirrorSessionStore store(&svc.store(), &svc.ingestor());
+        mirror::LocalDatabase db(QStringLiteral(":memory:"));
+        mirror::Outbox outbox(&db);
+        outbox.load();
+        store.setOutbox(&outbox);
         DaemonSessionRoster r(&store);
-        MockFleetTree f(&net);
+        fleet::MirrorFleetTree f(&svc.store(), &svc.ingestor(), nullptr);
         MockApprovalsInbox a;
         MockDashboard d(&r, &f, &a);
 
@@ -75,22 +91,36 @@ private slots:
         r.suspend(QStringLiteral("s-help"));
         QVERIFY(d.activeSessions() < activeBefore);
 
-        // Closing archives the session (client-local): it leaves the active roster entirely.
+        // Closing archives the session: the intent rides the session-meta lane (durable op),
+        // and the ROW leaves the roster only when the node's echo lands (§14.7 — never an
+        // optimistic local flip). Simulate the echo through the seeder, as the mock host does.
         const int activeAfterSuspend = d.activeSessions();
         r.close(QStringLiteral("s-design"));
+        const QList<mirror::PendingOp> ops = outbox.ops();
+        QCOMPARE(ops.size(), 1);
+        QCOMPARE(ops.first().verb, QStringLiteral("SessionUpdateMeta"));
+        QCOMPARE(d.activeSessions(), activeAfterSuspend); // no local mutation before the echo
+        const mirror::Session* row =
+            svc.store().snapshot().sessions.find(mirror::SessionKey{QStringLiteral("s-design")});
+        QVERIFY(row != nullptr);
+        mirror::Session archived = *row;
+        archived.archived = true;
+        seeder.upsertSession(archived, ops.first().opId);
         QVERIFY(d.activeSessions() < activeAfterSuspend);
         QVERIFY(changed.count() >= 1);
     }
 
     // Approvals resolution appends a live activity entry (structural removal on the inbox model).
-    // Roster-driven token totals are gone with the mock roster: the shared roster projection
-    // carries no client-side token data (the aligned mock==daemon degradation), so tokensToday
-    // reports the true zero rather than a mock-only fiction.
+    // Roster-driven token totals stay gone: the shared roster projection carries no client-side
+    // token data (the aligned mock==daemon degradation), so tokensToday reports the true zero.
     void dashboardActivityAndAlignedTokens() {
-        daemonnet::MockFleetSource net;
-        persistence::InMemorySessionStore store(&net);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        mirror::Seeder seeder(svc.store());
+        seeder.seed(daemonapp::daemon::mockScenarioByName(QStringLiteral("default")).mirror.seed);
+        daemonapp::daemon::MirrorSessionStore store(&svc.store(), &svc.ingestor());
         DaemonSessionRoster r(&store);
-        MockFleetTree f(&net);
+        fleet::MirrorFleetTree f(&svc.store(), &svc.ingestor(), nullptr);
         MockApprovalsInbox a;
         MockDashboard d(&r, &f, &a);
 

@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-#include "daemonnet/mock_fleet_source.h"
+#include "daemon/mirror_session_store.h"
+#include "mirror/mirror_service.h"
 #include "participants_model.h"
-#include "persistence/in_memory_session_store.h"
 
 #include <QtTest>
 
-using daemonnet::MockFleetSource;
 using participants::ParticipantsModel;
-using persistence::InMemorySessionStore;
 
 // Exercises the right sidebar's Participants section model (the GUI/TUI-shared
-// ParticipantsModel): the collapsible "Participants" header, the participant rows
-// with their green presence dots, and the section fold.
+// ParticipantsModel) over the production store (AD: the InMemory fixture died with the legacy
+// stores). ISessionStore::participants() is empty on every production store since A8 aligned
+// mock to daemon (the mock-only seeded rows were a shape fork), so the section is the header
+// alone — the model must render that truthfully and stay fold/no-store safe. (The row/presence
+// rendering paths keep their coverage epitaph in LEDGER-ad: they become live again only if a
+// participants vertical lands on the mirror.)
 class TestParticipantsModel : public QObject {
     Q_OBJECT
 
@@ -24,60 +26,33 @@ private:
     }
 
 private slots:
-    // Row 0 is the collapsible section header ("Participants").
-    void exposesSectionHeader() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+    // Row 0 is the collapsible section header ("Participants"); the production store carries no
+    // participant rows (the aligned mock==daemon degradation), so the header is all there is.
+    void exposesHeaderOnlyOverProductionStore() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        daemonapp::daemon::MirrorSessionStore store(&svc.store(), &svc.ingestor());
         ParticipantsModel model;
         model.setStore(&store);
 
-        QVERIFY(model.rowCount() >= 1);
+        QCOMPARE(model.rowCount(), 1);
         QVERIFY(roleAt<bool>(model, 0, ParticipantsModel::IsSeparatorRole));
-        QVERIFY(roleAt<bool>(model, 0, ParticipantsModel::HasChildrenRole));
-        QVERIFY(roleAt<bool>(model, 0, ParticipantsModel::ExpandedRole));
         QCOMPARE(roleAt<QString>(model, 0, ParticipantsModel::LabelRole),
                  QStringLiteral("Participants"));
     }
 
-    // The two seeded participants ("Agent"/"User") follow the header, both with a
-    // green ("available") presence dot; the agent flag distinguishes them.
-    void exposesParticipantRows() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
-        ParticipantsModel model;
-        model.setStore(&store);
-
-        QCOMPARE(model.rowCount(), 3); // header + Agent + User
-
-        QCOMPARE(roleAt<QString>(model, 1, ParticipantsModel::LabelRole), QStringLiteral("Agent"));
-        QVERIFY(roleAt<bool>(model, 1, ParticipantsModel::IsAgentRole));
-        QCOMPARE(roleAt<QString>(model, 2, ParticipantsModel::LabelRole), QStringLiteral("User"));
-        QVERIFY(!roleAt<bool>(model, 2, ParticipantsModel::IsAgentRole));
-
-        for (int row = 1; row <= 2; ++row) {
-            QVERIFY(!roleAt<bool>(model, row, ParticipantsModel::IsSeparatorRole));
-            QCOMPARE(roleAt<QString>(model, row, ParticipantsModel::PresenceRole),
-                     QStringLiteral("available"));
-            // Green dot color carried straight to the GUI/TUI renderers.
-            QCOMPARE(roleAt<QString>(model, row, ParticipantsModel::ColorRole),
-                     QStringLiteral("#3fb950"));
-        }
-    }
-
-    // Folding the header hides the participant rows; unfolding restores them.
+    // Folding the (empty) header stays safe and reversible.
     void headerCollapsesAndExpands() {
-        MockFleetSource net;
-        InMemorySessionStore store(&net);
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        daemonapp::daemon::MirrorSessionStore store(&svc.store(), &svc.ingestor());
         ParticipantsModel model;
         model.setStore(&store);
-        QCOMPARE(model.rowCount(), 3);
+        QCOMPARE(model.rowCount(), 1);
 
         model.toggleExpand(0);
-        QCOMPARE(model.rowCount(), 1); // only the header remains
         QVERIFY(!roleAt<bool>(model, 0, ParticipantsModel::ExpandedRole));
-
         model.toggleExpand(0);
-        QCOMPARE(model.rowCount(), 3);
         QVERIFY(roleAt<bool>(model, 0, ParticipantsModel::ExpandedRole));
     }
 

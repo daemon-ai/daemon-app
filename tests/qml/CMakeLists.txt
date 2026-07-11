@@ -256,6 +256,9 @@ target_link_libraries(tst_sidebar
         daemon-app::daemonnet
         daemon-app::fleet
         daemon-app::uimodels
+        # AD: the scenario-seeded mirror store replaces the deleted InMemory fixture.
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 target_compile_definitions(tst_sidebar
     PRIVATE

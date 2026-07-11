@@ -34,38 +34,15 @@ private:
     DaemonCacheStore* m_cache = nullptr;
 };
 
-// Sessions are the first live daemon slice: refreshSessions() issues a SessionsQuery via the
-// NodeApiClient, the response is decoded by NodeApiCodec, and the resulting rows are written into
-// the DaemonCacheStore. UI/adapters read the cache, never the wire.
+// The surviving direct session verb seam (AD): node-authoritative CREATE (SessionCreate — the
+// node mints the id), the operator Submit ops, and the on-demand SessionGet detail hydration.
+// The legacy roster read path + cache feed + SessionUpdateMeta died with AD: roster reads live
+// on the mirror `sessions` table (ingestor-fed); session-meta mutations ride the outbox lane.
 class SessionRepository : public RepositoryBase {
     Q_OBJECT
 
 public:
     SessionRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
-
-    bool upsertCachedSession(const CachedSessionRow& row);
-    [[nodiscard]] QList<CachedSessionRow> cachedSessions() const;
-
-    // Issue a SessionsQuery; on success the cache is updated and sessionsRefreshed() fires.
-    void refreshSessions();
-    // Issue a SessionsQuery scoped to `SessionScope::ByProfile(profileId)` — the per-agent view
-    // (Fleet membership, daemon-supervision-spec §0). The returned rows are merged into the cache
-    // ADDITIVELY (no prune), so an agent-scoped fetch augments the roster without clobbering it;
-    // sessionsRefreshed() fires so the sidebar/list re-project. Encoder-only (the ByProfile arm is
-    // already in the CDDL); no contract change.
-    void refreshSessionsByProfile(const QString& profileId);
-
-    // Issue a SessionsQuery scoped to `SessionScope::Archived` (F6/DEL-6): archived primary
-    // sessions, which the TopLevel roster excludes. Merged ADDITIVELY like ByProfile (a scoped
-    // subset must not clobber the roster cache); the full-roster prune spares archived rows for
-    // the same reason. Encoder-only (the Archived arm is already in the CDDL).
-    void refreshArchivedSessions();
-
-    // Issue a SessionsQuery scoped to `SessionScope::ByTransport(transportId)` (B4/EIO-8): the
-    // sessions routed over one transport instance — the NODE resolves membership (the client
-    // never re-derives it). Rows merge additively; transportSessionsResolved fires ONCE with the
-    // full membership id set so the store can project the ByTransport list scope.
-    void refreshSessionsByTransport(const QString& transportId);
 
     // --- Operator submit (F4/DEL-4, wire-reachable at v28) ------------------------------------
     // Session-addressable Submit ops for ANY session id (delegated children included) — the
@@ -96,34 +73,19 @@ public:
     // projections + subagent title enrichment read this; the wire is never touched here).
     [[nodiscard]] bool cachedDetail(const QString& id, DecodedSessionDetail* out) const;
 
-    // Node-authoritative session-metadata patch (SessionUpdateMeta{session, patch} -> Ok). Each
-    // optional is Some=set, std::nullopt=leave unchanged. NOTHING is written client-side: on Ok the
-    // node emits SessionMetaChanged (debounced roster refetch) and we ALSO issue an immediate
-    // authoritative refreshSessions() so the pin/archive/title reflects the node's stored row. On
-    // Error/transport failure metaUpdateFailed() fires so a rejected change (e.g. Forbidden for a
-    // non-owner) is surfaced, never silently mistaken for applied.
-    void updateSessionMeta(const QString& sessionId, std::optional<bool> pinned,
-                           std::optional<bool> archived, std::optional<QString> title);
-
 signals:
-    void sessionsRefreshed();
+    // A transport-level SessionCreate failure (the create is dead; surfaced, never silent).
     void refreshFailed(const QString& message);
-    // A SessionUpdateMeta was rejected (node ApiError) or failed at the transport. `sessionId`
-    // echoes the target; `message` is the node's reason. The UI surfaces this (GUI toast / TUI
-    // notification) instead of leaving a silent no-op that looks applied.
-    void metaUpdateFailed(const QString& sessionId, const QString& message);
     // A node SessionCreate resolved: `sessionId` is the node-minted id, `profileId` the profile it
     // was bound under (echoed from the request so the auto-select path knows the agent).
     void sessionCreated(const QString& sessionId, const QString& profileId);
     // A SessionGet resolved and cachedDetail(sessionId) is now populated (empty on the null arm).
     void sessionDetailLoaded(const QString& sessionId);
-    // A SessionGet was rejected (node ApiError) or failed at the transport. Dedicated (not folded
-    // into refreshFailed) so a detail-hydration miss is distinguishable from a roster refresh miss.
+    // A SessionGet was rejected (node ApiError) or failed at the transport. Dedicated so a
+    // detail-hydration miss is distinguishable from a create failure.
     void detailFailed(const QString& sessionId, const QString& message);
     // An operator Submit (startTurn/steer/interrupt) was accepted by the node.
     void submitted(const QString& sessionId);
-    // A ByTransport scope fetch resolved: `sessionIds` is the node-decided membership (B4).
-    void transportSessionsResolved(const QString& transportId, const QSet<QString>& sessionIds);
     // An operator Submit was rejected (node ApiError, e.g. Forbidden for a non-owner) or failed
     // at the transport. Surfaced (toast) instead of silently swallowed.
     void submitFailed(const QString& sessionId, const QString& message);
@@ -132,70 +94,29 @@ private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
 
-    // SessionPage handling, split out of handleResponse so the dispatcher stays flat and the
-    // replace/delta cache reconciliation is not nested four deep.
-    void applySessionPage(const QByteArray& responseCbor);
-    // ByProfile page handling: decode + additive upsert (no prune), then emit sessionsRefreshed().
-    void applyByProfilePage(const QByteArray& responseCbor);
-    // Archived page handling (F6): decode + additive upsert (no prune), like ByProfile.
-    void applyArchivedPage(const QByteArray& responseCbor);
-    // ByTransport page handling (B4): additive upsert + membership id accumulation.
-    void applyByTransportPage(const QByteArray& responseCbor);
     // Operator Submit reply (F4): non-Error = accepted -> submitted(); Error -> submitFailed().
     void applySubmitReply(const QString& sessionId, const QByteArray& responseCbor);
-    void pruneSessionsMissingFrom(const QList<CachedSessionRow>& rows);
-    void pruneRemovedSessions(const QList<QString>& removed);
 
     // SessionCreated handling: node-authoritative create reply -> emit sessionCreated.
     void applySessionCreated(const QByteArray& responseCbor);
-    // SessionUpdateMeta reply: Ok -> authoritative refreshSessions(); Error -> metaUpdateFailed.
-    void applyMetaUpdate(const QByteArray& responseCbor);
     // SessionGet reply: decode SessionDetail -> cache + sessionDetailLoaded; Error -> detailFailed.
     void applySessionDetail(const QString& sessionId, const QByteArray& responseCbor);
 
-    static constexpr auto kSessionsCorrelation = "repo/sessions-query";
-    static constexpr auto kByProfileCorrelation = "repo/sessions-by-profile";
-    static constexpr auto kArchivedCorrelation = "repo/sessions-archived";
-    static constexpr auto kByTransportCorrelation = "repo/sessions-by-transport";
     static constexpr auto kCreateCorrelation = "repo/session-create";
-    static constexpr auto kUpdateMetaCorrelation = "repo/session-update-meta";
     // SessionGet correlations carry the target session id on the tail (prefix-routed).
     static constexpr auto kDetailPrefix = "repo/session-get/";
     // Operator Submit correlations carry the target session id (distinct from the turn engine's
     // "turn/submit/<id>" so replies never cross wires).
     static constexpr auto kSubmitPrefix = "repo/submit/";
-    static constexpr auto kRosterRevScope = "roster-rev"; // L4 persisted roster revision
 
     // The profile the in-flight SessionCreate carried, echoed on sessionCreated so the caller's
     // auto-select knows which agent the new session belongs to.
     QString m_pendingCreateProfile;
 
-    // The session id the in-flight SessionUpdateMeta targets, echoed on metaUpdateFailed so the UI
-    // can name the affected row.
-    QString m_pendingMetaSession;
-
     // CHA-9 detail hydration: the last-decoded detail per session id, plus the set of ids with an
     // in-flight SessionGet (dedupes re-issues while one is outstanding).
     QHash<QString, DecodedSessionDetail> m_details;
     QSet<QString> m_detailInFlight;
-
-    // L4: the since_rev the in-flight SessionsQuery carried (0 = a full request), so the response
-    // handler knows whether to merge a delta or replace the roster (and detects a daemon-reset
-    // fallback when the returned rev went backwards).
-    bool m_sentRosterDelta = false;
-    quint64 m_sentRosterSinceRev = 0;
-
-    // Roster page loops (the shared PageLoop accumulator): a full refresh accumulates rows across
-    // next_cursor pages and runs the replace + prune ONCE over the whole set (pruning against a
-    // single page would drop every session beyond it). Delta reads stay single-page. ByProfile
-    // loops too, but merges per page (additive, so incremental application is safe — its loop
-    // carries only the runaway guard); it needs the profile id to re-issue the continuation.
-    PageLoop<CachedSessionRow> m_rosterLoop;
-    PageLoop<CachedSessionRow> m_byProfileLoop;   // guard-only (pages merge incrementally)
-    PageLoop<CachedSessionRow> m_archivedLoop;    // guard-only (pages merge incrementally)
-    PageLoop<CachedSessionRow> m_byTransportLoop; // accumulates the membership across pages
-    QString m_byProfileId;
-    QString m_byTransportId;
 };
 
 class ProfileRepository : public RepositoryBase {
@@ -673,45 +594,34 @@ private:
     PageLoop<DecodedApprovalInfo> m_pendingLoop;
 };
 
-// The agent fleet / subagent tree (PRO-9/10): refreshTree() issues a Tree query, decode() flattens
-// it into daemon_fleet_units (offline-first cache), and treeRefreshed() fires. pause/resume/scale
-// issue the control op; on Ok the tree is re-fetched, on Unsupported/error controlFailed() fires
-// (PRO-10: control is only meaningful on orchestrator units; engine leaves return Unsupported).
+// The fleet CONTROL seam (PRO-10; AD): pause/resume/scale issue the control op; on Ok
+// controlAcked() fires (the graph/MirrorFleetTree bridges it to the ingestor's Tree refetch so
+// the MIRROR tree re-renders the node's stored state); on Unsupported/error controlFailed()
+// fires (control is only meaningful on orchestrator units; engine leaves return Unsupported).
+// The legacy tree FEED (refreshTree/cachedUnits/daemon_fleet_units) died with AD — the tree
+// reads live on the mirror `fleet_units` table.
 class FleetRepository : public RepositoryBase {
     Q_OBJECT
 
 public:
     FleetRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
 
-    [[nodiscard]] QList<CachedFleetUnitRow> cachedUnits() const;
-
-    // `source` labels why the tree is being re-queried (baseline/control/subscription/request); it
-    // is used only for debug instrumentation (FIX 2).
-    void refreshTree(const QString& source = QStringLiteral("request"));
     void pause(const QString& unitId);
     void resume(const QString& unitId);
     void scale(const QString& unitId, quint32 n);
 
 signals:
-    void treeRefreshed();
-    void refreshFailed(const QString& message);
+    // A control op was acked by the node; the mirror Tree refetch renders the outcome.
+    void controlAcked();
     void controlFailed(const QString& message);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
 
-    void handleTreeResponse(const QByteArray& responseCbor);
     void handleUnitControlResponse(const QByteArray& responseCbor);
-    void syncFleetUnits(const QList<DecodedUnitNode>& flat);
 
-    static constexpr auto kTreeCorrelation = "repo/tree";
     static constexpr auto kControlCorrelation = "repo/unit-control";
-
-    // Tree page loop (wire v25): accumulate raw nodes across `after` pages (`root` rides every
-    // page; the first one fixes it), then flatten + sync ONCE over the whole union.
-    PageLoop<DecodedUnitNode> m_treeLoop;
-    QString m_treeRoot;
 };
 
 // [wave2:app-delegation] F7/DEL-7: the node's delegation guardrail ceilings (Caps -> CapsReport).
@@ -1250,50 +1160,25 @@ private:
 };
 
 // --- Routing (B6/ROU: the origin->session pin table; wire v28) --------------------------------
-// The real routing-manager backend: refreshChats() lists the explicit chat pins
-// (RoutingListChats, page loop), refreshRooms(transport) lists a transport's bindable rooms
-// (TransportRooms, page loop), and bindChat/unbindChat/setRoute mutate the pin table
-// (RoutingBindChat/RoutingUnbindChat/RoutingSet; on Ok the pins re-list so the client renders
-// the node's stored state, never an optimistic local write). Kept in memory (re-fetched on
-// connect/focus); pins are small and authoritative.
+// The routing MUTATION seam (M3 → AD): the node-authoritative RoutingBindChat/RoutingUnbindChat
+// verbs behind daemonnet::IRoutingActions. On Ok, mutationApplied() fires and the graph bridges
+// it to the ingestor's RoutingListChats refetch — the MIRROR pin table is the only read path
+// (the repo's dead in-memory routes/rooms cache — the LEDGER-a6 residual — died with AD).
 class RoutingRepository : public RepositoryBase, public daemonnet::IRoutingActions {
     Q_OBJECT
 
 public:
     RoutingRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
 
-    [[nodiscard]] const QList<DecodedChatRoute>& routes() const { return m_routes; }
-
-    // daemonnet::IRoutingActions (M3): the node-authoritative mutation seam the routing manager
-    // view-model drives. Converts the domain::Origin to the codec's DecodedOrigin and sends the
-    // RoutingBindChat / RoutingUnbindChat wire op; on Ok the pins re-list (routesRefreshed), which
-    // the graph forwards to the ingestor to re-fetch the pin table into the mirror.
+    // daemonnet::IRoutingActions (M3): converts the domain::Origin to the codec's DecodedOrigin
+    // and sends the RoutingBindChat / RoutingUnbindChat wire op.
     void routingBindChat(const domain::Origin& origin, const domain::SessionId& session,
                          const domain::ProfileRef& profile) override;
     void routingUnbindChat(const domain::Origin& origin) override;
-    [[nodiscard]] QList<DecodedRoomInfo> roomsFor(const QString& transport) const {
-        return m_rooms.value(transport);
-    }
-
-    // List the pins (RoutingListChats); routesRefreshed() fires with routes() populated.
-    void refreshChats();
-    // List a transport instance's bindable rooms (TransportRooms); roomsRefreshed(transport)
-    // fires with roomsFor(transport) populated.
-    void refreshRooms(const QString& transport);
-    // Resolve one origin's pin (RoutingGet); routeResolved(found, route) fires.
-    void getRoute(const DecodedOrigin& origin);
-    // Pin an origin to a session (+ optional agent) (RoutingBindChat -> Ok -> re-list).
-    void bindChat(const DecodedOrigin& origin, const QString& session,
-                  const QString& profile = QString());
-    // Remove an origin's pin (RoutingUnbindChat -> Ok -> re-list).
-    void unbindChat(const DecodedOrigin& origin);
-    // Set a full route incl. isolation (RoutingSet -> Ok -> re-list).
-    void setRoute(const DecodedChatRoute& route);
 
 signals:
-    void routesRefreshed();
-    void roomsRefreshed(const QString& transport);
-    void routeResolved(bool found, const DecodedChatRoute& route);
+    // A routing mutation was acked by the node; the mirror pin-table refetch renders the outcome.
+    void mutationApplied();
     void operationFailed(const QString& message);
 
 private:
@@ -1301,17 +1186,7 @@ private:
     void handleFailure(const QString& correlationId, const QString& message);
     void handleMutationResponse(const QByteArray& responseCbor);
 
-    static constexpr auto kListCorrelation = "repo/routing-list-chats";
-    static constexpr auto kGetCorrelation = "repo/routing-get";
     static constexpr auto kMutateCorrelation = "repo/routing-mutate";
-    static constexpr auto kRoomsPrefix = "repo/transport-rooms/";
-
-    QList<DecodedChatRoute> m_routes;
-    QHash<QString, QList<DecodedRoomInfo>> m_rooms; // transport id -> its bindable rooms
-    // Page loops (wire v25): pins + per-transport rooms accumulate across `after` pages; the
-    // refreshed signals fire ONCE with the complete listing.
-    PageLoop<DecodedChatRoute> m_routesLoop;
-    QHash<QString, PageLoop<DecodedRoomInfo>> m_roomsLoops;
 };
 
 // [wave2:app-approvals-safety] D2: node-wide tool inventory (ToolList -> Tools, wire v29).

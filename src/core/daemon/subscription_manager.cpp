@@ -15,24 +15,10 @@ namespace daemonapp::daemon {
 
 SubscriptionManager::SubscriptionManager(NodeApiClient* nodeApi, SessionRepository* sessions,
                                          ApprovalRepository* approvals, ModelRepository* models,
-                                         DaemonCacheStore* cache, FleetRepository* fleet,
-                                         ProfileRepository* profiles, QObject* parent)
+                                         DaemonCacheStore* cache, ProfileRepository* profiles,
+                                         QObject* parent)
     : QObject(parent), m_nodeApi(nodeApi), m_sessions(sessions), m_approvals(approvals),
-      m_models(models), m_fleet(fleet), m_profiles(profiles), m_cache(cache) {
-    m_rosterDebounce.setSingleShot(true);
-    m_rosterDebounce.setInterval(kRosterDebounceMs);
-    connect(&m_rosterDebounce, &QTimer::timeout, this, [this] {
-        if (m_rosterDirty && m_sessions != nullptr) {
-            m_rosterDirty = false;
-            m_sessions->refreshSessions();
-            // A fleet unit IS a durable session, so the same roster delta that adds a
-            // lazily-created session must re-query the tree for it to appear (FIX 2). Debounced
-            // with the roster.
-            if (m_fleet != nullptr) {
-                m_fleet->refreshTree(QStringLiteral("subscription"));
-            }
-        }
-    });
+      m_models(models), m_profiles(profiles), m_cache(cache) {
     if (m_nodeApi != nullptr) {
         connect(m_nodeApi, &NodeApiClient::streamItem, this, &SubscriptionManager::onStreamItem);
         connect(m_nodeApi, &NodeApiClient::streamEnded, this, &SubscriptionManager::onStreamEnded);
@@ -114,15 +100,14 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         // A session's metadata changed. Refresh its hydrated SessionDetail so live per-session
         // projections re-read (Phase E: the composer's foreign model selector / backend). Scoped to
         // a session we ALREADY hydrated, so a burst of meta changes doesn't fetch detail for every
-        // roster row. Then fall through to the roster refetch below (debounced).
+        // roster row. The ROSTER refetch is the mirror ingestor's policy arm (AD — the legacy
+        // debounced cache refetch died with the cache feed).
         if (m_sessions != nullptr && m_sessions->cachedDetail(event.session, nullptr)) {
             m_sessions->getSessionDetail(event.session);
         }
-        [[fallthrough]];
+        break;
     case DecodedNodeEvent::Kind::RosterChanged:
-        // The roster set or a row's metadata changed; refetch the roster (a delta query is L4).
-        // Debounced so a burst of meta changes is one refetch, not N.
-        scheduleRosterRefetch();
+        // Mirror-served (the ingestor's RosterChanged arm refetches the `sessions` table).
         break;
     case DecodedNodeEvent::Kind::ApprovalPending:
         // Badge the inbox without a connect-ready storm; the repository fetches the detail.
@@ -164,13 +149,8 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         const bool all = event.scope.isEmpty() || event.scope == QStringLiteral("all");
         const bool profiles = all || event.scope == QStringLiteral("profiles");
         if (all) {
-            m_rosterDirty = true;
-            if (m_sessions != nullptr) {
-                m_sessions->refreshSessions();
-            }
-            if (m_fleet != nullptr) {
-                m_fleet->refreshTree(QStringLiteral("subscription"));
-            }
+            // The roster/fleet re-baseline is mirror-served (the ingestor's resync handling);
+            // only the non-migrated repo domains re-baseline here.
             if (m_approvals != nullptr) {
                 m_approvals->refreshPending();
             }
@@ -188,14 +168,9 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         break;
     }
     // [wave2:app-channels-liveness] F5: a fleet supervision change that need not move the roster
-    // (e.g. a subagent state transition with no new session row). Re-query the Tree directly so
-    // fleet/roster surfaces update live. Direct (not debounced) per coordinator decision 2 - the
-    // node emits FleetChanged at coarse transitions, and refreshTree already rides every roster
-    // delta, so this adds no new storm risk.
+    // (e.g. a subagent state transition with no new session row). The TREE refetch is the mirror
+    // ingestor's FleetChanged policy arm (AD).
     case DecodedNodeEvent::Kind::FleetChanged:
-        if (m_fleet != nullptr) {
-            m_fleet->refreshTree(QStringLiteral("fleet"));
-        }
         // Route the fleet change to every focused turn engine so a live turn re-reads its
         // structured subagent events (UnitEvents) and the subagent strip reflects spawn/finish. The
         // feed carries no session key, so notify all focused engines; each no-ops when idle.
@@ -220,31 +195,15 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             }
         }
         break;
-    // [waveB:app-v30] D2: the conversation set for a transport changed (a room was added/removed).
-    // Refetch that transport's ConvList — invalidation pointer only; the node owns membership.
-    // This is what lets the client stop re-polling ConvList on tab-enter / expand.
+    // [waveB:app-v30] D2: the conversation set for a transport changed (a room was added/
+    // removed) or a room's membership changed (a join/leave can add or drop a visible room).
+    // Either way, refetch that transport's ConvList — invalidation pointer only; the node owns
+    // membership. On a self-removal the node already reconciled the routing pins; the pin-table
+    // + roster refetches are the mirror ingestor's MembershipChanged arm (AD).
     case DecodedNodeEvent::Kind::ConversationsChanged:
-        if (m_transports != nullptr) {
-            m_transports->refreshConversations(event.transport);
-        }
-        break;
-    // [waveB:app-v30] D2: a room's membership changed. Always refetch that transport's ConvList
-    // (a join/leave can add or drop a visible room). On a removal of THIS node's own identity
-    // (is_self + left/kicked/banned) the node has already reconciled the routing pins, so also
-    // re-list routing + nudge the roster so the routing-facing surfaces re-render — the client
-    // derives nothing itself.
     case DecodedNodeEvent::Kind::MembershipChanged:
         if (m_transports != nullptr) {
             m_transports->refreshConversations(event.transport);
-        }
-        if (event.isSelf && (event.membershipChange == QStringLiteral("left") ||
-                             event.membershipChange == QStringLiteral("kicked") ||
-                             event.membershipChange == QStringLiteral("banned"))) {
-            if (m_routing != nullptr) {
-                m_routing->refreshChats();
-                m_routing->refreshRooms(event.transport);
-            }
-            scheduleRosterRefetch();
         }
         break;
     // [acct-mgmt] A transport's contact roster changed (wire v34). Refetch that transport's
@@ -284,13 +243,6 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         break;
     case DecodedNodeEvent::Kind::Unknown:
         break;
-    }
-}
-
-void SubscriptionManager::scheduleRosterRefetch() {
-    m_rosterDirty = true;
-    if (!m_rosterDebounce.isActive()) {
-        m_rosterDebounce.start();
     }
 }
 

@@ -1005,6 +1005,12 @@ struct DecodedNodeEvent {
     QString actor;
     QString memberReason;
     bool isSelf = false;
+    // [api/39 §10.3] Uniform operation provenance (carrier 3): the causing operation's
+    // client-minted op_id on the single-mutation event arms (SessionMetaChanged /
+    // ConversationsChanged). Empty when the wire omitted it (a mutation without an op_id, or a
+    // pre-provenance node). The mirror ingestor threads it into the triggered fetch so the
+    // resulting apply lands the outbox op (§6.6).
+    QString originOp;
 };
 
 // A decoded page of the node-wide event feed (EventsSince -> EventsPage). `nextCursor` advances the
@@ -1427,10 +1433,14 @@ public:
     // SessionMetaChanged so the roster re-projects from the authoritative row - the app never
     // caches-and-mutates the pin/archive/title state locally. (Only the value arm is ever sent;
     // clearing a title via the wire's `null` arm is not a current UI affordance.)
+    // [api/39 §10.3] `opId` (non-empty) rides the optional SessionUpdateMeta op_id field: the
+    // node dedups on (principal, op_id) — a lane retry/replay is side-effect-free — and stamps
+    // `origin_op` on the read path so the outbox lands the op (§6.6).
     [[nodiscard]] static QByteArray encodeSessionUpdateMetaRequest(const QString& sessionId,
                                                                    std::optional<bool> pinned,
                                                                    std::optional<bool> archived,
-                                                                   std::optional<QString> title);
+                                                                   std::optional<QString> title,
+                                                                   const QString& opId = QString());
 
     // Onboarding (CON-4 / CON-6): credentials + model discovery/selection.
     // Store a provider secret under `profile` (CredentialSet -> Ok). The secret never returns.

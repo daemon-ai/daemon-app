@@ -427,33 +427,25 @@ void DaemonTurnEngine::fetchSubagentEvents() {
 }
 
 QString DaemonTurnEngine::subagentTitle(const QString& childId) const {
-    // Structured enrichment: upgrade the bare child session id to its roster title (node state the
-    // cache already holds). Never parse display text. Falls back to the id when the roster has no
-    // title yet (a just-spawned child not yet in the roster page).
-    if (m_cache != nullptr) {
-        const QList<daemonapp::daemon::CachedSessionRow> rows = m_cache->sessions();
-        for (const daemonapp::daemon::CachedSessionRow& row : rows) {
-            if (row.sessionId == childId && !row.title.isEmpty()) {
-                return row.title;
-            }
+    // Structured enrichment: upgrade the bare child session id to its roster title (node state
+    // the MIRROR holds — AD re-homed this read off the legacy roster cache). Never parse display
+    // text. Falls back to the id when the roster has no title yet (a just-spawned child not yet
+    // in the roster page).
+    if (m_mirrorSink != nullptr) {
+        const QString title = m_mirrorSink->sessionTitle(childId);
+        if (!title.isEmpty()) {
+            return title;
         }
     }
     return childId;
 }
 
-// [waveB:app-v30] stretch: the node-reported terminal reason for a child session, from the cached
-// fleet tree (UnitNode.end_reason). "" when unknown (not yet in the tree / still running). Never
-// derived — rendered from the node's fact.
+// [waveB:app-v30] stretch: the node-reported terminal reason for a child session, from the
+// mirror fleet unit (unit-state-finished.end_reason — AD re-homed this read off the legacy fleet
+// cache). "" when unknown (not yet in the tree / still running). Never derived — rendered from
+// the node's fact.
 QString DaemonTurnEngine::childEndReason(const QString& childId) const {
-    if (m_cache == nullptr || childId.isEmpty()) {
-        return {};
-    }
-    for (const daemonapp::daemon::CachedFleetUnitRow& row : m_cache->fleetUnits()) {
-        if (row.sessionId == childId) {
-            return row.endReason;
-        }
-    }
-    return {};
+    return m_mirrorSink != nullptr ? m_mirrorSink->unitEndReason(childId) : QString();
 }
 
 void DaemonTurnEngine::applyUnitEvents(const QByteArray& responseCbor) {
@@ -472,7 +464,7 @@ void DaemonTurnEngine::applyUnitEvents(const QByteArray& responseCbor) {
         m_subagentSeq = ev.seq;
         // SubagentPhase -> the strip's status. Spawned = a live child (running); Finished =
         // settled. [waveB:app-v30] stretch: a Finished child's terminal outcome is the
-        // node-reported UnitNode.end_reason (cached in daemon_fleet_units) — "Failed" renders as
+        // node-reported UnitNode.end_reason (the mirror FleetUnit row) — "Failed" renders as
         // "error" (feeds the strip's failedCount), anything else as "done". This is rendering the
         // node's fact, not re-deriving it; the wire carries no error phase on the ManageEvent
         // itself.
@@ -818,15 +810,11 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
         // unanswered parked Request, then finish - the interrupted turn ended with the reset.
         emit eventsEmitted(
             QVariantList{QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}});
-        // L3: the journal is the authoritative coalesced transcript — rebuild the durable cache
-        // from it so a subsequent refocus/cold-start renders from disk. Wipe the stale generation
-        // first (this drops locally-persisted Reasoning blocks too: the node's journal does not
-        // retain disclosures, and stale-generation seqs cannot be trusted against the new log).
-        if (m_cache != nullptr && !m_sessionId.isEmpty()) {
-            m_cache->clearTranscript(m_sessionId);
-        }
-        // A7T dual-write: wipe the stale generation from the mirror window too, so the replay
-        // below re-feeds it in lockstep with the cache (parity across the rebaseline).
+        // L3: the journal is the authoritative coalesced transcript — rebuild the durable mirror
+        // window from it so a subsequent refocus/cold-start renders from disk (the write-behind
+        // persists the wipe + replay). Wipe the stale generation first (this drops
+        // locally-persisted Reasoning blocks too: the node's journal does not retain disclosures,
+        // and stale-generation seqs cannot be trusted against the new log).
         if (m_mirrorSink != nullptr && !m_sessionId.isEmpty()) {
             m_mirrorSink->clear(m_sessionId);
         }
@@ -974,19 +962,16 @@ void DaemonTurnEngine::persistWatermark() {
 
 void DaemonTurnEngine::persistTranscriptBlock(
     const daemonapp::daemon::CachedTranscriptBlockRow& block) {
-    if (m_cache != nullptr) {
-        m_cache->upsertTranscriptBlock(block);
-    }
-    // A7T dual-write (§13 M4): feed the same coalesced block to the mirror window through the
-    // ingestor sink (single writer §5.1). Inert to the UI until the read facade flips (withheld
-    // on the entity-field gap, LEDGER-a7t).
+    // AD (1b.3): the mirror sink is the SINGLE transcript write path (§5.1; byte-parity proven
+    // S1-S9). The legacy cache dual-write leg is retired — durability now rides the mirror
+    // write-behind (w_transcript_blocks), which the offline cold boot reloads (E1).
     if (m_mirrorSink != nullptr) {
         m_mirrorSink->deliverBlock(block);
     }
 }
 
 void DaemonTurnEngine::checkpointReasoningBlock() {
-    if (m_reasoningSeq == 0 || m_cache == nullptr || m_sessionId.isEmpty()) {
+    if (m_reasoningSeq == 0 || m_mirrorSink == nullptr || m_sessionId.isEmpty()) {
         return;
     }
     daemonapp::daemon::CachedTranscriptBlockRow b;
