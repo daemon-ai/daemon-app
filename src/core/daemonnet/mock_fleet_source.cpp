@@ -78,10 +78,12 @@ QString lifecycleStr(Lifecycle l) {
 
 } // namespace
 
-MockFleetSource::MockFleetSource(QObject* parent)
-    : QObject(parent), m_fleetModel(new uimodels::VariantListModel(this)),
+MockFleetSource::MockFleetSource(QObject* parent) : MockFleetSource(defaultSeed(), parent) {}
+
+MockFleetSource::MockFleetSource(const SeedBundle& bundle, QObject* parent)
+    : QObject(parent), m_units(bundle.units), m_sessions(bundle.sessions), m_tags(bundle.tags),
+      m_participants(bundle.participants), m_fleetModel(new uimodels::VariantListModel(this)),
       m_sessionsModel(new uimodels::VariantListModel(this)) {
-    buildSeed();
     computeProjections();
 }
 
@@ -96,26 +98,19 @@ SeedBundle MockFleetSource::seed() const {
     return SeedBundle{m_units, m_sessions, m_tags, m_participants};
 }
 
-void MockFleetSource::buildSeed() {
-    seedTagsAndParticipants();
-    seedUnits();
-    seedSessions();
-}
-
-void MockFleetSource::seedTagsAndParticipants() {
-    m_tags = {
+SeedBundle MockFleetSource::defaultSeed() {
+    SeedBundle out;
+    out.tags = {
         {1, QStringLiteral("ideas"), QStringLiteral("#2383e2")},
         {2, QStringLiteral("todo"), QStringLiteral("#e2a423")},
     };
-    m_participants = {
+    out.participants = {
         {QStringLiteral("agent"), tr("Agent"), QStringLiteral("available"),
          QStringLiteral("#3fb950"), true},
         {QStringLiteral("user"), tr("User"), QStringLiteral("available"), QStringLiteral("#3fb950"),
          false},
     };
-}
 
-void MockFleetSource::seedUnits() {
     static const QHash<QString, QString> kUnitProfiles = {
         {QStringLiteral("n-scratch"), QStringLiteral("prof-1")},
         {QStringLiteral("n-acme"), QStringLiteral("prof-1")},
@@ -144,7 +139,7 @@ void MockFleetSource::seedUnits() {
             (kind == UnitKind::Host)
                 ? ProfileRef()
                 : ProfileRef(kUnitProfiles.value(n.id.toString(), QStringLiteral("prof-1")));
-        m_units.push_back(n);
+        out.units.push_back(n);
     };
     mkUnit("n-scratch", "", "scratchpad", UnitKind::Engine, UnitState::Running, "");
     mkUnit("n-acme", "", "Acme Platform", UnitKind::Orchestrator, UnitState::Running,
@@ -158,9 +153,7 @@ void MockFleetSource::seedUnits() {
     mkUnit("n-worker", "n-deep", "Worker A", UnitKind::Engine, UnitState::Running,
            "Running checks");
     mkUnit("n-ops", "n-acme", "Ops Host", UnitKind::Host, UnitState::Running, "");
-}
 
-void MockFleetSource::seedSessions() {
     const QDateTime now = QDateTime::currentDateTime();
     const auto sess = [&](const char* sid, const char* unit, const QList<int>& tagIds,
                           bool archived, Lifecycle lifecycle, const QString& title,
@@ -168,7 +161,7 @@ void MockFleetSource::seedSessions() {
         Session c;
         c.sessionId = domain::SessionId(QString::fromLatin1(sid));
         c.unitId = UnitId(QString::fromLatin1(unit));
-        for (const UnitNode& u : m_units) {
+        for (const UnitNode& u : out.units) {
             if (u.id == c.unitId) {
                 c.boundProfile = u.profile;
                 break;
@@ -184,7 +177,7 @@ void MockFleetSource::seedSessions() {
         c.lastActivityMs = now.toMSecsSinceEpoch();
         c.created = now;
         c.modified = now;
-        m_sessions.push_back(c);
+        out.sessions.push_back(c);
     };
 
     sess("s-scratch", "n-scratch", {1}, false, Lifecycle::Durable, QStringLiteral("Scratch ideas"),
@@ -222,6 +215,8 @@ void MockFleetSource::seedSessions() {
     sess("s-http-dashboard", "n-build", {}, false, Lifecycle::Live,
          QStringLiteral("Dashboard query"),
          QStringLiteral("Inbound `GET /status` from the `dashboard` API key.\n"));
+
+    return out;
 }
 
 void MockFleetSource::computeProjections() {

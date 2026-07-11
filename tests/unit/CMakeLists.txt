@@ -1371,6 +1371,18 @@ if(TARGET daemon-app::mirror_ingestor)
         set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif()
 
+    # tst_mock_scenario (mirror A8, M5): the mock scenario catalog (spec 09 §9) — mirror rows
+    # derived from the ONE SeedBundle (id agreement), canonical string vocabulary, seeded chat
+    # windows scope seeded conversations, the MANDATORY rejection/timeout verb rules, the api38/
+    # empty variants, and the DAEMON_APP_MOCK_SCENARIO selector.
+    if(TARGET daemon-app::daemon_client)
+        qt_add_executable(tst_mock_scenario tst_mock_scenario.cpp)
+        target_link_libraries(tst_mock_scenario
+            PRIVATE Qt6::Test daemon-app::daemon_client)
+        add_test(NAME tst_mock_scenario COMMAND tst_mock_scenario)
+        set_tests_properties(tst_mock_scenario PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
     # tst_mirror_seeder (mirror A8): the mock-mode single Writer (spec 09 §9, §5.1) — seed() +
     # scripted timeline write through the SAME apply/commit pipeline (journal origin = Seeder), a
     # lens renders the seeded rows (parity by construction), and the verb script resolves

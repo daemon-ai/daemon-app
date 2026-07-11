@@ -186,10 +186,13 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         daemon_fetch_executor.h
         daemon_fetch_executor.cpp
         # mirror A7 (M4): the mirror-backed ISessionStore the session/fleet consumers rebind onto
-        # (6->1 session-shape unification); daemon mode only until A8's seeder feeds the mock
-        # mirror.
+        # (6->1 session-shape unification); BOTH modes since A8 (mock projects the seeded mirror).
         mirror_session_store.h
         mirror_session_store.cpp
+        # mirror A8 (M5): the mock scenario catalog (the ONLY mock seed source) + the host that
+        # drives it (Seeder + timeline + scripted verb outcomes + the api/<N> mode select).
+        mock_scenario.h
+        mock_scenario.cpp
     )
     target_link_libraries(da_daemon_client PUBLIC
         daemon-app::mirror_ingestor
