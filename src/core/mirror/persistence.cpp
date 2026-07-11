@@ -499,9 +499,10 @@ bool Persistence::loadInto(MirrorModel& model, int chatWindowLimit) {
             Window<ChatMessage> win;
             auto items = win.items.transient();
             qint64 bytes = 0;
-            for (auto it = newestFirst.rbegin(); it != newestFirst.rend(); ++it) {
-                bytes += static_cast<qint64>(reflect::gadget_dump(*it).size());
-                items.push_back(immer::box<ChatMessage>{*it});
+            for (std::size_t i = newestFirst.size(); i > 0; --i) {
+                const ChatMessage& m = newestFirst[i - 1]; // reversed: oldest-first
+                bytes += static_cast<qint64>(reflect::gadget_dump(m).size());
+                items.push_back(immer::box<ChatMessage>{m});
             }
             win.items = items.persistent();
             win.meta.item_count = static_cast<int>(win.items.size());

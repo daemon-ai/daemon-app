@@ -119,7 +119,7 @@ public:
 
     // The precious local-<id>.db manages its own namespaced path (LocalDatabase, same hash);
     // Persistence never consumes this member (declared for the DbPathProvider contract).
-    [[nodiscard]] QString localDbPath() const override { return QString(); }
+    [[nodiscard]] QString localDbPath() const override { return {}; }
 
 private:
     QString user_key_;
