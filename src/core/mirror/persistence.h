@@ -78,6 +78,13 @@ struct WriteBatch {
     std::vector<ContactKey> contactTombstones;
     std::vector<Person> personUpserts;
     std::vector<PersonKey> personTombstones;
+    // AD (1a): the tree/hub M-tables (offline-first integrations tree / channels hub, E1).
+    std::vector<PersonEndpoint> personEndpointUpserts;
+    std::vector<PersonEndpointKey> personEndpointTombstones;
+    std::vector<Adapter> adapterUpserts;
+    std::vector<AdapterKey> adapterTombstones;
+    std::vector<TransportAccount> transportAccountUpserts;
+    std::vector<TransportAccountKey> transportAccountTombstones;
     std::vector<WindowRowWrite> windowUpserts;
     std::vector<WindowMetaWrite> windowMeta;
     // AD (1b.3): a clearWindow scope tombstone (the engine's journal-rebaseline transcript wipe)
@@ -99,10 +106,10 @@ struct WriteBatch {
 class Persistence {
 public:
     // schema_version the generated DDL targets (mirror_schema_gen.sql / spec §4.5).
-    // v13 (AD): m_fleet_units gained end_reason (the node's terminal reason for a Finished
-    // child — the engine's childEndReason mirror source); a mismatch drops-and-rebuilds
+    // v14 (AD 1a): m_person_endpoints gained presence_primitive (the endpoint contact-info's
+    // presence — the integrations tree's per-person dot); a mismatch drops-and-rebuilds
     // (disposable cache), no migration.
-    static constexpr int kSchemaVersion = 13;
+    static constexpr int kSchemaVersion = 14;
 
     Persistence() = default;
     ~Persistence();

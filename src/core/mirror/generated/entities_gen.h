@@ -978,12 +978,14 @@ struct PersonEndpoint {
     Q_PROPERTY(QString transport MEMBER transport)
     Q_PROPERTY(QString contact MEMBER contact)
     Q_PROPERTY(QString display_name MEMBER display_name)
+    Q_PROPERTY(QString presence_primitive MEMBER presence_primitive)
 
 public:
     QString person;
     QString transport;
     QString contact;
     QString display_name;
+    QString presence_primitive;
 
     [[nodiscard]] PersonEndpointKey key() const {
         return PersonEndpointKey{person, transport, contact};

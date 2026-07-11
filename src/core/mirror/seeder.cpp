@@ -15,6 +15,8 @@ quint64 Seeder::seed(const SeedSet& set) {
     b.upsertPage(set.conversations, JournalOrigin::Seeder);
     b.upsertPage(set.contacts, JournalOrigin::Seeder);
     b.upsertPage(set.persons, JournalOrigin::Seeder);
+    b.upsertPage(set.personEndpoints, JournalOrigin::Seeder);
+    b.upsertPage(set.adapters, JournalOrigin::Seeder);
     b.upsertPage(set.sessions, JournalOrigin::Seeder);
     b.upsertPage(set.fleetUnits, JournalOrigin::Seeder);
     b.upsertPage(set.routePins, JournalOrigin::Seeder);

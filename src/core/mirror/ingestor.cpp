@@ -251,7 +251,13 @@ FetchOp Ingestor::baselineOpFor(const QString& collection) const {
         return FetchOp::RoutingListChats;
     if (collection == QStringLiteral("rooms"))
         return FetchOp::TransportRooms;
-    // chat windows fill on demand (§4.6); transports has no single list op here.
+    // AD (1a): the tree/hub reads — the account list re-baselines on connect (TransportChanged
+    // patches it in place between reads); the adapter catalog is a connect-refresh read.
+    if (collection == QStringLiteral("transports"))
+        return FetchOp::TransportInstances;
+    if (collection == QStringLiteral("adapters"))
+        return FetchOp::TransportAdapters;
+    // chat windows fill on demand (§4.6).
     return FetchOp::None;
 }
 
@@ -562,16 +568,89 @@ void Ingestor::applyPersonFullList(const std::vector<Person>& items) {
 }
 
 void Ingestor::deliverPersons(const std::vector<Person>& items, bool isFinalPage) {
+    deliverPersons(items, {}, isFinalPage);
+}
+
+void Ingestor::deliverPersons(const std::vector<Person>& items,
+                              const std::vector<PersonEndpoint>& endpoints, bool isFinalPage) {
     if (isFinalPage) {
         applyPersonFullList(items);
+        // The endpoints table replaces WITH the persons list (one wire read carries both): every
+        // stored endpoint absent from the final union is tombstoned — including all endpoints of
+        // pruned persons, so the tree's per-account Persons sections never render a ghost.
+        const JournalOrigin origin = originFor(QStringLiteral("persons"));
+        QSet<QString> incoming;
+        for (const PersonEndpoint& e : endpoints) {
+            incoming.insert(e.key().serialize());
+        }
+        auto b = store_.beginBatch();
+        for (const PersonEndpoint& e : endpoints) {
+            b.upsert(e, origin);
+        }
+        for (const PersonEndpoint& e : store_.snapshot().person_endpoints) {
+            if (!incoming.contains(e.key().serialize())) {
+                b.tombstone<PersonEndpoint>(e.key(), origin);
+            }
+        }
+        b.commit();
     } else {
         auto b = store_.beginBatch();
         for (const Person& p : items) {
             b.upsert(p, originFor(QStringLiteral("persons")));
         }
+        for (const PersonEndpoint& e : endpoints) {
+            b.upsert(e, originFor(QStringLiteral("persons")));
+        }
         b.commit();
     }
     state_.markFresh(QStringLiteral("persons"), 0, nowMs());
+}
+
+void Ingestor::deliverAdapters(const std::vector<Adapter>& items, bool isFinalPage) {
+    const JournalOrigin origin = originFor(QStringLiteral("adapters"));
+    auto b = store_.beginBatch();
+    if (isFinalPage) {
+        QSet<QString> incoming;
+        for (const Adapter& a : items) {
+            incoming.insert(a.family);
+            b.upsert(a, origin);
+        }
+        for (const Adapter& a : store_.snapshot().adapters) {
+            if (!incoming.contains(a.family)) {
+                b.tombstone<Adapter>(AdapterKey{a.family}, origin);
+            }
+        }
+    } else {
+        for (const Adapter& a : items) {
+            b.upsert(a, origin);
+        }
+    }
+    b.commit();
+    state_.markFresh(QStringLiteral("adapters"), 0, nowMs());
+}
+
+void Ingestor::deliverTransportAccounts(const std::vector<TransportAccount>& items,
+                                        bool isFinalPage) {
+    const JournalOrigin origin = originFor(QStringLiteral("transports"));
+    auto b = store_.beginBatch();
+    if (isFinalPage) {
+        QSet<QString> incoming;
+        for (const TransportAccount& t : items) {
+            incoming.insert(t.transport);
+            b.upsert(t, origin);
+        }
+        for (const TransportAccount& t : store_.snapshot().transport_accounts) {
+            if (!incoming.contains(t.transport)) {
+                b.tombstone<TransportAccount>(TransportAccountKey{t.transport}, origin);
+            }
+        }
+    } else {
+        for (const TransportAccount& t : items) {
+            b.upsert(t, origin);
+        }
+    }
+    b.commit();
+    state_.markFresh(QStringLiteral("transports"), 0, nowMs());
 }
 
 void Ingestor::applyRoutePinFullList(const std::vector<RoutePin>& items) {
@@ -875,10 +954,36 @@ void Ingestor::deliverContactsDelta(const QString& transport, const std::vector<
 
 void Ingestor::deliverPersonsDelta(const std::vector<Person>& changed, const QStringList& removed,
                                    quint64 rev, bool isFinalPage) {
+    deliverPersonsDelta(changed, {}, removed, rev, isFinalPage);
+}
+
+void Ingestor::deliverPersonsDelta(const std::vector<Person>& changed,
+                                   const std::vector<PersonEndpoint>& endpoints,
+                                   const QStringList& removed, quint64 rev, bool isFinalPage) {
     const JournalOrigin origin = originFor(QStringLiteral("persons"));
+    // A changed person's wire row carries its FULL current endpoint set: replace that person's
+    // endpoints wholesale. A removed person's endpoints go with its row.
+    QSet<QString> changedIds;
+    for (const Person& p : changed) {
+        changedIds.insert(p.id);
+    }
+    QSet<QString> incomingKeys;
+    for (const PersonEndpoint& e : endpoints) {
+        incomingKeys.insert(e.key().serialize());
+    }
     auto b = store_.beginBatch();
     for (const Person& p : changed) {
         b.upsert(p, origin);
+    }
+    for (const PersonEndpoint& e : endpoints) {
+        b.upsert(e, origin);
+    }
+    for (const PersonEndpoint& e : store_.snapshot().person_endpoints) {
+        const bool ownerChanged = changedIds.contains(e.person);
+        const bool ownerRemoved = removed.contains(e.person);
+        if ((ownerChanged && !incomingKeys.contains(e.key().serialize())) || ownerRemoved) {
+            b.tombstone<PersonEndpoint>(e.key(), origin);
+        }
     }
     for (const QString& id : removed) {
         b.tombstone<Person>(PersonKey{id}, origin);

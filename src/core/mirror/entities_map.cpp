@@ -7,6 +7,8 @@
 
 #include "entities_map_gen.h"
 
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QString>
 #include <QStringList>
 
@@ -73,6 +75,64 @@ QString presencePrimitive(const ::presence_primitive_t_r& p) {
         return QStringLiteral("streaming");
     case ::presence_primitive_t_r::presence_primitive_t_OutOfOffice_tstr_c:
         return QStringLiteral("out_of_office");
+    }
+    return {};
+}
+
+// connection-state enum → the lowercase token convention the TransportChanged event decode uses
+// (connectionStateName parity — the full-list read and the patch-in-place write identical state).
+QString connectionToken(const ::connection_state_r& c) {
+    switch (c.connection_state_choice) {
+    case ::connection_state_r::connection_state_Offline_tstr_c:
+        return QStringLiteral("offline");
+    case ::connection_state_r::connection_state_Connecting_tstr_c:
+        return QStringLiteral("connecting");
+    case ::connection_state_r::connection_state_Connected_tstr_c:
+        return QStringLiteral("connected");
+    case ::connection_state_r::connection_state_Disconnecting_tstr_c:
+        return QStringLiteral("disconnecting");
+    case ::connection_state_r::connection_state_Error_tstr_c:
+        return QStringLiteral("error");
+    }
+    return {};
+}
+
+// presence-state enum → lowercase token (presenceStateName parity).
+QString presenceToken(const ::presence_state_r& p) {
+    switch (p.presence_state_choice) {
+    case ::presence_state_r::presence_state_Unknown_tstr_c:
+        return QStringLiteral("unknown");
+    case ::presence_state_r::presence_state_Offline_tstr_c:
+        return QStringLiteral("offline");
+    case ::presence_state_r::presence_state_Available_tstr_c:
+        return QStringLiteral("available");
+    case ::presence_state_r::presence_state_Idle_tstr_c:
+        return QStringLiteral("idle");
+    case ::presence_state_r::presence_state_Away_tstr_c:
+        return QStringLiteral("away");
+    case ::presence_state_r::presence_state_Busy_tstr_c:
+        return QStringLiteral("busy");
+    }
+    return {};
+}
+
+// disconnect-reason enum → coarse lowercase token (disconnectReasonName parity).
+QString disconnectToken(const ::disconnect_reason_r& r) {
+    switch (r.disconnect_reason_choice) {
+    case ::disconnect_reason_r::disconnect_reason_UserRequested_tstr_c:
+        return QStringLiteral("user_requested");
+    case ::disconnect_reason_r::disconnect_reason_NetworkError_tstr_c:
+        return QStringLiteral("network_error");
+    case ::disconnect_reason_r::disconnect_reason_AuthenticationFailed_tstr_c:
+        return QStringLiteral("authentication_failed");
+    case ::disconnect_reason_r::disconnect_reason_ReplacedByOtherClient_tstr_c:
+        return QStringLiteral("replaced_by_other_client");
+    case ::disconnect_reason_r::disconnect_reason_InvalidSettings_tstr_c:
+        return QStringLiteral("invalid_settings");
+    case ::disconnect_reason_r::disconnect_reason_CertificateError_tstr_c:
+        return QStringLiteral("certificate_error");
+    case ::disconnect_reason_r::disconnect_reason_Other_tstr_c:
+        return QStringLiteral("other");
     }
     return {};
 }
@@ -244,9 +304,70 @@ AccessUser map_access_user(const ::access_user& in) {
 }
 
 Adapter map_adapter(const ::adapter_info& in) {
+    // AD (1a) arm: connect-refresh → TransportAdapters. The per-verb ops maps (wire v33) are
+    // serialized into ONE canonical-JSON column (`ops_json`, camelCase keys — the convention the
+    // deleted registry rows used); an ABSENT/null wire map is an absent JSON key, so consumers
+    // keep the "no per-verb info ⇒ coarse capability fallback" distinction.
     Adapter out;
-    (void)in;
-    // TODO(mirror-map): populate Adapter from wire per entity-map.toml provenance.
+    out.family = qstr(in.adapter_info_family);
+    out.display_name = qstr(in.adapter_info_display_name);
+    out.cap_rooms = in.adapter_info_capabilities.adapter_capabilities_rooms;
+    out.cap_direct_messages = in.adapter_info_capabilities.adapter_capabilities_direct_messages;
+    out.cap_file_transfer = in.adapter_info_capabilities.adapter_capabilities_file_transfer;
+    if (in.adapter_info_directory_present) {
+        out.directory = in.adapter_info_directory.adapter_info_directory;
+    }
+    QJsonObject ops;
+    if (in.adapter_info_conversation_ops_present &&
+        in.adapter_info_conversation_ops.adapter_info_conversation_ops_choice ==
+            ::adapter_info_conversation_ops_r::adapter_info_conversation_ops_conversation_ops_m_c) {
+        const ::conversation_ops& c =
+            in.adapter_info_conversation_ops.adapter_info_conversation_ops_conversation_ops_m;
+        ops.insert(
+            QStringLiteral("conversationOps"),
+            QJsonObject{{QStringLiteral("create"), c.conversation_ops_create},
+                        {QStringLiteral("joinChannel"), c.conversation_ops_join_channel},
+                        {QStringLiteral("leave"), c.conversation_ops_leave},
+                        {QStringLiteral("delete"), c.conversation_ops_delete},
+                        {QStringLiteral("send"), c.conversation_ops_send},
+                        {QStringLiteral("setTopic"), c.conversation_ops_set_topic},
+                        {QStringLiteral("setTitle"), c.conversation_ops_set_title},
+                        {QStringLiteral("setDescription"), c.conversation_ops_set_description}});
+    }
+    if (in.adapter_info_membership_ops_present &&
+        in.adapter_info_membership_ops.adapter_info_membership_ops_choice ==
+            ::adapter_info_membership_ops_r::adapter_info_membership_ops_membership_ops_m_c) {
+        const ::membership_ops& m =
+            in.adapter_info_membership_ops.adapter_info_membership_ops_membership_ops_m;
+        ops.insert(QStringLiteral("membershipOps"),
+                   QJsonObject{{QStringLiteral("invite"), m.membership_ops_invite},
+                               {QStringLiteral("remove"), m.membership_ops_remove},
+                               {QStringLiteral("ban"), m.membership_ops_ban},
+                               {QStringLiteral("setRole"), m.membership_ops_set_role}});
+    }
+    if (in.adapter_info_contacts_ops_present &&
+        in.adapter_info_contacts_ops.adapter_info_contacts_ops_choice ==
+            ::adapter_info_contacts_ops_r::adapter_info_contacts_ops_contacts_ops_m_c) {
+        const ::contacts_ops& c =
+            in.adapter_info_contacts_ops.adapter_info_contacts_ops_contacts_ops_m;
+        ops.insert(QStringLiteral("contactsOps"),
+                   QJsonObject{{QStringLiteral("getProfile"), c.contacts_ops_get_profile},
+                               {QStringLiteral("actionMenu"), c.contacts_ops_action_menu},
+                               {QStringLiteral("setAlias"), c.contacts_ops_set_alias}});
+    }
+    if (in.adapter_info_roster_ops_present &&
+        in.adapter_info_roster_ops.adapter_info_roster_ops_choice ==
+            ::adapter_info_roster_ops_r::adapter_info_roster_ops_roster_ops_m_c) {
+        const ::roster_ops& r = in.adapter_info_roster_ops.adapter_info_roster_ops_roster_ops_m;
+        ops.insert(QStringLiteral("rosterOps"),
+                   QJsonObject{{QStringLiteral("list"), r.roster_ops_list},
+                               {QStringLiteral("add"), r.roster_ops_add},
+                               {QStringLiteral("update"), r.roster_ops_update},
+                               {QStringLiteral("remove"), r.roster_ops_remove}});
+    }
+    if (!ops.isEmpty()) {
+        out.ops_json = QString::fromUtf8(QJsonDocument(ops).toJson(QJsonDocument::Compact));
+    }
     return out;
 }
 
@@ -537,9 +658,22 @@ Person map_person(const ::person& in) {
 }
 
 PersonEndpoint map_person_endpoint(const ::person_endpoint& in) {
+    // AD (1a) arm: PersonsChanged → PersonList; endpoints ride each `person` row. Note `person`
+    // (the owning id) is the enclosing person's scope — the caller stamps it; the payload carries
+    // transport + the endpoint's contact-info (id, display name, presence — the tree's dot).
     PersonEndpoint out;
-    (void)in;
-    // TODO(mirror-map): populate PersonEndpoint from wire per entity-map.toml provenance.
+    out.transport = qstr(in.person_endpoint_transport);
+    const ::contact_info& c = in.person_endpoint_contact;
+    out.contact = qstr(c.contact_info_id);
+    if (c.contact_info_display_name_present &&
+        c.contact_info_display_name.contact_info_display_name_choice ==
+            ::contact_info_display_name_r::contact_info_display_name_tstr_c) {
+        out.display_name = qstr(c.contact_info_display_name.contact_info_display_name_tstr);
+    }
+    if (c.contact_info_presence_present) {
+        out.presence_primitive =
+            presencePrimitive(c.contact_info_presence.contact_info_presence.presence_primitive);
+    }
     return out;
 }
 
@@ -740,9 +874,53 @@ TranscriptBlock map_transcript_block(const ::journal_record& in) {
 }
 
 TransportAccount map_transport_account(const ::transport_instance_info& in) {
+    // AD (1a) arm: connect-refresh → TransportInstances (the full account list); TransportChanged
+    // patches the same row in place between reads. The connection/presence/reason tokens are the
+    // SAME lowercase strings the event decode produces (connectionStateName et al.), so the two
+    // feed paths write byte-identical row state.
     TransportAccount out;
-    (void)in;
-    // TODO(mirror-map): populate TransportAccount from wire per entity-map.toml provenance.
+    out.transport = qstr(in.transport_instance_info_transport);
+    out.family = qstr(in.transport_instance_info_family);
+    out.display_name = qstr(in.transport_instance_info_display_name);
+    out.enabled = true; // wire default (absent = enabled)
+    if (in.transport_instance_info_connection_present) {
+        out.connection = connectionToken(
+            in.transport_instance_info_connection.transport_instance_info_connection);
+    }
+    if (in.transport_instance_info_presence_present) {
+        out.presence =
+            presenceToken(in.transport_instance_info_presence.transport_instance_info_presence);
+    }
+    if (in.transport_instance_info_bound_profile_present &&
+        in.transport_instance_info_bound_profile.transport_instance_info_bound_profile_choice ==
+            ::transport_instance_info_bound_profile_r::
+                transport_instance_info_bound_profile_profile_ref_m_c) {
+        out.bound_profile = qstr(in.transport_instance_info_bound_profile
+                                     .transport_instance_info_bound_profile_profile_ref_m);
+    }
+    if (in.transport_instance_info_reason_present &&
+        in.transport_instance_info_reason.transport_instance_info_reason_choice ==
+            ::transport_instance_info_reason_r::
+                transport_instance_info_reason_disconnect_reason_m_c) {
+        out.reason = disconnectToken(
+            in.transport_instance_info_reason.transport_instance_info_reason_disconnect_reason_m);
+    }
+    if (in.transport_instance_info_message_present &&
+        in.transport_instance_info_message.transport_instance_info_message_choice ==
+            ::transport_instance_info_message_r::transport_instance_info_message_tstr_c) {
+        out.message = qstr(in.transport_instance_info_message.transport_instance_info_message_tstr);
+    }
+    if (in.transport_instance_info_fatal_present) {
+        out.fatal = in.transport_instance_info_fatal.transport_instance_info_fatal;
+    }
+    if (in.transport_instance_info_enabled_present) {
+        out.enabled = in.transport_instance_info_enabled.transport_instance_info_enabled;
+    }
+    if (in.transport_instance_info_label_present &&
+        in.transport_instance_info_label.transport_instance_info_label_choice ==
+            ::transport_instance_info_label_r::transport_instance_info_label_tstr_c) {
+        out.label = qstr(in.transport_instance_info_label.transport_instance_info_label_tstr);
+    }
     return out;
 }
 

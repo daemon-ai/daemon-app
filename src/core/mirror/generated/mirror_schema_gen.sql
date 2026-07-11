@@ -167,6 +167,7 @@ CREATE TABLE m_person_endpoints(
   transport TEXT NOT NULL,
   contact TEXT NOT NULL,
   display_name TEXT,
+  presence_primitive TEXT,
   last_rev INTEGER NOT NULL, fetched_at_ms INTEGER NOT NULL);
 
 CREATE TABLE m_profiles(

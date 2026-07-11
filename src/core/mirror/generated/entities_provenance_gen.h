@@ -184,6 +184,7 @@ inline constexpr FieldProvenance kProvenanceTable[] = {
     { EntityKind::PersonEndpoint, "PersonEndpoint", "transport", "person-endpoint.transport", false },
     { EntityKind::PersonEndpoint, "PersonEndpoint", "contact", "person-endpoint.contact#id", false },
     { EntityKind::PersonEndpoint, "PersonEndpoint", "display_name", "person-endpoint.contact#display_name", false },
+    { EntityKind::PersonEndpoint, "PersonEndpoint", "presence_primitive", "person-endpoint.contact#presence", false },
     { EntityKind::Profile, "Profile", "id", "profile-info.id", false },
     { EntityKind::Profile, "Profile", "provider", "profile-info.provider", false },
     { EntityKind::Profile, "Profile", "model", "profile-info.model", false },

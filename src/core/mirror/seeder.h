@@ -32,6 +32,11 @@ struct SeedSet {
     std::vector<Conversation> conversations;
     std::vector<Contact> contacts;
     std::vector<Person> persons;
+    // AD (1a): the tree/hub kinds — per-transport person endpoints, the adapter catalog. Seeded
+    // through the same apply pipeline the daemon feed uses (§9), so the integrations tree /
+    // channels hub render identically in mock.
+    std::vector<PersonEndpoint> personEndpoints;
+    std::vector<Adapter> adapters;
     std::vector<Session> sessions;
     std::vector<FleetUnit> fleetUnits;
     std::vector<RoutePin> routePins;

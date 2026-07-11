@@ -117,6 +117,14 @@ void DaemonFetchExecutor::sendFor(const InFlight& f, const QString& pageToken,
         // M4: the supervision fleet tree; `after` resumes the unit-id page loop.
         req = NodeApiCodec::encodeTreeRequest(pageToken);
         break;
+    case mirror::FetchOp::TransportAdapters:
+        // AD (1a): the adapter catalog (single-shot, no page loop).
+        req = NodeApiCodec::encodeTransportAdaptersRequest();
+        break;
+    case mirror::FetchOp::TransportInstances:
+        // AD (1a): the configured account list (single-shot, no page loop).
+        req = NodeApiCodec::encodeTransportInstancesRequest();
+        break;
     default:
         // Ops the mirror path does not fulfil yet (sessions/fleet/etc. — A7's M4 wave) complete
         // immediately; the legacy repositories still serve those surfaces (dual-write).
@@ -195,14 +203,34 @@ void DaemonFetchExecutor::onResponse(const QString& correlationId, const QByteAr
     }
     case mirror::FetchOp::PersonList: {
         std::vector<mirror::Person> persons;
+        std::vector<mirror::PersonEndpoint> endpoints;
         quint64 rev = 0;
         QStringList removed;
-        if (decodePersonsToMirror(responseCbor, &persons, &rev, &removed)) {
+        if (decodePersonsToMirror(responseCbor, &persons, &rev, &removed, &endpoints)) {
             if (deltaRead) {
-                m_ingestor.deliverPersonsDelta(persons, removed, rev, /*isFinalPage=*/true);
+                // AD (1a): a delta read carries the CHANGED persons (with their full current
+                // endpoint sets) + removed ids; the delta seam upserts/tombstones both tables.
+                m_ingestor.deliverPersonsDelta(persons, endpoints, removed, rev,
+                                               /*isFinalPage=*/true);
             } else {
-                m_ingestor.deliverPersons(persons, /*isFinalPage=*/true);
+                m_ingestor.deliverPersons(persons, endpoints, /*isFinalPage=*/true);
             }
+        }
+        finish(correlationId);
+        return;
+    }
+    case mirror::FetchOp::TransportAdapters: {
+        std::vector<mirror::Adapter> adapters;
+        if (decodeAdaptersToMirror(responseCbor, &adapters)) {
+            m_ingestor.deliverAdapters(adapters, /*isFinalPage=*/true);
+        }
+        finish(correlationId);
+        return;
+    }
+    case mirror::FetchOp::TransportInstances: {
+        std::vector<mirror::TransportAccount> accounts;
+        if (decodeTransportInstancesToMirror(responseCbor, &accounts)) {
+            m_ingestor.deliverTransportAccounts(accounts, /*isFinalPage=*/true);
         }
         finish(correlationId);
         return;

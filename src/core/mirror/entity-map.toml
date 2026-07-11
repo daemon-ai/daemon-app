@@ -235,6 +235,9 @@ wire_read = ["PersonList"]
   [entity.PersonEndpoint.fields.display_name]
   wire = "person-endpoint.contact#display_name"
   type = "QString"
+  [entity.PersonEndpoint.fields.presence_primitive]
+  wire = "person-endpoint.contact#presence"       # contact-info.presence (AD: the tree's per-endpoint dot)
+  type = "QString"
 
 [entity.Session]
 class = "M"
