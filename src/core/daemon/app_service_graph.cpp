@@ -647,6 +647,31 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                 });
         }
 
+        // Reconnect wiring (§5.6/§6.8): on AuthOk drive the ingestor's per-connection reconnect and
+        // — from api/39 — auto-replay the outbox. The mirror's live-wire seam (A4 shipped the
+        // ingestor decoupled; nobody drove onConnected/onDisconnected until now).
+        {
+            QObject::connect(
+                graph.nodeApi, &NodeApiClient::authenticated, svc,
+                [svc, nodeApi = graph.nodeApi, outbox = graph.outbox](const DecodedPrincipalView&) {
+                    const int api = static_cast<int>(nodeApi->daemonApiVersion());
+                    // hasRevFields is compile-time TRUE: the v39 codec is vendored (the
+                    // rev/removed/ bootstrap wire shapes exist), so mode selection keys purely off
+                    // the node's advertised api/<N>. FULL (api/39) ⇒ onConnected enqueues the
+                    // Bootstrap probe → onBootstrap → since_rev delta reads; degraded (api/38) ⇒
+                    // the staleness scan.
+                    svc->ingestor().onConnected(api, /*hasRevFields=*/true);
+                    // Auto-replay (§6.8): from api/39 the node dedups on op_id, so an unattended
+                    // reconnect drain is safe. api/38 holds the lanes for a manual tap.
+                    if (mirror::Outbox::autoReplayEnabled(api)) {
+                        outbox->drain();
+                    }
+                });
+            // Connection lost (§5.6): the ingestor retains its feed cursor for the next resume.
+            QObject::connect(graph.nodeApi, &NodeApiClient::disconnected, svc,
+                             [svc] { svc->ingestor().onDisconnected(); });
+        }
+
         {
             // Fulfil the ingestor's fetch jobs over the SAME NodeApiClient (shared pipeline).
             graph.mirrorExecutor =
@@ -668,9 +693,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                  }
                              });
 
-            // The outbox drains ConvSend to the wire on a MANUAL tap (§6.8 no auto-replay). The
-            // provenance-keyed confirm (§6.6) lands when the resulting MessagesChanged→ConvHistory
-            // delta reaches the ingestor; the ack/rejection below advances the lane state.
+            // The outbox drains ConvSend to the wire on a manual tap (always) and unattended on an
+            // api/39 reconnect (§6.8). The send carries the op_id (§10.3) so a retry/replay is
+            // dedup-safe: the node returns the original result for a duplicate (principal, op_id),
+            // and stamps `origin_op` provenance for the eventual confirm (§6.6). The ack/rejection
+            // below advances the lane state.
             QObject::connect(
                 graph.outbox, &mirror::Outbox::sendRequested, graph.nodeApi,
                 [nodeApi = graph.nodeApi](const mirror::PendingOp& op) {
@@ -681,7 +708,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     const QByteArray req = NodeApiCodec::encodeConvSendRequest(
                         args.value(QStringLiteral("transport")).toString(),
                         args.value(QStringLiteral("conv")).toString(),
-                        args.value(QStringLiteral("message")).toString());
+                        args.value(QStringLiteral("message")).toString(), op.opId);
                     nodeApi->sendRequest(req, QStringLiteral("outbox/") + op.opId);
                 });
             QObject::connect(graph.nodeApi, &NodeApiClient::responseReady, graph.outbox,

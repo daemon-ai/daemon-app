@@ -114,10 +114,13 @@ private slots:
             strip.setScopeFilter(QStringLiteral("m\x1f!room"));
             QCOMPARE(strip.count(), 1);
 
-            // Auto-replay stays OFF: the op is present but was NOT sent on boot (manual drain
-            // only).
+            // Offline boot never blindly resends: the op is present but was NOT sent (there is no
+            // connection to drain to). The auto-replay gate (§6.8) is api-version-based — OFF at
+            // api/38, ON from api/39 — but it is only consulted on an authenticated reconnect,
+            // which has not happened here; the outbox never drained on boot.
             QVERIFY(!Outbox::autoReplayEnabled(38));
-            QVERIFY(!Outbox::autoReplayEnabled(39));
+            QVERIFY(Outbox::autoReplayEnabled(39));
+            QCOMPARE(outbox.op(outbox.ops().first().opId).state, OpState::Pending);
         }
     }
 };

@@ -12,11 +12,11 @@
 // appears only when the node's MessagesChanged → ConvHistory delta lands in the mirror window
 // (provenance-keyed, uniform §6.6).
 //
-// Drain is MANUAL against api/38 (§6.8): the outbox never auto-replays; the surface offers a
-// "send" tap. The auto-replay gate stays OFF for every api version here (asserted); BR flips it on
-// per connection once api/39 is negotiated. The owner (app graph) connects the outbox's
-// sendRequested → the real ConvSend wire call and reports onAck/onRejection back to the outbox;
-// this controller stays a pure lane/pending presenter (no wire).
+// Drain is MANUAL against api/38 (§6.8): the outbox holds the lane after reconnect and the surface
+// offers a "send" tap. From api/39 the gate opens and the graph drains unattended on reconnect
+// (rung 3 dedup makes a resend safe). The owner (app graph) connects the outbox's sendRequested →
+// the real ConvSend wire call and reports onAck/onRejection back to the outbox; this controller
+// stays a pure lane/pending presenter (no wire).
 
 #include "outbox_types.h"
 
@@ -70,7 +70,8 @@ public:
     // non-blank text. Returns the minted op-id ("" on a bound breach — surfaced by the outbox).
     Q_INVOKABLE QString send(const QString& text);
 
-    // Manual drain (§6.3): the ONLY way ops leave the lane — no auto-replay (§6.8).
+    // Drain (§6.3): a manual tap always; the graph also drains unattended on an api/39 reconnect
+    // (§6.8, gated by autoReplayEnabled()).
     Q_INVOKABLE void drain();
 
     // Rejection affordances (§6.5), one set for every rejected entry.
@@ -81,8 +82,8 @@ public:
     Q_INVOKABLE QString takeForEdit(const QString& opId);
     Q_INVOKABLE void sendRemainingAnyway();
 
-    // The auto-replay gate (§6.8): HARD-OFF for every api version at M2 (asserted in tests). BR
-    // flips it per-connection at api >= 39. Exposed so a surface can render the "N unsent" prompt.
+    // The auto-replay gate (§6.8): OFF at api/38 (manual drain, "N unsent" prompt), ON from
+    // api/39 (unattended reconnect drain). Delegates to mirror::Outbox::autoReplayEnabled.
     [[nodiscard]] Q_INVOKABLE static bool autoReplayEnabled(int apiVersion);
 
     // The canonical lane scope tail 'transport␟conv' for the bound conversation.

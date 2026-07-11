@@ -95,6 +95,9 @@ signals:
     void handshakeReady();
     // SASL authentication succeeded (AuthOk): the connection is bound to `principal`.
     void authenticated(const daemonapp::daemon::DecodedPrincipalView& principal);
+    // The transport dropped (connection lost): every outstanding exchange has been failed and the
+    // client reset to Disconnected. The mirror uses this to run its reconnect teardown (§5.6).
+    void disconnected();
     // The server issued an opaque session token on AuthOk (store it, never the password).
     void tokenIssued(const QString& token);
     // Authentication failed (AuthError, server-signature mismatch, or no usable mechanism). The
