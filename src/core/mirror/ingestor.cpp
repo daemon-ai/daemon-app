@@ -635,6 +635,82 @@ void Ingestor::deliverRooms(const QString& transport, const std::vector<Room>& i
     state_.markFresh(QStringLiteral("rooms"), 0, nowMs());
 }
 
+void Ingestor::applySessionFullList(const std::vector<Session>& items) {
+    const JournalOrigin origin = originFor(QStringLiteral("sessions"));
+    QSet<QString> present;
+    for (const Session& s : store_.snapshot().sessions) {
+        present.insert(s.session);
+    }
+    QSet<QString> incoming;
+    auto b = store_.beginBatch();
+    for (const Session& s : items) {
+        incoming.insert(s.session);
+        b.upsert(s, origin);
+    }
+    for (const QString& id : present) {
+        if (!incoming.contains(id)) {
+            b.tombstone<Session>(SessionKey{id}, origin);
+        }
+    }
+    b.commit();
+}
+
+void Ingestor::deliverSessions(const std::vector<Session>& items, bool isFinalPage) {
+    if (isFinalPage) {
+        applySessionFullList(items);
+    } else {
+        auto b = store_.beginBatch();
+        for (const Session& s : items) {
+            b.upsert(s, originFor(QStringLiteral("sessions")));
+        }
+        b.commit();
+    }
+    state_.markFresh(QStringLiteral("sessions"), 0, nowMs());
+}
+
+void Ingestor::deliverSession(const Session& session) {
+    auto b = store_.beginBatch();
+    b.upsert(session, originFor(QStringLiteral("sessions")));
+    b.commit();
+    state_.markFresh(QStringLiteral("sessions"), 0, nowMs());
+}
+
+void Ingestor::applyFleetUnitFullList(const std::vector<FleetUnit>& items) {
+    const JournalOrigin origin = originFor(QStringLiteral("fleet"));
+    QSet<QString> present;
+    for (const FleetUnit& u : store_.snapshot().fleet_units) {
+        present.insert(u.id);
+    }
+    QSet<QString> incoming;
+    auto b = store_.beginBatch();
+    for (const FleetUnit& u : items) {
+        incoming.insert(u.id);
+        b.upsert(u, origin);
+    }
+    for (const QString& id : present) {
+        if (!incoming.contains(id)) {
+            b.tombstone<FleetUnit>(FleetUnitKey{id}, origin);
+        }
+    }
+    b.commit();
+}
+
+void Ingestor::deliverFleetUnits(const std::vector<FleetUnit>& items, bool isFinalPage,
+                                 quint64 rev) {
+    if (isFinalPage) {
+        applyFleetUnitFullList(items);
+    } else {
+        auto b = store_.beginBatch();
+        for (const FleetUnit& u : items) {
+            b.upsert(u, originFor(QStringLiteral("fleet")));
+        }
+        b.commit();
+    }
+    if (isFinalPage) {
+        state_.markFresh(QStringLiteral("fleet"), rev, nowMs());
+    }
+}
+
 void Ingestor::refetchRouting() {
     enqueueFetch(FetchOp::RoutingListChats, QString(),
                  observing(QStringLiteral("routing"), QString()) ? Priority::VisibleSurface

@@ -60,4 +60,21 @@ bool decodeRoutePinsToMirror(const QByteArray& responseCbor, std::vector<mirror:
 bool decodeRoomsToMirror(const QByteArray& responseCbor, const QString& transport,
                          std::vector<mirror::Room>* out, QString* next);
 
+// SessionsQuery (default scope) → the session roster → Session entities (M4). The wire reply is a
+// full list (no paging / rev at this scope), so the executor lands it as one replace-and-prune.
+bool decodeSessionsToMirror(const QByteArray& responseCbor, std::vector<mirror::Session>* out);
+
+// Tree → TreeReport page → FleetUnit entities (M4). `next` (if non-null) receives the unit-id page
+// resume cursor ("" = last page); `rev` (if non-null) receives the tree revision recorded for the
+// FleetChanged rung-1 skip-gate (§5.5). The supervision-tree hierarchy is flattened into flat rows
+// (child_count only); parent/children reconstruction is a §3.5 relation-index concern.
+bool decodeFleetUnitsToMirror(const QByteArray& responseCbor, std::vector<mirror::FleetUnit>* out,
+                              QString* next, quint64* rev = nullptr);
+
+// SessionGet → SessionDetail → a single hydrated Session (M4): the base session-info fields plus
+// the detail-only model + checkpoints. `*found` (if non-null) is set false on the null arm (the
+// node does not know the session). Returns false only on a decode error.
+bool decodeSessionDetailToMirror(const QByteArray& responseCbor, mirror::Session* out,
+                                 bool* found = nullptr);
+
 } // namespace daemonapp::daemon

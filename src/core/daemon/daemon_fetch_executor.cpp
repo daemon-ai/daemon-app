@@ -89,6 +89,21 @@ void DaemonFetchExecutor::sendFor(const InFlight& f, const QString& pageToken,
         // M3: a transport instance's bindable rooms; `after` resumes the page loop.
         req = NodeApiCodec::encodeTransportRoomsRequest(f.transport, pageToken);
         break;
+    case mirror::FetchOp::SessionsQuery:
+        // M4: the session roster at the daemon's default scope. Full list (no since_rev / paging at
+        // this scope); the reply lands as one replace-and-prune.
+        req = NodeApiCodec::encodeSessionsQueryRequest();
+        break;
+    case mirror::FetchOp::SessionGet:
+        // M4: one session's full detail (hydrates model + checkpoints). The job scope is the
+        // session id (SessionMetaChanged carries no transport, so splitScope leaves it in
+        // `transport`).
+        req = NodeApiCodec::encodeSessionGetRequest(f.transport);
+        break;
+    case mirror::FetchOp::Tree:
+        // M4: the supervision fleet tree; `after` resumes the unit-id page loop.
+        req = NodeApiCodec::encodeTreeRequest(pageToken);
+        break;
     default:
         // Ops the mirror path does not fulfil yet (sessions/fleet/etc. — A7's M4 wave) complete
         // immediately; the legacy repositories still serve those surfaces (dual-write).
@@ -223,6 +238,46 @@ void DaemonFetchExecutor::onResponse(const QString& correlationId, const QByteAr
             return;
         }
         m_ingestor.deliverRooms(f.transport, f.roomAccum, /*isFinalPage=*/true);
+        finish(correlationId);
+        return;
+    }
+    case mirror::FetchOp::SessionsQuery: {
+        // M4: the roster is a full list at the default scope — land it as one replace-and-prune.
+        std::vector<mirror::Session> sessions;
+        if (decodeSessionsToMirror(responseCbor, &sessions)) {
+            m_ingestor.deliverSessions(sessions, /*isFinalPage=*/true);
+        }
+        finish(correlationId);
+        return;
+    }
+    case mirror::FetchOp::SessionGet: {
+        // M4: one session's hydrated detail — keyed upsert (never prunes siblings).
+        mirror::Session session;
+        bool found = false;
+        if (decodeSessionDetailToMirror(responseCbor, &session, &found) && found) {
+            m_ingestor.deliverSession(session);
+        }
+        finish(correlationId);
+        return;
+    }
+    case mirror::FetchOp::Tree: {
+        // M4: the fleet tree pages over unit-id cursors; accumulate then replace-and-prune.
+        std::vector<mirror::FleetUnit> page;
+        QString nextPage;
+        quint64 rev = 0;
+        if (!decodeFleetUnitsToMirror(responseCbor, &page, &nextPage, &rev)) {
+            finish(correlationId);
+            return;
+        }
+        for (auto& u : page) {
+            f.fleetAccum.push_back(std::move(u));
+        }
+        f.rev = rev;
+        if (!nextPage.isEmpty()) {
+            sendFor(f, nextPage, 0); // next page — same scheduler job
+            return;
+        }
+        m_ingestor.deliverFleetUnits(f.fleetAccum, /*isFinalPage=*/true, f.rev);
         finish(correlationId);
         return;
     }
