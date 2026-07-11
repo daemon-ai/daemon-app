@@ -159,7 +159,9 @@ RootWidget::RootWidget()
     // the single source of truth for the open tabs and the active one; the TUI
     // creates a per-tab TabSession on demand and binds the views to the active one.
     m_tabModel = new TabModel(this);
-    m_tabSessions = std::make_unique<TabSessionManager>(m_services.store, m_tabModel);
+    // M4 sub-gate 4: the per-tab detail controllers read the mirror-backed store (content()
+    // delegates to the legacy transcript source until sub-gate 6 re-homes the blocks).
+    m_tabSessions = std::make_unique<TabSessionManager>(m_services.storeMirror, m_tabModel);
     // The per-session profile drives the turn (#6b): give every orchestrator the shared override
     // seam + profile store (both modes), matching the GUI TranscriptPage bindings.
     m_tabSessions->setSessionSettings(m_services.sessionSettings);
@@ -221,7 +223,7 @@ RootWidget::RootWidget()
 
     // The right sidebar's Participants section: the same shared model the GUI binds.
     m_participants = new participants::ParticipantsModel(this);
-    m_participants->setStore(m_services.store);
+    m_participants->setStore(m_services.storeMirror);
 
     // Phase 0 shared seams (identical classes to the GUI). The connection seam
     // owns liveness; mirror its state into the footer's gateway indicator, then

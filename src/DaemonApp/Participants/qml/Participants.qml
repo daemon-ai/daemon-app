@@ -18,7 +18,7 @@ Rectangle {
 
     ParticipantsModel {
         id: participantsModel
-        store: SessionStore
+        store: SessionStoreMirror
     }
 
     Column {

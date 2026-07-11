@@ -606,15 +606,20 @@ endif()
 # the legacy mutation/transcript delegation + signal relays. Only built with the substrate.
 if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     qt_add_executable(tst_mirror_session_store tst_mirror_session_store.cpp)
+    target_include_directories(tst_mirror_session_store
+        PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Session"
+    )
     target_link_libraries(tst_mirror_session_store
         PRIVATE
             Qt6::Test
+            Qt6::Quick
             daemon-app::mirror_ingestor
             daemon-app::mirror_substrate
             daemon-app::daemon_client
             daemon-app::daemon_codec
             daemon-app::persistence
             daemon-app::domain
+            daemon-app::session_view
     )
     add_test(NAME tst_mirror_session_store COMMAND tst_mirror_session_store)
     set_tests_properties(tst_mirror_session_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

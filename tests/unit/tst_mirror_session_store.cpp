@@ -23,6 +23,7 @@
 #include "mirror/mirror_service.h"
 #include "mirror/parity.h"
 #include "mirror/store.h"
+#include "session_controller.h"
 
 #include <QSet>
 #include <QSignalSpy>
@@ -294,6 +295,28 @@ private slots:
         emit legacy.metaUpdateFailed(QStringLiteral("s-a"), QStringLiteral("denied"));
         QCOMPARE(created.count(), 1);
         QCOMPARE(failed.count(), 1);
+    }
+
+    // M4 sub-gate 4: the detail pane consumer — a SessionController (the VM TranscriptPage.qml
+    // + the TUI TabSessionManager bind) over the mirror store renders the DELEGATED transcript
+    // content (legacy source until sub-gate 6) and refreshes on the relayed legacy changed().
+    void detailPaneControllerReadsThroughMirrorStore() {
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        StubLegacyStore legacy;
+        MirrorSessionStore store(&svc.store(), &svc.ingestor(), &legacy);
+
+        SessionController controller;
+        controller.setStore(&store);
+        controller.open(QStringLiteral("s-a"));
+        QCOMPARE(controller.content(), QStringLiteral("legacy transcript"));
+        QVERIFY(legacy.contentReads.contains(QStringLiteral("s-a")));
+
+        // A legacy-side transcript update (the engine writes the cache, cache emits changed):
+        // the relayed changed() re-reads content through the same delegated path.
+        const int before = static_cast<int>(legacy.contentReads.size());
+        emit legacy.changed();
+        QVERIFY(static_cast<int>(legacy.contentReads.size()) > before);
     }
 };
 
