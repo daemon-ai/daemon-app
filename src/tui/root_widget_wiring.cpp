@@ -124,8 +124,8 @@ void RootWidget::wireModelBindings() {
     // SessionStore.changed() -> _resolveTitle() in TranscriptPage.qml). The
     // mid-turn reload guard lives in refreshTranscript(); titles are safe to
     // refresh any time.
-    connect(m_services.store, &persistence::ISessionStore::changed, this,
-            [this] { rwdetail::refreshTranscriptTabTitles(m_tabModel, m_services.store); });
+    connect(m_services.storeMirror, &persistence::ISessionStore::changed, this,
+            [this] { rwdetail::refreshTranscriptTabTitles(m_tabModel, m_services.storeMirror); });
 }
 
 void RootWidget::wirePageLiveRefresh() {
@@ -366,7 +366,7 @@ void RootWidget::wireSessionList() {
     connect(m_listView, &SessionListView::pinToggleRequested, this, [this](int row) {
         const QString id = m_list->idAt(row);
         if (!id.isEmpty()) {
-            m_services.store->setPinned(id, !m_services.store->isPinned(id));
+            m_services.storeMirror->setPinned(id, !m_services.storeMirror->isPinned(id));
         }
     });
     connect(m_listView, &SessionListView::deleteRequested, this, [this](int row) {
@@ -377,44 +377,44 @@ void RootWidget::wireSessionList() {
         auto* confirm =
             new ConfirmDialog(tr("Delete session"), tr("Permanently delete this session?"), this);
         connect(confirm, &ConfirmDialog::confirmed, this,
-                [this, id] { m_services.store->deleteSession(id); });
+                [this, id] { m_services.storeMirror->deleteSession(id); });
     });
     connect(m_listView, &SessionListView::exportRequested, this, [this](int row) {
         const QString id = m_list->idAt(row);
         if (id.isEmpty()) {
             return;
         }
-        QString name = m_services.store->title(id);
+        QString name = m_services.storeMirror->title(id);
         if (name.isEmpty()) {
             name = QStringLiteral("session");
         }
         const QString path = QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
-        m_exporter->exportToPath(m_services.store, id, path);
+        m_exporter->exportToPath(m_services.storeMirror, id, path);
     });
     connect(m_listView, &SessionListView::renameRequested, this, [this](int row) {
         const QString id = m_list->idAt(row);
         if (id.isEmpty()) {
             return;
         }
-        auto* dialog = new TextPromptDialog(tr("Rename session"), m_services.store->title(id),
+        auto* dialog = new TextPromptDialog(tr("Rename session"), m_services.storeMirror->title(id),
                                             /*masked=*/false, this);
         connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
             if (!text.trimmed().isEmpty()) {
-                m_services.store->renameSession(id, text.trimmed());
+                m_services.storeMirror->renameSession(id, text.trimmed());
             }
         });
     });
     connect(m_listView, &SessionListView::moveRequested, this, [this](int row, int delta) {
         const QString id = m_list->idAt(row);
         if (!id.isEmpty()) {
-            m_services.store->moveSession(id, delta);
+            m_services.storeMirror->moveSession(id, delta);
         }
     });
     // Pin/archive/rename are node-owned: the store sends a SessionUpdateMeta intent and the roster
     // re-projects from the node's reply. A rejected/failed write must not look applied - surface it
     // through the TUI notification path (GUI parity: the SessionStore.metaUpdateFailed -> Kit.Toast
     // in Main.qml). The in-memory/mock store never emits this, so this is inert off daemon mode.
-    connect(m_services.store, &persistence::ISessionStore::metaUpdateFailed, this,
+    connect(m_services.storeMirror, &persistence::ISessionStore::metaUpdateFailed, this,
             [](const QString& /*sessionId*/, const QString& message) {
                 rwdetail::emitDesktopNotification(
                     RootWidget::tr("Session update failed"),
@@ -590,11 +590,11 @@ void RootWidget::handleComposerCommand(const QString& command) {
             return;
         }
         const QString id = m_active->sessionId;
-        auto* dialog = new TextPromptDialog(tr("Rename session"), m_services.store->title(id),
+        auto* dialog = new TextPromptDialog(tr("Rename session"), m_services.storeMirror->title(id),
                                             /*masked=*/false, this);
         connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
             if (!text.trimmed().isEmpty()) {
-                m_services.store->renameSession(id, text.trimmed());
+                m_services.storeMirror->renameSession(id, text.trimmed());
             }
         });
         return;
@@ -604,12 +604,12 @@ void RootWidget::handleComposerCommand(const QString& command) {
             return;
         }
         const QString id = m_active->sessionId;
-        QString name = m_services.store->title(id);
+        QString name = m_services.storeMirror->title(id);
         if (name.isEmpty()) {
             name = QStringLiteral("session");
         }
         const QString path = QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
-        m_exporter->exportToPath(m_services.store, id, path);
+        m_exporter->exportToPath(m_services.storeMirror, id, path);
         return;
     }
     if (command == QStringLiteral("compress")) {
@@ -874,7 +874,7 @@ void RootWidget::wireSessionStreaming(TabSession* s) {
             if (m_services.settings != nullptr &&
                 m_services.settings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
                 const QString convTitle = s->controller->hasSession()
-                                              ? m_services.store->title(s->sessionId)
+                                              ? m_services.storeMirror->title(s->sessionId)
                                               : tr("daemon");
                 rwdetail::emitDesktopNotification(convTitle, tr("The turn finished."));
             }
@@ -905,7 +905,7 @@ void RootWidget::wireSessionStreaming(TabSession* s) {
             terminal()->setTitle(tr("\u25cf daemon \u2014 needs %1").arg(what));
         }
         const QString convTitle = (m_active != nullptr && m_active->controller->hasSession())
-                                      ? m_services.store->title(m_active->sessionId)
+                                      ? m_services.storeMirror->title(m_active->sessionId)
                                       : tr("daemon");
         rwdetail::emitDesktopNotification(convTitle, tr("The turn needs your %1.").arg(what));
     });

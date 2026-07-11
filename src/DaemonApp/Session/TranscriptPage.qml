@@ -74,13 +74,13 @@ Rectangle {
     function _resolveTitle() {
         if (sessionId === "")
             return;
-        const t = SessionStore.title(sessionId);
+        const t = SessionStoreMirror.title(sessionId);
         root.titleResolved((t && t.length > 0) ? t : qsTr("Session"));
     }
 
     SessionController {
         id: controller
-        store: SessionStore
+        store: SessionStoreMirror
     }
 
     // The shared submit pipeline: owns the turn (injected into the transcript) and
@@ -148,7 +148,7 @@ Rectangle {
     // message and the roster refetch lands that title in the cache WITHOUT a content change, so
     // the tab chip would otherwise keep its stale "Session" fallback.
     Connections {
-        target: SessionStore
+        target: SessionStoreMirror
         function onChanged() { root._resolveTitle(); }
     }
 
@@ -167,7 +167,7 @@ Rectangle {
             // Turn-done desktop notification (opt-in): App.notifyGate no-ops while
             // the window is on-screen and active, so this only alerts when hidden.
             if (AppSettings.value("notify/turnDone", false))
-                App.notifyGate(SessionStore.title(root.sessionId),
+                App.notifyGate(SessionStoreMirror.title(root.sessionId),
                                qsTr("The turn finished."));
         }
         function onEventsEmitted(events) { Status.applyTurnEvents(events); }
@@ -205,7 +205,7 @@ Rectangle {
                 return;
             const what = kind === "approval" ? qsTr("needs your approval")
                                              : qsTr("needs a credential");
-            App.notifyGate(SessionStore.title(root.sessionId),
+            App.notifyGate(SessionStoreMirror.title(root.sessionId),
                            qsTr("The turn %1.").arg(what));
         }
     }

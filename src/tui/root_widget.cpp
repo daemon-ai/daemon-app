@@ -10,8 +10,9 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // capability provider for the command palette
-#include "daemon/repositories.h" // [wave2:app-delegation] F7/DEL-7: CapsRepository::refresh()
-#include "daemon/repositories.h" // RoutingRepository IS-A daemonnet::IRoutingActions (hub dep)
+// [wave2:app-delegation] F7/DEL-7 CapsRepository::refresh(); RoutingRepository IS-A
+// daemonnet::IRoutingActions (hub dep).
+#include "daemon/repositories.h"
 #include "dialogs/first_run_dialog.h"
 #include "display_role_adapter.h"
 #include "file_finder_model.h"
@@ -103,7 +104,9 @@ RootWidget::RootWidget()
     // The reused layer: store + view models, wired exactly as in the GUI. None
     // of this depends on Tui Widgets - the same objects back the QML frontend.
     m_sidebar = new SidebarModel(this);
-    m_sidebar->setStore(m_services.store);
+    // M4 sub-gate 2: the sidebar session section reads the mirror-backed store (mock: the
+    // composition fallback alias, §9).
+    m_sidebar->setStore(m_services.storeMirror);
     // The legacy fleet-sidebar integrations section was deleted in M3 — the dedicated
     // IntegrationsTree below owns the integrations surface (GUI parity), and the routing manager
     // now reads the mirror store's pin table. SidebarModel renders only Fleet + Tags.
@@ -116,7 +119,9 @@ RootWidget::RootWidget()
     m_integrationsTree->setPersons(m_services.persons);
 
     m_list = new SessionsListModel(this);
-    m_list->setStore(m_services.store);
+    // M4 sub-gate 1: the roster list reads the mirror-backed store (in mock mode storeMirror
+    // aliases the legacy store — composition fallback, §9).
+    m_list->setStore(m_services.storeMirror);
 
     // The shared composer FSM - the same C++ class the QML composer drives. The
     // TUI binds its single-line input to it, gaining draft persistence, history,
@@ -155,7 +160,9 @@ RootWidget::RootWidget()
     // the single source of truth for the open tabs and the active one; the TUI
     // creates a per-tab TabSession on demand and binds the views to the active one.
     m_tabModel = new TabModel(this);
-    m_tabSessions = std::make_unique<TabSessionManager>(m_services.store, m_tabModel);
+    // M4 sub-gate 4: the per-tab detail controllers read the mirror-backed store (content()
+    // delegates to the legacy transcript source until sub-gate 6 re-homes the blocks).
+    m_tabSessions = std::make_unique<TabSessionManager>(m_services.storeMirror, m_tabModel);
     // The per-session profile drives the turn (#6b): give every orchestrator the shared override
     // seam + profile store (both modes), matching the GUI TranscriptPage bindings.
     m_tabSessions->setSessionSettings(m_services.sessionSettings);
@@ -217,7 +224,7 @@ RootWidget::RootWidget()
 
     // The right sidebar's Participants section: the same shared model the GUI binds.
     m_participants = new participants::ParticipantsModel(this);
-    m_participants->setStore(m_services.store);
+    m_participants->setStore(m_services.storeMirror);
 
     // Phase 0 shared seams (identical classes to the GUI). The connection seam
     // owns liveness; mirror its state into the footer's gateway indicator, then

@@ -422,13 +422,14 @@ ApplicationWindow {
         }
     }
 
-    // Pin / archive / rename are node-owned: SessionStore sends a SessionUpdateMeta intent and the
+    // Pin / archive / rename are node-owned: the store sends a SessionUpdateMeta intent and the
     // roster re-projects from the node's authoritative reply. If the node rejects one (e.g. a
     // non-owner), surface it here instead of leaving a silent no-op that looks applied - the store
-    // never mutates the pin/archive/title locally.
+    // never mutates the pin/archive/title locally. (M4: bound to the mirror store, which relays
+    // the legacy wire path's metaUpdateFailed during the dual-write window.)
     Kit.Toast { id: sessionMetaToast }
     Connections {
-        target: SessionStore
+        target: SessionStoreMirror
         function onMetaUpdateFailed(sessionId, message) {
             sessionMetaToast.show(message.length > 0
                 ? qsTr("Couldn't update session: %1").arg(message)

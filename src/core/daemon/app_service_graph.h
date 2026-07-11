@@ -128,6 +128,13 @@ enum class ServiceMode {
 // logs this at startup in daemon mode so the partial state is not mistaken for fully live.
 struct AppServiceGraph {
     persistence::ISessionStore* store = nullptr;
+    // mirror A7 (spec 09 §13 wave M4): the store the PORTED session/fleet consumers bind (the
+    // 6→1 unification path). Daemon mode with the substrate: a MirrorSessionStore projecting the
+    // mirror `sessions`/`fleet_units` tables (mutations + transcript reads delegate to `store`).
+    // Mock mode / substrate-less stacks: ALIASES `store` — the composition-time fallback that
+    // keeps mock rendering until A8's seeder feeds the mock mirror (§9 "mock keeps working").
+    // NEVER null once the graph is built; consumers flip here one sub-gate at a time.
+    persistence::ISessionStore* storeMirror = nullptr;
     settings::ISettingsStore* settings = nullptr;
     connection::IConnectionService* connection = nullptr;
     config::IDaemonConfig* daemonConfig = nullptr;
