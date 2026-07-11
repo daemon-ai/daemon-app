@@ -3,6 +3,7 @@
 
 #include "daemon/mirror_session_store.h"
 
+#include "daemon/repositories.h"
 #include "daemon/transcript_projection.h"
 #include "mirror/ingestor.h"
 #include "mirror/store.h"
@@ -82,8 +83,9 @@ domain::Session projectRow(const mirror::Session& s) {
 } // namespace
 
 MirrorSessionStore::MirrorSessionStore(mirror::Store* store, mirror::Ingestor* ingestor,
-                                       persistence::ISessionStore* legacy, QObject* parent)
-    : persistence::ISessionStore(parent), m_mirror(store), m_ingestor(ingestor), m_legacy(legacy) {
+                                       SessionRepository* sessions, QObject* parent)
+    : persistence::ISessionStore(parent), m_mirror(store), m_ingestor(ingestor),
+      m_sessions(sessions) {
     if (m_mirror != nullptr) {
         m_mirror->journal().registerConsumer(QLatin1String(kConsumer));
         m_watermark = m_mirror->journal().headRev();
@@ -102,17 +104,17 @@ MirrorSessionStore::MirrorSessionStore(mirror::Store* store, mirror::Ingestor* i
                     emit changed();
                 });
     }
-    if (m_legacy != nullptr) {
-        // Dual-write window: the delegated reads (transcript content) refresh through the legacy
-        // signal; the wire round-trips (create / meta rejection) surface through its relays.
-        connect(m_legacy, &persistence::ISessionStore::changed, this,
-                &persistence::ISessionStore::changed);
-        connect(m_legacy, &persistence::ISessionStore::sessionCreated, this,
+    if (m_sessions != nullptr) {
+        // The direct create seam (§7): the node mints the id; the repo's reply relays as
+        // ISessionStore::sessionCreated so the initiating surface adopts it (open + auto-select).
+        connect(m_sessions, &SessionRepository::sessionCreated, this,
                 &persistence::ISessionStore::sessionCreated);
-        connect(m_legacy, &persistence::ISessionStore::metaUpdateFailed, this,
-                &persistence::ISessionStore::metaUpdateFailed);
     }
     rebuildFromSnapshot();
+}
+
+void MirrorSessionStore::onNodeSessionCreated(const QString& sessionId, const QString& profileId) {
+    emit sessionCreated(sessionId, profileId);
 }
 
 void MirrorSessionStore::setOutbox(mirror::Outbox* outbox) {
@@ -278,15 +280,15 @@ QList<domain::Participant> MirrorSessionStore::participants() const {
 
 QString MirrorSessionStore::content(const domain::SessionId& id) const {
     // G2 (M5): the facade flip. Transcript content now projects the mirror `w_transcript_blocks`
-    // window (fed by the engine dual-write via MirrorTranscriptSink), byte-identical to the legacy
-    // cache projection (S1-S9 parity green). The legacy delegation is retired here.
+    // window (fed by the engine via MirrorTranscriptSink), byte-identical to the legacy
+    // cache projection (S1-S9 parity green).
     return mirrorContent(id);
 }
 
-void MirrorSessionStore::setContent(const domain::SessionId& id, const QString& markdown) {
-    if (m_legacy != nullptr) {
-        m_legacy->setContent(id, markdown);
-    }
+void MirrorSessionStore::setContent(const domain::SessionId&, const QString&) {
+    // The engine owns transcript writes (single writer through the sink); a client-side content
+    // write has no wire verb and no mirror write API (§14.2). No-op on both modes — the mock
+    // aligns to daemon (the pre-AD mock-only local write was a shape fork; A8 precedent).
 }
 
 QString MirrorSessionStore::mirrorContent(const domain::SessionId& id) const {
@@ -308,16 +310,20 @@ QString MirrorSessionStore::mirrorContent(const domain::SessionId& id) const {
     return projectTranscriptBlocks(blocks);
 }
 
-domain::SessionId MirrorSessionStore::newSession(const domain::UnitId& unitId) {
-    return m_legacy != nullptr ? m_legacy->newSession(unitId) : domain::SessionId();
+domain::SessionId MirrorSessionStore::newSession(const domain::UnitId&) {
+    // Session lifecycle is node-owned: creation flows through requestNewSession (the async
+    // direct SessionCreate seam) + the sessionCreated relay — nothing is client-minted. Both
+    // modes answer empty (the mock aligns to daemon; the synchronous local mint was a
+    // mock/daemon shape fork — A8 precedent).
+    return {};
 }
 
 // --- session-meta mutations (AD, §6.4): the durable outbox lane -------------------------------
 // The node owns pin/archive/title; each mutation is a SessionUpdateMeta intent enqueued to the
 // per-session `session-meta` lane (offline-durable, §6.6; op_id dedup makes replay safe, §10.3).
 // The mirror row changes ONLY when the node's authoritative read lands (SessionMetaChanged →
-// SessionGet / roster delta) — never an optimistic local write (§14.7). The legacy delegation
-// survives solely for outbox-less test stacks until the delegate parameter dies (AD Phase 2).
+// SessionGet / roster delta) — never an optimistic local write (§14.7). Without an outbox (bare
+// test stacks) they are no-ops: there is no legacy fallback path anymore.
 
 void MirrorSessionStore::setArchived(const domain::SessionId& id, bool archived) {
     if (m_outbox != nullptr && !id.isEmpty()) {
@@ -325,10 +331,6 @@ void MirrorSessionStore::setArchived(const domain::SessionId& id, bool archived)
             id, QJsonObject{{QStringLiteral("archived"), archived}},
             QStringLiteral(u"%1 \u2014 %2")
                 .arg(archived ? QStringLiteral("archive") : QStringLiteral("restore"), title(id)));
-        return;
-    }
-    if (m_legacy != nullptr) {
-        m_legacy->setArchived(id, archived);
     }
 }
 
@@ -336,17 +338,12 @@ void MirrorSessionStore::renameSession(const domain::SessionId& id, const QStrin
     if (m_outbox != nullptr && !id.isEmpty()) {
         enqueueSessionMeta(id, QJsonObject{{QStringLiteral("title"), title}},
                            QStringLiteral(u"rename \u2014 %1").arg(title));
-        return;
-    }
-    if (m_legacy != nullptr) {
-        m_legacy->renameSession(id, title);
     }
 }
 
-void MirrorSessionStore::deleteSession(const domain::SessionId& id) {
-    if (m_legacy != nullptr) {
-        m_legacy->deleteSession(id);
-    }
+void MirrorSessionStore::deleteSession(const domain::SessionId&) {
+    // No session-delete wire verb exists at v39 — the daemon store always no-opped here; the
+    // mock now aligns (the local delete was a shape fork). Archive is the supported removal.
 }
 
 void MirrorSessionStore::setPinned(const domain::SessionId& id, bool pinned) {
@@ -355,58 +352,50 @@ void MirrorSessionStore::setPinned(const domain::SessionId& id, bool pinned) {
             id, QJsonObject{{QStringLiteral("pinned"), pinned}},
             QStringLiteral(u"%1 \u2014 %2")
                 .arg(pinned ? QStringLiteral("pin") : QStringLiteral("unpin"), title(id)));
-        return;
-    }
-    if (m_legacy != nullptr) {
-        m_legacy->setPinned(id, pinned);
     }
 }
 
-void MirrorSessionStore::moveSession(const domain::SessionId& id, int delta) {
-    if (m_legacy != nullptr) {
-        m_legacy->moveSession(id, delta);
-    }
+void MirrorSessionStore::moveSession(const domain::SessionId&, int) {
+    // The projection order is node-derived (pinned, last-activity, id) — there is no manual
+    // reorder verb. Always a no-op, both modes (daemon parity; the mock local reorder was a
+    // shape fork).
 }
 
 void MirrorSessionStore::requestNewSession(const QString& profileId) {
-    if (m_legacy != nullptr) {
-        m_legacy->requestNewSession(profileId);
+    // The DIRECT create seam (§7): daemon → SessionCreate through the repository (the node mints
+    // the id; the ctor relays sessionCreated); mock → the composition answers via
+    // createRequested → the scenario host scripts the outcome + seeds the row.
+    if (m_sessions != nullptr) {
+        m_sessions->createSession(profileId);
+        return;
     }
+    emit createRequested(profileId);
 }
 
-domain::UnitId MirrorSessionStore::createUnit(const domain::UnitId& parentId,
-                                              domain::UnitKind kind) {
-    return m_legacy != nullptr ? m_legacy->createUnit(parentId, kind) : domain::UnitId();
+domain::UnitId MirrorSessionStore::createUnit(const domain::UnitId&, domain::UnitKind) {
+    // Units are node-owned supervision structure; no client-side create verb (daemon parity).
+    return {};
 }
 
-int MirrorSessionStore::createTag(const QString& name, const QString& color) {
-    return m_legacy != nullptr ? m_legacy->createTag(name, color) : -1;
+int MirrorSessionStore::createTag(const QString&, const QString&) {
+    // Tags are a client-local sidecar concern (§3.4) with no mirror vertical yet; the daemon
+    // store never supported them. No-op, both modes.
+    return -1;
 }
 
 void MirrorSessionStore::refreshSessionsForProfile(const QString& profileId) {
-    // Dual-write: the legacy repo refreshes its cache (unported consumers), the ingestor fetches
-    // the same scoped subset into the mirror (ported consumers). Both land additively.
-    if (m_legacy != nullptr) {
-        m_legacy->refreshSessionsForProfile(profileId);
-    }
     if (m_ingestor != nullptr) {
         m_ingestor->refetchSessionsForProfile(profileId);
     }
 }
 
 void MirrorSessionStore::refreshArchivedSessions() {
-    if (m_legacy != nullptr) {
-        m_legacy->refreshArchivedSessions();
-    }
     if (m_ingestor != nullptr) {
         m_ingestor->refetchArchivedSessions();
     }
 }
 
 void MirrorSessionStore::refreshSessionsForTransport(const QString& transportId) {
-    if (m_legacy != nullptr) {
-        m_legacy->refreshSessionsForTransport(transportId);
-    }
     if (m_ingestor != nullptr) {
         m_ingestor->refetchSessionsForTransport(transportId);
     }

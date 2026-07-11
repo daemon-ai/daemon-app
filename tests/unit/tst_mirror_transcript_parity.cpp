@@ -118,7 +118,7 @@ Projections project(const std::vector<CachedTranscriptBlockRow>& blocks) {
         sink.deliverBlock(b);
     }
     CachedSessionStore legacy(&cache, nullptr);
-    MirrorSessionStore store(&svc.store(), &svc.ingestor(), &legacy);
+    MirrorSessionStore store(&svc.store(), &svc.ingestor());
     return {legacy.content(domain::SessionId(QLatin1String(kSession))),
             store.mirrorContent(domain::SessionId(QLatin1String(kSession)))};
 }
@@ -209,7 +209,7 @@ private slots:
             sink.deliverBlock(b);
         }
         CachedSessionStore legacy(&cache, nullptr);
-        MirrorSessionStore store(&svc.store(), &svc.ingestor(), &legacy);
+        MirrorSessionStore store(&svc.store(), &svc.ingestor());
         const domain::SessionId id{QLatin1String(kSession)};
         QCOMPARE(store.mirrorContent(id), legacy.content(id));
         QVERIFY(!store.mirrorContent(id).contains(QStringLiteral("stale")));
@@ -246,7 +246,7 @@ private slots:
         sink.deliverBlock(inOrder[0]);
         sink.deliverBlock(inOrder[1]);
         CachedSessionStore legacy(&cache, nullptr);
-        MirrorSessionStore store(&svc.store(), &svc.ingestor(), &legacy);
+        MirrorSessionStore store(&svc.store(), &svc.ingestor());
         const domain::SessionId id{QLatin1String(kSession)};
         QCOMPARE(store.mirrorContent(id), legacy.content(id));
     }

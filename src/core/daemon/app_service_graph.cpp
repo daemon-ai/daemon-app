@@ -720,13 +720,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                  });
             }
 
-            // mirror A7 (M4): the mirror-backed session store the ported consumers bind. Session
+            // mirror A7 (M4) → AD: the mirror-backed session store every consumer binds. Session
             // ROWS project the mirror `sessions` table; content() projects the mirror transcript
-            // window (G2). AD: pin/archive/rename go through the session-meta OUTBOX lane
-            // (offline-durable, §6.4/§6.6) — bound below; the legacy `store` remains only the
-            // create/refresh delegate until the direct seams land (AD Phase 1b.2).
+            // window (G2); pin/archive/rename ride the session-meta OUTBOX lane (§6.4/§6.6);
+            // create rides the DIRECT SessionCreate seam through the repository (§7). The legacy
+            // ISessionStore delegation is GONE.
             auto* mirrorStore =
-                new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
+                new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.sessions, owner);
             mirrorStore->setOutbox(graph.outbox);
             graph.storeMirror = mirrorStore;
 
@@ -887,14 +887,18 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                              });
         }
 
-        // mirror A8 (M5): mock storeMirror is the REAL MirrorSessionStore over the seeded mirror —
-        // the A7 composition-time aliasing is deleted; the 6→1 projection now serves BOTH modes.
-        // AD: pin/archive/rename ride the SAME session-meta outbox lane as daemon mode — the mock
-        // host answers from the scenario's VerbScript and echoes the patched row provenance-
-        // stamped (§6.6), so the mock roster updates event-driven, exactly like the node path.
-        auto* mirrorStore =
-            new MirrorSessionStore(&svc->store(), &svc->ingestor(), graph.store, owner);
+        // mirror A8 (M5) → AD: mock storeMirror is the REAL MirrorSessionStore over the seeded
+        // mirror. Pin/archive/rename ride the SAME session-meta outbox lane as daemon mode — the
+        // mock host answers from the scenario's VerbScript and echoes the patched row provenance-
+        // stamped (§6.6); create rides the createRequested → scripted-SessionCreate seam (the
+        // host mints + seeds + reports back). No legacy delegate anywhere.
+        auto* mirrorStore = new MirrorSessionStore(&svc->store(), &svc->ingestor(),
+                                                   /*sessions=*/nullptr, owner);
         mirrorStore->setOutbox(graph.outbox);
+        QObject::connect(mirrorStore, &MirrorSessionStore::createRequested, graph.mockHost,
+                         &MockScenarioHost::onCreateSessionRequested);
+        QObject::connect(graph.mockHost, &MockScenarioHost::sessionCreated, mirrorStore,
+                         &MirrorSessionStore::onNodeSessionCreated);
         graph.storeMirror = mirrorStore;
     }
 #endif

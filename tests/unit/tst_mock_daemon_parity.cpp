@@ -212,8 +212,8 @@ private slots:
         // --- store-projection parity: the 6→1 session read both modes' consumers bind ---------
         auto* fleetSource = new daemonnet::MockFleetSource(scn.bundle, &owner);
         auto* daemonLegacy = new persistence::InMemorySessionStore(fleetSource, &owner);
-        daemonapp::daemon::MirrorSessionStore daemonStore(&daemonSvc.store(), &daemonSvc.ingestor(),
-                                                          daemonLegacy);
+        daemonapp::daemon::MirrorSessionStore daemonStore(&daemonSvc.store(),
+                                                          &daemonSvc.ingestor());
         const QList<domain::Session> mockRows = graph.storeMirror->sessions(domain::ListScope{});
         const QList<domain::Session> daemonRows = daemonStore.sessions(domain::ListScope{});
         QCOMPARE(mockRows.size(), daemonRows.size());
