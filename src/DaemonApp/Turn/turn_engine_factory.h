@@ -14,6 +14,7 @@ namespace daemonapp::daemon {
 class NodeApiClient;
 class DaemonCacheStore;
 class SubscriptionManager;
+class ITranscriptMirrorSink; // A7T: transcript dual-write into the mirror window
 } // namespace daemonapp::daemon
 
 // Builds the per-session turn engine. Injected into SessionOrchestrator (QML assigns the
@@ -51,15 +52,17 @@ public:
     explicit DaemonTurnEngineFactory(
         daemonapp::daemon::NodeApiClient* client,
         daemonapp::daemon::DaemonCacheStore* cache = nullptr,
-        daemonapp::daemon::SubscriptionManager* subscriptions = nullptr, QObject* parent = nullptr)
+        daemonapp::daemon::SubscriptionManager* subscriptions = nullptr,
+        daemonapp::daemon::ITranscriptMirrorSink* mirrorSink = nullptr, QObject* parent = nullptr)
         : ITurnEngineFactory(parent), m_client(client), m_cache(cache),
-          m_subscriptions(subscriptions) {}
+          m_subscriptions(subscriptions), m_mirrorSink(mirrorSink) {}
     [[nodiscard]] ITurnEngine* create(QObject* parent) override {
-        return new DaemonTurnEngine(m_client, m_cache, m_subscriptions, parent);
+        return new DaemonTurnEngine(m_client, m_cache, m_subscriptions, m_mirrorSink, parent);
     }
 
 private:
     daemonapp::daemon::NodeApiClient* m_client = nullptr;
     daemonapp::daemon::DaemonCacheStore* m_cache = nullptr;
     daemonapp::daemon::SubscriptionManager* m_subscriptions = nullptr;
+    daemonapp::daemon::ITranscriptMirrorSink* m_mirrorSink = nullptr;
 };

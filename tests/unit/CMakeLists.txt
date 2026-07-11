@@ -626,6 +626,27 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     set_tests_properties(tst_mirror_session_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
 
+# tst_mirror_transcript_parity (M4 sub-step 6, A7T): the transcript re-homing parity harness - the
+# SAME coalesced block stream driven through the legacy cache projection (CachedSessionStore::
+# content) and the mirror projection (MirrorTranscriptSink -> ingestor -> w_transcript_blocks ->
+# MirrorSessionStore::mirrorContent), asserting msg-fence byte-equality per scenario and PINNING the
+# argsSummary/detail entity-field gap that withholds the facade flip. Only built with the substrate.
+if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
+    qt_add_executable(tst_mirror_transcript_parity tst_mirror_transcript_parity.cpp)
+    target_link_libraries(tst_mirror_transcript_parity
+        PRIVATE
+            Qt6::Test
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+            daemon-app::persistence
+            daemon-app::domain
+    )
+    add_test(NAME tst_mirror_transcript_parity COMMAND tst_mirror_transcript_parity)
+    set_tests_properties(tst_mirror_transcript_parity PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
 # tst_sessions_list_mirror (M4 sub-gate 1): the roster list consumer on the mirror path - the
 # shared SessionsListModel (GUI SessionsList/ArchivedSection + TUI SessionListView) over
 # MirrorSessionStore: mirror deliveries render + live-update, the Archived/Agent scopes drive the

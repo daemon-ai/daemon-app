@@ -76,6 +76,15 @@ public:
     [[nodiscard]] QString content(const domain::SessionId& id) const override;
     void setContent(const domain::SessionId& id, const QString& markdown) override;
 
+    // A7T (M4 sub-step 6): the msg-fence transcript projection served FROM THE MIRROR
+    // `w_transcript_blocks` window — the byte-stable twin of `CachedSessionStore::content()`,
+    // ported grammar-for-grammar. NOT yet wired into `content()` (the flip): the generated
+    // `mirror::TranscriptBlock` entity does not carry `argsSummary`/`detailKind`/`detailBody`, so
+    // a tool call with non-empty args or a structured tool result cannot be reproduced
+    // byte-for-byte (see LEDGER-a7t "ENTITY-FIELD GAP"). Exposed for the parity harness + as the
+    // one-line flip target once the entity is enriched (node-side `just update-codec`).
+    [[nodiscard]] QString mirrorContent(const domain::SessionId& id) const;
+
     // --- node-authoritative mutations: delegated to the legacy wire path ----------------------
     domain::SessionId newSession(const domain::UnitId& unitId) override;
     void setArchived(const domain::SessionId& id, bool archived) override;

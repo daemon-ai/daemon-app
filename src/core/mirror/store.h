@@ -122,6 +122,23 @@ public:
     Batch& appendWindow(const T& item, JournalOrigin origin = JournalOrigin::RefetchDiff,
                         const QString& originOp = QString());
 
+    // Upsert a windowed (W) item BY ITS ORDERING KEY (window_item_key), preserving cursor order
+    // (§4.6). Unlike appendWindow (which always pushes at the tail), this replaces an item already
+    // at the same ordering key in place, or inserts at the sorted position otherwise — the mirror
+    // twin of the transcript engine's `(session, seq)` upsert (A7T: reasoning re-checkpoints and
+    // the journal rebaseline both re-write the same seq). Diff-before-write: a replace whose value
+    // equals the existing item is a no-op (§5.3). Eviction trims oldest-first past the policy.
+    template <typename T>
+    Batch& upsertWindow(const T& item, JournalOrigin origin = JournalOrigin::RefetchDiff,
+                        const QString& originOp = QString());
+
+    // Drop an entire per-scope window (§4.6) — the twin of `DaemonCacheStore::clearTranscript`
+    // (A7T: the journal rebaseline wipes the stale generation before replaying). Stages ONE
+    // Tombstone record keyed by the scope. No-op when the scope has no window.
+    template <typename T>
+    Batch& clearWindow(const ScopeOf<T>& scope, JournalOrigin origin = JournalOrigin::RefetchDiff,
+                       const QString& originOp = QString());
+
     // Publish: mint revs, swap the root, notify once. Returns the new head rev (== revFrom when
     // the batch was empty / all no-ops). Single-shot.
     quint64 commit();
@@ -240,6 +257,74 @@ Batch& Batch::appendWindow(const T& item, JournalOrigin origin, const QString& o
     windows = std::move(windows).set(scope, std::move(win));
     stage(T::entity_kind, scope.serialize() + QChar(0x1f) + window_item_key(item),
           JournalOp::Upsert, origin, originOp);
+    return *this;
+}
+
+// ---- Batch::upsertWindow (cursor-ordered upsert-by-key) --------------------------------------
+template <typename T>
+Batch& Batch::upsertWindow(const T& item, JournalOrigin origin, const QString& originOp) {
+    auto& windows = window_for(working_, TypeTag<T>{});
+    const auto scope = item.scope();
+    Window<T> win = windows.count(scope) ? windows[scope] : Window<T>{};
+    const quint64 order = window_order(item);
+
+    // Cursor-ordered scan for the sorted insert position / an in-place replace at the same order.
+    std::size_t idx = 0;
+    bool replace = false;
+    while (idx < win.items.size()) {
+        const quint64 cur = window_order(win.items[idx].get());
+        if (cur == order) {
+            replace = true;
+            break;
+        }
+        if (cur > order) {
+            break;
+        }
+        ++idx;
+    }
+
+    if (replace) {
+        if (win.items[idx].get() == item) {
+            return *this; // diff-before-write: unchanged, no record
+        }
+        win.meta.byte_count -=
+            static_cast<qint64>(::mirror::reflect::gadget_dump(win.items[idx].get()).size());
+        win.items = std::move(win.items).set(idx, immer::box<T>{item});
+        win.meta.byte_count += static_cast<qint64>(::mirror::reflect::gadget_dump(item).size());
+    } else {
+        win.items = std::move(win.items).insert(idx, immer::box<T>{item});
+        win.meta.byte_count += static_cast<qint64>(::mirror::reflect::gadget_dump(item).size());
+    }
+    win.meta.item_count = static_cast<int>(win.items.size());
+    win.meta.oldest_cursor = win.items.empty() ? 0 : window_order(win.items[0].get());
+    win.meta.newest_cursor =
+        win.items.empty() ? 0 : window_order(win.items[win.items.size() - 1].get());
+
+    // Eviction (§4.6): trim oldest-first past the policy. Node remains the archive; no tombstone.
+    const int maxItems = store_.windowMaxItems(T::entity_kind);
+    while (maxItems > 0 && static_cast<int>(win.items.size()) > maxItems) {
+        win.meta.byte_count -=
+            static_cast<qint64>(::mirror::reflect::gadget_dump(win.items[0].get()).size());
+        win.items = std::move(win.items).erase(0);
+        win.meta.oldest_cursor = win.items.empty() ? 0 : window_order(win.items[0].get());
+    }
+    win.meta.item_count = static_cast<int>(win.items.size());
+
+    windows = std::move(windows).set(scope, std::move(win));
+    stage(T::entity_kind, scope.serialize() + QChar(0x1f) + window_item_key(item),
+          JournalOp::Upsert, origin, originOp);
+    return *this;
+}
+
+// ---- Batch::clearWindow (drop a per-scope window) --------------------------------------------
+template <typename T>
+Batch& Batch::clearWindow(const ScopeOf<T>& scope, JournalOrigin origin, const QString& originOp) {
+    auto& windows = window_for(working_, TypeTag<T>{});
+    if (windows.count(scope) == 0U) {
+        return *this; // nothing to clear
+    }
+    windows = std::move(windows).erase(scope);
+    stage(T::entity_kind, scope.serialize(), JournalOp::Tombstone, origin, originOp);
     return *this;
 }
 

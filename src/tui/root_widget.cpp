@@ -173,7 +173,8 @@ RootWidget::RootWidget()
     if (qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection) !=
         nullptr) {
         m_tabSessions->setTurnEngines(new DaemonTurnEngineFactory(
-            m_services.nodeApi, m_services.cache, m_services.subscriptions, this));
+            m_services.nodeApi, m_services.cache, m_services.subscriptions,
+            m_services.transcriptMirrorSink, this));
     }
     connect(m_tabModel, &TabModel::currentTabChanged, this, [this](int tabId) {
         if (tabId >= 0) {

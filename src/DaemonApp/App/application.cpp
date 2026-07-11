@@ -200,7 +200,8 @@ Application::Application(QObject* parent)
     if (qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection) !=
         nullptr) {
         m_turnEngines = new DaemonTurnEngineFactory(m_services.nodeApi, m_services.cache,
-                                                    m_services.subscriptions, this);
+                                                    m_services.subscriptions,
+                                                    m_services.transcriptMirrorSink, this);
     } else {
         m_turnEngines = new MockTurnEngineFactory(this);
     }
@@ -671,7 +672,8 @@ QString Application::runHeadlessChat(const QString& prompt, int timeoutMs, const
     settle(600); // let the on-ready refreshes drain off the single-in-flight queue first
 
     auto* engine =
-        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions, this);
+        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions,
+                             m_services.transcriptMirrorSink, this);
     engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
     engine->setProfile(profile); // PRO-5: bind the turn to the selected profile (empty = active)
 
@@ -1009,7 +1011,8 @@ QString Application::runHeadlessHitl(const QString& prompt, const QString& decis
     settle(600);
 
     auto* engine =
-        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions, this);
+        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions,
+                             m_services.transcriptMirrorSink, this);
     engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
 
     QString answer;

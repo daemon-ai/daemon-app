@@ -190,6 +190,12 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         # mirror.
         mirror_session_store.h
         mirror_session_store.cpp
+        # A7T (M4 sub-step 6): the app-local transcript stream re-homed onto the mirror window.
+        # The engine-facing ITranscriptMirrorSink is mirror-free (always buildable); the concrete
+        # adapter needs the ingestor, so it is substrate-gated here.
+        transcript_mirror_sink.h
+        mirror_transcript_sink.h
+        mirror_transcript_sink.cpp
     )
     target_link_libraries(da_daemon_client PUBLIC
         daemon-app::mirror_ingestor
