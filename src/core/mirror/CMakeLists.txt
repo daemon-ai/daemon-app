@@ -124,6 +124,7 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         write_behind.cpp
         parity.cpp
         mirror_service.cpp
+        seeder.cpp
         node_event.h
         policy_table.h
         fetch_job.h
@@ -133,6 +134,7 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         write_behind.h
         parity.h
         mirror_service.h
+        seeder.h
     )
     add_library(daemon-app::mirror_ingestor ALIAS da_mirror_ingestor)
 

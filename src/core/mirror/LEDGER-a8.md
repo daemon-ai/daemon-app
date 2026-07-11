@@ -144,3 +144,11 @@ data-mock deletion, (6) mock e2e parity.
   `setProvenanceCapable(api>=39)` in the SAME change, and runs boot reconciliation over
   `Persistence::persistedOriginOps()` (§6.6 two-phase local cleanup). `tst_provenance_landing`
   (8 cases) + `tst_mirror_service::provenanceStampedRelaysOriginOp`. ctest 141→142.
+- **Seeder core + scenario/script types — DONE (additive; composition flip pending).**
+  `mirror::Seeder` writes every kind through the store apply/commit pipeline (journal
+  origin = Seeder, one batch), `Scenario`/`SeedSet`/`ScenarioPlayer` play a declarative seed +
+  deterministic scripted timeline, and `VerbScript` resolves ok/reject/timeout with an arg matcher
+  (the MANDATORY rejection fixtures). `tst_mirror_seeder`: seed+timeline stamp Seeder only, a lens
+  renders seeded rows (parity by construction), verb-script outcomes. ctest 142→143. NOT yet wired
+  into the mock composition (the flip + data-mock deletion + api/<N> Hello are the remaining M5
+  slices).

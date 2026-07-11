@@ -1371,6 +1371,19 @@ if(TARGET daemon-app::mirror_ingestor)
         set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif()
 
+    # tst_mirror_seeder (mirror A8): the mock-mode single Writer (spec 09 §9, §5.1) — seed() +
+    # scripted timeline write through the SAME apply/commit pipeline (journal origin = Seeder), a
+    # lens renders the seeded rows (parity by construction), and the verb script resolves
+    # ok/reject/timeout with an arg matcher (the MANDATORY rejection fixtures, §6.5). Links the
+    # ingestor (which hosts the seeder) + the lens (the parity-by-construction check).
+    if(TARGET daemon-app::mirror_lens)
+        qt_add_executable(tst_mirror_seeder tst_mirror_seeder.cpp)
+        target_link_libraries(tst_mirror_seeder
+            PRIVATE Qt6::Test daemon-app::mirror_ingestor daemon-app::mirror_lens)
+        add_test(NAME tst_mirror_seeder COMMAND tst_mirror_seeder)
+        set_tests_properties(tst_mirror_seeder PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
     # tst_provenance_landing (mirror A8): the provenance-landing seam deferred to A8 by BR/A7
     # (spec 09 §5.1/§6.6) — MirrorService::provenanceStamped re-emits each commit's journal
     # origin_op, driving Outbox::onProvenanceStamped end-to-end (ack→echo→landed; rejection→paused
