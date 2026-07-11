@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-// The real routing manager backend (B6/ROU, wire v28):
+// The real routing manager backend (B6/ROU, wire v28; M3 read path):
 //  - RoutingRepository lists the chat pins (RoutingListChats page loop), binds/unbinds
 //    (RoutingBindChat/RoutingUnbindChat -> Ok -> authoritative re-list), and lists a transport's
-//    bindable rooms (TransportRooms);
-//  - DaemonDaemonNet projects the repo through the IDaemonNet seam the RoutingPage binds:
-//    routes() as RoutingPins, resolve() answering from the pin table only (Pin vs Default),
-//    accountsAgents() from the transport instances, and the QML chip helpers.
+//    bindable rooms (TransportRooms). The decoded pins/rooms are the SAME wire shapes the mirror
+//    decode-to-mirror bridge maps into route_pins/rooms (tst_routing_projection), so the wire
+//    round-trip is exercised here and the mirror landing is exercised there.
 
 #include "daemon/daemon_cache_store.h"
-#include "daemon/daemon_daemonnet.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
@@ -25,7 +23,6 @@
 #include <QtTest/QtTest>
 
 using daemonapp::daemon::DaemonCacheStore;
-using daemonapp::daemon::DaemonDaemonNet;
 using daemonapp::daemon::DaemonTransport;
 using daemonapp::daemon::DecodedChatRoute;
 using daemonapp::daemon::DecodedOrigin;
@@ -261,141 +258,6 @@ private slots:
         QCOMPARE(rooms.at(0).session, QStringLiteral("s-ops"));
         QVERIFY(rooms.at(1).name.isEmpty());
         QVERIFY(rooms.at(1).session.isEmpty());
-    }
-
-    // DaemonDaemonNet projects the repo through the IDaemonNet seam: pins, pin-table resolve
-    // (Pin vs honest Default), and the QML chip helpers.
-    void daemonNetProjectsPins() {
-        const QString sock = m_tmp.filePath(QStringLiteral("rt-net.sock"));
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock), "listen");
-        fake.setReplyPayload(chatRoutesResponse());
-        DaemonTransport transport;
-        transport.setSocketPath(sock);
-        NodeApiClient client(&transport);
-        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("rt-net.db")));
-        RoutingRepository repo(&client, &cache);
-        DaemonDaemonNet net(&repo, nullptr, nullptr, nullptr);
-
-        QSignalSpy changed(&net, &daemonnet::IDaemonNet::changed);
-        repo.refreshChats();
-        QTRY_VERIFY_WITH_TIMEOUT(changed.count() >= 1, 3000);
-
-        const auto pins = net.routes();
-        QCOMPARE(pins.size(), 2);
-        QCOMPARE(pins.at(0).origin.transport.toString(), QStringLiteral("matrix/@bot:hs.org"));
-        QCOMPARE(pins.at(0).origin.scope.chat, QStringLiteral("#secops"));
-        QCOMPARE(pins.at(0).session.toString(), QStringLiteral("s-secops"));
-
-        // resolve(): a pinned origin resolves by the pin; an unpinned one is an honest Default
-        // (the client never re-derives the node's lower precedence rungs).
-        domain::Origin pinned;
-        pinned.transport = domain::TransportId(QStringLiteral("matrix/@bot:hs.org"));
-        pinned.scope.kind = domain::OriginScopeKind::Group;
-        pinned.scope.chat = QStringLiteral("#secops");
-        QCOMPARE(net.resolve(pinned).decidedBy, daemonnet::DecidedBy::Pin);
-        QCOMPARE(net.resolve(pinned).session.toString(), QStringLiteral("s-secops"));
-        domain::Origin unpinned = pinned;
-        unpinned.scope.chat = QStringLiteral("#not-pinned");
-        QCOMPARE(net.resolve(unpinned).decidedBy, daemonnet::DecidedBy::Default);
-        QVERIFY(net.resolve(unpinned).session.isEmpty());
-
-        // The QML chip helpers (session header + room rows).
-        QCOMPARE(net.pinsForSession(QStringLiteral("s-secops")).size(), 1);
-        QCOMPARE(net.pinsForSession(QStringLiteral("s-secops"))
-                     .first()
-                     .toMap()
-                     .value(QStringLiteral("label"))
-                     .toString(),
-                 QStringLiteral("#secops"));
-        QVERIFY(net.pinsForSession(QStringLiteral("nope")).isEmpty());
-        QCOMPARE(
-            net.pinnedSessionFor(QStringLiteral("matrix/@bot:hs.org"), QStringLiteral("#secops")),
-            QStringLiteral("s-secops"));
-        QVERIFY(net.pinnedSessionFor(QStringLiteral("matrix/@bot:hs.org"), QStringLiteral("#dev"))
-                    .isEmpty());
-
-        // bindingRules() is honestly empty (config-time; no wire read op).
-        QVERIFY(net.bindingRules().isEmpty());
-    }
-
-    // B4/EIO-8: transportsTree() merges the cached accounts + conversations into the sidebar
-    // Integrations taxonomy (account -> Channels/DMs -> leaves), deduped against the pins — a
-    // pinned conversation IS its session leaf; an unpinned one is a browse-only leaf carrying
-    // the transport+conversation ids for the Channels-page activation.
-    void transportsTreeMergesConversationsAndPins() {
-        const QString sock = m_tmp.filePath(QStringLiteral("rt-tree.sock"));
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock), "listen");
-        fake.setReplyPayload(chatRoutesResponse()); // pins: #secops -> s-secops, @bob -> s-bob
-        DaemonTransport transport;
-        transport.setSocketPath(sock);
-        NodeApiClient client(&transport);
-        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("rt-tree.db")));
-
-        // Offline-first inputs: one account with two channels + one DM.
-        daemonapp::daemon::CachedTransportInstanceRow acct;
-        acct.transport = QStringLiteral("matrix/@bot:hs.org");
-        acct.family = QStringLiteral("matrix");
-        acct.displayName = QStringLiteral("@bot:hs.org");
-        acct.presence = QStringLiteral("available");
-        QVERIFY(cache.upsertTransportInstance(acct));
-        daemonapp::daemon::CachedConversationRow c1;
-        c1.transport = acct.transport;
-        c1.convId = QStringLiteral("#secops");
-        c1.kind = QStringLiteral("channel");
-        c1.title = QStringLiteral("SecOps");
-        QVERIFY(cache.upsertConversation(c1));
-        daemonapp::daemon::CachedConversationRow c2;
-        c2.transport = acct.transport;
-        c2.convId = QStringLiteral("#dev");
-        c2.kind = QStringLiteral("channel");
-        QVERIFY(cache.upsertConversation(c2));
-        daemonapp::daemon::CachedConversationRow c3;
-        c3.transport = acct.transport;
-        c3.convId = QStringLiteral("@bob:hs.org");
-        c3.kind = QStringLiteral("dm");
-        QVERIFY(cache.upsertConversation(c3));
-
-        daemonapp::daemon::TransportRepository transports(&client, &cache);
-        RoutingRepository routing(&client, &cache);
-        DaemonDaemonNet net(&routing, &transports, nullptr, nullptr);
-
-        QSignalSpy changed(&net, &daemonnet::IDaemonNet::changed);
-        routing.refreshChats();
-        QTRY_VERIFY_WITH_TIMEOUT(changed.count() >= 1, 3000);
-
-        const auto tree = net.transportsTree();
-        // account + "Channels" group + 2 channels + "DMs" group + 1 dm = 6 rows.
-        QCOMPARE(tree.size(), 6);
-        QCOMPARE(tree.at(0).kind, QStringLiteral("account"));
-        QCOMPARE(tree.at(0).scopeKey, acct.transport); // ByTransport list scope
-        QCOMPARE(tree.at(0).presence, QStringLiteral("available"));
-        QVERIFY(tree.at(0).hasChildren);
-
-        // Pinned channel leaf: ONE row carrying the pinned session (dedup — no duplicate).
-        int secops = -1;
-        int dev = -1;
-        int bob = -1;
-        for (int i = 0; i < tree.size(); ++i) {
-            if (tree.at(i).conversationId == QStringLiteral("#secops")) {
-                secops = i;
-            } else if (tree.at(i).conversationId == QStringLiteral("#dev")) {
-                dev = i;
-            } else if (tree.at(i).conversationId == QStringLiteral("@bob:hs.org")) {
-                bob = i;
-            }
-        }
-        QVERIFY(secops >= 0 && dev >= 0 && bob >= 0);
-        QCOMPARE(tree.at(secops).sessionId, QStringLiteral("s-secops"));
-        QCOMPARE(tree.at(secops).label, QStringLiteral("SecOps"));
-        // Unpinned channel: browse-only leaf (no sessionId) with the activation ids.
-        QVERIFY(tree.at(dev).sessionId.isEmpty());
-        QCOMPARE(tree.at(dev).transportId, acct.transport);
-        QCOMPARE(tree.at(dev).conversationId, QStringLiteral("#dev"));
-        // Pinned DM leaf (dm-scope pin from the fixture).
-        QCOMPARE(tree.at(bob).sessionId, QStringLiteral("s-bob"));
-        QCOMPARE(tree.at(bob).convType, QStringLiteral("dm"));
     }
 };
 
