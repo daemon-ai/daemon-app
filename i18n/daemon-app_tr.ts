@@ -2492,17 +2492,6 @@ kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Kanallar</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM&apos;ler</translation>
-    </message>
-</context>
-<context>
     <name>DaemonModelCatalog</name>
     <message>
         <source>Model %1 is missing on disk: %2</source>
@@ -4210,7 +4199,7 @@ Teşekkürler — şununla devam ediliyor: %1
     </message>
 </context>
 <context>
-    <name>MockDaemonNet</name>
+    <name>MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Aracı</translation>
@@ -6094,21 +6083,6 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— sabitlendi</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· türetildi</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - izleyici</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6869,10 +6843,6 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
     <message>
         <source>Fleet</source>
         <translation>Filo</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Entegrasyonlar</translation>
     </message>
     <message>
         <source>New tag</source>
@@ -9230,17 +9200,6 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Kanallar</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM&apos;ler</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9496,7 +9455,7 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
+    <name>daemonnet::MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Aracı</translation>

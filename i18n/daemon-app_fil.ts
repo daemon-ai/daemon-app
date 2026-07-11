@@ -2492,17 +2492,6 @@ hanggang muli itong mairehistro.</translation>
     </message>
 </context>
 <context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Mga Channel</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>DaemonModelCatalog</name>
     <message>
         <source>Model %1 is missing on disk: %2</source>
@@ -4214,7 +4203,7 @@ Salamat — magpapatuloy sa: %1
     </message>
 </context>
 <context>
-    <name>MockDaemonNet</name>
+    <name>MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agent</translation>
@@ -6098,21 +6087,6 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— naka-pin</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· hinango</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - manonood</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6874,10 +6848,6 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     <message>
         <source>Fleet</source>
         <translation>Fleet</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Mga Integration</translation>
     </message>
     <message>
         <source>New tag</source>
@@ -9238,17 +9208,6 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Mga Channel</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9504,7 +9463,7 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
+    <name>daemonnet::MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agent</translation>

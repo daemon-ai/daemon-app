@@ -2492,17 +2492,6 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>चैनल</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>DaemonModelCatalog</name>
     <message>
         <source>Model %1 is missing on disk: %2</source>
@@ -4214,7 +4203,7 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
-    <name>MockDaemonNet</name>
+    <name>MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>एजेंट</translation>
@@ -6098,21 +6087,6 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— पिन किया गया</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· व्युत्पन्न</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - दर्शक</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6874,10 +6848,6 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Fleet</source>
         <translation>फ़्लीट</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>एकीकरण</translation>
     </message>
     <message>
         <source>New tag</source>
@@ -9238,17 +9208,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>चैनल</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9504,7 +9463,7 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
+    <name>daemonnet::MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>एजेंट</translation>

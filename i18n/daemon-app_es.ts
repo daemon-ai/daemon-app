@@ -2492,17 +2492,6 @@ hasta que se vuelva a registrar.</translation>
     </message>
 </context>
 <context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Canales</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>MD</translation>
-    </message>
-</context>
-<context>
     <name>DaemonModelCatalog</name>
     <message>
         <source>Model %1 is missing on disk: %2</source>
@@ -4214,7 +4203,7 @@ Gracias — continuando con: %1
     </message>
 </context>
 <context>
-    <name>MockDaemonNet</name>
+    <name>MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agente</translation>
@@ -6098,21 +6087,6 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— anclado</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· derivado</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - espectador</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6874,10 +6848,6 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
     <message>
         <source>Fleet</source>
         <translation>Flota</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Integraciones</translation>
     </message>
     <message>
         <source>New tag</source>
@@ -9238,17 +9208,6 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Canales</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>MD</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9504,7 +9463,7 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
+    <name>daemonnet::MockFleetSource</name>
     <message>
         <source>Agent</source>
         <translation>Agente</translation>
