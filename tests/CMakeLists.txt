@@ -26,6 +26,27 @@ else()
     message(STATUS "daemon-app: Python3 not found; skipping the i18n_audit + i18n_translations tests")
 endif()
 
+# GUI mock boot smoke: render the full QML root offscreen in mock service mode and
+# require a clean exit. The daemon-app binary's offscreen render harness
+# (DAEMON_APP_RENDER_SHOTS) boots the root, opens a seeded session, grabs a frame
+# per theme, then exits; a QML objectCreationFailed exits -1 (main.cpp). This
+# catches QML TypeError/ReferenceError/missing-context-property breakage that the
+# unit/QML ctests never see (AD found two such pre-existing breakages this way).
+# The TUI counterpart is the daemon_tui_offscreen_* suite. Endgame: also run this
+# in the superproject `just e2e` / sim against the sealed bundle.
+if(TARGET daemon-app)
+    add_test(NAME daemon_app_offscreen_mock_boot
+        COMMAND ${CMAKE_COMMAND} -E env
+            DAEMON_APP_SERVICE_MODE=mock
+            DAEMON_APP_MOCK_SCENARIO=default
+            QT_QPA_PLATFORM=offscreen
+            QT_QUICK_BACKEND=software
+            DAEMON_APP_RENDER_SHOTS=${CMAKE_CURRENT_BINARY_DIR}/mock-boot-shots
+            $<TARGET_FILE:daemon-app>
+    )
+    set_tests_properties(daemon_app_offscreen_mock_boot PROPERTIES TIMEOUT 120)
+endif()
+
 # TUI transcript-render tests need TuiWidgets (pkg-config), only present when the
 # experimental terminal frontend is enabled.
 if(DAEMON_APP_TUI)
