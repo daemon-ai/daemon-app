@@ -115,9 +115,11 @@ void RoutingManagerController::setActions(QObject* actions) {
 void RoutingManagerController::bindStoreSignals() {
     if (auto* svc = qobject_cast<mirror::MirrorService*>(m_mirrorObject)) {
         // Re-derive the panels on every committed batch (§8.1 — the store is the read path).
-        connect(
-            &svc->store(), &mirror::Store::committed, this, [this](quint64, quint64) { rebuild(); },
-            Qt::UniqueConnection);
+        // NOTE: Qt::UniqueConnection is only honored for a pointer-to-member-function slot
+        // (a functor/lambda slot makes connect() assert), so bind rebuild() directly; the
+        // extra committed(quint64,quint64) args are simply dropped.
+        connect(&svc->store(), &mirror::Store::committed, this, &RoutingManagerController::rebuild,
+                Qt::UniqueConnection);
         // Visibility (§5.8): declare interest in the pin table so the ingestor tops it up.
         svc->ingestor().beginObserving(QStringLiteral("routing"));
     }
