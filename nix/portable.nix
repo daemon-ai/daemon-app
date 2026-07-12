@@ -609,6 +609,7 @@ let
       "-DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${depSources.ksyntaxhighlighting}"
       "-DMICROTEX_SOURCE_DIR=${depSources.microtex}"
       "-DQRCODEGEN_SOURCE_DIR=${depSources.qrcodegen}"
+      "-DIMMER_SOURCE_DIR=${depSources.immer}"
       "-DDAEMON_APP_VERSION_STR=${versionStr}"
       # Auto-updater dials (packaging/UPDATES.md). SelfApply CEILING: this one
       # static binary feeds the AppImage, deb, rpm, and portable tarball. The

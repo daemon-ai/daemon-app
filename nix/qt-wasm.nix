@@ -316,6 +316,7 @@ let
     "-DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${depSources.ksyntaxhighlighting}"
     "-DMICROTEX_SOURCE_DIR=${depSources.microtex}"
     "-DQRCODEGEN_SOURCE_DIR=${depSources.qrcodegen}"
+    "-DIMMER_SOURCE_DIR=${depSources.immer}"
   ];
 
   # KSyntaxHighlighting's find_package(ECM) cannot see host prefixes under the
@@ -487,6 +488,7 @@ let
       export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${depSources.ksyntaxhighlighting}"
       export MICROTEX_SOURCE_DIR="${depSources.microtex}"
       export QRCODEGEN_SOURCE_DIR="${depSources.qrcodegen}"
+      export IMMER_SOURCE_DIR="${depSources.immer}"
     '';
   };
 in
