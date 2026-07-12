@@ -274,7 +274,7 @@ void RoutingManagerController::rebuild() {
 
 void RoutingManagerController::rebuildDelivery() {
     // Delivery targets are a per-session SessionGet read (no mirror entity yet); the panel stays
-    // empty until that seam lands (A7 sessions territory — see LEDGER-a6).
+    // empty until that seam lands (A7 sessions territory).
     m_delivery->setRows({});
 }
 

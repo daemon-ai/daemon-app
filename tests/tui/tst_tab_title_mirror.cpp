@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-// M4 sub-gate 3 (spec 09 §13; LEDGER-a7): the tab-chip / picker reads on the MIRROR path — the
+// M4 sub-gate 3 (spec 09 §13): the tab-chip / picker reads on the MIRROR path — the
 // TUI tab-title wiring (rwdetail::resolveSessionTabTitle + refreshTranscriptTabTitles, the same
 // helpers RootWidget binds to storeMirror->changed()) resolves titles from the mirror-backed
 // store: a node-side retitle lands as a mirror keyed upsert and re-titles the open transcript

@@ -31,7 +31,7 @@ class IRoutingActions;
 // manager renders EMPTY there (A8 seeds the mock mirror). resolve()/explain() answer Pin (a pinned
 // origin) else Default — the node owns the lower precedence rungs (no client re-derivation). The
 // delivery/handover panel needs a per-session SessionGet read (no mirror entity yet) — it stays
-// empty and handoverTo()/bindAccount() are inert (A7 sessions territory; documented in LEDGER-a6).
+// empty and handoverTo()/bindAccount() are inert (A7 sessions territory; no mirror entity yet).
 class RoutingManagerController : public QObject {
     Q_OBJECT
     QML_ELEMENT

@@ -234,7 +234,7 @@ struct AppServiceGraph {
     // blocks here so w_transcript_blocks tracks the live/rebaselined transcript. Non-null only in
     // Daemon mode with the substrate; null (no-op) otherwise. The read facade
     // (MirrorSessionStore::content) still delegates to the legacy cache — the flip is withheld on
-    // the entity-field gap (LEDGER-a7t).
+    // the entity-field gap (D2; see docs/known-debt.md).
     ITranscriptMirrorSink* transcriptMirrorSink = nullptr;
     // AD (1a.3): the SHARED channels-hub view-model (GUI ChannelsPage context property + the TUI
     // channels hub page) — accounts/adapters/conversations/contacts projected from the mirror in

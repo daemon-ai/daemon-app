@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-// The mirror-backed ISessionStore (spec 09 §13 wave M4 → AD; LEDGER-a7/LEDGER-ad) — the ONE
+// The mirror-backed ISessionStore (spec 09 §13 wave M4 → AD) — the ONE
 // projection every session consumer binds (6→1). Asserts:
 //  - the wire decode: the SAME SessionPage bytes through decodeSessionsToMirror → ingestor →
 //    MirrorSessionStore yield the pinned GOLDEN row-set/views (ids, titles, pinned,

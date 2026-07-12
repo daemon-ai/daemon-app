@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-// M4 sub-gate 2 (spec 09 §13; LEDGER-a7): the sidebar session section on the MIRROR path — the
+// M4 sub-gate 2 (spec 09 §13): the sidebar session section on the MIRROR path — the
 // SHARED SidebarModel (GUI Sidebar.qml + TUI sidebar view bind this one VM) reading through
 // MirrorSessionStore: the All Sessions / Archived counts project mirror rows, the Fleet
 // membership section lists each agent's ByProfile sessions from the mirror (bound_profile), and

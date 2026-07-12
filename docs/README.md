@@ -6,9 +6,11 @@ Project documentation and historical audits.
 
 - `client-sync-architecture.md` - **the client data architecture (shipped): the
   mirror.** Store/journal/ingestor/outbox/projections/codegen end state. The
-  normative contract is the superproject spec `docs/architecture/09-specification.md`;
-  the per-package build history + the closing F6 audit / known-debt register live
-  in `src/core/mirror/LEDGER-*.md` (see `LEDGER-a9.md`).
+  normative contract is the superproject spec `docs/architecture/09-specification.md`.
+- `known-debt.md` - **the living debt register of the mirror architecture program:**
+  the F6 success-metric audit (with reproducible commands) + the honest leftovers,
+  each with a deletion/upgrade condition. Supersedes the per-package
+  `LEDGER-*.md` build-history files (deleted; git history is their archive).
 - `transcript-search.md` - shipped search engine and GUI/TUI find bars, with
   remaining highlight follow-ups.
 - `placeholder-surface-inventory.md` - current policy and inventory for visible
