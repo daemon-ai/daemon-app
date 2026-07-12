@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-// A7T/G2 → AD — the transcript byte-stability suite (spec 09 §13; LEDGER-a7t/LEDGER-ad).
+// A7T/G2 → AD — the transcript byte-stability suite (spec 09 §13).
 //
 // Drives coalesced transcript block streams through the PRODUCTION path:
 //   CachedTranscriptBlockRow -> MirrorTranscriptSink -> ingestor -> w_transcript_blocks

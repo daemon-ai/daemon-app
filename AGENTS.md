@@ -77,10 +77,10 @@ architecture spec 09 §14; the citations are the authority.
 **Review checklist (block the diff if any is unmet):** new domain state ⇒ entity-map entry +
 mapper + policy row(s), never a private cache; new event arm ⇒ policy row; new verb ⇒ a seam
 declaration (lane or direct, op-id or not — never a confirmation source); new unbounded stream ⇒
-window policy; every user-facing data feature ⇒ GUI + TUI. The ledgers `src/core/mirror/LEDGER-*.md`
-are the program's historical record; `LEDGER-a9.md` carries the F6 audit and the known-debt
-register (survivors + their deletion conditions) — consult it before proposing a "cleanup" of a
-surviving legacy seam.
+window policy; every user-facing data feature ⇒ GUI + TUI. The living debt register
+`docs/known-debt.md` carries the F6 audit and the known-debt entries (survivors + their deletion
+conditions) — consult it before proposing a "cleanup" of a surviving legacy seam. (It superseded the
+per-package `src/core/mirror/LEDGER-*.md` build-history files, now deleted; git history archives them.)
 
 ## Mock mode — one store, one journal, a different feeder
 

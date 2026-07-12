@@ -7,7 +7,7 @@
 //   - Priority bands: visible-surface > prefetch > reconcile; band-ordered FIFO within a band.
 //   - Cap: at most `maxInflight` concurrent jobs (SPEC-DECISION 4) — bounded reconnect fan-out.
 // The scheduler is transport-agnostic: it hands ready jobs to a FetchExecutor seam and is told
-// when each completes. QCoro is deliberately NOT used (ADR-009; see LEDGER-a4.md) — the seam is
+// when each completes. QCoro is deliberately NOT used (ADR-009) — the seam is
 // shaped so a QCoro-backed executor is a drop-in.
 
 #include "mirror/fetch_job.h"

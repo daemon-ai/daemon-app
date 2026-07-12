@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-// M4 sub-gate 1 (spec 09 §13; LEDGER-a7): the roster list consumer on the MIRROR path — the
+// M4 sub-gate 1 (spec 09 §13): the roster list consumer on the MIRROR path — the
 // SHARED SessionsListModel (GUI SessionsList.qml + ArchivedSection.qml; TUI SessionListView bind
 // this one VM) reading through MirrorSessionStore:
 //  - mirror deliveries render as rows (title fallback, pinned floats first) and live-update on

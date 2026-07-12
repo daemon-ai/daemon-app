@@ -56,7 +56,7 @@ void SessionController::appendUserText(const QString& text) {
     // with the legacy stores: transcript persistence is the ENGINE's (daemon: the node echoes
     // the user message → the sink persists the block → content() re-projects the authoritative
     // row). In mock the simulator's live turn is editor-local by design (the seeded transcripts
-    // render from the mirror; an ad-hoc demo turn is not durable — recorded in LEDGER-ad).
+    // render from the mirror; an ad-hoc demo turn is not durable by design).
     const QString id = QStringLiteral("u%1").arg(QDateTime::currentMSecsSinceEpoch());
     const QString marker = QStringLiteral("```msg\n{\"id\":\"%1\",\"role\":\"user\"}\n```").arg(id);
 

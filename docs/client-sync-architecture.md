@@ -10,10 +10,10 @@ BOTH the daemon and mock feeders; no pre-mirror data path remains.
 This document is the in-repo map of the implemented design. The normative contract lives in the
 superproject architecture spec `docs/architecture/09-specification.md` (with `07-client-inventory.md`
 as the pre-program baseline and the ADRs for the ratified decisions); the wire protocol is
-normative in `daemon-node`'s sync-protocol spec. The per-package build history is recorded in
-`src/core/mirror/LEDGER-*.md`, and the closing audit + known-debt register in `LEDGER-a9.md`. The
-enforceable rules distilled for review are in the repo `AGENTS.md` ("Data layer — the mirror is the
-only client model").
+normative in `daemon-node`'s sync-protocol spec. The closing F6 audit and the living known-debt
+register are in `docs/known-debt.md` (the per-package `LEDGER-*.md` build-history files it superseded
+are deleted; git history is their archive). The enforceable rules distilled for review are in the
+repo `AGENTS.md` ("Data layer — the mirror is the only client model").
 
 ---
 
@@ -223,4 +223,4 @@ shape forks — are the exact defects the mirror removes. The migration deleted 
 (M5/AD), and the transcript dual-write (so the mirror sink is the single transcript writer). The
 surviving repositories are wire fetch/verb feeders for the ingestor and the direct verb seams — not
 read models. The full deleted-vs-survivor census with reproducible counts is in
-`src/core/mirror/LEDGER-a9.md` (the F6 audit).
+`docs/known-debt.md` (the F6 audit).

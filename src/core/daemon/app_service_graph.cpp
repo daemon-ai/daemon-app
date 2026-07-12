@@ -319,7 +319,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // manager view-model drives). Reads no longer flow through it: the routing pin table lives
         // on the mirror store (RoutingListChats → route_pins), fetched by the ingestor and
         // re-listed on the routing refresh triggers wired in the mirror block below. Its own
-        // in-memory cache is now dead (residual debt; see LEDGER-a6).
+        // in-memory cache is now dead (residual debt; see docs/known-debt.md).
         graph.routingRepository = new RoutingRepository(graph.nodeApi, graph.cache, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the

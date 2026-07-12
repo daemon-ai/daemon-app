@@ -18,7 +18,7 @@
 //    store (the node-authoritative SessionRepository wire ops — one mutation path), while the
 //    scoped refreshes ALSO trigger the ingestor's mirror-side scoped fetches so the mirror rows
 //    land too (dual-write, both live).
-//  - Documented degradations (07§9.3 / LEDGER-a7): row `content` snippets and `tagIds` are empty
+//  - Documented degradations (07§9.3): row `content` snippets and `tagIds` are empty
 //    (transcript re-homing / client-local tag sidecar are later waves); `unitId` stays empty
 //    (parity with the deleted legacy daemon store, which never set it either).
 //

@@ -1131,7 +1131,8 @@ private:
 // The routing MUTATION seam (M3 → AD): the node-authoritative RoutingBindChat/RoutingUnbindChat
 // verbs behind daemonnet::IRoutingActions. On Ok, mutationApplied() fires and the graph bridges
 // it to the ingestor's RoutingListChats refetch — the MIRROR pin table is the only read path
-// (the repo's dead in-memory routes/rooms cache — the LEDGER-a6 residual — died with AD).
+// (the repo's dead in-memory routes/rooms cache — the routing-cache residual — died with AD;
+// see docs/known-debt.md).
 class RoutingRepository : public RepositoryBase, public daemonnet::IRoutingActions {
     Q_OBJECT
 
