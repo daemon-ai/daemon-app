@@ -14,6 +14,7 @@ import DaemonApp.Controls as Kit
 // pin/unbind through RoutingActions. See docs/routing-manager-design.md.
 Item {
     id: root
+    objectName: "routingPage"
 
     RoutingManagerController {
         id: rm
@@ -86,6 +87,15 @@ Item {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
+                            root.selectedRouteId = card.entry.id;
+                            rm.selectedSession = card.entry.session;
+                        }
+
+                        // Selectable route card named for its transport + scope.
+                        Accessible.role: Accessible.ListItem
+                        Accessible.name: card.entry.transport + " " + card.entry.scope
+                        Accessible.selected: root.selectedRouteId === card.entry.id
+                        Accessible.onPressAction: {
                             root.selectedRouteId = card.entry.id;
                             rm.selectedSession = card.entry.session;
                         }

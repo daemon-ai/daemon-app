@@ -11,6 +11,8 @@ import DaemonApp.Theme
 // deep-linkable via `section` (Nav.section).
 Item {
     id: root
+    // Locale-independent AT-SPI accessible-id landmark for the audit + locators.
+    objectName: "modelsPage"
 
     property string section: "discover"
 

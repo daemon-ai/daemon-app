@@ -699,6 +699,10 @@ hanggang muli itong mairehistro.</translation>
         <translation>Typeface na ginagamit para sa teksto ng transcript / editor.</translation>
     </message>
     <message>
+        <source>Font category</source>
+        <translation>Kategorya ng font</translation>
+    </message>
+    <message>
         <source>Sans</source>
         <translation>Sans</translation>
     </message>
@@ -717,6 +721,14 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Size of the transcript / editor text.</source>
         <translation>Laki ng teksto ng transcript / editor.</translation>
+    </message>
+    <message>
+        <source>Decrease font size</source>
+        <translation>Bawasan ang laki ng font</translation>
+    </message>
+    <message>
+        <source>Increase font size</source>
+        <translation>Palakihin ang laki ng font</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -855,6 +867,13 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Include the response text</source>
         <translation>Isama ang teksto ng tugon</translation>
+    </message>
+</context>
+<context>
+    <name>AttachmentChip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>Alisin ang %1</translation>
     </message>
 </context>
 <context>
@@ -1065,6 +1084,13 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>The system refused the login item: %1</source>
         <translation>Tinanggihan ng system ang login item: %1</translation>
+    </message>
+</context>
+<context>
+    <name>BlockDelegate</name>
+    <message>
+        <source>Message text</source>
+        <translation>Teksto ng mensahe</translation>
     </message>
 </context>
 <context>
@@ -1524,6 +1550,13 @@ hanggang muli itong mairehistro.</translation>
     </message>
 </context>
 <context>
+    <name>Chip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>Alisin ang %1</translation>
+    </message>
+</context>
+<context>
     <name>ClarifyBlock</name>
     <message>
         <source>The agent needs your input.</source>
@@ -1556,6 +1589,17 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Skip</source>
         <translation>Laktawan</translation>
+    </message>
+</context>
+<context>
+    <name>CodeBlock</name>
+    <message>
+        <source>Code block (%1)</source>
+        <translation>Code block (%1)</translation>
+    </message>
+    <message>
+        <source>Code block</source>
+        <translation>Code block</translation>
     </message>
 </context>
 <context>
@@ -1988,6 +2032,18 @@ hanggang muli itong mairehistro.</translation>
         <source>Steer the running turn (Ctrl+Enter)</source>
         <translation>I-steer ang tumatakbong turn (Ctrl+Enter)</translation>
     </message>
+    <message>
+        <source>Stop</source>
+        <translation>Ihinto</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation>Ipila</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ipadala</translation>
+    </message>
 </context>
 <context>
     <name>ComposerMenu</name>
@@ -2380,6 +2436,14 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Edit</source>
         <translation>I-edit</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Naka-enable</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Tanggalin</translation>
     </message>
 </context>
 <context>
@@ -3483,6 +3547,10 @@ hanggang muli itong mairehistro.</translation>
         <comment>font specimen sample</comment>
         <translation>Ag</translation>
     </message>
+    <message>
+        <source>%1 font</source>
+        <translation>%1 na font</translation>
+    </message>
 </context>
 <context>
     <name>ForeignBackendPicker</name>
@@ -3633,6 +3701,17 @@ hanggang muli itong mairehistro.</translation>
     </message>
 </context>
 <context>
+    <name>GeneratedImageBlock</name>
+    <message>
+        <source>Download image</source>
+        <translation>I-download ang larawan</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>Buksan ang larawan</translation>
+    </message>
+</context>
+<context>
     <name>GraphView</name>
     <message>
         <source>No graph data</source>
@@ -3648,6 +3727,10 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>image unavailable</source>
         <translation>hindi available ang larawan</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation>Larawan</translation>
     </message>
 </context>
 <context>
@@ -3758,6 +3841,13 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Password</source>
         <translation>Password</translation>
+    </message>
+</context>
+<context>
+    <name>Lightbox</name>
+    <message>
+        <source>Image preview</source>
+        <translation>Preview ng larawan</translation>
     </message>
 </context>
 <context>
@@ -3874,6 +3964,10 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Math error: </source>
         <translation>Math error: </translation>
+    </message>
+    <message>
+        <source>Math block</source>
+        <translation>Math block</translation>
     </message>
 </context>
 <context>
@@ -4230,6 +4324,10 @@ Salamat — magpapatuloy sa: %1
 <context>
     <name>MermaidBlock</name>
     <message>
+        <source>Diagram</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
         <source>Diagram error: %1</source>
         <translation>Diagram error: %1</translation>
     </message>
@@ -4243,6 +4341,10 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Edit message</source>
+        <translation>I-edit ang mensahe</translation>
     </message>
 </context>
 <context>
@@ -4309,6 +4411,13 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Verbose</source>
         <translation>Verbose</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPill</name>
+    <message>
+        <source>Select model</source>
+        <translation>Pumili ng modelo</translation>
     </message>
 </context>
 <context>
@@ -4646,6 +4755,13 @@ Magsimula ng isa mula sa Discover tab.</translation>
     </message>
 </context>
 <context>
+    <name>ProcessNotice</name>
+    <message>
+        <source>Toggle details</source>
+        <translation>I-toggle ang mga detalye</translation>
+    </message>
+</context>
+<context>
     <name>ProfileEditor</name>
     <message>
         <source>Select or create a profile.</source>
@@ -4702,6 +4818,10 @@ Magsimula ng isa mula sa Discover tab.</translation>
     <message>
         <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
         <translation>Base URL (opsyonal, hal. https://api.daemon.ai/api/v1)</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Modelo</translation>
     </message>
     <message>
         <source>Credential: connected%1</source>
@@ -4970,6 +5090,10 @@ Magsimula ng isa mula sa Discover tab.</translation>
     <message>
         <source>+ New profile</source>
         <translation>+ Bagong profile</translation>
+    </message>
+    <message>
+        <source>Filter profiles</source>
+        <translation>I-filter ang mga profile</translation>
     </message>
     <message>
         <source>All profiles</source>
@@ -7318,6 +7442,10 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>Tool</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>Kopyahin</translation>
+    </message>
+    <message>
         <source>Spawned a subagent to work in the background.</source>
         <translation>Naglunsad ng subagent para gumana sa background.</translation>
     </message>
@@ -7387,6 +7515,10 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
         <translation>Magpadala ng mensahe sa ibaba para magsimula. Ang reasoning, tool call, at mga sagot ng agent ay mag-stream dito.</translation>
+    </message>
+    <message>
+        <source>Jump to latest</source>
+        <translation>Pumunta sa pinakabago</translation>
     </message>
     <message>
         <source>Find in transcript</source>
@@ -7564,6 +7696,17 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Nabigong ilapat ang mga setting ng account</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <source>Collapse</source>
+        <translation>I-collapse</translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>Palawakin</translation>
     </message>
 </context>
 <context>

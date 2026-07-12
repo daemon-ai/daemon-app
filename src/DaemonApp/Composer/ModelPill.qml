@@ -94,6 +94,11 @@ Item {
             enabled: root.enabled
             cursorShape: Qt.PointingHandCursor
             onClicked: root.session ? overlay.open() : menu.open()
+
+            // Opens the model picker.
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Select model")
+            Accessible.onPressAction: root.session ? overlay.open() : menu.open()
         }
     }
 

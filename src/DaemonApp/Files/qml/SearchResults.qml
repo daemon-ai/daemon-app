@@ -81,6 +81,11 @@ Item {
                     onTapped: root.hitChosen(del.rootId, del.path, del.line, del.column)
                 }
 
+                // Search hit named for its file:line location.
+                Accessible.role: Accessible.ListItem
+                Accessible.name: del.path + ":" + del.line
+                Accessible.onPressAction: root.hitChosen(del.rootId, del.path, del.line, del.column)
+
                 ColumnLayout {
                     id: rowLayout
                     anchors.left: parent.left

@@ -287,6 +287,20 @@ RowLayout {
                 else
                     root.send();
             }
+
+            // The primary composer action; its name tracks the mode.
+            Accessible.role: Accessible.Button
+            Accessible.name: primary.mode === "stop" ? qsTr("Stop")
+                           : primary.mode === "queue" ? qsTr("Queue")
+                           : qsTr("Send")
+            Accessible.onPressAction: {
+                if (primary.mode === "queue")
+                    root.queue();
+                else if (primary.mode === "stop")
+                    root.stop();
+                else
+                    root.send();
+            }
         }
     }
 }

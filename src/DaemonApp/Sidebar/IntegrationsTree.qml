@@ -263,6 +263,11 @@ Rectangle {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: treeModel.toggleExpand(del.index)
+
+                            // Collapsible integrations section header.
+                            Accessible.role: Accessible.Button
+                            Accessible.name: del.label
+                            Accessible.onPressAction: treeModel.toggleExpand(del.index)
                         }
                         Kit.Glyph {
                             id: secChevron

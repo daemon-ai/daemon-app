@@ -16,6 +16,11 @@ QQC.CheckBox {
     font.family: FontIcons.display
     font.pixelSize: 14
 
+    // Defaults to the visible label; a call site rendering the box with no text
+    // (the caption sits elsewhere) sets this so it is not an anonymous checkbox.
+    property string accessibleName: text
+    Accessible.name: accessibleName
+
     indicator: Rectangle {
         implicitWidth: root.boxSize
         implicitHeight: root.boxSize

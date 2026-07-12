@@ -699,6 +699,10 @@ hasta que se vuelva a registrar.</translation>
         <translation>Tipografía utilizada para la transcripción / el texto del editor.</translation>
     </message>
     <message>
+        <source>Font category</source>
+        <translation>Categoría de fuente</translation>
+    </message>
+    <message>
         <source>Sans</source>
         <translation>Sans</translation>
     </message>
@@ -717,6 +721,14 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>Size of the transcript / editor text.</source>
         <translation>Tamaño de la transcripción / el texto del editor.</translation>
+    </message>
+    <message>
+        <source>Decrease font size</source>
+        <translation>Reducir tamaño de fuente</translation>
+    </message>
+    <message>
+        <source>Increase font size</source>
+        <translation>Aumentar tamaño de fuente</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -855,6 +867,13 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>Include the response text</source>
         <translation>Incluir el texto de la respuesta</translation>
+    </message>
+</context>
+<context>
+    <name>AttachmentChip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>Quitar %1</translation>
     </message>
 </context>
 <context>
@@ -1065,6 +1084,13 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>The system refused the login item: %1</source>
         <translation>El sistema rechazó el ítem de inicio: %1</translation>
+    </message>
+</context>
+<context>
+    <name>BlockDelegate</name>
+    <message>
+        <source>Message text</source>
+        <translation>Texto del mensaje</translation>
     </message>
 </context>
 <context>
@@ -1524,6 +1550,13 @@ hasta que se vuelva a registrar.</translation>
     </message>
 </context>
 <context>
+    <name>Chip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>Quitar %1</translation>
+    </message>
+</context>
+<context>
     <name>ClarifyBlock</name>
     <message>
         <source>The agent needs your input.</source>
@@ -1556,6 +1589,17 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>Skip</source>
         <translation>Omitir</translation>
+    </message>
+</context>
+<context>
+    <name>CodeBlock</name>
+    <message>
+        <source>Code block (%1)</source>
+        <translation>Bloque de código (%1)</translation>
+    </message>
+    <message>
+        <source>Code block</source>
+        <translation>Bloque de código</translation>
     </message>
 </context>
 <context>
@@ -1988,6 +2032,18 @@ hasta que se vuelva a registrar.</translation>
         <source>Steer the running turn (Ctrl+Enter)</source>
         <translation>Dirigir el turno en curso (Ctrl+Enter)</translation>
     </message>
+    <message>
+        <source>Stop</source>
+        <translation>Detener</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation>Encolar</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
 </context>
 <context>
     <name>ComposerMenu</name>
@@ -2380,6 +2436,14 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>Edit</source>
         <translation>Editar</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Activado</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Eliminar</translation>
     </message>
 </context>
 <context>
@@ -3483,6 +3547,10 @@ hasta que se vuelva a registrar.</translation>
         <comment>font specimen sample</comment>
         <translation>Ag</translation>
     </message>
+    <message>
+        <source>%1 font</source>
+        <translation>Fuente %1</translation>
+    </message>
 </context>
 <context>
     <name>ForeignBackendPicker</name>
@@ -3633,6 +3701,17 @@ hasta que se vuelva a registrar.</translation>
     </message>
 </context>
 <context>
+    <name>GeneratedImageBlock</name>
+    <message>
+        <source>Download image</source>
+        <translation>Descargar imagen</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>Abrir imagen</translation>
+    </message>
+</context>
+<context>
     <name>GraphView</name>
     <message>
         <source>No graph data</source>
@@ -3648,6 +3727,10 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>image unavailable</source>
         <translation>imagen no disponible</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation>Imagen</translation>
     </message>
 </context>
 <context>
@@ -3758,6 +3841,13 @@ Gracias — continuando con: %1
     <message>
         <source>Password</source>
         <translation>Contraseña</translation>
+    </message>
+</context>
+<context>
+    <name>Lightbox</name>
+    <message>
+        <source>Image preview</source>
+        <translation>Vista previa de la imagen</translation>
     </message>
 </context>
 <context>
@@ -3874,6 +3964,10 @@ Gracias — continuando con: %1
     <message>
         <source>Math error: </source>
         <translation>Error de fórmula: </translation>
+    </message>
+    <message>
+        <source>Math block</source>
+        <translation>Bloque matemático</translation>
     </message>
 </context>
 <context>
@@ -4230,6 +4324,10 @@ Gracias — continuando con: %1
 <context>
     <name>MermaidBlock</name>
     <message>
+        <source>Diagram</source>
+        <translation>Diagrama</translation>
+    </message>
+    <message>
         <source>Diagram error: %1</source>
         <translation>Error de diagrama: %1</translation>
     </message>
@@ -4243,6 +4341,10 @@ Gracias — continuando con: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Edit message</source>
+        <translation>Editar mensaje</translation>
     </message>
 </context>
 <context>
@@ -4309,6 +4411,13 @@ Gracias — continuando con: %1
     <message>
         <source>Verbose</source>
         <translation>Detallado</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPill</name>
+    <message>
+        <source>Select model</source>
+        <translation>Seleccionar modelo</translation>
     </message>
 </context>
 <context>
@@ -4646,6 +4755,13 @@ Inicia una desde la pestaña Descubrir.</translation>
     </message>
 </context>
 <context>
+    <name>ProcessNotice</name>
+    <message>
+        <source>Toggle details</source>
+        <translation>Alternar detalles</translation>
+    </message>
+</context>
+<context>
     <name>ProfileEditor</name>
     <message>
         <source>Select or create a profile.</source>
@@ -4702,6 +4818,10 @@ Inicia una desde la pestaña Descubrir.</translation>
     <message>
         <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
         <translation>URL base (opcional, p. ej. https://api.daemon.ai/api/v1)</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Modelo</translation>
     </message>
     <message>
         <source>Credential: connected%1</source>
@@ -4970,6 +5090,10 @@ Inicia una desde la pestaña Descubrir.</translation>
     <message>
         <source>+ New profile</source>
         <translation>+ Nuevo perfil</translation>
+    </message>
+    <message>
+        <source>Filter profiles</source>
+        <translation>Filtrar perfiles</translation>
     </message>
     <message>
         <source>All profiles</source>
@@ -7318,6 +7442,10 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
         <translation>Herramienta</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>Copiar</translation>
+    </message>
+    <message>
         <source>Spawned a subagent to work in the background.</source>
         <translation>Se creó un subagente para trabajar en segundo plano.</translation>
     </message>
@@ -7387,6 +7515,10 @@ Gracias — continuando con: %1
     <message>
         <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
         <translation>Envía un mensaje abajo para empezar. El razonamiento del agente, las llamadas a herramientas y las respuestas se transmitirán aquí.</translation>
+    </message>
+    <message>
+        <source>Jump to latest</source>
+        <translation>Ir a lo más reciente</translation>
     </message>
     <message>
         <source>Find in transcript</source>
@@ -7564,6 +7696,17 @@ Gracias — continuando con: %1
     <message>
         <source>Failed to apply the account settings</source>
         <translation>No se pudo aplicar la configuración de la cuenta</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <source>Collapse</source>
+        <translation>Contraer</translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>Expandir</translation>
     </message>
 </context>
 <context>

@@ -16,6 +16,11 @@ QQC.Switch {
     implicitWidth: 38
     implicitHeight: 22
 
+    // Label-less by design (the host row draws the caption), so the toggle has
+    // no intrinsic accessible name — the host row passes its caption here.
+    property string accessibleName: ""
+    Accessible.name: accessibleName
+
     indicator: Rectangle {
         implicitWidth: 38
         implicitHeight: 22

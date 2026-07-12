@@ -12,6 +12,7 @@ import DaemonApp.Controls as Kit
 // connected / pending (OAuth in flight) / error.
 Item {
     id: root
+    objectName: "accountsPage"
 
     PageHeader {
         id: header

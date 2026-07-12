@@ -137,6 +137,16 @@ Item {
         acceptedButtons: Qt.LeftButton
         cursorShape: Qt.PointingHandCursor
 
+        // Image named for its alt text; activating opens the link or preview.
+        Accessible.role: Accessible.Button
+        Accessible.name: root.altText.length > 0 ? root.altText : qsTr("Image")
+        Accessible.onPressAction: {
+            if (root.linkUrl !== "")
+                Qt.openUrlExternally(root.linkUrl);
+            else
+                root.openPreview();
+        }
+
         // A linked image opens its target on a single click; a plain image opens
         // in the lightbox on a single click. A double-click always drops into the
         // block's raw markdown for editing.

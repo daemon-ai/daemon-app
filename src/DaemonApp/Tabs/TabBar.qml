@@ -103,6 +103,13 @@ RowLayout {
                 onClicked: root.tabModel.activate(chip.index)
                 // Double-click pins a preview tab (makes it permanent).
                 onDoubleClicked: root.tabModel.pinTab(chip.index)
+
+                // The chip is a selectable tab named for its title.
+                Accessible.role: Accessible.PageTab
+                Accessible.name: chip.title
+                Accessible.selectable: true
+                Accessible.selected: chip.current
+                Accessible.onPressAction: root.tabModel.activate(chip.index)
             }
         }
     }

@@ -94,6 +94,11 @@ Item {
         cursorShape: Qt.IBeamCursor
         onClicked: root.activateForEditing()
         onDoubleClicked: root.activateForEditing()
+
+        // Activating the math block drops into raw-markdown editing.
+        Accessible.role: Accessible.Button
+        Accessible.name: qsTr("Math block")
+        Accessible.onPressAction: root.activateForEditing()
     }
 
     function activateForEditing() {

@@ -91,6 +91,11 @@ Item {
                     HoverHandler { id: stripHover; enabled: root.compact }
                     TapHandler { enabled: root.compact; onTapped: root.openRequested() }
 
+                    // Compact strip is a tappable download row named for the model.
+                    Accessible.role: Accessible.ListItem
+                    Accessible.name: row.entry.name
+                    Accessible.onPressAction: if (root.compact) root.openRequested()
+
                     ColumnLayout {
                         id: body
                         anchors.fill: parent

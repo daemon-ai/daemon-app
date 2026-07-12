@@ -47,6 +47,21 @@ if(TARGET daemon-app)
     set_tests_properties(daemon_app_offscreen_mock_boot PROPERTIES TIMEOUT 120)
 endif()
 
+# a11y (AT-SPI) coverage gate: launch the app per page under a private
+# Xvfb/D-Bus/AT-SPI sandbox and fail if any SHOWING interactive element is
+# unnamed (no accessible name / labelled-by / description), plus a static
+# blind-spot pass for bespoke MouseArea/TapHandler click targets that never
+# enter the AT-SPI tree. The launcher self-manages its own xcb/Xvfb env (so it
+# runs even under the offscreen ctest default) and exits 77 (SKIP) when the
+# sandbox deps are absent -- a bare checkout outside the devShell skips instead
+# of failing. See scripts/a11y-audit.{sh,py} + its allowlist.
+add_test(
+    NAME a11y_audit
+    COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/a11y-audit.sh
+            --binary $<TARGET_FILE:daemon-app>
+            --allowlist ${CMAKE_SOURCE_DIR}/scripts/a11y-audit-allowlist.txt)
+set_tests_properties(a11y_audit PROPERTIES TIMEOUT 300 SKIP_RETURN_CODE 77)
+
 # TUI transcript-render tests need TuiWidgets (pkg-config), only present when the
 # experimental terminal frontend is enabled.
 if(DAEMON_APP_TUI)

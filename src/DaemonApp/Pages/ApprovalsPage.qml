@@ -15,6 +15,7 @@ import DaemonApp.BlockEditor as BE // [waveB:app-v30] D5: DiffBlock + DiffFormat
 // (D3/Q4).
 Item {
     id: root
+    objectName: "approvalsPage"
 
     PageHeader {
         id: header

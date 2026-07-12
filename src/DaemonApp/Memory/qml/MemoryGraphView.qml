@@ -198,6 +198,12 @@ Item {
                                 horizontalAlignment: Text.AlignHCenter
                                 elide: Text.ElideRight
                             }
+                            // Graph node named for its label; activating selects it.
+                            Accessible.role: Accessible.Button
+                            Accessible.name: nodeItem.label
+                            Accessible.selected: nodeItem.selected
+                            Accessible.onPressAction: gm.selectedId = nodeItem.nodeId
+
                             TapHandler { onTapped: gm.selectedId = nodeItem.nodeId }
                             TapHandler {
                                 acceptedButtons: Qt.LeftButton

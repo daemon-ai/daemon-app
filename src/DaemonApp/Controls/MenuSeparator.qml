@@ -19,4 +19,7 @@ QQC.MenuSeparator {
         implicitHeight: 1
         color: Theme.border
     }
+
+    // A non-interactive visual divider: keep it out of the accessibility tree.
+    Accessible.ignored: true
 }

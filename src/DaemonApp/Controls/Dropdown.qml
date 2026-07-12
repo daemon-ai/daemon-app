@@ -14,6 +14,12 @@ QQC.ComboBox {
     font.family: FontIcons.display
     font.pixelSize: 11
 
+    // A combo box's value (displayText) is not a name; when the dropdown has no
+    // adjacent caption the call site sets this so a screen reader can announce
+    // what the selection controls.
+    property string accessibleName: ""
+    Accessible.name: accessibleName
+
     // Disabled reads as muted + non-interactive (mirrors Kit.Switch), so a row
     // rendered read-only (e.g. a node-owned setting the app can't change) is
     // unambiguously not editable.

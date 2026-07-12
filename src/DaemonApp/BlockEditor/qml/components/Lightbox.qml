@@ -65,6 +65,10 @@ Popup {
             cache: true
             mipmap: true
             fillMode: Image.PreserveAspectFit
+
+            // The previewed image is the dialog's content.
+            Accessible.role: Accessible.Graphic
+            Accessible.name: qsTr("Image preview")
             width: Math.min(viewport.width * 0.92, implicitWidth)
             height: Math.min(viewport.height * 0.92, implicitHeight)
             transformOrigin: Item.Center

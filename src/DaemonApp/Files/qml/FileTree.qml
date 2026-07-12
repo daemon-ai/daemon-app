@@ -98,6 +98,9 @@ Item {
                 icon: del.loading ? FontIcons.fa_spinner : (del.isDir ? FontIcons.fa_folder : FontIcons.fa_file)
                 trailingText: del.error !== "" ? qsTr("Retry") : ""
                 onTwistieClicked: if (del.isDir) explorerModel.toggleExpand(del.index)
+                // The overlay MouseArea below is the operable row node; keep the
+                // visual TreeRow out of the tree so the row is announced once.
+                Accessible.ignored: true
             }
 
             MouseArea {
@@ -105,6 +108,17 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
+
+                // Selectable file/dir row named for the entry.
+                Accessible.role: Accessible.ListItem
+                Accessible.name: del.error !== "" ? del.error : del.label
+                Accessible.selected: del.current
+                Accessible.onPressAction: {
+                    list.forceActiveFocus();
+                    list.currentIndex = del.index;
+                    explorerModel.activate(del.index);
+                }
+
                 onClicked: {
                     list.forceActiveFocus();
                     list.currentIndex = del.index;

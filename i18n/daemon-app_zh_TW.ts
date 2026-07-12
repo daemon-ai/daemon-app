@@ -699,6 +699,10 @@ until it is re-registered.</source>
         <translation>對話記錄／編輯器文字使用的字體。</translation>
     </message>
     <message>
+        <source>Font category</source>
+        <translation>字型類別</translation>
+    </message>
+    <message>
         <source>Sans</source>
         <translation>無襯線</translation>
     </message>
@@ -717,6 +721,14 @@ until it is re-registered.</source>
     <message>
         <source>Size of the transcript / editor text.</source>
         <translation>對話記錄／編輯器文字的大小。</translation>
+    </message>
+    <message>
+        <source>Decrease font size</source>
+        <translation>縮小字型大小</translation>
+    </message>
+    <message>
+        <source>Increase font size</source>
+        <translation>放大字型大小</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -855,6 +867,13 @@ until it is re-registered.</source>
     <message>
         <source>Include the response text</source>
         <translation>包含回覆文字</translation>
+    </message>
+</context>
+<context>
+    <name>AttachmentChip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>移除 %1</translation>
     </message>
 </context>
 <context>
@@ -1065,6 +1084,13 @@ until it is re-registered.</source>
     <message>
         <source>The system refused the login item: %1</source>
         <translation>系統拒絕了該登入項目：%1</translation>
+    </message>
+</context>
+<context>
+    <name>BlockDelegate</name>
+    <message>
+        <source>Message text</source>
+        <translation>訊息文字</translation>
     </message>
 </context>
 <context>
@@ -1524,6 +1550,13 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>Chip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>移除 %1</translation>
+    </message>
+</context>
+<context>
     <name>ClarifyBlock</name>
     <message>
         <source>The agent needs your input.</source>
@@ -1556,6 +1589,17 @@ until it is re-registered.</source>
     <message>
         <source>Skip</source>
         <translation>略過</translation>
+    </message>
+</context>
+<context>
+    <name>CodeBlock</name>
+    <message>
+        <source>Code block (%1)</source>
+        <translation>程式碼區塊 (%1)</translation>
+    </message>
+    <message>
+        <source>Code block</source>
+        <translation>程式碼區塊</translation>
     </message>
 </context>
 <context>
@@ -1988,6 +2032,18 @@ until it is re-registered.</source>
         <source>Steer the running turn (Ctrl+Enter)</source>
         <translation>引導進行中的回合（Ctrl+Enter）</translation>
     </message>
+    <message>
+        <source>Stop</source>
+        <translation>停止</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation>加入佇列</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>傳送</translation>
+    </message>
 </context>
 <context>
     <name>ComposerMenu</name>
@@ -2380,6 +2436,14 @@ until it is re-registered.</source>
     <message>
         <source>Edit</source>
         <translation>編輯</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>已啟用</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>刪除</translation>
     </message>
 </context>
 <context>
@@ -3481,6 +3545,10 @@ until it is re-registered.</source>
         <comment>font specimen sample</comment>
         <translation>Ag</translation>
     </message>
+    <message>
+        <source>%1 font</source>
+        <translation>%1 字型</translation>
+    </message>
 </context>
 <context>
     <name>ForeignBackendPicker</name>
@@ -3631,6 +3699,17 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>GeneratedImageBlock</name>
+    <message>
+        <source>Download image</source>
+        <translation>下載圖片</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>開啟圖片</translation>
+    </message>
+</context>
+<context>
     <name>GraphView</name>
     <message>
         <source>No graph data</source>
@@ -3646,6 +3725,10 @@ until it is re-registered.</source>
     <message>
         <source>image unavailable</source>
         <translation>圖片無法使用</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation>圖片</translation>
     </message>
 </context>
 <context>
@@ -3756,6 +3839,13 @@ Thanks — proceeding with: %1
     <message>
         <source>Password</source>
         <translation>密碼</translation>
+    </message>
+</context>
+<context>
+    <name>Lightbox</name>
+    <message>
+        <source>Image preview</source>
+        <translation>圖片預覽</translation>
     </message>
 </context>
 <context>
@@ -3872,6 +3962,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Math error: </source>
         <translation>數學錯誤： </translation>
+    </message>
+    <message>
+        <source>Math block</source>
+        <translation>數學公式區塊</translation>
     </message>
 </context>
 <context>
@@ -4226,6 +4320,10 @@ Thanks — proceeding with: %1
 <context>
     <name>MermaidBlock</name>
     <message>
+        <source>Diagram</source>
+        <translation>圖表</translation>
+    </message>
+    <message>
         <source>Diagram error: %1</source>
         <translation>圖表錯誤：%1</translation>
     </message>
@@ -4239,6 +4337,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Edit message</source>
+        <translation>編輯訊息</translation>
     </message>
 </context>
 <context>
@@ -4305,6 +4407,13 @@ Thanks — proceeding with: %1
     <message>
         <source>Verbose</source>
         <translation>詳細</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPill</name>
+    <message>
+        <source>Select model</source>
+        <translation>選擇模型</translation>
     </message>
 </context>
 <context>
@@ -4642,6 +4751,13 @@ Start one from the Discover tab.</source>
     </message>
 </context>
 <context>
+    <name>ProcessNotice</name>
+    <message>
+        <source>Toggle details</source>
+        <translation>切換詳細資料</translation>
+    </message>
+</context>
+<context>
     <name>ProfileEditor</name>
     <message>
         <source>Select or create a profile.</source>
@@ -4698,6 +4814,10 @@ Start one from the Discover tab.</source>
     <message>
         <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
         <translation>基礎網址（選填，例如 https://api.daemon.ai/api/v1）</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>模型</translation>
     </message>
     <message>
         <source>Credential: connected%1</source>
@@ -4966,6 +5086,10 @@ Start one from the Discover tab.</source>
     <message>
         <source>+ New profile</source>
         <translation>+ 新增設定檔</translation>
+    </message>
+    <message>
+        <source>Filter profiles</source>
+        <translation>篩選設定檔</translation>
     </message>
     <message>
         <source>All profiles</source>
@@ -7310,6 +7434,10 @@ This only affects the app appearance, not your data.</source>
         <translation>工具</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>複製</translation>
+    </message>
+    <message>
         <source>Spawned a subagent to work in the background.</source>
         <translation>已啟動一個子代理在背景工作。</translation>
     </message>
@@ -7379,6 +7507,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
         <translation>在下方傳送訊息以開始。代理的推理、工具呼叫與回覆將在此串流顯示。</translation>
+    </message>
+    <message>
+        <source>Jump to latest</source>
+        <translation>跳至最新</translation>
     </message>
     <message>
         <source>Find in transcript</source>
@@ -7556,6 +7688,17 @@ Thanks — proceeding with: %1
     <message>
         <source>Failed to apply the account settings</source>
         <translation>套用帳戶設定失敗</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <source>Collapse</source>
+        <translation>摺疊</translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>展開</translation>
     </message>
 </context>
 <context>

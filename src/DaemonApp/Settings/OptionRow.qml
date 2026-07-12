@@ -20,6 +20,15 @@ Item {
     implicitWidth: parent ? parent.width : 200
     implicitHeight: 34
 
+    // The whole row is the operable checkbox (the inner Switch is decorative and
+    // ignored below), named for its caption.
+    Accessible.role: Accessible.CheckBox
+    Accessible.name: label
+    Accessible.checkable: true
+    Accessible.checked: checked
+    Accessible.onToggleAction: root.toggled(!root.checked)
+    Accessible.onPressAction: root.toggled(!root.checked)
+
     Rectangle {
         anchors.fill: parent
         radius: 5
@@ -42,6 +51,9 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         checkable: false
         checked: root.checked
+        // The row (above) is the named, operable checkbox; keep the visual
+        // toggle out of the tree so a screen reader announces the row once.
+        Accessible.ignored: true
     }
 
     MouseArea {

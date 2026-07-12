@@ -89,6 +89,13 @@ QQC.Popup {
                         }
                     }
                     TapHandler { onTapped: SessionSettings.setProfile(entry.id) }
+
+                    // Profile choice named for the profile.
+                    Accessible.role: Accessible.RadioButton
+                    Accessible.name: entry.name
+                    Accessible.checkable: true
+                    Accessible.checked: entry.id === SessionSettings.profile
+                    Accessible.onPressAction: SessionSettings.setProfile(entry.id)
                 }
             }
         }

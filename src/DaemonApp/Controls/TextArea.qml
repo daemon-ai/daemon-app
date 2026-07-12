@@ -13,6 +13,12 @@ import DaemonApp.Theme
 QQC.TextArea {
     id: root
 
+    // Screen-reader name. The multiline area is usually framed by a host with a
+    // separate caption and only carries a placeholder, so default the accessible
+    // name to the placeholder; a call site sets this when neither is present.
+    property string accessibleName: placeholderText
+    Accessible.name: accessibleName
+
     color: Theme.text
     placeholderTextColor: Theme.textMuted
     selectionColor: Theme.searchSelection

@@ -278,6 +278,7 @@ Item {
                 id: providerCombo
                 visible: !root.foreign
                 Layout.fillWidth: true
+                accessibleName: qsTr("Provider")
                 model: root.providerChoices.map(function(p) { return p.name; })
                 // Reflect root.wProvider into the current index; -1 for an unlisted (e.g. Mock) value
                 // so no real provider is shown as selected (the caption below explains it).
@@ -329,6 +330,7 @@ Item {
                 id: modelCombo
                 visible: !root.foreign
                 Layout.fillWidth: true
+                accessibleName: qsTr("Model")
                 // The offered-model rows for the selected provider ({id, name, kind}); the trailing
                 // discover row (local) opens the download flow instead of selecting a model. An
                 // existing wModel absent from the list is kept selectable so it never silently drops.

@@ -19,6 +19,12 @@ Item {
     property bool usePointingHand: true
     property string tooltipText: ""
 
+    // Screen-reader name for this icon-only button. Defaults to the tooltip text
+    // (the visible affordance), so a call site that already sets `tooltipText`
+    // gets an accessible name for free; a call site with no tooltip must set
+    // `accessibleName` explicitly (the a11y-audit gate flags an unnamed button).
+    property string accessibleName: tooltipText
+
     property alias containsMouse: mouseArea.containsMouse
     property alias pressedState: mouseArea.pressed
 
@@ -30,6 +36,19 @@ Item {
     signal pressedSignal()
     signal released()
     signal pressedAndHold()
+
+    // --- Accessibility (AT-SPI) ---------------------------------------------
+    // A bespoke Item+MouseArea has no implicit a11y node, so declare one: a
+    // focusable Button that a screen reader can name, tab to, and activate (both
+    // via the AT press action and the keyboard).
+    activeFocusOnTab: enabled
+    Accessible.role: Accessible.Button
+    Accessible.name: accessibleName
+    Accessible.focusable: enabled
+    Accessible.focused: activeFocus
+    Accessible.onPressAction: root.clicked()
+    Keys.onSpacePressed: root.clicked()
+    Keys.onReturnPressed: root.clicked()
 
     Rectangle {
         id: background

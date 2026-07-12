@@ -699,6 +699,10 @@ sampai didaftarkan ulang.</translation>
         <translation>Jenis huruf yang digunakan untuk teks transkrip / editor.</translation>
     </message>
     <message>
+        <source>Font category</source>
+        <translation>Kategori font</translation>
+    </message>
+    <message>
         <source>Sans</source>
         <translation>Sans</translation>
     </message>
@@ -717,6 +721,14 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Size of the transcript / editor text.</source>
         <translation>Ukuran teks transkrip / editor.</translation>
+    </message>
+    <message>
+        <source>Decrease font size</source>
+        <translation>Perkecil ukuran font</translation>
+    </message>
+    <message>
+        <source>Increase font size</source>
+        <translation>Perbesar ukuran font</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -855,6 +867,13 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Include the response text</source>
         <translation>Sertakan teks respons</translation>
+    </message>
+</context>
+<context>
+    <name>AttachmentChip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>Hapus %1</translation>
     </message>
 </context>
 <context>
@@ -1065,6 +1084,13 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>The system refused the login item: %1</source>
         <translation>Sistem menolak item login: %1</translation>
+    </message>
+</context>
+<context>
+    <name>BlockDelegate</name>
+    <message>
+        <source>Message text</source>
+        <translation>Teks pesan</translation>
     </message>
 </context>
 <context>
@@ -1524,6 +1550,13 @@ sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
+    <name>Chip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>Hapus %1</translation>
+    </message>
+</context>
+<context>
     <name>ClarifyBlock</name>
     <message>
         <source>The agent needs your input.</source>
@@ -1556,6 +1589,17 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Skip</source>
         <translation>Lewati</translation>
+    </message>
+</context>
+<context>
+    <name>CodeBlock</name>
+    <message>
+        <source>Code block (%1)</source>
+        <translation>Blok kode (%1)</translation>
+    </message>
+    <message>
+        <source>Code block</source>
+        <translation>Blok kode</translation>
     </message>
 </context>
 <context>
@@ -1988,6 +2032,18 @@ sampai didaftarkan ulang.</translation>
         <source>Steer the running turn (Ctrl+Enter)</source>
         <translation>Kemudikan giliran yang berjalan (Ctrl+Enter)</translation>
     </message>
+    <message>
+        <source>Stop</source>
+        <translation>Hentikan</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation>Antre</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Kirim</translation>
+    </message>
 </context>
 <context>
     <name>ComposerMenu</name>
@@ -2380,6 +2436,14 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Edit</source>
         <translation>Edit</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Aktif</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Hapus</translation>
     </message>
 </context>
 <context>
@@ -3481,6 +3545,10 @@ sampai didaftarkan ulang.</translation>
         <comment>font specimen sample</comment>
         <translation>Ag</translation>
     </message>
+    <message>
+        <source>%1 font</source>
+        <translation>Font %1</translation>
+    </message>
 </context>
 <context>
     <name>ForeignBackendPicker</name>
@@ -3631,6 +3699,17 @@ sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
+    <name>GeneratedImageBlock</name>
+    <message>
+        <source>Download image</source>
+        <translation>Unduh gambar</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>Buka gambar</translation>
+    </message>
+</context>
+<context>
     <name>GraphView</name>
     <message>
         <source>No graph data</source>
@@ -3646,6 +3725,10 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>image unavailable</source>
         <translation>gambar tidak tersedia</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation>Gambar</translation>
     </message>
 </context>
 <context>
@@ -3756,6 +3839,13 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Password</source>
         <translation>Kata sandi</translation>
+    </message>
+</context>
+<context>
+    <name>Lightbox</name>
+    <message>
+        <source>Image preview</source>
+        <translation>Pratinjau gambar</translation>
     </message>
 </context>
 <context>
@@ -3872,6 +3962,10 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Math error: </source>
         <translation>Kesalahan matematika: </translation>
+    </message>
+    <message>
+        <source>Math block</source>
+        <translation>Blok matematika</translation>
     </message>
 </context>
 <context>
@@ -4226,6 +4320,10 @@ Terima kasih — melanjutkan dengan: %1
 <context>
     <name>MermaidBlock</name>
     <message>
+        <source>Diagram</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
         <source>Diagram error: %1</source>
         <translation>Kesalahan diagram: %1</translation>
     </message>
@@ -4239,6 +4337,10 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Edit message</source>
+        <translation>Edit pesan</translation>
     </message>
 </context>
 <context>
@@ -4305,6 +4407,13 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Verbose</source>
         <translation>Rinci</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPill</name>
+    <message>
+        <source>Select model</source>
+        <translation>Pilih model</translation>
     </message>
 </context>
 <context>
@@ -4642,6 +4751,13 @@ Mulai dari tab Temukan.</translation>
     </message>
 </context>
 <context>
+    <name>ProcessNotice</name>
+    <message>
+        <source>Toggle details</source>
+        <translation>Alihkan detail</translation>
+    </message>
+</context>
+<context>
     <name>ProfileEditor</name>
     <message>
         <source>Select or create a profile.</source>
@@ -4698,6 +4814,10 @@ Mulai dari tab Temukan.</translation>
     <message>
         <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
         <translation>Base URL (opsional, mis. https://api.daemon.ai/api/v1)</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
     </message>
     <message>
         <source>Credential: connected%1</source>
@@ -4966,6 +5086,10 @@ Mulai dari tab Temukan.</translation>
     <message>
         <source>+ New profile</source>
         <translation>+ Profil baru</translation>
+    </message>
+    <message>
+        <source>Filter profiles</source>
+        <translation>Filter profil</translation>
     </message>
     <message>
         <source>All profiles</source>
@@ -7310,6 +7434,10 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
         <translation>Alat</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>Salin</translation>
+    </message>
+    <message>
         <source>Spawned a subagent to work in the background.</source>
         <translation>Membuat subagen untuk bekerja di latar belakang.</translation>
     </message>
@@ -7379,6 +7507,10 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
         <translation>Kirim pesan di bawah untuk memulai. Penalaran agen, pemanggilan alat, dan balasan akan mengalir di sini.</translation>
+    </message>
+    <message>
+        <source>Jump to latest</source>
+        <translation>Lompat ke terbaru</translation>
     </message>
     <message>
         <source>Find in transcript</source>
@@ -7556,6 +7688,17 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Gagal menerapkan pengaturan akun</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <source>Collapse</source>
+        <translation>Ciutkan</translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>Bentangkan</translation>
     </message>
 </context>
 <context>

@@ -148,6 +148,16 @@ QQC.Popup {
                             root.registry.trigger(index);
                         root.close();
                     }
+
+                    // Command entry named for its title, with the hint as description.
+                    Accessible.role: Accessible.ListItem
+                    Accessible.name: title
+                    Accessible.description: hint
+                    Accessible.onPressAction: {
+                        if (root.registry)
+                            root.registry.trigger(index);
+                        root.close();
+                    }
                 }
             }
         }

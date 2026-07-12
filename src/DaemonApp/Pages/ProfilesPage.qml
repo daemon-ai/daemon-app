@@ -10,6 +10,7 @@ import DaemonApp.Controls as Kit
 // the editor + Skills/tools curator on the right.
 Item {
     id: root
+    objectName: "profilesPage"
 
     property string selectedId: Profiles.defaultProfileId
     // Transient export/import/revert feedback (PRO-7 / PRO-8).
@@ -76,6 +77,7 @@ Item {
                 Kit.Dropdown {
                     id: provenanceBox
                     Layout.fillWidth: true
+                    accessibleName: qsTr("Filter profiles")
                     model: [qsTr("All profiles"), qsTr("Operator"), qsTr("Agent-authored")]
                     onCurrentIndexChanged: root.provenanceFilter =
                         currentIndex === 1 ? "operator" : currentIndex === 2 ? "agent" : "all"
@@ -177,6 +179,12 @@ Item {
                             // Keep the revoke button clickable: the row selects on the body only.
                             z: -1
                             onClicked: root.selectedId = entry.id
+
+                            // Selectable profile row named for the profile.
+                            Accessible.role: Accessible.ListItem
+                            Accessible.name: entry.name
+                            Accessible.selected: root.selectedId === entry.id
+                            Accessible.onPressAction: root.selectedId = entry.id
                         }
                     }
                 }

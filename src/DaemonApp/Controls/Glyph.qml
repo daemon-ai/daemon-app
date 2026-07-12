@@ -19,4 +19,8 @@ Text {
     color: Theme.iconMuted
     verticalAlignment: Text.AlignVCenter
     horizontalAlignment: Text.AlignHCenter
+
+    // Purely decorative icon glyph: the naming lives on the control that hosts
+    // it, so keep the glyph itself out of the accessibility tree.
+    Accessible.ignored: true
 }

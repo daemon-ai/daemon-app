@@ -699,6 +699,10 @@ until it is re-registered.</source>
         <translation>ट्रांसक्रिप्ट / एडिटर टेक्स्ट के लिए उपयोग किया जाने वाला टाइपफ़ेस।</translation>
     </message>
     <message>
+        <source>Font category</source>
+        <translation>फ़ॉन्ट श्रेणी</translation>
+    </message>
+    <message>
         <source>Sans</source>
         <translation>सैंस</translation>
     </message>
@@ -717,6 +721,14 @@ until it is re-registered.</source>
     <message>
         <source>Size of the transcript / editor text.</source>
         <translation>ट्रांसक्रिप्ट / एडिटर टेक्स्ट का आकार।</translation>
+    </message>
+    <message>
+        <source>Decrease font size</source>
+        <translation>फ़ॉन्ट आकार घटाएँ</translation>
+    </message>
+    <message>
+        <source>Increase font size</source>
+        <translation>फ़ॉन्ट आकार बढ़ाएँ</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -855,6 +867,13 @@ until it is re-registered.</source>
     <message>
         <source>Include the response text</source>
         <translation>प्रतिक्रिया का टेक्स्ट शामिल करें</translation>
+    </message>
+</context>
+<context>
+    <name>AttachmentChip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>%1 हटाएँ</translation>
     </message>
 </context>
 <context>
@@ -1065,6 +1084,13 @@ until it is re-registered.</source>
     <message>
         <source>The system refused the login item: %1</source>
         <translation>सिस्टम ने लॉगिन आइटम अस्वीकार कर दिया: %1</translation>
+    </message>
+</context>
+<context>
+    <name>BlockDelegate</name>
+    <message>
+        <source>Message text</source>
+        <translation>संदेश पाठ</translation>
     </message>
 </context>
 <context>
@@ -1524,6 +1550,13 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>Chip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>%1 हटाएँ</translation>
+    </message>
+</context>
+<context>
     <name>ClarifyBlock</name>
     <message>
         <source>The agent needs your input.</source>
@@ -1556,6 +1589,17 @@ until it is re-registered.</source>
     <message>
         <source>Skip</source>
         <translation>छोड़ें</translation>
+    </message>
+</context>
+<context>
+    <name>CodeBlock</name>
+    <message>
+        <source>Code block (%1)</source>
+        <translation>कोड ब्लॉक (%1)</translation>
+    </message>
+    <message>
+        <source>Code block</source>
+        <translation>कोड ब्लॉक</translation>
     </message>
 </context>
 <context>
@@ -1988,6 +2032,18 @@ until it is re-registered.</source>
         <source>Steer the running turn (Ctrl+Enter)</source>
         <translation>चल रहे टर्न को दिशा दें (Ctrl+Enter)</translation>
     </message>
+    <message>
+        <source>Stop</source>
+        <translation>रोकें</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation>कतार में लगाएँ</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>भेजें</translation>
+    </message>
 </context>
 <context>
     <name>ComposerMenu</name>
@@ -2380,6 +2436,14 @@ until it is re-registered.</source>
     <message>
         <source>Edit</source>
         <translation>संपादित करें</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>सक्षम</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>हटाएँ</translation>
     </message>
 </context>
 <context>
@@ -3483,6 +3547,10 @@ until it is re-registered.</source>
         <comment>font specimen sample</comment>
         <translation>Ag</translation>
     </message>
+    <message>
+        <source>%1 font</source>
+        <translation>%1 फ़ॉन्ट</translation>
+    </message>
 </context>
 <context>
     <name>ForeignBackendPicker</name>
@@ -3633,6 +3701,17 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>GeneratedImageBlock</name>
+    <message>
+        <source>Download image</source>
+        <translation>छवि डाउनलोड करें</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>छवि खोलें</translation>
+    </message>
+</context>
+<context>
     <name>GraphView</name>
     <message>
         <source>No graph data</source>
@@ -3648,6 +3727,10 @@ until it is re-registered.</source>
     <message>
         <source>image unavailable</source>
         <translation>छवि अनुपलब्ध</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation>छवि</translation>
     </message>
 </context>
 <context>
@@ -3758,6 +3841,13 @@ Thanks — proceeding with: %1
     <message>
         <source>Password</source>
         <translation>पासवर्ड</translation>
+    </message>
+</context>
+<context>
+    <name>Lightbox</name>
+    <message>
+        <source>Image preview</source>
+        <translation>छवि पूर्वावलोकन</translation>
     </message>
 </context>
 <context>
@@ -3874,6 +3964,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Math error: </source>
         <translation>गणित त्रुटि: </translation>
+    </message>
+    <message>
+        <source>Math block</source>
+        <translation>गणित ब्लॉक</translation>
     </message>
 </context>
 <context>
@@ -4230,6 +4324,10 @@ Thanks — proceeding with: %1
 <context>
     <name>MermaidBlock</name>
     <message>
+        <source>Diagram</source>
+        <translation>आरेख</translation>
+    </message>
+    <message>
         <source>Diagram error: %1</source>
         <translation>आरेख त्रुटि: %1</translation>
     </message>
@@ -4243,6 +4341,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Edit message</source>
+        <translation>संदेश संपादित करें</translation>
     </message>
 </context>
 <context>
@@ -4309,6 +4411,13 @@ Thanks — proceeding with: %1
     <message>
         <source>Verbose</source>
         <translation>विस्तृत</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPill</name>
+    <message>
+        <source>Select model</source>
+        <translation>मॉडल चुनें</translation>
     </message>
 </context>
 <context>
@@ -4646,6 +4755,13 @@ Start one from the Discover tab.</source>
     </message>
 </context>
 <context>
+    <name>ProcessNotice</name>
+    <message>
+        <source>Toggle details</source>
+        <translation>विवरण टॉगल करें</translation>
+    </message>
+</context>
+<context>
     <name>ProfileEditor</name>
     <message>
         <source>Select or create a profile.</source>
@@ -4702,6 +4818,10 @@ Start one from the Discover tab.</source>
     <message>
         <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
         <translation>बेस URL (वैकल्पिक, जैसे https://api.daemon.ai/api/v1)</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>मॉडल</translation>
     </message>
     <message>
         <source>Credential: connected%1</source>
@@ -4970,6 +5090,10 @@ Start one from the Discover tab.</source>
     <message>
         <source>+ New profile</source>
         <translation>+ नई प्रोफ़ाइल</translation>
+    </message>
+    <message>
+        <source>Filter profiles</source>
+        <translation>प्रोफ़ाइल फ़िल्टर करें</translation>
     </message>
     <message>
         <source>All profiles</source>
@@ -7318,6 +7442,10 @@ This only affects the app appearance, not your data.</source>
         <translation>टूल</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>कॉपी करें</translation>
+    </message>
+    <message>
         <source>Spawned a subagent to work in the background.</source>
         <translation>बैकग्राउंड में काम करने के लिए एक सबएजेंट शुरू किया गया।</translation>
     </message>
@@ -7387,6 +7515,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
         <translation>शुरू करने के लिए नीचे एक संदेश भेजें। एजेंट की रीज़निंग, टूल कॉल और उत्तर यहाँ स्ट्रीम होंगे।</translation>
+    </message>
+    <message>
+        <source>Jump to latest</source>
+        <translation>नवीनतम पर जाएँ</translation>
     </message>
     <message>
         <source>Find in transcript</source>
@@ -7564,6 +7696,17 @@ Thanks — proceeding with: %1
     <message>
         <source>Failed to apply the account settings</source>
         <translation>खाता सेटिंग्स लागू करने में विफल</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <source>Collapse</source>
+        <translation>संक्षिप्त करें</translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>विस्तृत करें</translation>
     </message>
 </context>
 <context>

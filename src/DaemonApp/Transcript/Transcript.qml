@@ -647,6 +647,14 @@ Rectangle {
                 editorView.pinToBottom()
             }
         }
+
+        // Scroll-to-latest affordance.
+        Accessible.role: Accessible.Button
+        Accessible.name: qsTr("Jump to latest")
+        Accessible.onPressAction: {
+            editorView.stickToBottom = true;
+            editorView.pinToBottom();
+        }
     }
 
     // Floating find bar (Ctrl+F / Settings "Search transcript" / /find): a one-

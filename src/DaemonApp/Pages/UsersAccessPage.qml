@@ -15,6 +15,7 @@ import DaemonApp.Controls as Kit
 // built. Until it lands, the management section shows a pending state; the WhoAmI panel is live.
 Item {
     id: root
+    objectName: "accessPage"
 
     PageHeader {
         id: header

@@ -18,6 +18,12 @@ QQC.ToolTip {
         text: root.text
         font: root.font
         color: Theme.background
+
+        // The tooltip text is supplementary chrome for the control it describes;
+        // screen readers announce that control directly, so keep the tip out of
+        // the accessibility tree. (Attached here on the Item-derived contentItem;
+        // the ToolTip root is a Popup and cannot carry Accessible.*)
+        Accessible.ignored: true
     }
 
     background: Rectangle {

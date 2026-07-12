@@ -80,6 +80,10 @@ Item {
             color: Theme.messageFooterText
         }
 
+        Accessible.role: Accessible.Button
+        Accessible.name: qsTr("Edit message")
+        Accessible.onPressAction: root.editRequested()
+
         HoverHandler { id: editHover }
         TapHandler { onTapped: root.editRequested() }
     }

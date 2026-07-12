@@ -699,6 +699,10 @@ until it is re-registered.</source>
         <translation>Гарнитура для текста транскрипта / редактора.</translation>
     </message>
     <message>
+        <source>Font category</source>
+        <translation>Категория шрифта</translation>
+    </message>
+    <message>
         <source>Sans</source>
         <translation>Без засечек</translation>
     </message>
@@ -717,6 +721,14 @@ until it is re-registered.</source>
     <message>
         <source>Size of the transcript / editor text.</source>
         <translation>Размер текста транскрипта / редактора.</translation>
+    </message>
+    <message>
+        <source>Decrease font size</source>
+        <translation>Уменьшить размер шрифта</translation>
+    </message>
+    <message>
+        <source>Increase font size</source>
+        <translation>Увеличить размер шрифта</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -855,6 +867,13 @@ until it is re-registered.</source>
     <message>
         <source>Include the response text</source>
         <translation>Включить текст ответа</translation>
+    </message>
+</context>
+<context>
+    <name>AttachmentChip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>Удалить %1</translation>
     </message>
 </context>
 <context>
@@ -1065,6 +1084,13 @@ until it is re-registered.</source>
     <message>
         <source>The system refused the login item: %1</source>
         <translation>Система отклонила объект входа: %1</translation>
+    </message>
+</context>
+<context>
+    <name>BlockDelegate</name>
+    <message>
+        <source>Message text</source>
+        <translation>Текст сообщения</translation>
     </message>
 </context>
 <context>
@@ -1524,6 +1550,13 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>Chip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>Удалить %1</translation>
+    </message>
+</context>
+<context>
     <name>ClarifyBlock</name>
     <message>
         <source>The agent needs your input.</source>
@@ -1556,6 +1589,17 @@ until it is re-registered.</source>
     <message>
         <source>Skip</source>
         <translation>Пропустить</translation>
+    </message>
+</context>
+<context>
+    <name>CodeBlock</name>
+    <message>
+        <source>Code block (%1)</source>
+        <translation>Блок кода (%1)</translation>
+    </message>
+    <message>
+        <source>Code block</source>
+        <translation>Блок кода</translation>
     </message>
 </context>
 <context>
@@ -1988,6 +2032,18 @@ until it is re-registered.</source>
         <source>Steer the running turn (Ctrl+Enter)</source>
         <translation>Направить текущий ход (Ctrl+Enter)</translation>
     </message>
+    <message>
+        <source>Stop</source>
+        <translation>Остановить</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation>В очередь</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Отправить</translation>
+    </message>
 </context>
 <context>
     <name>ComposerMenu</name>
@@ -2380,6 +2436,14 @@ until it is re-registered.</source>
     <message>
         <source>Edit</source>
         <translation>Изменить</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Включено</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Удалить</translation>
     </message>
 </context>
 <context>
@@ -3485,6 +3549,10 @@ until it is re-registered.</source>
         <comment>font specimen sample</comment>
         <translation>Аг</translation>
     </message>
+    <message>
+        <source>%1 font</source>
+        <translation>Шрифт %1</translation>
+    </message>
 </context>
 <context>
     <name>ForeignBackendPicker</name>
@@ -3635,6 +3703,17 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>GeneratedImageBlock</name>
+    <message>
+        <source>Download image</source>
+        <translation>Скачать изображение</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+</context>
+<context>
     <name>GraphView</name>
     <message>
         <source>No graph data</source>
@@ -3650,6 +3729,10 @@ until it is re-registered.</source>
     <message>
         <source>image unavailable</source>
         <translation>изображение недоступно</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation>Изображение</translation>
     </message>
 </context>
 <context>
@@ -3760,6 +3843,13 @@ Thanks — proceeding with: %1
     <message>
         <source>Password</source>
         <translation>Пароль</translation>
+    </message>
+</context>
+<context>
+    <name>Lightbox</name>
+    <message>
+        <source>Image preview</source>
+        <translation>Предпросмотр изображения</translation>
     </message>
 </context>
 <context>
@@ -3876,6 +3966,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Math error: </source>
         <translation>Ошибка формулы: </translation>
+    </message>
+    <message>
+        <source>Math block</source>
+        <translation>Математический блок</translation>
     </message>
 </context>
 <context>
@@ -4234,6 +4328,10 @@ Thanks — proceeding with: %1
 <context>
     <name>MermaidBlock</name>
     <message>
+        <source>Diagram</source>
+        <translation>Диаграмма</translation>
+    </message>
+    <message>
         <source>Diagram error: %1</source>
         <translation>Ошибка диаграммы: %1</translation>
     </message>
@@ -4247,6 +4345,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Edit message</source>
+        <translation>Изменить сообщение</translation>
     </message>
 </context>
 <context>
@@ -4313,6 +4415,13 @@ Thanks — proceeding with: %1
     <message>
         <source>Verbose</source>
         <translation>Подробно</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPill</name>
+    <message>
+        <source>Select model</source>
+        <translation>Выбрать модель</translation>
     </message>
 </context>
 <context>
@@ -4650,6 +4759,13 @@ Start one from the Discover tab.</source>
     </message>
 </context>
 <context>
+    <name>ProcessNotice</name>
+    <message>
+        <source>Toggle details</source>
+        <translation>Переключить подробности</translation>
+    </message>
+</context>
+<context>
     <name>ProfileEditor</name>
     <message>
         <source>Select or create a profile.</source>
@@ -4706,6 +4822,10 @@ Start one from the Discover tab.</source>
     <message>
         <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
         <translation>Базовый URL (необязательно, напр. https://api.daemon.ai/api/v1)</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Модель</translation>
     </message>
     <message>
         <source>Credential: connected%1</source>
@@ -4974,6 +5094,10 @@ Start one from the Discover tab.</source>
     <message>
         <source>+ New profile</source>
         <translation>+ Новый профиль</translation>
+    </message>
+    <message>
+        <source>Filter profiles</source>
+        <translation>Фильтровать профили</translation>
     </message>
     <message>
         <source>All profiles</source>
@@ -7326,6 +7450,10 @@ This only affects the app appearance, not your data.</source>
         <translation>Инструмент</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>Копировать</translation>
+    </message>
+    <message>
         <source>Spawned a subagent to work in the background.</source>
         <translation>Запущен субагент для работы в фоне.</translation>
     </message>
@@ -7395,6 +7523,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
         <translation>Отправьте сообщение ниже, чтобы начать. Рассуждения агента, вызовы инструментов и ответы будут поступать сюда.</translation>
+    </message>
+    <message>
+        <source>Jump to latest</source>
+        <translation>Перейти к последнему</translation>
     </message>
     <message>
         <source>Find in transcript</source>
@@ -7572,6 +7704,17 @@ Thanks — proceeding with: %1
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Не удалось применить настройки учётной записи</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <source>Collapse</source>
+        <translation>Свернуть</translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>Развернуть</translation>
     </message>
 </context>
 <context>

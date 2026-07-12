@@ -72,6 +72,17 @@ ColumnLayout {
                 border.width: isSel ? 2 : 1
                 border.color: isSel ? Theme.accent : Theme.border
 
+                // Connection-mode choice card named for its title.
+                Accessible.role: Accessible.RadioButton
+                Accessible.name: cardRoot.modelData.title
+                Accessible.description: cardRoot.modelData.desc
+                Accessible.checkable: true
+                Accessible.checked: cardRoot.isSel
+                Accessible.onPressAction: {
+                    root.mode = cardRoot.modelData.id;
+                    root.testMessage = "";
+                }
+
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 10

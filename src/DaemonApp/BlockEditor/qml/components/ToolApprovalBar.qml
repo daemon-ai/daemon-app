@@ -131,6 +131,10 @@ Item {
                         font.bold: btn.strong
                     }
 
+                    Accessible.role: Accessible.Button
+                    Accessible.name: btn.label
+                    Accessible.onPressAction: btn.clicked()
+
                     HoverHandler { id: btnHover }
                     TapHandler { onTapped: btn.clicked() }
                 }

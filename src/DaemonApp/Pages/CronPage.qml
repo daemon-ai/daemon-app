@@ -11,6 +11,7 @@ import DaemonApp.Controls as Kit
 // an edit dialog for create/update.
 Item {
     id: root
+    objectName: "cronPage"
 
     PageHeader {
         id: header
@@ -92,11 +93,13 @@ Item {
                         }
                         Kit.Switch {
                             checked: entry.enabled
+                            accessibleName: qsTr("Enabled")
                             onToggled: Cron.setEnabled(entry.id, checked)
                         }
                         Kit.IconButton {
                             icon: FontIcons.fa_trash; iconColor: Theme.danger
                             iconPointSize: 12; implicitWidth: 30; implicitHeight: 26
+                            tooltipText: qsTr("Delete")
                             onClicked: Cron.remove(entry.id)
                         }
                     }

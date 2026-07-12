@@ -346,6 +346,19 @@ ColumnLayout {
                 font.family: FontIcons.display; font.pixelSize: 12
                 color: modelData.kind === "discover" ? Theme.accent : Theme.text
             }
+            // Model choice named for the model (native rows) or "+ <name>" discover row.
+            Accessible.role: Accessible.ListItem
+            Accessible.name: modelData.name
+            Accessible.selected: modelData.id === picker.model
+            Accessible.onPressAction: {
+                if (modelData.kind === "discover")
+                    discoverDialog.openDialog();
+                else {
+                    picker.model = modelData.id;
+                    picker._pushInference();
+                }
+            }
+
             TapHandler {
                 onTapped: {
                     if (modelData.kind === "discover") {

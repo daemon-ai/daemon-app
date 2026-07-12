@@ -10,6 +10,7 @@ import DaemonApp.Theme
 // approvals seams) over a recent-activity feed.
 Item {
     id: root
+    objectName: "dashboardPage"
 
     PageHeader {
         id: header

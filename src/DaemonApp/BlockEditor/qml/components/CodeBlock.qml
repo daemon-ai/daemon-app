@@ -88,6 +88,16 @@ Item {
                 if (root.editorController && root.blockId !== undefined)
                     root.editorController.activateBlock(Number(root.blockId))
             }
+
+            // Activating the code block drops into raw-markdown editing.
+            Accessible.role: Accessible.Button
+            Accessible.name: root.language.length > 0
+                           ? qsTr("Code block (%1)").arg(root.language)
+                           : qsTr("Code block")
+            Accessible.onPressAction: {
+                if (root.editorController && root.blockId !== undefined)
+                    root.editorController.activateBlock(Number(root.blockId));
+            }
         }
     }
 }

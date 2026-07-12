@@ -32,6 +32,13 @@ Column {
         cursorShape: Qt.PointingHandCursor
         onClicked: root.sampleClicked()
 
+        // The specimen card is a checkable style choice named for its category.
+        Accessible.role: Accessible.RadioButton
+        Accessible.name: root.label
+        Accessible.checkable: true
+        Accessible.checked: root.selected
+        Accessible.onPressAction: root.sampleClicked()
+
         Rectangle {
             anchors.fill: parent
             radius: 3
@@ -65,6 +72,7 @@ Column {
         width: 71
         model: root.fonts
         currentIndex: root.currentIndex
+        accessibleName: qsTr("%1 font").arg(root.label)
         onActivated: function(index) { root.fontPicked(index); }
     }
 }

@@ -38,6 +38,15 @@ Item {
     // Captures keyboard modifiers for callers that need alternate click behavior.
     signal clicked(var modifiers)
 
+    // --- Accessibility (AT-SPI) ---------------------------------------------
+    // An "action" item is a button; a "text" item is an inert read-out. The name
+    // is the visible label, or the tooltip for icon-only items.
+    property string accessibleName: label !== "" ? label : tooltipText
+    Accessible.role: interactive ? Accessible.Button : Accessible.StaticText
+    Accessible.name: accessibleName
+    Accessible.description: interactive ? detail : ""
+    Accessible.onPressAction: if (root.interactive) root.clicked(Qt.NoModifier)
+
     implicitHeight: parent ? parent.height : Theme.statusBarHeight
     implicitWidth: iconOnly ? (Theme.touch ? Theme.tapTargetMin : 28) : row.implicitWidth + 12
 

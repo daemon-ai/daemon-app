@@ -162,6 +162,18 @@ ColumnLayout {
                     }
                 }
             }
+            // Engine choice named for the agent (native core or the foreign engine).
+            Accessible.role: Accessible.RadioButton
+            Accessible.name: engineRow.isNative ? qsTr("daemon-core (native)") : engineRow.row.name
+            Accessible.checkable: true
+            Accessible.checked: engineRow.selected
+            Accessible.onPressAction: {
+                if (engineRow.isNative)
+                    picker.selectEngine("Core", "", false);
+                else if (!engineRow.isDisabled)
+                    picker.selectEngine("Foreign", engineRow.row.agent, engineRow.isInstalled);
+            }
+
             TapHandler {
                 onTapped: {
                     // A disabled (NotInstalled) foreign row stays visible but unselectable (the

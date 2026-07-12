@@ -13,6 +13,8 @@ import DaemonApp.Theme
 // "..." popup is a separate, untouched surface.
 Item {
     id: root
+    // Locale-independent AT-SPI accessible-id landmark for the audit + locators.
+    objectName: "settingsPage"
 
     // Deep-link target (a section id); defaults to Appearance.
     property string section: "appearance"

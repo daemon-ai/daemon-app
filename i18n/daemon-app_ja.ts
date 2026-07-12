@@ -699,6 +699,10 @@ until it is re-registered.</source>
         <translation>トランスクリプト / エディターのテキストに使用する書体。</translation>
     </message>
     <message>
+        <source>Font category</source>
+        <translation>フォントカテゴリ</translation>
+    </message>
+    <message>
         <source>Sans</source>
         <translation>サンセリフ</translation>
     </message>
@@ -717,6 +721,14 @@ until it is re-registered.</source>
     <message>
         <source>Size of the transcript / editor text.</source>
         <translation>トランスクリプト / エディターのテキストのサイズ。</translation>
+    </message>
+    <message>
+        <source>Decrease font size</source>
+        <translation>フォントサイズを小さくする</translation>
+    </message>
+    <message>
+        <source>Increase font size</source>
+        <translation>フォントサイズを大きくする</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -855,6 +867,13 @@ until it is re-registered.</source>
     <message>
         <source>Include the response text</source>
         <translation>応答テキストを含める</translation>
+    </message>
+</context>
+<context>
+    <name>AttachmentChip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>%1 を削除</translation>
     </message>
 </context>
 <context>
@@ -1065,6 +1084,13 @@ until it is re-registered.</source>
     <message>
         <source>The system refused the login item: %1</source>
         <translation>システムがログイン項目を拒否しました: %1</translation>
+    </message>
+</context>
+<context>
+    <name>BlockDelegate</name>
+    <message>
+        <source>Message text</source>
+        <translation>メッセージ本文</translation>
     </message>
 </context>
 <context>
@@ -1524,6 +1550,13 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>Chip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>%1 を削除</translation>
+    </message>
+</context>
+<context>
     <name>ClarifyBlock</name>
     <message>
         <source>The agent needs your input.</source>
@@ -1556,6 +1589,17 @@ until it is re-registered.</source>
     <message>
         <source>Skip</source>
         <translation>スキップ</translation>
+    </message>
+</context>
+<context>
+    <name>CodeBlock</name>
+    <message>
+        <source>Code block (%1)</source>
+        <translation>コードブロック (%1)</translation>
+    </message>
+    <message>
+        <source>Code block</source>
+        <translation>コードブロック</translation>
     </message>
 </context>
 <context>
@@ -1988,6 +2032,18 @@ until it is re-registered.</source>
         <source>Steer the running turn (Ctrl+Enter)</source>
         <translation>実行中のターンを誘導（Ctrl+Enter）</translation>
     </message>
+    <message>
+        <source>Stop</source>
+        <translation>停止</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation>キューに追加</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>送信</translation>
+    </message>
 </context>
 <context>
     <name>ComposerMenu</name>
@@ -2380,6 +2436,14 @@ until it is re-registered.</source>
     <message>
         <source>Edit</source>
         <translation>編集</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>有効</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>削除</translation>
     </message>
 </context>
 <context>
@@ -3481,6 +3545,10 @@ until it is re-registered.</source>
         <comment>font specimen sample</comment>
         <translation>Ag</translation>
     </message>
+    <message>
+        <source>%1 font</source>
+        <translation>%1 フォント</translation>
+    </message>
 </context>
 <context>
     <name>ForeignBackendPicker</name>
@@ -3631,6 +3699,17 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>GeneratedImageBlock</name>
+    <message>
+        <source>Download image</source>
+        <translation>画像をダウンロード</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>画像を開く</translation>
+    </message>
+</context>
+<context>
     <name>GraphView</name>
     <message>
         <source>No graph data</source>
@@ -3646,6 +3725,10 @@ until it is re-registered.</source>
     <message>
         <source>image unavailable</source>
         <translation>画像を利用できません</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation>画像</translation>
     </message>
 </context>
 <context>
@@ -3756,6 +3839,13 @@ Thanks — proceeding with: %1
     <message>
         <source>Password</source>
         <translation>パスワード</translation>
+    </message>
+</context>
+<context>
+    <name>Lightbox</name>
+    <message>
+        <source>Image preview</source>
+        <translation>画像プレビュー</translation>
     </message>
 </context>
 <context>
@@ -3872,6 +3962,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Math error: </source>
         <translation>数式エラー: </translation>
+    </message>
+    <message>
+        <source>Math block</source>
+        <translation>数式ブロック</translation>
     </message>
 </context>
 <context>
@@ -4226,6 +4320,10 @@ Thanks — proceeding with: %1
 <context>
     <name>MermaidBlock</name>
     <message>
+        <source>Diagram</source>
+        <translation>図</translation>
+    </message>
+    <message>
         <source>Diagram error: %1</source>
         <translation>ダイアグラムエラー: %1</translation>
     </message>
@@ -4239,6 +4337,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Edit message</source>
+        <translation>メッセージを編集</translation>
     </message>
 </context>
 <context>
@@ -4305,6 +4407,13 @@ Thanks — proceeding with: %1
     <message>
         <source>Verbose</source>
         <translation>詳細</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPill</name>
+    <message>
+        <source>Select model</source>
+        <translation>モデルを選択</translation>
     </message>
 </context>
 <context>
@@ -4642,6 +4751,13 @@ Start one from the Discover tab.</source>
     </message>
 </context>
 <context>
+    <name>ProcessNotice</name>
+    <message>
+        <source>Toggle details</source>
+        <translation>詳細を切り替え</translation>
+    </message>
+</context>
+<context>
     <name>ProfileEditor</name>
     <message>
         <source>Select or create a profile.</source>
@@ -4698,6 +4814,10 @@ Start one from the Discover tab.</source>
     <message>
         <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
         <translation>ベースURL（任意、例 https://api.daemon.ai/api/v1）</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>モデル</translation>
     </message>
     <message>
         <source>Credential: connected%1</source>
@@ -4966,6 +5086,10 @@ Start one from the Discover tab.</source>
     <message>
         <source>+ New profile</source>
         <translation>+ 新しいプロファイル</translation>
+    </message>
+    <message>
+        <source>Filter profiles</source>
+        <translation>プロファイルを絞り込む</translation>
     </message>
     <message>
         <source>All profiles</source>
@@ -7310,6 +7434,10 @@ This only affects the app appearance, not your data.</source>
         <translation>ツール</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>コピー</translation>
+    </message>
+    <message>
         <source>Spawned a subagent to work in the background.</source>
         <translation>バックグラウンドで作業するサブエージェントを起動しました。</translation>
     </message>
@@ -7379,6 +7507,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
         <translation>開始するには下にメッセージを送信してください。エージェントの推論・ツール呼び出し・返信がここにストリーミングされます。</translation>
+    </message>
+    <message>
+        <source>Jump to latest</source>
+        <translation>最新へ移動</translation>
     </message>
     <message>
         <source>Find in transcript</source>
@@ -7556,6 +7688,17 @@ Thanks — proceeding with: %1
     <message>
         <source>Failed to apply the account settings</source>
         <translation>アカウント設定の適用に失敗しました</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <source>Collapse</source>
+        <translation>折りたたむ</translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>展開</translation>
     </message>
 </context>
 <context>

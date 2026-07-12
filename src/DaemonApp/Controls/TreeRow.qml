@@ -27,6 +27,14 @@ Item {
 
     implicitHeight: Theme.rowHeight
 
+    // --- Accessibility (AT-SPI) ---------------------------------------------
+    // The row is a named list item; its selected state tracks `current`. The
+    // twistie (below) exposes its own Button for expand/collapse.
+    Accessible.role: Accessible.ListItem
+    Accessible.name: label
+    Accessible.selectable: true
+    Accessible.selected: current
+
     readonly property int indentBase: 14 + depth * Theme.treeIndent
 
     Rectangle {
@@ -52,6 +60,11 @@ Item {
         width: Theme.twistieSize
         height: Theme.twistieSize
         visible: root.showTwistie
+
+        // The expand/collapse affordance is its own named button in the tree.
+        Accessible.role: Accessible.Button
+        Accessible.name: root.expanded ? qsTr("Collapse") : qsTr("Expand")
+        Accessible.onPressAction: root.twistieClicked()
 
         Kit.Glyph {
             anchors.centerIn: parent

@@ -16,6 +16,7 @@ import DaemonApp.Pages
 // the TUI mirrors the rest plus a graph adjacency fallback.
 Item {
     id: root
+    objectName: "memoryPage"
 
     // The agent identity (ProfileRef == the Mnemosyne bank) this tab inspects.
     property string profile: ""
@@ -164,6 +165,12 @@ Item {
                 }
                 HoverHandler { id: chipHover }
                 TapHandler { onTapped: root.section = tabChip.modelData.id }
+
+                // Section tab named for its label.
+                Accessible.role: Accessible.PageTab
+                Accessible.name: tabChip.modelData.label
+                Accessible.selected: tabChip.isCurrent
+                Accessible.onPressAction: root.section = tabChip.modelData.id
             }
         }
         Item { Layout.fillWidth: true }

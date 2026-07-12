@@ -79,6 +79,13 @@ Rectangle {
                 }
             }
 
+            // Selectable navigation entry named for its label.
+            Accessible.role: Accessible.ListItem
+            Accessible.name: row.modelData.label === undefined ? "" : row.modelData.label
+            Accessible.selectable: true
+            Accessible.selected: row.isCurrent
+            Accessible.onPressAction: root.selected(row.modelData.id)
+
             HoverHandler { id: hover }
             TapHandler { onTapped: root.selected(row.modelData.id) }
         }

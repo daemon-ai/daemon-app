@@ -128,6 +128,10 @@ Item {
             TapHandler {
                 onTapped: Qt.openUrlExternally(root.imageUrl)
             }
+
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Download image")
+            Accessible.onPressAction: Qt.openUrlExternally(root.imageUrl)
         }
 
         // Click the image (not the download button) to open the lightbox.
@@ -140,6 +144,10 @@ Item {
                 if (root.editorController)
                     root.editorController.requestImagePreview(root.imageUrl, "")
             }
+
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Open image")
+            Accessible.onPressAction: if (root.editorController) root.editorController.requestImagePreview(root.imageUrl, "")
         }
     }
 }

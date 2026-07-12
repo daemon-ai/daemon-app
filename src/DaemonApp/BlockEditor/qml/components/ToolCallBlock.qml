@@ -182,6 +182,19 @@ Item {
                     font.pixelSize: Theme.captionFontSize
                     color: copyHover.hovered ? Theme.text : Theme.mutedText
 
+                    Accessible.role: Accessible.Button
+                    Accessible.name: qsTr("Copy")
+                    Accessible.onPressAction: {
+                        const payload = root.subtitle.length > 0 ? root.subtitle : root.ansiText;
+                        if (root.editorController)
+                            root.editorController.copyText(payload);
+                        else {
+                            clip.text = payload;
+                            clip.selectAll();
+                            clip.copy();
+                        }
+                    }
+
                     HoverHandler { id: copyHover }
                     TapHandler {
                         onTapped: {

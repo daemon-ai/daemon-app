@@ -260,6 +260,13 @@ Item {
                                 }
                             }
 
+                            // Answer choice named for its option text.
+                            Accessible.role: questionBlock.multi ? Accessible.CheckBox : Accessible.RadioButton
+                            Accessible.name: String(chip.modelData)
+                            Accessible.checkable: true
+                            Accessible.checked: chip.selected
+                            Accessible.onPressAction: root.toggleChoice(questionBlock.qid, chip.modelData, questionBlock.multi)
+
                             HoverHandler { id: chipHover }
                             TapHandler {
                                 onTapped: root.toggleChoice(questionBlock.qid, chip.modelData, questionBlock.multi)

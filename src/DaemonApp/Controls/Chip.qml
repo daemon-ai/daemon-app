@@ -24,6 +24,15 @@ Rectangle {
     signal clicked()
     signal closeRequested()
 
+    // --- Accessibility (AT-SPI) ---------------------------------------------
+    // An interactive chip is a named button; a static chip is a labelled badge.
+    // The close affordance (below) is its own button.
+    property string accessibleName: text
+    Accessible.role: interactive ? Accessible.Button : Accessible.StaticText
+    Accessible.name: accessibleName
+    Accessible.focusable: interactive
+    Accessible.onPressAction: if (root.interactive) root.clicked()
+
     readonly property color toneColor: tone === "accent" ? Theme.accent
                                      : tone === "danger" ? Theme.danger
                                      : tone === "muted" ? Theme.textMuted
@@ -72,6 +81,11 @@ Rectangle {
             font.pixelSize: 10
             renderType: Text.NativeRendering
             color: closeArea.containsMouse ? Theme.text : Theme.textMuted
+
+            // The remove affordance is a named button in the tree.
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Remove %1").arg(root.text)
+            Accessible.onPressAction: root.closeRequested()
 
             MouseArea {
                 id: closeArea

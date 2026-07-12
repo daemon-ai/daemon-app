@@ -109,6 +109,10 @@ Rectangle {
                     terminal.forceActiveFocus();
                     mouse.accepted = false;
                 }
+                // Not a control: a focus-restoring shim that declines the event so
+                // the terminal widget still handles selection/drag. Keep it out of
+                // the accessibility tree (the terminal widget is the real surface).
+                Accessible.ignored: true
             }
 
             // Our own auto-hiding scrollbar overlay. Replaces the plugin's bundled

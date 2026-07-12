@@ -228,6 +228,12 @@ QQC.Popup {
                         cursorShape: Qt.PointingHandCursor
                         onEntered: list.currentIndex = index
                         onClicked: list.pick(modelData)
+
+                        // Model choice named for its label.
+                        Accessible.role: Accessible.ListItem
+                        Accessible.name: modelData.label !== undefined ? modelData.label : ""
+                        Accessible.selected: modelData.current === true
+                        Accessible.onPressAction: list.pick(modelData)
                     }
                 }
             }

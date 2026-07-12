@@ -66,6 +66,12 @@ Item {
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
+
+            // Inherently graphical: pan/zoom/select happen through this surface,
+            // which is exposed as a named graphic rather than a control.
+            Accessible.role: Accessible.Graphic
+            Accessible.name: qsTr("Diagram")
+
             // Only steal drags from the list when zoomed in (panning); a plain
             // click selects the node under the cursor.
             preventStealing: diagram.zoom > 1.0

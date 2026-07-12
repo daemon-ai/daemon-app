@@ -1156,6 +1156,21 @@
             nodejs # provides npx for jscpd duplicate detection (not packaged in nixpkgs)
             just # task runner: the justfile recipes (lint / build / qmllint)
             qt6Packages.qtkeychain # OS keychain for the server-token store (auth6)
+            # --- a11y audit gate (scripts/a11y-audit.sh + .py): the AT-SPI walker
+            #     sandbox. Everything the gate composes lives here so a bare
+            #     checkout inside the devShell can run it; outside it, the .sh
+            #     detects the missing deps and exits 77 (ctest SKIP). Plain
+            #     python3 (via withPackages) also un-skips find_package(Python3),
+            #     which the i18n_audit / i18n_translations gates need.
+            # pyatspi rides on PyGObject; pyatspi alone does not pull `gi` into
+            # the withPackages env, so name pygobject3 explicitly.
+            (python3.withPackages (ps: [ ps.pyatspi ps.pygobject3 ])) # AT-SPI walker
+            at-spi2-core # at-spi-bus-launcher + registry daemon + Atspi-2.0 typelib
+            xorg-server # Xvfb: a private, headless X DISPLAY per page pass
+            xvfb-run # convenience wrapper around Xvfb (used when present)
+            dbus # dbus-run-session: a private session bus for the AT-SPI registry
+            gobject-introspection # GI runtime (pyatspi resolves typelibs through it)
+            glib # GLib/GObject/Gio typelibs pyatspi transitively imports
           ] ++ qtShellPackages ++ tuiDeps ++ [ qmltermwidget-qt6 ];
 
           shellHook = ''
@@ -1181,6 +1196,13 @@
             export QXTGLOBALSHORTCUT_SOURCE_DIR="${qxtglobalshortcut}"
             export QMLTERMWIDGET_QML_DIR="${qmltermwidgetQmlDir}"
             export IMMER_SOURCE_DIR="${immer}"
+            # pyatspi (the a11y-audit walker) resolves the Atspi-2.0 + GLib
+            # typelibs through GI at import time; surface them so `import pyatspi`
+            # works in the shell and under the audit sandbox.
+            export GI_TYPELIB_PATH="${pkgs.at-spi2-core}/lib/girepository-1.0:${pkgs.glib.out}/lib/girepository-1.0:${pkgs.gobject-introspection}/lib/girepository-1.0''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
+            # at-spi2-core ships its bus launcher + registry daemon under libexec
+            # (not bin), so a11y-audit.sh finds them through this seam.
+            export DAEMON_APP_ATSPI_LIBEXEC="${pkgs.at-spi2-core}/libexec"
           '';
         };
 

@@ -18,6 +18,11 @@ QQC.SpinBox {
     font.family: FontIcons.display
     font.pixelSize: 12
 
+    // The spin box shows a value, not a name; a label-less call site sets this
+    // so a screen reader can announce what the number controls.
+    property string accessibleName: ""
+    Accessible.name: accessibleName
+
     contentItem: TextInput {
         z: 2
         text: root.displayText

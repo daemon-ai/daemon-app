@@ -166,6 +166,16 @@ Item {
                         selected: nodeItem.selected
                     }
 
+                    // Graph node named for its label; activating selects it.
+                    Accessible.role: Accessible.Button
+                    Accessible.name: nodeItem.label
+                    Accessible.selected: nodeItem.selected
+                    Accessible.onPressAction: {
+                        if (root.model)
+                            root.model.selectedId = nodeItem.nodeId;
+                        root.nodeActivated(nodeItem.nodeId);
+                    }
+
                     TapHandler {
                         onTapped: {
                             if (root.model)

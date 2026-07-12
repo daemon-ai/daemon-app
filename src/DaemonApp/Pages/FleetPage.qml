@@ -12,6 +12,7 @@ import DaemonApp.Controls as Kit
 // offline-first; refreshes the Tree on show.
 Item {
     id: root
+    objectName: "fleetPage"
 
     // Last control rejection (e.g. Pause/Scale Unsupported on an engine leaf - PRO-10).
     property string controlError: ""
@@ -144,6 +145,11 @@ Item {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: fleetRow.expanded = !fleetRow.expanded
+
+                    // Expandable fleet-node row named for the node.
+                    Accessible.role: Accessible.ListItem
+                    Accessible.name: fleetRow.entry.name
+                    Accessible.onPressAction: fleetRow.expanded = !fleetRow.expanded
                 }
 
                 ColumnLayout {

@@ -203,6 +203,10 @@ Item {
             color: btn.selected ? Theme.accent : Theme.messageFooterText
         }
 
+        Accessible.role: Accessible.Button
+        Accessible.name: btn.tip
+        Accessible.onPressAction: btn.activated()
+
         HoverHandler { id: btnHover }
         TapHandler {
             enabled: btn.enabled

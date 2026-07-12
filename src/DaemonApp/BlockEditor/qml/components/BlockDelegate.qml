@@ -340,6 +340,7 @@ Item {
                             id: editArea
                             width: parent.width
                             wrapMode: TextArea.Wrap
+                            Accessible.name: qsTr("Message text")
                             background: null
                             padding: 0
                             color: Theme.text

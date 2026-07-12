@@ -121,6 +121,11 @@ QQC.Popup {
                     cursorShape: Qt.PointingHandCursor
                     onEntered: root.hovered(itemRoot.index)
                     onClicked: root.picked(itemRoot.index)
+
+                    // Completion candidate named for its label.
+                    Accessible.role: Accessible.ListItem
+                    Accessible.name: itemRoot.label
+                    Accessible.onPressAction: root.picked(itemRoot.index)
                 }
             }
         }

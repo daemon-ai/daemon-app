@@ -265,6 +265,11 @@ Rectangle {
                             enabled: del.hasChildren
                             cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                             onClicked: sidebarModel.toggleExpand(del.index)
+
+                            // Collapsible section header.
+                            Accessible.role: Accessible.Button
+                            Accessible.name: del.label
+                            Accessible.onPressAction: sidebarModel.toggleExpand(del.index)
                         }
 
                         // Section disclosure chevron (rotated 90deg when expanded).
@@ -516,6 +521,13 @@ Rectangle {
                         enabled: del.selectable && !del.isSeparator
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+                        // Selectable navigation row named for its label.
+                        Accessible.role: Accessible.ListItem
+                        Accessible.name: del.label
+                        Accessible.selectable: del.selectable
+                        Accessible.selected: del.isSelected
+                        Accessible.onPressAction: sidebarModel.activate(del.index)
                         onClicked: function(mouse) {
                             list.forceActiveFocus();
                             // Right-click an agent (a profile-backed unit) for its

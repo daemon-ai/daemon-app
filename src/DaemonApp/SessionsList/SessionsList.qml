@@ -391,6 +391,16 @@ Rectangle {
                         hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
+
+                        // Selectable session row named for its title.
+                        Accessible.role: Accessible.ListItem
+                        Accessible.name: del.title
+                        Accessible.selected: del.isSelected
+                        Accessible.onPressAction: {
+                            convModel.activate(del.index);
+                            root.sessionActivated(convModel.idAt(del.index));
+                        }
+
                         onClicked: function(mouse) {
                             if (mouse.button === Qt.RightButton) {
                                 rowMenu.openFor(convModel.idAt(del.index), del.pinned);

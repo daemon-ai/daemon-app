@@ -37,6 +37,12 @@ Item {
                     font.underline: linkHover.hovered
                     elide: Text.ElideRight
 
+                    // Search result link named for its title (or url).
+                    Accessible.role: Accessible.Link
+                    Accessible.name: modelData.title ? modelData.title
+                                                     : (modelData.url ? modelData.url : qsTr("result"))
+                    Accessible.onPressAction: if (modelData.url) Qt.openUrlExternally(modelData.url)
+
                     HoverHandler { id: linkHover }
                     TapHandler {
                         onTapped: {

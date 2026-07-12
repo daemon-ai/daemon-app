@@ -90,6 +90,14 @@ Item {
                     }
                 }
 
+                // Selectable file-finder result named for the file.
+                Accessible.role: Accessible.ListItem
+                Accessible.name: del.name
+                Accessible.onPressAction: {
+                    list.currentIndex = del.index;
+                    list.activateCurrent();
+                }
+
                 ColumnLayout {
                     id: rowLayout
                     anchors.left: parent.left

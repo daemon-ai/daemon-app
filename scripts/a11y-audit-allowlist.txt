@@ -1,0 +1,17 @@
+# a11y-audit allowlist
+#
+# Justified exemptions for scripts/a11y-audit.{sh,py}. This is a RATCHET: keep it
+# small and every entry justified with a comment. Prefer fixing the control
+# (Accessible.name / labelled-by / an `accessibleName` property, or wiring
+# Accessible.role on a bespoke click target) over adding a line here.
+#
+# Entry forms (one per line; blank + `#` comment lines ignored):
+#   <relative-qml-path>            STATIC: the whole file is decorative/non-control
+#   static|<relative-qml-path>     STATIC: same, explicit form
+#   atspi|<page>                   WALK:   every finding on <page> is exempt
+#   atspi|<page>|<role>            WALK:   a role on <page> is exempt
+#   atspi|<page>|<role>|<path>     WALK:   one exact tree element is exempt
+#
+# <page> is the audit label (base, settings, models, ..., firstrun); <role> is
+# the AT-SPI role name ("push button", "check box", ...); <path> is the tree
+# path printed in the report.

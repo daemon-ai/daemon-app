@@ -89,6 +89,11 @@ Kit.Dialog {
                     HoverHandler { id: rowHover }
                     TapHandler { onTapped: quantPicker.openFor(entry.repo) }
 
+                    // Discoverable model row named for the model.
+                    Accessible.role: Accessible.ListItem
+                    Accessible.name: entry.name
+                    Accessible.onPressAction: quantPicker.openFor(entry.repo)
+
                     RowLayout {
                         anchors.fill: parent
                         anchors.margins: 10

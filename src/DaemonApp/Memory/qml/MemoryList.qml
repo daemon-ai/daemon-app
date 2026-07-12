@@ -163,6 +163,12 @@ Item {
 
                         HoverHandler { id: rowHover }
                         TapHandler { onTapped: root.currentRow = memRow.index }
+
+                        // Memory entry named for its content line.
+                        Accessible.role: Accessible.ListItem
+                        Accessible.name: memRow.content
+                        Accessible.selected: root.currentRow === index
+                        Accessible.onPressAction: root.currentRow = memRow.index
                     }
                 }
             }

@@ -699,6 +699,10 @@ kadar başlatılamaz.</translation>
         <translation>Döküm / düzenleyici metni için kullanılan yazı tipi.</translation>
     </message>
     <message>
+        <source>Font category</source>
+        <translation>Yazı tipi kategorisi</translation>
+    </message>
+    <message>
         <source>Sans</source>
         <translation>Sans</translation>
     </message>
@@ -717,6 +721,14 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Size of the transcript / editor text.</source>
         <translation>Döküm / düzenleyici metninin boyutu.</translation>
+    </message>
+    <message>
+        <source>Decrease font size</source>
+        <translation>Yazı tipi boyutunu küçült</translation>
+    </message>
+    <message>
+        <source>Increase font size</source>
+        <translation>Yazı tipi boyutunu büyüt</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -855,6 +867,13 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Include the response text</source>
         <translation>Yanıt metnini dahil et</translation>
+    </message>
+</context>
+<context>
+    <name>AttachmentChip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>%1 kaldır</translation>
     </message>
 </context>
 <context>
@@ -1065,6 +1084,13 @@ kadar başlatılamaz.</translation>
     <message>
         <source>The system refused the login item: %1</source>
         <translation>Sistem, oturum açma öğesini reddetti: %1</translation>
+    </message>
+</context>
+<context>
+    <name>BlockDelegate</name>
+    <message>
+        <source>Message text</source>
+        <translation>Mesaj metni</translation>
     </message>
 </context>
 <context>
@@ -1524,6 +1550,13 @@ kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
+    <name>Chip</name>
+    <message>
+        <source>Remove %1</source>
+        <translation>%1 kaldır</translation>
+    </message>
+</context>
+<context>
     <name>ClarifyBlock</name>
     <message>
         <source>The agent needs your input.</source>
@@ -1556,6 +1589,17 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Skip</source>
         <translation>Atla</translation>
+    </message>
+</context>
+<context>
+    <name>CodeBlock</name>
+    <message>
+        <source>Code block (%1)</source>
+        <translation>Kod bloğu (%1)</translation>
+    </message>
+    <message>
+        <source>Code block</source>
+        <translation>Kod bloğu</translation>
     </message>
 </context>
 <context>
@@ -1988,6 +2032,18 @@ kadar başlatılamaz.</translation>
         <source>Steer the running turn (Ctrl+Enter)</source>
         <translation>Çalışan turu yönlendir (Ctrl+Enter)</translation>
     </message>
+    <message>
+        <source>Stop</source>
+        <translation>Durdur</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation>Sıraya al</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Gönder</translation>
+    </message>
 </context>
 <context>
     <name>ComposerMenu</name>
@@ -2380,6 +2436,14 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Edit</source>
         <translation>Düzenle</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Etkin</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Sil</translation>
     </message>
 </context>
 <context>
@@ -3481,6 +3545,10 @@ kadar başlatılamaz.</translation>
         <comment>font specimen sample</comment>
         <translation>Ar</translation>
     </message>
+    <message>
+        <source>%1 font</source>
+        <translation>%1 yazı tipi</translation>
+    </message>
 </context>
 <context>
     <name>ForeignBackendPicker</name>
@@ -3631,6 +3699,17 @@ kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
+    <name>GeneratedImageBlock</name>
+    <message>
+        <source>Download image</source>
+        <translation>Görseli indir</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>Görseli aç</translation>
+    </message>
+</context>
+<context>
     <name>GraphView</name>
     <message>
         <source>No graph data</source>
@@ -3646,6 +3725,10 @@ kadar başlatılamaz.</translation>
     <message>
         <source>image unavailable</source>
         <translation>görsel kullanılamıyor</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation>Görsel</translation>
     </message>
 </context>
 <context>
@@ -3756,6 +3839,13 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Password</source>
         <translation>Parola</translation>
+    </message>
+</context>
+<context>
+    <name>Lightbox</name>
+    <message>
+        <source>Image preview</source>
+        <translation>Görsel önizlemesi</translation>
     </message>
 </context>
 <context>
@@ -3872,6 +3962,10 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Math error: </source>
         <translation>Matematik hatası: </translation>
+    </message>
+    <message>
+        <source>Math block</source>
+        <translation>Matematik bloğu</translation>
     </message>
 </context>
 <context>
@@ -4226,6 +4320,10 @@ Teşekkürler — şununla devam ediliyor: %1
 <context>
     <name>MermaidBlock</name>
     <message>
+        <source>Diagram</source>
+        <translation>Diyagram</translation>
+    </message>
+    <message>
         <source>Diagram error: %1</source>
         <translation>Diyagram hatası: %1</translation>
     </message>
@@ -4239,6 +4337,10 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Edit message</source>
+        <translation>Mesajı düzenle</translation>
     </message>
 </context>
 <context>
@@ -4305,6 +4407,13 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Verbose</source>
         <translation>Ayrıntılı</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPill</name>
+    <message>
+        <source>Select model</source>
+        <translation>Model seç</translation>
     </message>
 </context>
 <context>
@@ -4642,6 +4751,13 @@ Keşfet sekmesinden bir tane başlatın.</translation>
     </message>
 </context>
 <context>
+    <name>ProcessNotice</name>
+    <message>
+        <source>Toggle details</source>
+        <translation>Ayrıntıları aç/kapat</translation>
+    </message>
+</context>
+<context>
     <name>ProfileEditor</name>
     <message>
         <source>Select or create a profile.</source>
@@ -4698,6 +4814,10 @@ Keşfet sekmesinden bir tane başlatın.</translation>
     <message>
         <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
         <translation>Temel URL (isteğe bağlı, ör. https://api.daemon.ai/api/v1)</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
     </message>
     <message>
         <source>Credential: connected%1</source>
@@ -4966,6 +5086,10 @@ Keşfet sekmesinden bir tane başlatın.</translation>
     <message>
         <source>+ New profile</source>
         <translation>+ Yeni profil</translation>
+    </message>
+    <message>
+        <source>Filter profiles</source>
+        <translation>Profilleri filtrele</translation>
     </message>
     <message>
         <source>All profiles</source>
@@ -7310,6 +7434,10 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <translation>Araç</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>Kopyala</translation>
+    </message>
+    <message>
         <source>Spawned a subagent to work in the background.</source>
         <translation>Arka planda çalışmak üzere bir alt aracı başlatıldı.</translation>
     </message>
@@ -7379,6 +7507,10 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
         <translation>Başlamak için aşağıya bir mesaj gönderin. Aracının akıl yürütmesi, araç çağrıları ve yanıtları burada akacak.</translation>
+    </message>
+    <message>
+        <source>Jump to latest</source>
+        <translation>En yeniye git</translation>
     </message>
     <message>
         <source>Find in transcript</source>
@@ -7556,6 +7688,17 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Failed to apply the account settings</source>
         <translation>Hesap ayarları uygulanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <source>Collapse</source>
+        <translation>Daralt</translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>Genişlet</translation>
     </message>
 </context>
 <context>

@@ -48,6 +48,7 @@ ColumnLayout {
         Kit.Dropdown {
             id: languageCombo
             Layout.preferredWidth: 200
+            accessibleName: qsTr("Language")
             // {code,label} list from UiSettings; show labels, persist codes.
             readonly property var langs: UiSettings.availableLanguages
             model: langs.map(function(entry) { return entry.label })
@@ -69,6 +70,7 @@ ColumnLayout {
             Kit.Dropdown {
                 id: categoryCombo
                 Layout.preferredWidth: 90
+                accessibleName: qsTr("Font category")
                 // Stored value stays the canonical Sans/Serif/Mono identifier; the
                 // dropdown shows a translatable label for each.
                 readonly property var categoryValues: ["Sans", "Serif", "Mono"]
@@ -81,6 +83,7 @@ ColumnLayout {
             Kit.Dropdown {
                 id: fontCombo
                 Layout.preferredWidth: 150
+                accessibleName: qsTr("Font")
                 readonly property var fonts: UiSettings.fontCategory === "Serif"
                     ? UiSettings.serifFonts
                     : UiSettings.fontCategory === "Mono" ? UiSettings.monoFonts
@@ -104,6 +107,7 @@ ColumnLayout {
             Kit.IconButton {
                 icon: FontIcons.fa_minus; iconColor: Theme.text; iconPointSize: 12
                 implicitWidth: 30; implicitHeight: 28
+                accessibleName: qsTr("Decrease font size")
                 enabled: UiSettings.editorFontSize > UiSettings.minFontSize
                 onClicked: UiSettings.decreaseFontSize()
             }
@@ -116,6 +120,7 @@ ColumnLayout {
             Kit.IconButton {
                 icon: FontIcons.fa_plus; iconColor: Theme.text; iconPointSize: 12
                 implicitWidth: 30; implicitHeight: 28
+                accessibleName: qsTr("Increase font size")
                 enabled: UiSettings.editorFontSize < UiSettings.maxFontSize
                 onClicked: UiSettings.increaseFontSize()
             }

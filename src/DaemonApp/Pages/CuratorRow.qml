@@ -20,6 +20,16 @@ Item {
 
     implicitHeight: 44
 
+    // The whole row is a checkbox named for its label, with the sub-line as its
+    // description.
+    Accessible.role: Accessible.CheckBox
+    Accessible.name: label
+    Accessible.description: description
+    Accessible.checkable: true
+    Accessible.checked: checked
+    Accessible.onToggleAction: root.toggled()
+    Accessible.onPressAction: root.toggled()
+
     Rectangle {
         anchors.fill: parent
         radius: 6

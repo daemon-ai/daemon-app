@@ -55,6 +55,11 @@ Rectangle {
             font.pixelSize: 11
             color: removeArea.containsMouse ? Theme.text : Theme.textMuted
 
+            // The remove affordance is a named button.
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("Remove %1").arg(root.name)
+            Accessible.onPressAction: root.removeRequested()
+
             MouseArea {
                 id: removeArea
                 anchors.fill: parent

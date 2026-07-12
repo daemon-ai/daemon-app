@@ -105,6 +105,11 @@ Item {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.expanded = !root.expanded
+
+                    // Disclosure toggle for the reasoning trace.
+                    Accessible.role: Accessible.Button
+                    Accessible.name: qsTr("Reasoning")
+                    Accessible.onPressAction: root.expanded = !root.expanded
                 }
             }
 

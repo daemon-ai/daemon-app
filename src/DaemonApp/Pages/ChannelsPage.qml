@@ -14,6 +14,7 @@ import DaemonApp.Controls as Kit
 // account management, contact ops); they are null in mock, so every verb call is null-guarded.
 Item {
     id: root
+    objectName: "channelsPage"
 
     // Re-read the Q_INVOKABLE lists on the projection's change signals (they are not properties).
     property var adapters: ChannelsHub.adapters()
@@ -579,6 +580,12 @@ Item {
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
+
+                        // Expandable account row named for its transport.
+                        Accessible.role: Accessible.ListItem
+                        Accessible.name: acctRow.modelData.transport
+                        Accessible.onPressAction: acctRow.expanded = !acctRow.expanded
+
                         onClicked: {
                             acctRow.expanded = !acctRow.expanded;
                             // [waveB:app-v30] D2: the per-expand live ConvList refetch is RETIRED.
@@ -662,6 +669,7 @@ Item {
                             }
                             Kit.Switch {
                                 checked: acctRow.modelData.enabled !== false
+                                accessibleName: qsTr("Enabled")
                                 onToggled: {
                                     if (Transports)
                                         Transports.setEnabled(acctRow.modelData.transport, checked);

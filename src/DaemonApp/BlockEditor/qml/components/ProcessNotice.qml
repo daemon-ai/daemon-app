@@ -89,6 +89,11 @@ Item {
                     enabled: root.detail.length > 0
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.expanded = !root.expanded
+
+                    // Disclosure toggle for the notice detail.
+                    Accessible.role: Accessible.Button
+                    Accessible.name: qsTr("Toggle details")
+                    Accessible.onPressAction: root.expanded = !root.expanded
                 }
             }
 

@@ -16,6 +16,12 @@ QQC.TextField {
     // is the boxed search field.
     property bool underline: false
 
+    // Screen-reader name. A single-line field is usually label-less (only a
+    // placeholder), so default the accessible name to the placeholder text; a
+    // call site with neither an adjacent label nor a placeholder sets this.
+    property string accessibleName: placeholderText
+    Accessible.name: accessibleName
+
     color: Theme.searchText
     placeholderTextColor: Theme.textMuted
     selectionColor: Theme.searchSelection

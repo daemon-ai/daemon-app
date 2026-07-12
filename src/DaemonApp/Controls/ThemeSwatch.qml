@@ -23,6 +23,15 @@ MouseArea {
 
     onClicked: root.picked()
 
+    // --- Accessibility (AT-SPI) ---------------------------------------------
+    // One swatch out of the theme set: a checkable radio button named for its
+    // theme, `checked` when it is the active theme.
+    Accessible.role: Accessible.RadioButton
+    Accessible.name: themeName
+    Accessible.checkable: true
+    Accessible.checked: selected
+    Accessible.onPressAction: root.picked()
+
     Rectangle {
         id: backgroundRect
         anchors.fill: parent

@@ -52,6 +52,14 @@ Item {
                 border.width: entry.current ? 0 : 1
                 border.color: Theme.border
 
+                // Checkpoint marker named for its label; activating restores it.
+                Accessible.role: Accessible.Button
+                Accessible.name: entry.label
+                Accessible.onPressAction: {
+                    if (!entry.current && !root.foreignSession)
+                        confirmDialog.confirmFor(entry.id, entry.label);
+                }
+
                 MouseArea {
                     id: dotArea
                     anchors.fill: parent

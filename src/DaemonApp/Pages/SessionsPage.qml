@@ -12,6 +12,7 @@ import DaemonApp.Controls as Kit
 // swaps the roster to archived sessions with a per-row Restore.
 Item {
     id: root
+    objectName: "sessionsPage"
 
     readonly property bool archivedScope: SessionRoster.scope === "archived"
 
@@ -75,6 +76,11 @@ Item {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: sessionRow.expanded = !sessionRow.expanded
+
+                    // Expandable session row named for its title.
+                    Accessible.role: Accessible.ListItem
+                    Accessible.name: sessionRow.entry.title
+                    Accessible.onPressAction: sessionRow.expanded = !sessionRow.expanded
                 }
 
                 ColumnLayout {

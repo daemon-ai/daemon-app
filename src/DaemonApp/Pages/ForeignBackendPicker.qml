@@ -52,6 +52,14 @@ ColumnLayout {
             border.width: 1
             border.color: row.selected ? Theme.accent : Theme.border
 
+            // Backend choice named for its title, with the hint as description.
+            Accessible.role: Accessible.RadioButton
+            Accessible.name: row.modelData.title
+            Accessible.description: row.modelData.hint
+            Accessible.checkable: true
+            Accessible.checked: row.selected
+            Accessible.onPressAction: if (backend._hasSetup) AgentSetup.chooseBackend(row.modelData.mode)
+
             ColumnLayout {
                 id: rowCol
                 anchors.left: parent.left
