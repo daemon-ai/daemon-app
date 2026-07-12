@@ -4,10 +4,8 @@
 #pragma once
 
 #include "domain/ids.h"
-#include "domain/participant.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
-#include "domain/tag.h"
 #include "domain/unit_node.h"
 
 #include <QList>
@@ -27,21 +25,6 @@ class ISessionStore : public QObject {
 public:
     using QObject::QObject;
     ~ISessionStore() override = default;
-
-    // The single recursive tree primitive: the direct children of `parentId`, or
-    // the top-level roots when `parentId` is empty. Mirrors the daemon
-    // `TreeReport` (a flat node list + per-node `children` ids) and is
-    // arbitrary-depth by construction - callers must never assume a fixed depth.
-    [[nodiscard]] virtual QList<domain::UnitNode>
-    unitChildren(const domain::UnitId& parentId) const = 0;
-
-    // One unit by id (invalid UnitNode if unknown).
-    [[nodiscard]] virtual domain::UnitNode unit(const domain::UnitId& id) const = 0;
-
-    [[nodiscard]] virtual QList<domain::Tag> tags() const = 0;
-
-    // The participants of the active chat/transcript (copied from the DaemonNet seed, like tags).
-    [[nodiscard]] virtual QList<domain::Participant> participants() const = 0;
 
     // Sessions matching the given sidebar scope (metadata + content). For a Unit
     // scope this folds over the unit's whole subtree.
@@ -101,14 +84,6 @@ public:
             emit sessionCreated(id.toString(), profileId);
         }
     }
-
-    // Create a tree unit under `parentId` (empty = a new top-level root) and
-    // return its new id. `kind` is cosmetic. Mirrors a future control-plane
-    // "spawn unit" call.
-    virtual domain::UnitId createUnit(const domain::UnitId& parentId, domain::UnitKind kind) = 0;
-    // Create a cross-cutting tag and return its new id.
-    virtual int createTag(const QString& name, const QString& color) = 0;
-
     // --- QML/TUI boundary: QString-keyed Q_INVOKABLE convenience overloads ---
     // QML and the TUI thread session ids as `QString` (empty = none); these inline shims construct
     // the typed `SessionId` and delegate to the canonical methods above. SessionId is not

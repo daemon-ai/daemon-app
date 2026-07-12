@@ -6735,10 +6735,6 @@ This only affects the app appearance, not your data.</source>
         <translation>新建智能体</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>新建标签</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>全部折叠</translation>
     </message>
@@ -6818,16 +6814,8 @@ This only affects the app appearance, not your data.</source>
         <translation>已归档</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>标签</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>编队</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>新建标签</translation>
     </message>
 </context>
 <context>
@@ -9458,13 +9446,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>磁盘上缺少模型 %1：%2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>参与者</translation>
     </message>
 </context>
 <context>

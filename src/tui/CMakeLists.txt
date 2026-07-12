@@ -61,8 +61,6 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Files/file_finder_model.h
     ../DaemonApp/Files/file_finder_model.cpp
     # Participants section model, shared verbatim with the GUI.
-    ../DaemonApp/Participants/participants_model.h
-    ../DaemonApp/Participants/participants_model.cpp
     ../DaemonApp/Editor/app/code_editor_controller.h
     ../DaemonApp/Editor/app/code_editor_controller.cpp
     ../DaemonApp/Editor/app/line_model.h
@@ -92,7 +90,6 @@ target_include_directories(da_tui_viewmodels PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Chat"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Command"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Files"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Participants"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Editor"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Editor/app"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Memory"
@@ -242,8 +239,6 @@ qt_add_executable(daemon-tui
     tab_strip_view.cpp
     file_tree_view.h
     file_tree_view.cpp
-    participants_view.h
-    participants_view.cpp
     code_editor_view.h
     code_editor_view.cpp
     composer_chrome.h

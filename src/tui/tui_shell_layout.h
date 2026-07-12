@@ -16,9 +16,6 @@ class DocumentStore;
 namespace files {
 class FsExplorerModel;
 }
-namespace participants {
-class ParticipantsModel;
-}
 
 class AttachmentBarView;
 class ChatPendingStripView;
@@ -26,7 +23,6 @@ class CodeEditorView;
 class CompletionView;
 class ComposerChrome;
 class FileTreeView;
-class ParticipantsView;
 class QueueStripView;
 class SearchInputBox;
 class SessionListView;
@@ -69,10 +65,8 @@ struct TuiShellWidgets {
     AttachmentBarView* attachments = nullptr;
     SubmitInputBox* composer = nullptr;
     CompletionView* completionPopup = nullptr;
-    // Right column: the Participants section stacked above the file Explorer. The
-    // column toggles as a unit (Ctrl+E) - both children show/hide together.
+    // Right column: the file Explorer (Ctrl+E toggles it).
     Tui::ZWidget* rightColumn = nullptr;
-    ParticipantsView* participantsView = nullptr;
     FileTreeView* fileTreeView = nullptr;
     StatusBarView* footer = nullptr;
 };
@@ -81,6 +75,5 @@ class TuiShellLayout {
 public:
     static TuiShellWidgets build(Tui::ZRoot* root, Tui::ZTerminal* terminal, const QRect& geometry,
                                  TabModel* tabModel, files::FsExplorerModel* fileTree,
-                                 participants::ParticipantsModel* participants,
                                  be::DocumentStore* pageDoc);
 };

@@ -1669,34 +1669,6 @@ DecodedOrigin decodeOriginStruct(const origin& o) {
     return d;
 }
 
-DecodedChatRoute decodeChatRouteStruct(const chat_route& r) {
-    DecodedChatRoute d;
-    d.origin = decodeOriginStruct(r.chat_route_origin);
-    d.session = fromZcbor(r.chat_route_session);
-    if (r.chat_route_profile_present &&
-        r.chat_route_profile.chat_route_profile_choice ==
-            chat_route_profile_r::chat_route_profile_profile_ref_m_c) {
-        d.profile = fromZcbor(r.chat_route_profile.chat_route_profile_profile_ref_m);
-    }
-    if (r.chat_route_isolation_present) {
-        switch (r.chat_route_isolation.chat_route_isolation.isolation_policy_choice) {
-        case isolation_policy_r::isolation_policy_PerUser_tstr_c:
-            d.isolation = QStringLiteral("PerUser");
-            break;
-        case isolation_policy_r::isolation_policy_PerChat_tstr_c:
-            d.isolation = QStringLiteral("PerChat");
-            break;
-        case isolation_policy_r::isolation_policy_PerThread_tstr_c:
-            d.isolation = QStringLiteral("PerThread");
-            break;
-        case isolation_policy_r::isolation_policy_Shared_tstr_c:
-            d.isolation = QStringLiteral("Shared");
-            break;
-        }
-    }
-    return d;
-}
-
 } // namespace codec_detail
 
 QByteArray NodeApiCodec::encodeRoutingListChatsRequest(const QString& after) {
@@ -1719,38 +1691,6 @@ QByteArray NodeApiCodec::encodeRoutingGetRequest(const DecodedOrigin& originArg)
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_routing_get_m_c;
     fillOrigin(request.api_request_request_routing_get_m.RoutingGet_origin, originArg, sc);
-    QByteArray out;
-    return encodeRequest(request, &out) ? out : QByteArray{};
-}
-
-QByteArray NodeApiCodec::encodeRoutingSetRequest(const DecodedChatRoute& route) {
-    OriginScratch sc;
-    const QByteArray sessionUtf8 = route.session.toUtf8();
-    const QByteArray profileUtf8 = route.profile.toUtf8();
-    api_request_r request{};
-    request.api_request_choice = api_request_r::api_request_request_routing_set_m_c;
-    chat_route& r = request.api_request_request_routing_set_m.RoutingSet_route;
-    fillOrigin(r.chat_route_origin, route.origin, sc);
-    setZcbor(r.chat_route_session, sessionUtf8);
-    r.chat_route_profile_present = !route.profile.isEmpty();
-    if (!route.profile.isEmpty()) {
-        r.chat_route_profile.chat_route_profile_choice =
-            chat_route_profile_r::chat_route_profile_profile_ref_m_c;
-        setZcbor(r.chat_route_profile.chat_route_profile_profile_ref_m, profileUtf8);
-    }
-    r.chat_route_isolation_present = !route.isolation.isEmpty();
-    if (!route.isolation.isEmpty()) {
-        auto& iso = r.chat_route_isolation.chat_route_isolation;
-        if (route.isolation == QStringLiteral("PerUser")) {
-            iso.isolation_policy_choice = isolation_policy_r::isolation_policy_PerUser_tstr_c;
-        } else if (route.isolation == QStringLiteral("PerThread")) {
-            iso.isolation_policy_choice = isolation_policy_r::isolation_policy_PerThread_tstr_c;
-        } else if (route.isolation == QStringLiteral("Shared")) {
-            iso.isolation_policy_choice = isolation_policy_r::isolation_policy_Shared_tstr_c;
-        } else {
-            iso.isolation_policy_choice = isolation_policy_r::isolation_policy_PerChat_tstr_c;
-        }
-    }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -1802,90 +1742,6 @@ QByteArray NodeApiCodec::encodeTransportRoomsRequest(const QString& transport,
     }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
-}
-
-bool NodeApiCodec::decodeChatRoutes(const QByteArray& responseCbor, QList<DecodedChatRoute>* out,
-                                    QString* next) {
-    if (out == nullptr) {
-        return false;
-    }
-    const auto response =
-        decodeChecked(responseCbor, api_response_r::api_response_response_chat_routes_m_c);
-    if (!response) {
-        return false;
-    }
-    const chat_route_page& page =
-        response->api_response_response_chat_routes_m.response_chat_routes_ChatRoutes;
-    out->clear();
-    for (size_t i = 0; i < page.chat_route_page_items_chat_route_m_count; ++i) {
-        out->append(decodeChatRouteStruct(page.chat_route_page_items_chat_route_m[i]));
-    }
-    if (next != nullptr) {
-        const bool hasNext = page.chat_route_page_next_present &&
-                             page.chat_route_page_next.chat_route_page_next_choice ==
-                                 chat_route_page_next_r::chat_route_page_next_tstr_c;
-        *next =
-            hasNext ? fromZcbor(page.chat_route_page_next.chat_route_page_next_tstr) : QString();
-    }
-    return true;
-}
-
-bool NodeApiCodec::decodeChatRoute(const QByteArray& responseCbor, DecodedChatRoute* out,
-                                   bool* found) {
-    if (out == nullptr || found == nullptr) {
-        return false;
-    }
-    const auto response =
-        decodeChecked(responseCbor, api_response_r::api_response_response_chat_route_m_c);
-    if (!response) {
-        return false;
-    }
-    const response_chat_route& r = response->api_response_response_chat_route_m;
-    if (r.response_chat_route_ChatRoute_choice ==
-        response_chat_route::response_chat_route_ChatRoute_chat_route_m_c) {
-        *out = decodeChatRouteStruct(r.response_chat_route_ChatRoute_chat_route_m);
-        *found = true;
-    } else {
-        *found = false;
-    }
-    return true;
-}
-
-bool NodeApiCodec::decodeRooms(const QByteArray& responseCbor, QList<DecodedRoomInfo>* out,
-                               QString* next) {
-    if (out == nullptr) {
-        return false;
-    }
-    const auto response =
-        decodeChecked(responseCbor, api_response_r::api_response_response_rooms_m_c);
-    if (!response) {
-        return false;
-    }
-    const room_page& page = response->api_response_response_rooms_m.response_rooms_Rooms;
-    out->clear();
-    for (size_t i = 0; i < page.room_page_items_room_info_m_count; ++i) {
-        const room_info& info = page.room_page_items_room_info_m[i];
-        DecodedRoomInfo d;
-        d.transport = fromZcbor(info.room_info_transport);
-        d.room = fromZcbor(info.room_info_room);
-        if (info.room_info_name_present &&
-            info.room_info_name.room_info_name_choice == room_info_name_r::room_info_name_tstr_c) {
-            d.name = fromZcbor(info.room_info_name.room_info_name_tstr);
-        }
-        if (info.room_info_session_present &&
-            info.room_info_session.room_info_session_choice ==
-                room_info_session_r::room_info_session_session_id_m_c) {
-            d.session = fromZcbor(info.room_info_session.room_info_session_session_id_m);
-        }
-        out->append(d);
-    }
-    if (next != nullptr) {
-        const bool hasNext =
-            page.room_page_next_present &&
-            page.room_page_next.room_page_next_choice == room_page_next_r::room_page_next_tstr_c;
-        *next = hasNext ? fromZcbor(page.room_page_next.room_page_next_tstr) : QString();
-    }
-    return true;
 }
 
 // --- [acct-mgmt] Transport contacts / roster (wire v34) ------------------------------------------

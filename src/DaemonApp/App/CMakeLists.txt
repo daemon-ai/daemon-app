@@ -92,7 +92,6 @@ target_link_libraries(daemon-app
         daemon-app::chat_view
         daemon-app::terminal
         daemon-app::files
-        daemon-app::participants
         daemon-app::editor
         daemon-app::transcript
         daemon-app::composer
@@ -116,7 +115,6 @@ target_link_libraries(daemon-app
         da_chat_viewplugin
         da_terminalplugin
         da_filesplugin
-        da_participantsplugin
         da_editorplugin
         da_transcriptplugin
         da_composerplugin

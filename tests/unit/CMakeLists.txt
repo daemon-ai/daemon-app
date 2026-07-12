@@ -584,7 +584,7 @@ set_tests_properties(tst_app_service_graph PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 
 # tst_mirror_session_store: the M4 mirror-backed ISessionStore (the 6->1 projection the session
 # consumers rebind onto) - DUAL-DECODER PARITY of the same SessionPage bytes through the legacy
-# (decodeSessionPage -> DaemonCacheStore -> CachedSessionStore) and mirror (decodeSessionsToMirror
+# and mirror (decodeSessionsToMirror
 # -> ingestor -> MirrorSessionStore) paths, the scoped views, the journal-filtered changed(), and
 # the legacy mutation/transcript delegation + signal relays. Only built with the substrate.
     qt_add_executable(tst_mirror_session_store tst_mirror_session_store.cpp)
@@ -946,29 +946,6 @@ target_link_libraries(tst_integrations_tree
 )
 add_test(NAME tst_integrations_tree COMMAND tst_integrations_tree)
 set_tests_properties(tst_integrations_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-
-# tst_participants_model: the right sidebar's Participants section model (shared by
-# the GUI and TUI) - the collapsible header, the seeded Agent/User rows with their
-# green "available" presence dots, and the section fold.
-qt_add_executable(tst_participants_model tst_participants_model.cpp)
-target_include_directories(tst_participants_model
-    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Participants"
-)
-target_link_libraries(tst_participants_model
-    PRIVATE
-        Qt6::Test
-        Qt6::Qml
-        Qt6::Quick
-        daemon-app::domain
-        daemon-app::persistence
-        daemon-app::daemonnet
-        daemon-app::participants
-        daemon-app::daemon_client
-        daemon-app::mirror_ingestor
-)
-
-add_test(NAME tst_participants_model COMMAND tst_participants_model)
-set_tests_properties(tst_participants_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_turn_controller: exercises the shared turn-lifecycle FSM (the C++ port of
 # TurnSimulator.qml) - a started turn runs its scripted events to completion and

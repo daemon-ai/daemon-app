@@ -262,22 +262,6 @@ bool MirrorSessionStore::isPinned(const domain::SessionId& id) const {
     return s != nullptr && s->pinned;
 }
 
-QList<domain::UnitNode> MirrorSessionStore::unitChildren(const domain::UnitId&) const {
-    return {};
-}
-
-domain::UnitNode MirrorSessionStore::unit(const domain::UnitId&) const {
-    return {};
-}
-
-QList<domain::Tag> MirrorSessionStore::tags() const {
-    return {};
-}
-
-QList<domain::Participant> MirrorSessionStore::participants() const {
-    return {};
-}
-
 QString MirrorSessionStore::content(const domain::SessionId& id) const {
     // G2 (M5): the facade flip. Transcript content now projects the mirror `w_transcript_blocks`
     // window (fed by the engine via MirrorTranscriptSink), byte-identical to the legacy
@@ -370,17 +354,6 @@ void MirrorSessionStore::requestNewSession(const QString& profileId) {
         return;
     }
     emit createRequested(profileId);
-}
-
-domain::UnitId MirrorSessionStore::createUnit(const domain::UnitId&, domain::UnitKind) {
-    // Units are node-owned supervision structure; no client-side create verb (daemon parity).
-    return {};
-}
-
-int MirrorSessionStore::createTag(const QString&, const QString&) {
-    // Tags are a client-local sidecar concern (§3.4) with no mirror vertical yet; the daemon
-    // store never supported them. No-op, both modes.
-    return -1;
 }
 
 void MirrorSessionStore::refreshSessionsForProfile(const QString& profileId) {

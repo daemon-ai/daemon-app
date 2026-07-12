@@ -18,7 +18,6 @@
 using domain::ListScope;
 using domain::NodeType;
 using domain::UnitId;
-using domain::UnitNode;
 
 namespace {
 // Fleet membership expand-state keys (a disjoint id namespace from unit/transport ids, so they
@@ -256,40 +255,10 @@ void SidebarModel::rebuild() {
                           -1,
                           {}});
 
-        // Tags section sits above Fleet (cross-cutting labels before the org chart).
-        pushSectionHeader(tr("Tags"), NodeType::TagSeparator, QStringLiteral("tags"));
-        if (isSectionExpanded(QStringLiteral("tags"))) {
-            for (const domain::Tag& t : m_store->tags()) {
-                m_rows.push_back({t.name,
-                                  m_store->sessionCount({NodeType::Tag, t.id, {}, {}}),
-                                  NodeType::Tag,
-                                  t.id,
-                                  {},
-                                  false,
-                                  true,
-                                  t.color,
-                                  0,
-                                  false,
-                                  false,
-                                  0,
-                                  0,
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  -1,
-                                  {}});
-            }
-        }
-
         pushSectionHeader(tr("Fleet"), NodeType::FleetSeparator, QStringLiteral("fleet"));
         if (isSectionExpanded(QStringLiteral("fleet"))) {
             // §0 membership view: node(client connection root) -> agents(profiles) -> sessions
-            // (ByProfile). NOT the node's in-partition tree()/unitChildren() (that feeds the
+            // (ByProfile). NOT the node's in-partition supervision tree (that feeds the
             // in-transcript SubagentModel drill-down, left untouched).
             appendFleetMembership();
         }
@@ -309,10 +278,6 @@ bool SidebarModel::rowIsCurrent(const Row& r) const {
         return false;
     }
     switch (r.type) {
-    case NodeType::Unit:
-        return m_selType == NodeType::Unit && r.unitId == m_selUnit;
-    case NodeType::Tag:
-        return m_selType == NodeType::Tag && r.tagId == m_selTag;
     case NodeType::Transport:
         return m_selType == NodeType::Transport && r.txNode == m_selTxNode;
     case NodeType::FleetNode:
@@ -465,45 +430,6 @@ int SidebarModel::adjacentSelectableRow(int from, int delta) const {
     return -1;
 }
 
-int SidebarModel::parentRow(int row) const {
-    if (row < 0 || row >= m_rows.size() || !m_store) {
-        return -1;
-    }
-    const Row& r = m_rows.at(row);
-    if (r.type != NodeType::Unit) {
-        return -1;
-    }
-    const QString parentId = m_store->unit(UnitId(r.unitId)).parentId.toString();
-    if (parentId.isEmpty()) {
-        return -1;
-    }
-    for (int i = 0; i < m_rows.size(); ++i) {
-        const Row& cand = m_rows.at(i);
-        if (cand.type == NodeType::Unit && cand.unitId == parentId) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-bool SidebarModel::selectionInSubtree(const QString& rootId) const {
-    if (m_selType != NodeType::Unit || !m_store) {
-        return false;
-    }
-    QString cur = m_selUnit;
-    for (int guard = 0; !cur.isEmpty(); ++guard) {
-        if (cur == rootId) {
-            return true;
-        }
-        // Bounded walk; the store's tree is finite and acyclic.
-        if (guard > 4096) {
-            break;
-        }
-        cur = m_store->unit(UnitId(cur)).parentId.toString();
-    }
-    return false;
-}
-
 void SidebarModel::toggleExpand(int row) {
     if (row < 0 || row >= m_rows.size()) {
         return;
@@ -530,43 +456,18 @@ void SidebarModel::toggleExpand(int row) {
         rebuild();
         return;
     }
-    if ((r.type != NodeType::Unit && r.type != NodeType::Transport) || !r.hasChildren) {
+    if (r.type != NodeType::Transport || !r.hasChildren) {
         return;
     }
-    // Transport group rows toggle by their tree-node id (a disjoint id namespace
-    // from unit ids, so they share m_collapsed safely).
-    if (r.type == NodeType::Transport) {
-        const QString id = r.txNode;
-        if (isExpanded(id)) {
-            m_collapsed.insert(id);
-        } else {
-            m_collapsed.remove(id);
-        }
-        rebuild();
-        return;
-    }
-    const QString id = r.unitId;
-    const bool collapsing = isExpanded(id);
-
-    // If we are about to hide the current selection, move it up to this unit so a
-    // highlighted row stays visible (and the middle pane follows).
-    bool moved = false;
-    if (collapsing && selectionInSubtree(id)) {
-        m_selType = NodeType::Unit;
-        m_selTag = -1;
-        m_selUnit = id;
-        moved = true;
-    }
-
-    if (collapsing) {
+    // Transport group rows toggle by their tree-node id. (The legacy Unit-subtree fold died with
+    // the dead ISessionStore unit reads — AD 1a.4; fleet rows fold via expandKey above.)
+    const QString id = r.txNode;
+    if (isExpanded(id)) {
         m_collapsed.insert(id);
     } else {
         m_collapsed.remove(id);
     }
     rebuild();
-    if (moved) {
-        emit scopeSelected(static_cast<int>(NodeType::Unit), -1, id);
-    }
 }
 
 void SidebarModel::selectNext() {
@@ -591,15 +492,10 @@ void SidebarModel::collapseCurrent() {
         return;
     }
     const Row& r = m_rows.at(cur);
-    if ((r.type == NodeType::Unit || r.type == NodeType::Transport ||
-         r.type == NodeType::FleetNode || r.type == NodeType::Agent) &&
+    if ((r.type == NodeType::Transport || r.type == NodeType::FleetNode ||
+         r.type == NodeType::Agent) &&
         r.hasChildren && r.expanded) {
         toggleExpand(cur); // collapse; selection stays on this row
-        return;
-    }
-    const int pr = parentRow(cur);
-    if (pr >= 0) {
-        setSelectionFromRow(pr);
     }
 }
 
@@ -609,8 +505,8 @@ void SidebarModel::expandCurrent() {
         return;
     }
     const Row& r = m_rows.at(cur);
-    if ((r.type != NodeType::Unit && r.type != NodeType::Transport &&
-         r.type != NodeType::FleetNode && r.type != NodeType::Agent) ||
+    if ((r.type != NodeType::Transport && r.type != NodeType::FleetNode &&
+         r.type != NodeType::Agent) ||
         !r.hasChildren) {
         return;
     }
@@ -704,16 +600,4 @@ void SidebarModel::createRootUnit() {
     // on success the post-mutation profile re-list makes the agent appear under the node root (no
     // node event needed — single client). A separate affordance opens a session on an agent.
     emit createAgentRequested();
-}
-
-void SidebarModel::createTag() {
-    if (!m_store) {
-        return;
-    }
-    const int id = m_store->createTag(tr("New tag"), QStringLiteral("#8e9296"));
-    m_selType = NodeType::Tag;
-    m_selTag = id;
-    m_selUnit.clear();
-    emit scopeSelected(static_cast<int>(NodeType::Tag), id, {});
-    emitCurrentChanged();
 }

@@ -72,9 +72,6 @@ namespace files {
 class FileFinderModel;
 class FsExplorerModel;
 } // namespace files
-namespace participants {
-class ParticipantsModel;
-}
 namespace editor {
 class CodeEditorController;
 }
@@ -103,7 +100,6 @@ class StatusBarModel;
 class CommandRegistry;
 class TranscriptExporter;
 class DisplayRoleAdapter;
-class ParticipantsView;
 class TabModel;
 class ChatConversationController;
 class ChatPendingStripView;
@@ -512,9 +508,7 @@ private:
     // one instance backs both the Ctrl+G finder and the Ctrl+O attach picker.
     files::FileFinderModel* m_fileFinder = nullptr;
     // Right-sidebar Participants section (above the Explorer, toggled as one column).
-    participants::ParticipantsModel* m_participants = nullptr;
     Tui::ZWidget* m_rightColumn = nullptr;
-    ParticipantsView* m_participantsView = nullptr;
     CodeEditorView* m_editorView = nullptr;
     Tui::ZLabel* m_fileStatus = nullptr;
     // Per-File-tab editor controllers and async fs resolution.

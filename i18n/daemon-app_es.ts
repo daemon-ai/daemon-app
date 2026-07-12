@@ -6740,10 +6740,6 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
         <translation>Nuevo agente</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Nueva etiqueta</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Contraer todo</translation>
     </message>
@@ -6823,16 +6819,8 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
         <translation>Archivadas</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Etiquetas</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Flota</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Nueva etiqueta</translation>
     </message>
 </context>
 <context>
@@ -9466,13 +9454,6 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Falta el modelo %1 en el disco: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Participantes</translation>
     </message>
 </context>
 <context>

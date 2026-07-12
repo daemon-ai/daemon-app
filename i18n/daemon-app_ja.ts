@@ -6735,10 +6735,6 @@ This only affects the app appearance, not your data.</source>
         <translation>新しいエージェント</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>新しいタグ</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>すべて折りたたむ</translation>
     </message>
@@ -6818,16 +6814,8 @@ This only affects the app appearance, not your data.</source>
         <translation>アーカイブ済み</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>タグ</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>フリート</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>新しいタグ</translation>
     </message>
 </context>
 <context>
@@ -9458,13 +9446,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>モデル %1 がディスク上に見つかりません: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>参加者</translation>
     </message>
 </context>
 <context>

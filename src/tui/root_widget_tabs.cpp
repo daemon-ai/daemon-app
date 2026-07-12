@@ -17,8 +17,6 @@
 #include "memory_list_model.h"
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
-#include "participants_model.h"
-#include "participants_view.h"
 #include "persistence/isession_store.h"
 #include "root_widget.h"
 #include "root_widget_detail.h"
@@ -422,9 +420,6 @@ void RootWidget::toggleExplorer() {
     }
     const bool show = !m_fileTreeView->isVisible();
     m_fileTreeView->setVisible(show);
-    if (m_participantsView != nullptr) {
-        m_participantsView->setVisible(show);
-    }
     if (show) {
         m_fileTreeView->setFocus();
     }

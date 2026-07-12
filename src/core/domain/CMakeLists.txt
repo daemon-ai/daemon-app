@@ -5,8 +5,6 @@ add_library(da_domain STATIC
     origin.h
     delivery.h
     unit_node.h
-    tag.h
-    participant.h
     sidebar_node.h
     domain.cpp
 )

@@ -81,17 +81,9 @@ public:
     [[nodiscard]] QString title(const domain::SessionId& id) const override;
     [[nodiscard]] bool isPinned(const domain::SessionId& id) const override;
 
-    // The fleet TREE renders through MirrorFleetTree (G2: the FleetUnit entity carries the
-    // child_ids edge), never through these ISessionStore unit reads — daemon-mode consumers never
-    // hit them (sessions are flat: unitId stays empty; the sidebar's fleet membership view reads
-    // profiles + Agent-scoped sessions, not unitChildren). Empty, like the rest of the documented
-    // degradations.
-    [[nodiscard]] QList<domain::UnitNode>
-    unitChildren(const domain::UnitId& parentId) const override;
-    [[nodiscard]] domain::UnitNode unit(const domain::UnitId& id) const override;
-    // Parity with the legacy daemon store: no tags / participants in daemon mode.
-    [[nodiscard]] QList<domain::Tag> tags() const override;
-    [[nodiscard]] QList<domain::Participant> participants() const override;
+    // (AD 1a.4: the dead unit/tags/participants ISessionStore reads are DELETED — the fleet TREE
+    // renders through MirrorFleetTree, and the permanently-empty Tags/Participants surfaces died
+    // with them.)
 
     // --- transcript reads: mirror-served since the G2 flip ------------------------------------
     // content() projects the mirror `w_transcript_blocks` window (mirrorContent). setContent
@@ -117,8 +109,6 @@ public:
     void setPinned(const domain::SessionId& id, bool pinned) override;
     void moveSession(const domain::SessionId& id, int delta) override;
     void requestNewSession(const QString& profileId) override;
-    domain::UnitId createUnit(const domain::UnitId& parentId, domain::UnitKind kind) override;
-    int createTag(const QString& name, const QString& color) override;
 
     // --- scoped refreshes: the ingestor's mirror scoped fetches -------------------------------
     void refreshSessionsForProfile(const QString& profileId) override;

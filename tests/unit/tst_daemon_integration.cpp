@@ -381,22 +381,6 @@ private slots:
                  daemonapp::daemon::ApiResponseKind::Health);
     }
 
-    void codecDecodesSessionPageResponse() {
-        // {"SessionPage": {"sessions": [ {"session": "s1", "state": "Active"} ], "rev": 0}}
-        // (L4 added the required "rev" field; "removed" is optional and omitted here.)
-        const QByteArray response(
-            "\xA1\x6BSessionPage\xA2\x68sessions\x81\xA2\x67session\x62s1\x65state\x66"
-            "Active\x63rev\x00",
-            54);
-        QList<daemonapp::daemon::CachedSessionRow> rows;
-        quint64 rev = 999;
-        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeSessionPage(response, &rows, nullptr, &rev));
-        QCOMPARE(rows.size(), 1);
-        QCOMPARE(rows.first().sessionId, QStringLiteral("s1"));
-        QCOMPARE(rows.first().state, QStringLiteral("Active"));
-        QCOMPARE(rev, static_cast<quint64>(0));
-    }
-
     void codecEncodesSubscribeRequest() {
         const QByteArray sub =
             daemonapp::daemon::NodeApiCodec::encodeSubscribeRequest(QStringLiteral("s1"), 3, 64);

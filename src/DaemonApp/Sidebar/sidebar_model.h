@@ -20,9 +20,7 @@ namespace profiles {
 class IProfileStore;
 }
 
-namespace domain {
-struct UnitNode;
-}
+namespace domain {}
 
 // Flattened supervision-tree sidebar (VSCode AsyncDataTree style): a single flat
 // list of rows where the unit tree is rendered as indented rows. Rows are: All
@@ -129,7 +127,6 @@ public:
     // and calls ProfileRepository::createProfile(spec) (A2). Renamed intent from the earlier
     // "new chat" so the "+" mints an agent, not a bare session.
     Q_INVOKABLE void createRootUnit();
-    Q_INVOKABLE void createTag();
 
     // Row index of the current selection (-1 if it is hidden/none). Lets QML keep
     // the view scrolled to the selection after keyboard navigation.
@@ -201,7 +198,7 @@ private:
     void rebuild();
     // Build the FLEET membership view (daemon-supervision-spec §0): the node/connection ROOT row,
     // then one agent row per profile, then each expanded agent's sessions (ByProfile). Sourced from
-    // the profile store + the session store, NOT from the node's tree()/unitChildren().
+    // the profile store + the session store, NOT from the node's supervision tree read.
     void appendFleetMembership();
     // The agent rows (id/name/model) projected from the bound profile store, or empty when none.
     [[nodiscard]] QList<QVariantMap> agentRows() const;
@@ -220,9 +217,6 @@ private:
     [[nodiscard]] bool rowIsCurrent(const Row& r) const;
     void emitCurrentChanged(); // dataChanged(CurrentRole) for all rows
     [[nodiscard]] int adjacentSelectableRow(int from, int delta) const;
-    [[nodiscard]] int parentRow(int row) const;
-    // True when the current selection is `rootId` or a descendant of it.
-    [[nodiscard]] bool selectionInSubtree(const QString& rootId) const;
     // Collect the ids of every foldable transport node (accounts + conversation groups).
     void collectTransportExpandableIds(QSet<QString>& out) const;
 

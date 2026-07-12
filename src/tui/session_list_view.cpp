@@ -143,12 +143,6 @@ void SessionListView::rebuild() {
         const QString title = role(SessionsListModel::TitleRole).toString();
         const QString snippet = role(SessionsListModel::SnippetRole).toString();
         const QDateTime modified = role(SessionsListModel::ModifiedRole).toDateTime();
-        const QString agent = role(SessionsListModel::UnitNameRole).toString();
-        const QString kind =
-            DisplayPresenter::agentKindIconKeyFor(role(SessionsListModel::UnitKindRole).toInt());
-        const QStringList tagNames = role(SessionsListModel::TagNamesRole).toStringList();
-        const QStringList tagColors = role(SessionsListModel::TagColorsRole).toStringList();
-
         const Tui::ZColor titleFg = selected ? tpal::accent() : tpal::fg();
 
         // Line 1: " title .... timestamp" (timestamp right-aligned, muted).
@@ -178,35 +172,6 @@ void SessionListView::rebuild() {
             RenderLine line;
             line.push_back(mkSpan(QStringLiteral("   "), tpal::muted(), tpal::bg()));
             line.push_back(mkSpan(elide(snippet, contentW - 3), tpal::muted(), tpal::bg()));
-            push(line, row);
-        }
-
-        // Line 3: agent-kind glyph + agent name + tag dots, omitted when empty.
-        if (!agent.isEmpty() || !tagNames.isEmpty()) {
-            RenderLine line;
-            line.push_back(mkSpan(QStringLiteral("   "), tpal::faint(), tpal::bg()));
-            if (!agent.isEmpty()) {
-                line.push_back(mkSpan(tpal::agentKindGlyph(kind) + QStringLiteral(" "),
-                                      tpal::accent(), tpal::bg()));
-                line.push_back(mkSpan(agent, tpal::faint(), tpal::bg()));
-            }
-            for (int t = 0; t < tagNames.size(); ++t) {
-                // Parse the tag's "#rrggbb" color directly to an RGB ZColor.
-                Tui::ZColor tagFg = tpal::muted();
-                if (t < tagColors.size()) {
-                    const QString& hex = tagColors.at(t);
-                    if (hex.size() == 7 && hex.startsWith(QLatin1Char('#'))) {
-                        bool ok = false;
-                        const int rgb = hex.mid(1).toInt(&ok, 16);
-                        if (ok) {
-                            tagFg = Tui::ZColor((rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff);
-                        }
-                    }
-                }
-                line.push_back(mkSpan(QStringLiteral("  ") + tpal::tagDot() + QStringLiteral(" "),
-                                      tagFg, tpal::bg()));
-                line.push_back(mkSpan(tagNames.at(t), tpal::faint(), tpal::bg()));
-            }
             push(line, row);
         }
 

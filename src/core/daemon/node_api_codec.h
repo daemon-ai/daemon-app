@@ -254,23 +254,6 @@ struct DecodedOrigin {
     QString apiKey;                                 // Api
 };
 
-// One explicit chat pin (RoutingListChats -> ChatRoutes page items / RoutingGet -> ChatRoute).
-struct DecodedChatRoute {
-    DecodedOrigin origin;
-    QString session;
-    QString profile;   // empty = no agent override
-    QString isolation; // "PerUser" | "PerChat" | "PerThread" | "Shared" | "" (absent)
-};
-
-// One bindable room/chat on a transport instance (TransportRooms -> Rooms page items). The pin
-// picker renders these; `session` (when set) is the room's pinned session.
-struct DecodedRoomInfo {
-    QString transport;
-    QString room;    // the chat handle / room id (the Group scope key)
-    QString name;    // display label (empty = use the room id)
-    QString session; // pinned session id (empty = not pinned)
-};
-
 // --- Checkpoints (E4/TOOL-9) ----------------------------------------------------------------
 // One durable checkpoint (CheckpointList -> Checkpoints page). Node-created on tool events;
 // `turnOrdinal`/`cursorSeq` locate it on the session timeline (optional on the wire).
@@ -1904,9 +1887,6 @@ public:
     // Decode a SessionPage. `rev` (L4) is the roster revision this page reflects (persist + pass
     // back as since_rev); `removed` (L4 delta reads) is the ids the client should prune from its
     // cache.
-    static bool decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
-                                  QString* nextCursor = nullptr, quint64* rev = nullptr,
-                                  QStringList* removed = nullptr);
     // Decode a SessionDetail response (SessionGet). Sets *found=false on the null arm (unknown
     // session). CHA-9 follow-on: hydrates the per-session facets the roster page omits.
     static bool decodeSessionDetail(const QByteArray& responseCbor, DecodedSessionDetail* out,
@@ -2104,7 +2084,6 @@ public:
     // Resolve one origin's pin (RoutingGet -> ChatRoute(opt)).
     [[nodiscard]] static QByteArray encodeRoutingGetRequest(const DecodedOrigin& origin);
     // Set a full route (RoutingSet{chat_route} -> Ok): origin -> session (+profile/isolation).
-    [[nodiscard]] static QByteArray encodeRoutingSetRequest(const DecodedChatRoute& route);
     // Pin an origin to a session (+ optional agent) (RoutingBindChat -> Ok).
     [[nodiscard]] static QByteArray encodeRoutingBindChatRequest(const DecodedOrigin& origin,
                                                                  const QString& session,
@@ -2115,13 +2094,8 @@ public:
     [[nodiscard]] static QByteArray encodeTransportRoomsRequest(const QString& transport,
                                                                 const QString& after = QString());
     // Decode one ChatRoutes page. `*next` (when non-null) gets the resume cursor.
-    static bool decodeChatRoutes(const QByteArray& responseCbor, QList<DecodedChatRoute>* out,
-                                 QString* next = nullptr);
     // Decode a ChatRoute response (RoutingGet). Sets *found=false on the null arm (no pin).
-    static bool decodeChatRoute(const QByteArray& responseCbor, DecodedChatRoute* out, bool* found);
     // Decode one Rooms page. `*next` (when non-null) gets the resume cursor.
-    static bool decodeRooms(const QByteArray& responseCbor, QList<DecodedRoomInfo>* out,
-                            QString* next = nullptr);
 
     // --- User feedback over OpenTelemetry (wire v32) -------------------------------------------
     // Submit thumbs up/down + optional comment on an agent response, or general app feedback

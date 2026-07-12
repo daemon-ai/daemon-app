@@ -509,26 +509,12 @@ private slots:
         QVERIFY(!roleAt<bool>(model, fleetAfter, SidebarModel::ExpandedRole));
         QVERIFY(findRow(model, QStringLiteral("Local node")) < 0);
         QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
-        // Other sections remain.
-        QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
+        // Other sections remain. (The Tags section died with the dead store members — AD 1a.4.)
         QVERIFY(findRow(model, QStringLiteral("All Sessions")) >= 0);
 
         // Re-expand restores the body.
         model.toggleExpand(findRow(model, QStringLiteral("Fleet")));
         QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0);
-    }
-
-    // Tags section is ordered above the Fleet section in the flattened list.
-    void tagsSectionIsAboveFleet() {
-        MirrorFixture fx;
-        auto& store = *fx.store;
-        SidebarModel model;
-        model.setStore(&store);
-
-        const int tags = findRow(model, QStringLiteral("Tags"));
-        const int fleet = findRow(model, QStringLiteral("Fleet"));
-        QVERIFY(tags >= 0 && fleet >= 0);
-        QVERIFY2(tags < fleet, "Tags section must render above the Fleet section");
     }
 };
 

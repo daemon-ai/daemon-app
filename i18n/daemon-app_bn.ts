@@ -6740,10 +6740,6 @@ This only affects the app appearance, not your data.</source>
         <translation>নতুন এজেন্ট</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>নতুন ট্যাগ</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>সব সংকুচিত করুন</translation>
     </message>
@@ -6823,16 +6819,8 @@ This only affects the app appearance, not your data.</source>
         <translation>সংরক্ষণাগারভুক্ত</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>ট্যাগ</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>ফ্লিট</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>নতুন ট্যাগ</translation>
     </message>
 </context>
 <context>
@@ -9466,13 +9454,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>মডেল %1 ডিস্কে অনুপস্থিত: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>অংশগ্রহণকারী</translation>
     </message>
 </context>
 <context>

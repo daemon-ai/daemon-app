@@ -6740,10 +6740,6 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
         <translation>Neuer Agent</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Neues Tag</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Alle einklappen</translation>
     </message>
@@ -6823,16 +6819,8 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
         <translation>Archiviert</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Tags</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Flotte</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Neues Tag</translation>
     </message>
 </context>
 <context>
@@ -9466,13 +9454,6 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Modell %1 fehlt auf dem Datenträger: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Teilnehmer</translation>
     </message>
 </context>
 <context>

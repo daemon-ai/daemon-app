@@ -6740,10 +6740,6 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
         <translation>Novo agente</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Novo marcador</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Recolher tudo</translation>
     </message>
@@ -6823,16 +6819,8 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
         <translation>Arquivadas</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Marcadores</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Frota</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Novo marcador</translation>
     </message>
 </context>
 <context>
@@ -9466,13 +9454,6 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>O modelo %1 está ausente no disco: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Participantes</translation>
     </message>
 </context>
 <context>

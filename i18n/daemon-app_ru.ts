@@ -6745,10 +6745,6 @@ This only affects the app appearance, not your data.</source>
         <translation>Новый агент</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Новый тег</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Свернуть всё</translation>
     </message>
@@ -6828,16 +6824,8 @@ This only affects the app appearance, not your data.</source>
         <translation>Архив</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Теги</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Флот</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Новый тег</translation>
     </message>
 </context>
 <context>
@@ -9474,13 +9462,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Модель %1 отсутствует на диске: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Участники</translation>
     </message>
 </context>
 <context>

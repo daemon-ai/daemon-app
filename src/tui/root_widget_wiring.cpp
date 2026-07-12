@@ -23,8 +23,6 @@
 #include "memory_timeline_model.h"
 #include "mirror/mirror_service.h" // Store::committed drives the Routing page re-render (M3)
 #include "mirror/store.h"
-#include "participants_model.h"
-#include "participants_view.h"
 #include "persistence/isession_store.h"
 #include "profiles/iprofile_store.h" // complete type for the persona (soulChanged) repaint hook
 #include "root_widget.h"

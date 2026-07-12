@@ -73,9 +73,9 @@ private slots:
         QCOMPARE(model.data(top, SessionsListModel::TitleRole).toString(),
                  QStringLiteral("Pinned"));
         QVERIFY(model.data(top, SessionsListModel::PinnedRole).toBool());
-        // Documented M4 degradations: no snippet (transcript re-homes in sub-gate 6), no tags.
+        // Documented M4 degradation: no snippet (transcript re-homes in sub-gate 6). (The tag
+        // roles died with the permanently-empty Tags surface — AD 1a.4.)
         QVERIFY(model.data(top, SessionsListModel::SnippetRole).toString().isEmpty());
-        QVERIFY(model.data(top, SessionsListModel::TagNamesRole).toStringList().isEmpty());
         // The untitled row renders the "(untitled)" fallback, same as the legacy path.
         QCOMPARE(model.idAt(2), QStringLiteral("s-old"));
         QVERIFY(!model.data(model.index(2), SessionsListModel::TitleRole).toString().isEmpty());
