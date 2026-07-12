@@ -302,6 +302,12 @@ target_compile_definitions(daemon-app
     PRIVATE DAEMON_APP_BUILD_QML_DIR="${CMAKE_BINARY_DIR}/qml"
 )
 
+# DEV ONLY (option defaults OFF): enable Qt's QML debug connector so `qmlpreview`
+# can attach and live-reload QML/JS from disk. Never set in shipped/bundle builds.
+if(DAEMON_APP_QML_DEBUG)
+    target_compile_definitions(daemon-app PRIVATE QT_QML_DEBUG)
+endif()
+
 # Embedded terminal on the POSIX static desktop: qmltermwidget is a prebuilt
 # STATIC QML plugin (the flake builds it against the static Qt). Link the archive
 # and register it via Q_IMPORT_QML_PLUGIN in main.cpp (same mechanism as

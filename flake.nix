@@ -1141,6 +1141,7 @@
             clang-tools # clang-tidy, clang-format, run-clang-tidy (see justfile `lint-cpp`)
             gcc
             gdb
+            mold # fast linker for the dev iteration loop (relinks the large debug binary in ~1s vs bfd); used via CMAKE_LINKER_TYPE=MOLD in `just dev-run`/`dev-run-preview`
             kdePackages.extra-cmake-modules
             perl
             tinyxml-2

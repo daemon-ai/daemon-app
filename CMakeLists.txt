@@ -102,6 +102,13 @@ if(DAEMON_APP_TUI)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Core5Compat)
 endif()
 
+# QML debug connector for live QML/JS reload via `qmlpreview` (see the superproject
+# `just dev-run-preview`). DEV ONLY, default OFF: it enables Qt's QML debugging
+# service (QT_QML_DEBUG), a remote-eval surface that must never ship — no release,
+# bundle, or packaged build sets it. Applied to the daemon-app target in
+# src/DaemonApp/App/CMakeLists.txt.
+option(DAEMON_APP_QML_DEBUG "Enable the QML debug connector for qmlpreview (DEV ONLY)" OFF)
+
 include(CompilerWarnings)
 
 # Third-party dependencies are vendored by the flake and consumed here
