@@ -5,6 +5,11 @@
 
 #include "daemon/node_api_codec.h"
 #include "daemon/repositories.h"
+#include "outbox.h"
+#include "verb_class.h"
+
+#include <QJsonDocument>
+#include <QJsonObject>
 
 namespace transports {
 
@@ -53,6 +58,42 @@ DaemonContactsService::DaemonContactsService(daemonapp::daemon::ContactsReposito
             &IContactsService::contactOperationFailed);
 }
 
+void DaemonContactsService::setOutbox(mirror::Outbox* outbox) {
+    if (m_outbox == outbox) {
+        return;
+    }
+    if (m_outbox != nullptr) {
+        disconnect(m_outbox, nullptr, this, nullptr);
+    }
+    m_outbox = outbox;
+    if (m_outbox == nullptr) {
+        return;
+    }
+    // §6.5: a roster-edit lane rejection reaches the initiating surface through the SAME
+    // contactOperationFailed relay the GUI toast + TUI notice already bind. The rejected row
+    // additionally stays visible in the outbox lens (durable affordance); the lane pauses until
+    // retry/discard.
+    connect(m_outbox, &mirror::Outbox::opChanged, this, [this](const QString& opId) {
+        const mirror::PendingOp op = m_outbox->op(opId);
+        if (op.state == mirror::OpState::Rejected &&
+            mirror::verbClass(op.verb) == mirror::VerbClass::RosterEdit) {
+            emit contactOperationFailed(op.lastError);
+        }
+    });
+}
+
+void DaemonContactsService::enqueueRosterOp(const QString& verb, const QString& transport,
+                                            QJsonObject args, const QString& display) {
+    args.insert(QStringLiteral("transport"), transport);
+    const QByteArray payload = QJsonDocument(args).toJson(QJsonDocument::Compact);
+    // Durable BEFORE any send (§6.6); lane scope = the transport (§6.4 "per transport for
+    // roster edits" — cross-transport edits are independent). The drain nudge is the user's own
+    // action; offline it simply holds: the gate keeps the op pending until connected, and it
+    // replays on reconnect (§6.8).
+    m_outbox->enqueue(verb, transport, payload, display);
+    m_outbox->drain();
+}
+
 QVariantList DaemonContactsService::contacts(const QString& transport) const {
     if (m_repo == nullptr) {
         return {};
@@ -66,35 +107,60 @@ void DaemonContactsService::refreshContacts(const QString& transport) {
     }
 }
 
+// --- roster mutations (D3, §6.4): the durable `roster-edit` outbox lane -----------------------
+// The node owns the roster; each mutation is an intent enqueued to the per-transport lane
+// (offline-durable, §6.6; the op_id rides the wire so replay is dedup-safe, §10.3). The roster
+// rows change ONLY when the node's authoritative read lands (ContactsChanged → RosterList
+// refetch) — never an optimistic local write (§14.7, no fake rows). Without an outbox (bare test
+// stacks) they are no-ops: there is no legacy direct-send fallback anymore (the
+// MirrorSessionStore precedent).
+
 void DaemonContactsService::addContact(const QString& transport, const QString& contactId) {
-    if (m_repo != nullptr) {
-        m_repo->addContact(transport, contactId);
+    if (m_outbox == nullptr || transport.isEmpty() || contactId.isEmpty()) {
+        return;
     }
+    enqueueRosterOp(QStringLiteral("RosterAdd"), transport,
+                    QJsonObject{{QStringLiteral("id"), contactId}},
+                    QStringLiteral(u"add \u2014 %1").arg(contactId));
 }
 
 void DaemonContactsService::updateContact(const QString& transport, const QVariantMap& contact) {
-    if (m_repo == nullptr) {
+    const QString contactId = contact.value(QStringLiteral("id")).toString();
+    if (m_outbox == nullptr || transport.isEmpty() || contactId.isEmpty()) {
         return;
     }
-    daemonapp::daemon::DecodedContact c;
-    c.id = contact.value(QStringLiteral("id")).toString();
-    c.displayName = contact.value(QStringLiteral("displayName")).toString();
-    c.presence = contact.value(QStringLiteral("presence")).toString();
-    c.permission = contact.value(QStringLiteral("permission")).toString();
-    m_repo->updateContact(transport, c);
+    enqueueRosterOp(
+        QStringLiteral("RosterUpdate"), transport,
+        QJsonObject{
+            {QStringLiteral("id"), contactId},
+            {QStringLiteral("displayName"),
+             contact.value(QStringLiteral("displayName")).toString()},
+            {QStringLiteral("presence"), contact.value(QStringLiteral("presence")).toString()},
+            {QStringLiteral("permission"), contact.value(QStringLiteral("permission")).toString()}},
+        QStringLiteral(u"update \u2014 %1").arg(contactId));
 }
 
 void DaemonContactsService::removeContact(const QString& transport, const QString& contactId) {
-    if (m_repo != nullptr) {
-        m_repo->removeContact(transport, contactId);
+    if (m_outbox == nullptr || transport.isEmpty() || contactId.isEmpty()) {
+        return;
     }
+    enqueueRosterOp(QStringLiteral("RosterRemove"), transport,
+                    QJsonObject{{QStringLiteral("id"), contactId}},
+                    QStringLiteral(u"remove \u2014 %1").arg(contactId));
 }
 
 void DaemonContactsService::setAlias(const QString& transport, const QString& contactId,
                                      const QString& alias) {
-    if (m_repo != nullptr) {
-        m_repo->setAlias(transport, contactId, alias);
+    if (m_outbox == nullptr || transport.isEmpty() || contactId.isEmpty()) {
+        return;
     }
+    // Empty alias clears (hasAlias=false ⇒ the wire optional is omitted node-side), the same
+    // convention the direct repo seam used.
+    enqueueRosterOp(QStringLiteral("ContactSetAlias"), transport,
+                    QJsonObject{{QStringLiteral("id"), contactId},
+                                {QStringLiteral("hasAlias"), !alias.isEmpty()},
+                                {QStringLiteral("alias"), alias}},
+                    QStringLiteral(u"alias \u2014 %1").arg(contactId));
 }
 
 void DaemonContactsService::getProfile(const QString& transport, const QString& contactId) {

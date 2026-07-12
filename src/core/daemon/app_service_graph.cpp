@@ -536,7 +536,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         }
         graph.mirrorService = svc;
 
-        // The precious local-<id>.db + the durable outbox (§6): the ConvSend + turn-prompt lanes.
+        // The precious local-<id>.db + the durable outbox (§6): the chat-send, session-meta,
+        // roster-edit, and turn-prompt lanes.
         // Same per-identity namespace at boot (LocalDatabase hashes the key identically).
         graph.localDb = new mirror::LocalDatabase(QString(), owner);
         if (!lastIdentity.isEmpty()) {
@@ -653,6 +654,15 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             mirrorStore->setOutbox(graph.outbox);
             graph.storeMirror = mirrorStore;
 
+            // D3 (§6.4): the four roster verbs ride the durable per-transport `roster-edit`
+            // lane — offline-durable, replayed on reconnect, §6.5 rejection surfacing through
+            // the seam's contactOperationFailed relay. The confirm is the node's ContactsChanged
+            // → RosterList refetch (never an optimistic local row).
+            if (auto* daemonContacts =
+                    qobject_cast<transports::DaemonContactsService*>(graph.contacts)) {
+                daemonContacts->setOutbox(graph.outbox);
+            }
+
             // AD (1a.3): the shared channels-hub projection (GUI + TUI hub read the SAME model).
             graph.channelsHub = new ChannelsHubModel(&svc->store(), owner);
 
@@ -722,6 +732,34 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                         req = NodeApiCodec::encodeSessionUpdateMetaRequest(
                             a.value(QStringLiteral("session")).toString(), pinned, archived, title,
                             op.opId);
+                    } else if (op.verb == QStringLiteral("RosterAdd") ||
+                               op.verb == QStringLiteral("RosterUpdate") ||
+                               op.verb == QStringLiteral("RosterRemove")) {
+                        // D3 (§6.4 roster-edit lane): the payload carries the contact fields the
+                        // seam enqueued; add/remove ride only the id (repo parity), update the
+                        // editable fields. The op_id makes the replay dedup-safe (§10.3).
+                        const QString transport =
+                            args.value(QStringLiteral("transport")).toString();
+                        DecodedContact contact;
+                        contact.id = args.value(QStringLiteral("id")).toString();
+                        contact.displayName = args.value(QStringLiteral("displayName")).toString();
+                        contact.presence = args.value(QStringLiteral("presence")).toString();
+                        contact.permission = args.value(QStringLiteral("permission")).toString();
+                        if (op.verb == QStringLiteral("RosterAdd")) {
+                            req = NodeApiCodec::encodeRosterAddRequest(transport, contact, op.opId);
+                        } else if (op.verb == QStringLiteral("RosterUpdate")) {
+                            req = NodeApiCodec::encodeRosterUpdateRequest(transport, contact,
+                                                                          op.opId);
+                        } else {
+                            req = NodeApiCodec::encodeRosterRemoveRequest(transport, contact,
+                                                                          op.opId);
+                        }
+                    } else if (op.verb == QStringLiteral("ContactSetAlias")) {
+                        req = NodeApiCodec::encodeContactSetAliasRequest(
+                            args.value(QStringLiteral("transport")).toString(),
+                            args.value(QStringLiteral("id")).toString(),
+                            args.value(QStringLiteral("hasAlias")).toBool(),
+                            args.value(QStringLiteral("alias")).toString(), op.opId);
                     } else {
                         return; // other lanes are wired by their owners; turn-prompt is dispatch
                     }

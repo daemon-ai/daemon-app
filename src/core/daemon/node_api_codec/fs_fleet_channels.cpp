@@ -1771,39 +1771,65 @@ QByteArray NodeApiCodec::encodeRosterListRequest(const QString& transport, const
                           });
 }
 
+// [api/39 §10.3] Each roster mutation's optional op_id (present + tstr when `opId` is non-empty)
+// makes a `roster-edit` lane retry/replay dedup-safe; empty ⇒ absent (v38-parity bytes).
 QByteArray NodeApiCodec::encodeRosterAddRequest(const QString& transport,
-                                                const DecodedContact& contact) {
+                                                const DecodedContact& contact,
+                                                const QString& opId) {
     const QByteArray t = transport.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     QList<QByteArray> scratch;
     return encodeWithFill(api_request_r::api_request_request_roster_add_m_c,
                           [&](api_request_r& request) {
                               request_roster_add& a = request.api_request_request_roster_add_m;
                               setZcbor(a.RosterAdd_transport, t);
                               fillContactInfo(a.RosterAdd_contact, contact, scratch);
+                              a.RosterAdd_op_id_present = !opId.isEmpty();
+                              if (!opId.isEmpty()) {
+                                  a.RosterAdd_op_id.RosterAdd_op_id_choice =
+                                      RosterAdd_op_id_r::RosterAdd_op_id_tstr_c;
+                                  setZcbor(a.RosterAdd_op_id.RosterAdd_op_id_tstr, opIdUtf8);
+                              }
                           });
 }
 
 QByteArray NodeApiCodec::encodeRosterUpdateRequest(const QString& transport,
-                                                   const DecodedContact& contact) {
+                                                   const DecodedContact& contact,
+                                                   const QString& opId) {
     const QByteArray t = transport.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     QList<QByteArray> scratch;
     return encodeWithFill(
         api_request_r::api_request_request_roster_update_m_c, [&](api_request_r& request) {
             request_roster_update& u = request.api_request_request_roster_update_m;
             setZcbor(u.RosterUpdate_transport, t);
             fillContactInfo(u.RosterUpdate_contact, contact, scratch);
+            u.RosterUpdate_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                u.RosterUpdate_op_id.RosterUpdate_op_id_choice =
+                    RosterUpdate_op_id_r::RosterUpdate_op_id_tstr_c;
+                setZcbor(u.RosterUpdate_op_id.RosterUpdate_op_id_tstr, opIdUtf8);
+            }
         });
 }
 
 QByteArray NodeApiCodec::encodeRosterRemoveRequest(const QString& transport,
-                                                   const DecodedContact& contact) {
+                                                   const DecodedContact& contact,
+                                                   const QString& opId) {
     const QByteArray t = transport.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     QList<QByteArray> scratch;
     return encodeWithFill(
         api_request_r::api_request_request_roster_remove_m_c, [&](api_request_r& request) {
             request_roster_remove& r = request.api_request_request_roster_remove_m;
             setZcbor(r.RosterRemove_transport, t);
             fillContactInfo(r.RosterRemove_contact, contact, scratch);
+            r.RosterRemove_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                r.RosterRemove_op_id.RosterRemove_op_id_choice =
+                    RosterRemove_op_id_r::RosterRemove_op_id_tstr_c;
+                setZcbor(r.RosterRemove_op_id.RosterRemove_op_id_tstr, opIdUtf8);
+            }
         });
 }
 
@@ -1823,9 +1849,10 @@ QByteArray NodeApiCodec::encodeContactGetProfileRequest(const QString& transport
 
 QByteArray NodeApiCodec::encodeContactSetAliasRequest(const QString& transport,
                                                       const QString& contactId, bool hasAlias,
-                                                      const QString& alias) {
+                                                      const QString& alias, const QString& opId) {
     const QByteArray t = transport.toUtf8();
     const QByteArray aliasU = alias.toUtf8();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     DecodedContact contact;
     contact.id = contactId;
     QList<QByteArray> scratch;
@@ -1840,6 +1867,12 @@ QByteArray NodeApiCodec::encodeContactSetAliasRequest(const QString& transport,
                 s.ContactSetAlias_alias.ContactSetAlias_alias_choice =
                     ContactSetAlias_alias_r::ContactSetAlias_alias_tstr_c;
                 setZcbor(s.ContactSetAlias_alias.ContactSetAlias_alias_tstr, aliasU);
+            }
+            s.ContactSetAlias_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                s.ContactSetAlias_op_id.ContactSetAlias_op_id_choice =
+                    ContactSetAlias_op_id_r::ContactSetAlias_op_id_tstr_c;
+                setZcbor(s.ContactSetAlias_op_id.ContactSetAlias_op_id_tstr, opIdUtf8);
             }
         });
 }

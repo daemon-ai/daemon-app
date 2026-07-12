@@ -1130,6 +1130,20 @@ target_link_libraries(tst_conv_send_lane
 add_test(NAME tst_conv_send_lane COMMAND tst_conv_send_lane)
 set_tests_properties(tst_conv_send_lane PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_roster_edit_lane (known-debt D3): the four roster verbs (RosterAdd/Update/Remove +
+# ContactSetAlias) routed through the durable per-transport `roster-edit` outbox lane
+# (spec 09 §6.4/§6.5/§6.6) — offline enqueue, restart replay in FIFO order, §6.5 rejection
+# surfacing via the IContactsService failure relay, and the op-id-carrying roster encoders.
+qt_add_executable(tst_roster_edit_lane tst_roster_edit_lane.cpp)
+target_link_libraries(tst_roster_edit_lane
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+        daemon-app::local
+)
+add_test(NAME tst_roster_edit_lane COMMAND tst_roster_edit_lane)
+set_tests_properties(tst_roster_edit_lane PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_chat_conversation_mirror (mirror A5 → AD): the chat controller's MIRROR read path —
 # window-lens rebinding on open (visibility declaration → ingestor top-up), journal-delta
 # re-projection, per-conversation isolation, and demand-paging end-of-history mediation.
