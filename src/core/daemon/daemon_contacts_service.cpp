@@ -53,6 +53,11 @@ DaemonContactsService::DaemonContactsService(daemonapp::daemon::ContactsReposito
             &IContactsService::contactOperationFailed);
 }
 
+void DaemonContactsService::setOutbox(mirror::Outbox* outbox) {
+    // RED scaffolding (D3): stores the lane seam; the enqueue routing lands in the green step.
+    m_outbox = outbox;
+}
+
 QVariantList DaemonContactsService::contacts(const QString& transport) const {
     if (m_repo == nullptr) {
         return {};

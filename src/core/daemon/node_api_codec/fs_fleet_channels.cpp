@@ -1772,8 +1772,10 @@ QByteArray NodeApiCodec::encodeRosterListRequest(const QString& transport, const
 }
 
 QByteArray NodeApiCodec::encodeRosterAddRequest(const QString& transport,
-                                                const DecodedContact& contact) {
+                                                const DecodedContact& contact,
+                                                const QString& opId) {
     const QByteArray t = transport.toUtf8();
+    Q_UNUSED(opId) // RED scaffolding (D3): the op_id fill lands in the green step
     QList<QByteArray> scratch;
     return encodeWithFill(api_request_r::api_request_request_roster_add_m_c,
                           [&](api_request_r& request) {
@@ -1784,8 +1786,10 @@ QByteArray NodeApiCodec::encodeRosterAddRequest(const QString& transport,
 }
 
 QByteArray NodeApiCodec::encodeRosterUpdateRequest(const QString& transport,
-                                                   const DecodedContact& contact) {
+                                                   const DecodedContact& contact,
+                                                   const QString& opId) {
     const QByteArray t = transport.toUtf8();
+    Q_UNUSED(opId) // RED scaffolding (D3)
     QList<QByteArray> scratch;
     return encodeWithFill(
         api_request_r::api_request_request_roster_update_m_c, [&](api_request_r& request) {
@@ -1796,8 +1800,10 @@ QByteArray NodeApiCodec::encodeRosterUpdateRequest(const QString& transport,
 }
 
 QByteArray NodeApiCodec::encodeRosterRemoveRequest(const QString& transport,
-                                                   const DecodedContact& contact) {
+                                                   const DecodedContact& contact,
+                                                   const QString& opId) {
     const QByteArray t = transport.toUtf8();
+    Q_UNUSED(opId) // RED scaffolding (D3)
     QList<QByteArray> scratch;
     return encodeWithFill(
         api_request_r::api_request_request_roster_remove_m_c, [&](api_request_r& request) {
@@ -1823,9 +1829,10 @@ QByteArray NodeApiCodec::encodeContactGetProfileRequest(const QString& transport
 
 QByteArray NodeApiCodec::encodeContactSetAliasRequest(const QString& transport,
                                                       const QString& contactId, bool hasAlias,
-                                                      const QString& alias) {
+                                                      const QString& alias, const QString& opId) {
     const QByteArray t = transport.toUtf8();
     const QByteArray aliasU = alias.toUtf8();
+    Q_UNUSED(opId) // RED scaffolding (D3)
     DecodedContact contact;
     contact.id = contactId;
     QList<QByteArray> scratch;

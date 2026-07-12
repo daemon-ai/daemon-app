@@ -1816,19 +1816,24 @@ public:
                                                             const QString& after = QString(),
                                                             bool hasSinceRev = false,
                                                             quint64 sinceRev = 0);
+    // [api/39 §10.3] `opId` (when non-empty) rides each roster mutation's optional op_id field:
+    // the node dedups on (principal, op_id) so a `roster-edit` lane retry/replay is
+    // side-effect-free (§6.8). Empty ⇒ absent (the historical v38-parity encoding).
     [[nodiscard]] static QByteArray encodeRosterAddRequest(const QString& transport,
-                                                           const DecodedContact& contact);
+                                                           const DecodedContact& contact,
+                                                           const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeRosterUpdateRequest(const QString& transport,
-                                                              const DecodedContact& contact);
+                                                              const DecodedContact& contact,
+                                                              const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeRosterRemoveRequest(const QString& transport,
-                                                              const DecodedContact& contact);
+                                                              const DecodedContact& contact,
+                                                              const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeContactGetProfileRequest(const QString& transport,
                                                                    const QString& contactId);
     // `hasAlias` false clears the alias (the optional is absent); true sets it to `alias`.
-    [[nodiscard]] static QByteArray encodeContactSetAliasRequest(const QString& transport,
-                                                                 const QString& contactId,
-                                                                 bool hasAlias,
-                                                                 const QString& alias);
+    [[nodiscard]] static QByteArray
+    encodeContactSetAliasRequest(const QString& transport, const QString& contactId, bool hasAlias,
+                                 const QString& alias, const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeDirectorySearchRequest(const QString& transport,
                                                                  const QString& query = QString());
     // Decode a ContactPage (`*next` gets the resume cursor, cleared on the last page), the unpaged

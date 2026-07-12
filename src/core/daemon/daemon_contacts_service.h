@@ -8,6 +8,9 @@
 namespace daemonapp::daemon {
 class ContactsRepository;
 }
+namespace mirror {
+class Outbox;
+}
 
 namespace transports {
 
@@ -27,6 +30,12 @@ public:
     explicit DaemonContactsService(daemonapp::daemon::ContactsRepository* repo,
                                    QObject* parent = nullptr);
 
+    // D3 (§6.4): the durable `roster-edit` lane seam. Once set, the four roster mutations
+    // (add/update/remove/setAlias) ENQUEUE per-transport ops instead of direct-sending, so an
+    // edit made offline survives and replays on reconnect; a lane rejection surfaces through
+    // contactOperationFailed (§6.5). Reads (refresh/profile/directory) stay direct.
+    void setOutbox(mirror::Outbox* outbox);
+
     [[nodiscard]] QVariantList contacts(const QString& transport) const override;
     void refreshContacts(const QString& transport) override;
     void addContact(const QString& transport, const QString& contactId) override;
@@ -39,6 +48,7 @@ public:
 
 private:
     daemonapp::daemon::ContactsRepository* m_repo = nullptr;
+    mirror::Outbox* m_outbox = nullptr;
 };
 
 } // namespace transports
