@@ -20,6 +20,91 @@ re-derives, caches-and-mutates, or forks domain behavior locally.
   hygiene, derived domain state), stop — the node API is missing a capability. Extend the Rust
   types + CDDL in `daemon-node`, `just update-codec` from the superproject, then consume it.
 
+## Data layer — the mirror is the only client model (enforced laws)
+
+The client data layer IS the mirror architecture (`src/core/mirror/`, namespace `mirror::`): the
+node's authoritative state is projected into ONE typed `immer` value tree fed by a single writer,
+observed through a revision journal, and rendered by lenses. There is no second client model, no
+per-domain cache, no ad-hoc row shape. These are review red-flags — reject on sight; several are
+also structurally enforced (drift gate, debug asserts, compile-time exhaustiveness). They restate
+architecture spec 09 §14; the citations are the authority.
+
+1. **Single writer.** Only `mirror::Ingestor` (daemon mode) or `mirror::Seeder` (mock mode) holds
+   the `mirror::Store::Writer` and applies to the store. `mirror::Reader` has no write API; a
+   `friend`/cast to reach one is a reject. Any apply not fingerprinted Ingestor-or-Seeder asserts
+   in debug (§4.2, §5.1, §14.2–3).
+2. **No private caches; no ad-hoc row shapes.** New domain state ⇒ an `entity-map.toml` entry +
+   mapper + event-policy row — NEVER a member-variable cache or a fresh `QVariantMap` layout. A
+   T-class (request/response) payload may parameterize a verb or dialog but may never be stashed
+   in a service member. Role maps read the typed generated entity; a new `QVariantMap` shape for a
+   mirrored domain is the 07§6 disease returning (§3.1, §3.6, §8.3, §14.1, §14.10–11).
+3. **No model resets after initial population.** Collection lenses subclass `mirror::TableModel`
+   and translate journal deltas into exact `begin{Insert,Remove}Rows`/`dataChanged`. `beginReset
+   Model` is allowed ONLY for the first population; anywhere else it is a defect (§8.1, §14.8).
+4. **Entity shapes come only from the generated set.** One generated struct per entity, from
+   `entity-map.toml` + the CDDL contract. A second client-side shape for a mirrored entity fails
+   the codec/entity drift gate (a build failure). Never hand-edit generated regions
+   (`src/core/mirror/generated`, `src/core/daemon/codec/{generated,vendor}`); regenerate via the
+   superproject `just update-codec` (§3.2, §3.6, §14.1, §14.11).
+5. **Verbs never cache domain state.** Verb seams stay small, stateless QObjects: they may read
+   the store, they have no store write API, and they hold no domain state between calls (§7,
+   §14.2).
+6. **New wire arms require policy rows — the exhaustiveness chain.** A new `NodeEvent` arm ⇒ a
+   row in the ingestor policy table; a new fetchable collection ⇒ a `FetchOp`. The policy table is
+   `switch`-exhaustive over the `NodeEvent` enum with no `default`, so a new wire arm that skips
+   its row fails to compile — that is the guardrail, not a runtime check (§5.2, §12, §14 drift
+   gates).
+7. **Windowed collections for unbounded data.** Any collection that can grow without bound
+   (transcripts, chat history, fs entries) is a `W` entity with a `§4.6` window/retention policy
+   row; a `W`-kind without one fails the entity-map schema, and growth past budget asserts in
+   debug (§4.6, §14.4).
+8. **Outbox for the §6.4 mutation classes; no fake rows.** Offline-durable mutations route through
+   a `mirror::Outbox` lane — the census is fixed: `chat-send` (ConvSend), `conv-meta`
+   (ConvSetTopic/Title/Description), `roster-edit` (RosterAdd/Update/Remove/ContactSetAlias),
+   `session-meta` (SessionUpdateMeta), `turn-prompt` (composer). Everything else is direct, with an
+   op-id when it is in the rung-3 retry-safe set. Pending/optimistic state NEVER lands as a mirror
+   row — it renders only through the outbox lens (pending strip / queue panel). Confirmation is
+   provenance-keyed **uniformly** (`origin_op` match, §6.6): a per-verb confirmation path, or
+   matching on a domain id (message id, room id, …), is a design reject (§6.4–6.6, §7, §14.7,
+   §14.13).
+9. **Provenance & op-ids.** Every entity field carries provenance (§3.3). Op-ids are minted per
+   §6.2 and threaded through the codec as the optional field; they are the ONLY confirmation key.
+10. **Freshness is the ingestor's, UI state is the lens's.** No `ensureFresh`, timer, or refetch
+    call in a lens — lenses declare visibility only; the ingestor owns staleness (§5.8, §14.6).
+    Selection/hover/scroll live in lens members; durable client-local facts (drafts, unread, mute)
+    live in the sidecar read through the store's sidecar accessors — never as store rows (§8.5).
+
+**Review checklist (block the diff if any is unmet):** new domain state ⇒ entity-map entry +
+mapper + policy row(s), never a private cache; new event arm ⇒ policy row; new verb ⇒ a seam
+declaration (lane or direct, op-id or not — never a confirmation source); new unbounded stream ⇒
+window policy; every user-facing data feature ⇒ GUI + TUI. The ledgers `src/core/mirror/LEDGER-*.md`
+are the program's historical record; `LEDGER-a9.md` carries the F6 audit and the known-debt
+register (survivors + their deletion conditions) — consult it before proposing a "cleanup" of a
+surviving legacy seam.
+
+## Mock mode — one store, one journal, a different feeder
+
+Mock mode is NOT a parallel set of hand-written behaviors: it is the SAME store / journal / lenses
+fed by `mirror::Seeder` instead of the wire ingestor, so mock⇄daemon parity holds by construction
+(§9). Rules:
+
+- **Seed only through the Seeder.** Mock data is a declarative `mirror::Scenario` (seed set +
+  scripted timeline) applied via the Seeder through the normal apply/commit pipeline. Do not add a
+  mock class that mutates a surface directly — no mock-only behavior below the verb boundary
+  (§14.5). The per-seam data mocks are gone; do not reintroduce one.
+- **Scenarios select via `DAEMON_APP_MOCK_SCENARIO`** — `default` (api/39, full seed + scripted
+  timeline incl. the mandatory rejection rule), `api38` (degraded refetch_diff + lanes-hold), and
+  `empty` (onboarding/empty-state). An unknown name warns and falls back to `default`. `DAEMON_APP_
+  SERVICE_MODE=mock` picks mock; there is no GUI toggle. (The old `DAEMON_APP_MOCK_INTEGRATIONS`
+  opt-in was deleted — it has no replacement other than a scenario.)
+- **Scripted verb outcomes live only at the seam.** A scenario's `VerbScript` declares `ok` /
+  `reject(kind,message)` / `timeout` / `delay` per verb so the outbox rejection path (§6.5) is
+  exercised in mock and in tests. The rejection fixture is mandatory.
+- **Boot smoke.** The GUI mock boot is a gate (`daemon_app_offscreen_mock_boot` ctest): it renders
+  the QML root offscreen in `mock` mode and must exit 0 (a QML `objectCreationFailed` exits −1).
+  It catches QML `TypeError`/`ReferenceError`/missing-context-property breakage that unit ctests
+  never see. The TUI mock boot is covered by the `daemon_tui_offscreen_*` ctests.
+
 ## One feature, every surface — GUI + TUI parity is the default
 
 The GUI and TUI are two thin renderers over ONE shared C++ view-model layer. A UI change that
