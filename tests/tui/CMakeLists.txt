@@ -46,6 +46,7 @@ target_link_libraries(tui_integrations_tree_tests
         daemon-app::uimodels
         daemon-app::presentation
         daemon-app::theme_core
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tui_integrations_tree_tests COMMAND tui_integrations_tree_tests)
 set_tests_properties(tui_integrations_tree_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -378,9 +379,39 @@ target_link_libraries(tui_tab_title_refresh_tests
         Qt6::Qml
         daemon-app::domain
         daemon-app::persistence
+        # AD: the fixture is the mirror-backed store (the InMemory fixture died).
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tui_tab_title_refresh_tests COMMAND tui_tab_title_refresh_tests)
 set_tests_properties(tui_tab_title_refresh_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_tab_title_mirror (M4 sub-gate 3): the same tab-title wiring over the MIRROR-backed store -
+# a node-side retitle (keyed mirror upsert) re-titles the open transcript tab through
+# refreshTranscriptTabTitles, the exact RootWidget wiring flipped to storeMirror. Only built
+# with the substrate.
+    qt_add_executable(tui_tab_title_mirror_tests
+        tst_tab_title_mirror.cpp
+        ${CMAKE_SOURCE_DIR}/src/tui/root_widget_detail.cpp
+        ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs/tab_model.cpp
+    )
+    set_target_properties(tui_tab_title_mirror_tests PROPERTIES AUTOMOC ON)
+    target_include_directories(tui_tab_title_mirror_tests PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/tui
+        ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs
+    )
+    target_link_libraries(tui_tab_title_mirror_tests
+        PRIVATE
+            Qt6::Test
+            Qt6::Qml
+            daemon-app::domain
+            daemon-app::persistence
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+    )
+    add_test(NAME tui_tab_title_mirror_tests COMMAND tui_tab_title_mirror_tests)
+    set_tests_properties(tui_tab_title_mirror_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_chat_activation (A4 app/chat-tabs; wire v38): the activation-dispatch rewire -
 # activating a room/DM opens (or focuses) a native Chat tab for (transport, conv)
@@ -431,6 +462,7 @@ target_link_libraries(tui_integrations_activation_tests
         daemon-app::transports
         daemon-app::domain
         daemon-app::persistence
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tui_integrations_activation_tests COMMAND tui_integrations_activation_tests)
 set_tests_properties(tui_integrations_activation_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

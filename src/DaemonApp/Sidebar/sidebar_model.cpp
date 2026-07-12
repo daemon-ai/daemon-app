@@ -3,7 +3,6 @@
 
 #include "sidebar_model.h"
 
-#include "daemonnet/idaemonnet.h"
 #include "domain/ids.h"
 #include "domain/session.h"
 #include "domain/unit_node.h"
@@ -16,11 +15,9 @@
 #include <QFile>
 #include <QHash>
 
-using daemonnet::TransportTreeRow;
 using domain::ListScope;
 using domain::NodeType;
 using domain::UnitId;
-using domain::UnitNode;
 
 namespace {
 // Fleet membership expand-state keys (a disjoint id namespace from unit/transport ids, so they
@@ -52,26 +49,6 @@ void SidebarModel::setStore(QObject* store) {
         connect(m_store, &persistence::ISessionStore::changed, this, &SidebarModel::rebuild);
     }
     emit storeChanged();
-    rebuild();
-}
-
-QObject* SidebarModel::daemonNet() const {
-    return m_net;
-}
-
-void SidebarModel::setDaemonNet(QObject* net) {
-    auto* dn = qobject_cast<daemonnet::IDaemonNet*>(net);
-    if (m_net == dn) {
-        return;
-    }
-    if (m_net) {
-        m_net->disconnect(this);
-    }
-    m_net = dn;
-    if (m_net) {
-        connect(m_net, &daemonnet::IDaemonNet::changed, this, &SidebarModel::rebuild);
-    }
-    emit daemonNetChanged();
     rebuild();
 }
 
@@ -278,118 +255,18 @@ void SidebarModel::rebuild() {
                           -1,
                           {}});
 
-        // Tags section sits above Fleet (cross-cutting labels before the org chart).
-        pushSectionHeader(tr("Tags"), NodeType::TagSeparator, QStringLiteral("tags"));
-        if (isSectionExpanded(QStringLiteral("tags"))) {
-            for (const domain::Tag& t : m_store->tags()) {
-                m_rows.push_back({t.name,
-                                  m_store->sessionCount({NodeType::Tag, t.id, {}, {}}),
-                                  NodeType::Tag,
-                                  t.id,
-                                  {},
-                                  false,
-                                  true,
-                                  t.color,
-                                  0,
-                                  false,
-                                  false,
-                                  0,
-                                  0,
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  {},
-                                  -1,
-                                  {}});
-            }
-        }
-
         pushSectionHeader(tr("Fleet"), NodeType::FleetSeparator, QStringLiteral("fleet"));
         if (isSectionExpanded(QStringLiteral("fleet"))) {
             // §0 membership view: node(client connection root) -> agents(profiles) -> sessions
-            // (ByProfile). NOT the node's in-partition tree()/unitChildren() (that feeds the
+            // (ByProfile). NOT the node's in-partition supervision tree (that feeds the
             // in-transcript SubagentModel drill-down, left untouched).
             appendFleetMembership();
         }
     }
-    // The co-equal events-IO axis: an "Integrations" header + the capability-driven
-    // transport tree (account -> taxonomy -> session leaf), sourced from DaemonNet.
-    appendTransportRows();
+    // The co-equal events-IO axis (the "Integrations" section) is rendered by the dedicated
+    // IntegrationsTreeModel now (A5) — the legacy transports-tree sidebar path was deleted in M3.
     endResetModel();
     emit treeChanged();
-}
-
-void SidebarModel::appendTransportRows() {
-    if (!m_net) {
-        return;
-    }
-    const QList<TransportTreeRow> tree = m_net->transportsTree();
-    if (tree.isEmpty()) {
-        // No transports, no section (header included). This is the deliberate empty state of
-        // ServiceMode::Daemon, whose graph seeds the DaemonNet transports tree empty until the
-        // live projection replaces the mock seam (see createAppServiceGraph).
-        return;
-    }
-
-    // The "Integrations" section header (the user-facing name for the events-IO
-    // transport-adapter tree). Collapsible like Fleet/Tags.
-    pushSectionHeader(tr("Integrations"), NodeType::TransportSeparator,
-                      QStringLiteral("integrations"));
-    if (!isSectionExpanded(QStringLiteral("integrations"))) {
-        return; // section folded: header only, no body
-    }
-
-    // Parent-chain map so a collapsed account/group hides its whole subtree.
-    QHash<QString, QString> parentOf;
-    for (const TransportTreeRow& t : tree) {
-        parentOf.insert(t.id, t.parentId);
-    }
-    const auto hiddenByCollapse = [&](const QString& id) {
-        QString cur = parentOf.value(id);
-        for (int guard = 0; !cur.isEmpty() && guard <= 4096; ++guard) {
-            if (!isExpanded(cur)) {
-                return true;
-            }
-            cur = parentOf.value(cur);
-        }
-        return false;
-    };
-
-    for (const TransportTreeRow& t : tree) {
-        if (hiddenByCollapse(t.id)) {
-            continue;
-        }
-        Row r;
-        r.label = t.label;
-        r.type = NodeType::Transport;
-        r.selectable = true;
-        r.depth = t.depth;
-        r.hasChildren = t.hasChildren;
-        r.expanded = isExpanded(t.id);
-        r.count = t.memberCount > 0 ? t.memberCount : -1;
-        r.session = t.sessionId;
-        r.txNode = t.id;
-        r.txKind = t.kind;
-        r.convType = t.convType;
-        r.sublabel = t.sublabel;
-        r.presence = t.presence;
-        r.scopeKey = t.scopeKey;
-        r.txTransport = t.transportId;
-        r.txConversation = t.conversationId;
-        // When a row has no session leaf, selecting it scopes the list: an account
-        // groups all sessions over its transport (ByTransport); a 1:1 Dm peer groups
-        // by that peer (ByPeer). Channels / convGroups carry no list scope.
-        if (t.kind == QStringLiteral("account")) {
-            r.scopeType = static_cast<int>(NodeType::ByTransport);
-        } else if (t.convType == QStringLiteral("dm")) {
-            r.scopeType = static_cast<int>(NodeType::ByPeer);
-        }
-        m_rows.push_back(r);
-    }
 }
 
 int SidebarModel::rowCount(const QModelIndex& parent) const {
@@ -401,10 +278,6 @@ bool SidebarModel::rowIsCurrent(const Row& r) const {
         return false;
     }
     switch (r.type) {
-    case NodeType::Unit:
-        return m_selType == NodeType::Unit && r.unitId == m_selUnit;
-    case NodeType::Tag:
-        return m_selType == NodeType::Tag && r.tagId == m_selTag;
     case NodeType::Transport:
         return m_selType == NodeType::Transport && r.txNode == m_selTxNode;
     case NodeType::FleetNode:
@@ -557,45 +430,6 @@ int SidebarModel::adjacentSelectableRow(int from, int delta) const {
     return -1;
 }
 
-int SidebarModel::parentRow(int row) const {
-    if (row < 0 || row >= m_rows.size() || !m_store) {
-        return -1;
-    }
-    const Row& r = m_rows.at(row);
-    if (r.type != NodeType::Unit) {
-        return -1;
-    }
-    const QString parentId = m_store->unit(UnitId(r.unitId)).parentId.toString();
-    if (parentId.isEmpty()) {
-        return -1;
-    }
-    for (int i = 0; i < m_rows.size(); ++i) {
-        const Row& cand = m_rows.at(i);
-        if (cand.type == NodeType::Unit && cand.unitId == parentId) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-bool SidebarModel::selectionInSubtree(const QString& rootId) const {
-    if (m_selType != NodeType::Unit || !m_store) {
-        return false;
-    }
-    QString cur = m_selUnit;
-    for (int guard = 0; !cur.isEmpty(); ++guard) {
-        if (cur == rootId) {
-            return true;
-        }
-        // Bounded walk; the store's tree is finite and acyclic.
-        if (guard > 4096) {
-            break;
-        }
-        cur = m_store->unit(UnitId(cur)).parentId.toString();
-    }
-    return false;
-}
-
 void SidebarModel::toggleExpand(int row) {
     if (row < 0 || row >= m_rows.size()) {
         return;
@@ -622,43 +456,18 @@ void SidebarModel::toggleExpand(int row) {
         rebuild();
         return;
     }
-    if ((r.type != NodeType::Unit && r.type != NodeType::Transport) || !r.hasChildren) {
+    if (r.type != NodeType::Transport || !r.hasChildren) {
         return;
     }
-    // Transport group rows toggle by their tree-node id (a disjoint id namespace
-    // from unit ids, so they share m_collapsed safely).
-    if (r.type == NodeType::Transport) {
-        const QString id = r.txNode;
-        if (isExpanded(id)) {
-            m_collapsed.insert(id);
-        } else {
-            m_collapsed.remove(id);
-        }
-        rebuild();
-        return;
-    }
-    const QString id = r.unitId;
-    const bool collapsing = isExpanded(id);
-
-    // If we are about to hide the current selection, move it up to this unit so a
-    // highlighted row stays visible (and the middle pane follows).
-    bool moved = false;
-    if (collapsing && selectionInSubtree(id)) {
-        m_selType = NodeType::Unit;
-        m_selTag = -1;
-        m_selUnit = id;
-        moved = true;
-    }
-
-    if (collapsing) {
+    // Transport group rows toggle by their tree-node id. (The legacy Unit-subtree fold died with
+    // the dead ISessionStore unit reads — AD 1a.4; fleet rows fold via expandKey above.)
+    const QString id = r.txNode;
+    if (isExpanded(id)) {
         m_collapsed.insert(id);
     } else {
         m_collapsed.remove(id);
     }
     rebuild();
-    if (moved) {
-        emit scopeSelected(static_cast<int>(NodeType::Unit), -1, id);
-    }
 }
 
 void SidebarModel::selectNext() {
@@ -683,15 +492,10 @@ void SidebarModel::collapseCurrent() {
         return;
     }
     const Row& r = m_rows.at(cur);
-    if ((r.type == NodeType::Unit || r.type == NodeType::Transport ||
-         r.type == NodeType::FleetNode || r.type == NodeType::Agent) &&
+    if ((r.type == NodeType::Transport || r.type == NodeType::FleetNode ||
+         r.type == NodeType::Agent) &&
         r.hasChildren && r.expanded) {
         toggleExpand(cur); // collapse; selection stays on this row
-        return;
-    }
-    const int pr = parentRow(cur);
-    if (pr >= 0) {
-        setSelectionFromRow(pr);
     }
 }
 
@@ -701,8 +505,8 @@ void SidebarModel::expandCurrent() {
         return;
     }
     const Row& r = m_rows.at(cur);
-    if ((r.type != NodeType::Unit && r.type != NodeType::Transport &&
-         r.type != NodeType::FleetNode && r.type != NodeType::Agent) ||
+    if ((r.type != NodeType::Transport && r.type != NodeType::FleetNode &&
+         r.type != NodeType::Agent) ||
         !r.hasChildren) {
         return;
     }
@@ -734,13 +538,13 @@ bool SidebarModel::anyExpanded() const {
 }
 
 void SidebarModel::collectTransportExpandableIds(QSet<QString>& out) const {
-    if (!m_net) {
-        return;
-    }
-    // The Integrations-tree nodes that can fold (accounts + conversation groups).
-    for (const TransportTreeRow& t : m_net->transportsTree()) {
-        if (t.hasChildren) {
-            out.insert(t.id);
+    // Vestigial after the M3 transports-tree deletion: SidebarModel no longer renders transport
+    // rows (the dedicated IntegrationsTreeModel owns that surface), so there are no foldable
+    // transport nodes here. Kept (scanning the current rows) so the header's expand-all control
+    // stays valid; it folds nothing until/unless transport rows return to this model.
+    for (const Row& r : m_rows) {
+        if (r.type == NodeType::Transport && r.hasChildren && !r.txNode.isEmpty()) {
+            out.insert(r.txNode);
         }
     }
 }
@@ -796,16 +600,4 @@ void SidebarModel::createRootUnit() {
     // on success the post-mutation profile re-list makes the agent appear under the node root (no
     // node event needed — single client). A separate affordance opens a session on an agent.
     emit createAgentRequested();
-}
-
-void SidebarModel::createTag() {
-    if (!m_store) {
-        return;
-    }
-    const int id = m_store->createTag(tr("New tag"), QStringLiteral("#8e9296"));
-    m_selType = NodeType::Tag;
-    m_selTag = id;
-    m_selUnit.clear();
-    emit scopeSelected(static_cast<int>(NodeType::Tag), id, {});
-    emitCurrentChanged();
 }

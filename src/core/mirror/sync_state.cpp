@@ -61,7 +61,8 @@ const QStringList& SyncState::allCollections() {
         QStringLiteral("sessions"), QStringLiteral("fleet"),      QStringLiteral("approvals"),
         QStringLiteral("models"),   QStringLiteral("profiles"),   QStringLiteral("conversations"),
         QStringLiteral("contacts"), QStringLiteral("persons"),    QStringLiteral("notifications"),
-        QStringLiteral("chat"),     QStringLiteral("transports"),
+        QStringLiteral("chat"),     QStringLiteral("transports"), QStringLiteral("routing"),
+        QStringLiteral("adapters"), // AD (1a): the adapter catalog (connect-refresh read)
     };
     return all;
 }

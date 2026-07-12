@@ -8,6 +8,7 @@
 #include "accounts/iaccounts_service.h"
 #include "attachment_bar_view.h"
 #include "automation/icron_store.h"
+#include "chat_pending_strip_view.h"
 #include "code_editor_view.h"
 #include "completion_view.h"
 #include "composer_chrome.h"
@@ -74,9 +75,6 @@ namespace files {
 class FileFinderModel;
 class FsExplorerModel;
 } // namespace files
-namespace participants {
-class ParticipantsModel;
-}
 namespace editor {
 class CodeEditorController;
 }
@@ -105,9 +103,10 @@ class StatusBarModel;
 class CommandRegistry;
 class TranscriptExporter;
 class DisplayRoleAdapter;
-class ParticipantsView;
 class TabModel;
 class ChatConversationController;
+class ChatPendingStripView;
+class ConvSendController;
 class TuiFileTabController;
 class TuiOverlayHost;
 class TuiPageHub;
@@ -400,7 +399,7 @@ private:
     void openAccountRename(const QString& accountId, const QString& currentLabel);
     // [acct-mgmt] Channels room-lifecycle key handlers. Join/create/invite/members go through the
     // shared RoomFlow (chained dialogs); leave/delete are RootWidget confirms (the account-remove
-    // pattern); pin opens a session picker then IDaemonNet::bindChat with the canonical originKey.
+    // pattern); pin opens a session picker then RoutingBindChat on the canonical origin (M3).
     void openRoomJoinFlow(const QString& transport);
     void openRoomCreateFlow(const QString& transport);
     void openRoomMembers(const QString& transport, const QString& conversation);
@@ -453,11 +452,13 @@ private:
     std::unique_ptr<TabSessionManager> m_tabSessions;
     // The active transcript session (nullptr while a page tab is active).
     TabSession* m_active = nullptr;
-    // [integrations wire v38] Per-native-chat-tab state, keyed by tab id; plus the
-    // active chat controller (nullptr unless a Chat tab is foregrounded), which the
-    // composer submit routes to instead of a session orchestrator.
+    // [integrations wire v38 → mirror M2] Per-native-chat-tab state, keyed by tab id; plus the
+    // active chat controllers (nullptr unless a Chat tab is foregrounded). The composer submit
+    // routes to the send controller's durable outbox lane when live (daemon mode), else to the
+    // legacy conversation controller.
     QHash<int, ChatTab*> m_chatTabs;
     ChatConversationController* m_activeChat = nullptr;
+    ConvSendController* m_activeChatSend = nullptr;
 
     // TUI-only glue + widgets.
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
@@ -493,6 +494,9 @@ private:
     ComposerChrome* m_composerChrome = nullptr;
     // Queued-prompt strip (custom-painted) above the composer; 0 height when empty.
     QueueStripView* m_queue = nullptr;
+    // [mirror M2] Chat pending strip (ConvSend outbox lens, §8.4): bound to the active chat
+    // tab's ConvSendController; 0 height when empty or no chat tab is active.
+    ChatPendingStripView* m_chatPending = nullptr;
     // Attachment-chip row just above the composer; 0 height when empty.
     AttachmentBarView* m_attachments = nullptr;
     SubmitInputBox* m_composer = nullptr;
@@ -507,9 +511,7 @@ private:
     // one instance backs both the Ctrl+G finder and the Ctrl+O attach picker.
     files::FileFinderModel* m_fileFinder = nullptr;
     // Right-sidebar Participants section (above the Explorer, toggled as one column).
-    participants::ParticipantsModel* m_participants = nullptr;
     Tui::ZWidget* m_rightColumn = nullptr;
-    ParticipantsView* m_participantsView = nullptr;
     CodeEditorView* m_editorView = nullptr;
     Tui::ZLabel* m_fileStatus = nullptr;
     // Per-File-tab editor controllers and async fs resolution.

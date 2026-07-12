@@ -97,6 +97,12 @@ wire_read = ["TransportAdapters"]
   [entity.Adapter.fields.ops_json]
   wire = "adapter-info.conversation_ops#ops_json"   # per-verb ops maps -> canonical json (cddl:1147-1151)
   type = "QString"
+  [entity.Adapter.fields.schema_json]
+  wire = "adapter-info.account_schema#schema_json"  # account-settings-schema -> canonical json (AD 1a: the add-account form)
+  type = "QString"
+  [entity.Adapter.fields.policies_json]
+  wire = "adapter-info.policies#policies_json"      # node-labeled policy rows -> canonical json (AD 1a: rendered verbatim)
+  type = "QString"
 
 [entity.Conversation]
 class = "M"
@@ -235,6 +241,9 @@ wire_read = ["PersonList"]
   [entity.PersonEndpoint.fields.display_name]
   wire = "person-endpoint.contact#display_name"
   type = "QString"
+  [entity.PersonEndpoint.fields.presence_primitive]
+  wire = "person-endpoint.contact#presence"       # contact-info.presence (AD: the tree's per-endpoint dot)
+  type = "QString"
 
 [entity.Session]
 class = "M"
@@ -302,6 +311,9 @@ wire_read = ["Tree"]
   [entity.FleetUnit.fields.state]
   wire = "unit-node.state"                         # unit-state enum -> string
   type = "QString"
+  [entity.FleetUnit.fields.end_reason]
+  wire = "unit-node.state#end_reason"              # unit-state-finished.end_reason ("" unless Finished)
+  type = "QString"
   [entity.FleetUnit.fields.work]
   wire = "unit-node.work"
   type = "QString"
@@ -323,6 +335,20 @@ wire_read = ["Tree"]
   [entity.FleetUnit.fields.child_count]
   wire = "unit-node.children#count"
   type = "int"
+  # G2 (M5): the supervision-tree edge + engine identity, all off the wire unit-node (no CDDL
+  # change). `child_ids` is the ordered children list (0x1f-joined) — the §3.5 unitsByParent
+  # relation the fleet TREE render reconstructs (root = a node no child list names; parent + depth
+  # are derived pre-order at projection time). engine/engine_agent carry the v29 engine-selector so
+  # the tree renders the Native/Foreign chip without a per-node profile join.
+  [entity.FleetUnit.fields.engine]
+  wire = "unit-node.engine"                        # engine-selector -> "Core" | "Foreign" | ""
+  type = "QString"
+  [entity.FleetUnit.fields.engine_agent]
+  wire = "unit-node.engine#agent"                  # engine-selector Foreign agent name
+  type = "QString"
+  [entity.FleetUnit.fields.child_ids]
+  wire = "unit-node.children"                       # ordered child unit-ids, 0x1f-joined (the edge)
+  type = "QString"
 
 [entity.Profile]
 class = "M"
@@ -810,6 +836,10 @@ policy = "transcript"
 table = "w_transcript_blocks"
 invalidators = ["SessionAdvanced"]
 wire_read = ["SessionHistory"]
+# The wire-decode/offline-reload feed maps a journal-record (its payload carries the transcript
+# block); pin the mapper source explicitly so it does not drift with the modal field-rule inference
+# (G2 added tool-call/tool-result fields, which would otherwise re-infer the source DTO).
+source = "journal-record"
 # NOTE (§3.1): TranscriptBlock joins the mirror in M4/M5; until then the legacy table is frozen.
 # transcript-block is a CDDL union (Message/ToolCall/ToolResult/Request/Content); modeled here with
 # a union discriminator plus the fields common across variants, all grounded on the variant rules.
@@ -843,6 +873,19 @@ wire_read = ["SessionHistory"]
   type = "bool"
   [entity.TranscriptBlock.fields.origin_op]
   wire = "journal-record#origin_op"                # rung-3 provenance (§10.3; null until api/39)
+  type = "QString"
+  # G2 (M5): the fidelity fields the byte-stable msg-fence content() projection needs to reproduce
+  # tool fences — all already on the wire (no CDDL change). `args_summary` is the ToolCall args key
+  # the legacy fence always emits; `detail_kind`/`detail_body` are the ToolResult structured detail
+  # (tool-detail = {kind, body}) folded into the fence (body decoded from the byte-array as UTF-8).
+  [entity.TranscriptBlock.fields.args_summary]
+  wire = "transcript-block-tool-call.args_summary" # (ToolCall)
+  type = "QString"
+  [entity.TranscriptBlock.fields.detail_kind]
+  wire = "transcript-block-tool-result.detail#kind" # (ToolResult tool-detail.kind)
+  type = "QString"
+  [entity.TranscriptBlock.fields.detail_body]
+  wire = "transcript-block-tool-result.detail#body" # (ToolResult tool-detail.body; byte-array->utf8)
   type = "QString"
 
 # ============================================================================================

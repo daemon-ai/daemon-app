@@ -44,7 +44,7 @@ Rectangle {
     // `created(sessionId)` fires when the SessionCreated reply lands, so the tab opens event-driven.
     SessionController {
         id: creator
-        store: SessionStore
+        store: SessionStoreMirror
         onCreated: function(sessionId) {
             tabModel.openTranscriptPinned(sessionId, root._titleFor(sessionId));
         }
@@ -65,7 +65,7 @@ Rectangle {
     // The canonical session title (the same string the list shows), with a
     // generic fallback so a chip is never blank.
     function _titleFor(sessionId) {
-        const t = SessionStore.title(sessionId);
+        const t = SessionStoreMirror.title(sessionId);
         return (t && t.length > 0) ? t : qsTr("Session");
     }
     // Single-click / type-ahead open: load the session into the transient
@@ -453,7 +453,7 @@ Rectangle {
 
         function openFor(sessionId) {
             renameDialog.targetId = sessionId;
-            renameField.text = SessionStore.title(sessionId);
+            renameField.text = SessionStoreMirror.title(sessionId);
             open();
             renameField.forceActiveFocus();
             renameField.selectAll();
@@ -461,7 +461,7 @@ Rectangle {
 
         onAccepted: {
             if (renameDialog.targetId !== "" && renameField.text.trim().length > 0)
-                SessionStore.renameSession(renameDialog.targetId, renameField.text.trim());
+                SessionStoreMirror.renameSession(renameDialog.targetId, renameField.text.trim());
         }
 
         contentItem: Kit.TextField {
@@ -482,13 +482,13 @@ Rectangle {
         defaultSuffix: "json"
 
         function openFor(sessionId) {
-            const t = SessionStore.title(sessionId);
+            const t = SessionStoreMirror.title(sessionId);
             const base = (t && t.length > 0 ? t : "session");
             if (Qt.platform.os === "wasm") {
                 // No shared filesystem with the node in the browser: skip the sandbox-only
                 // FileDialog and hand the serialized JSON to the wasm bridge, which triggers a
                 // real browser download of "<title-or-id>.json".
-                Exporter.exportToBrowser(SessionStore, sessionId, base + ".json");
+                Exporter.exportToBrowser(SessionStoreMirror, sessionId, base + ".json");
                 return;
             }
             exportDialog.targetId = sessionId;
@@ -498,7 +498,7 @@ Rectangle {
 
         onAccepted: {
             if (exportDialog.targetId !== "")
-                Exporter.writeFile(selectedFile, Exporter.toJson(SessionStore, exportDialog.targetId));
+                Exporter.writeFile(selectedFile, Exporter.toJson(SessionStoreMirror, exportDialog.targetId));
         }
     }
 }

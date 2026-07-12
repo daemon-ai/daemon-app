@@ -6,7 +6,6 @@
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
-#include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -15,8 +14,6 @@
 #include "memory_list_model.h"
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
-#include "participants_model.h"
-#include "participants_view.h"
 #include "persistence/isession_store.h"
 #include "root_widget.h"
 #include "session_controller.h"
@@ -157,8 +154,9 @@ QString RootWidget::runHeadlessChat(const QString& prompt, int timeoutMs) const 
         return {};
     }
     settle(600); // drain the on-ready refreshes first
-    auto* engine = new DaemonTurnEngine(m_services.nodeApi, m_services.cache,
-                                        m_services.subscriptions, const_cast<RootWidget*>(this));
+    auto* engine =
+        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions,
+                             m_services.transcriptMirrorSink, const_cast<RootWidget*>(this));
     engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
     QString answer;
     QEventLoop loop;

@@ -1392,8 +1392,52 @@ sampai didaftarkan ulang.</translation>
         <translation>Tidak dapat mengirim pesan.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>Muat pesan sebelumnya</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Belum ada pesan</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Belum terkirim (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Kirim</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Tetap kirim sisanya</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Gagal</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Mengirim…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Terkirim</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Dalam antrean</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Coba lagi</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Edit</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>Buang</translation>
     </message>
 </context>
 <context>
@@ -2488,17 +2532,6 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>Unsupported transport</source>
         <translation>Transport tidak didukung</translation>
-    </message>
-</context>
-<context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Saluran</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM</translation>
     </message>
 </context>
 <context>
@@ -4206,17 +4239,6 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
-    </message>
-</context>
-<context>
-    <name>MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agen</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Pengguna</translation>
     </message>
 </context>
 <context>
@@ -6093,21 +6115,6 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— disematkan</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· turunan</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - penonton</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6311,16 +6318,8 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Gagal mendekode respons SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Tidak tersambung ke daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Sesi menolak perintah</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta gagal</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -6779,10 +6778,6 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
         <translation>Agen baru</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Tag baru</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Ciutkan semua</translation>
     </message>
@@ -6862,20 +6857,8 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
         <translation>Diarsipkan</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Tag</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Armada</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Integrasi</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Tag baru</translation>
     </message>
 </context>
 <context>
@@ -8790,12 +8773,6 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Saluran tidak tersedia: lapisan transport belum terhubung dalam mode ini._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8862,6 +8839,12 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     <message>
         <source>Disconnected</source>
         <translation>Terputus</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Kanal tidak tersedia: proyeksi hub kanal tidak terhubung dalam mode ini._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9268,17 +9251,6 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Saluran</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9451,16 +9423,8 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
         <translation>Gagal mendekode respons SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Tidak tersambung ke daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Sesi menolak perintah</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta gagal</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9534,17 +9498,6 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agen</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Pengguna</translation>
-    </message>
-</context>
-<context>
     <name>firstrun::FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
@@ -9575,13 +9528,6 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Model %1 hilang dari disk: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Peserta</translation>
     </message>
 </context>
 <context>

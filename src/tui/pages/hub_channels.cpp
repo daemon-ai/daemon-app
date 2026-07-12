@@ -2,17 +2,17 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 // Channels page projection (TabModel::Channels): the Events-IO account manager
-// (story 04, read surface EIO-1/3/8/9) mirrored from ChannelsPage.qml - the
-// configured accounts with Pidgin-style status dots (Presence), each account's
-// last-known rooms (Transports.conversations), and the "Add channel" adapter
-// picker. Read-only in both shells this slice: connecting (EIO-2) and
-// disconnecting (EIO-7) are deferred. One focused TU for the Channels
+// (story 04, read surface EIO-1/3/8/9) mirrored from ChannelsPage.qml — the
+// configured accounts with Pidgin-style status dots, each account's last-known
+// rooms, contacts, and the "Add channel" adapter picker. AD (1a.3): every READ
+// comes from the SHARED ChannelsHubModel (the same mirror projection the GUI
+// page binds), identical in daemon and mock; the room-pin badge keeps reading
+// the mirror's route_pins directly (M3). One focused TU for the Channels
 // workstream; the dispatch stays in TuiPageHub::pageMarkdownForKind.
 
-#include "daemonnet/idaemonnet.h"
-#include "transports/icontacts_service.h"
-#include "transports/ipresence_service.h"
-#include "transports/itransport_registry.h"
+#include "daemon/channels_hub_model.h"
+#include "mirror/mirror_service.h" // the route_pins projection backs the room-pin badge (M3)
+#include "mirror/store.h"
 #include "tui_page_hub.h"
 
 // [waveB:app-v30] D1: friendly copy for the coarse disconnect-reason token (parity with the GUI
@@ -50,13 +50,13 @@ QList<QVariantMap> TuiPageHub::channelRows() const {
     // expandable room rows). `id` is the transport for an account and the conversation id for a
     // room; both carry `transport` so a room key knows its account.
     QList<QVariantMap> rows;
-    if (m_deps.transportRegistry == nullptr) {
+    if (m_deps.channelsHub == nullptr) {
         return rows;
     }
     // [acct-mgmt] Resolve a family's rosterOps.list (wire v34) — the Contacts group shows ONLY when
     // the node reported it (no legacy coarse fallback for contacts, GUI canRosterOp parity).
     const auto familyHasRosterList = [this](const QString& family) {
-        for (const QVariant& v : m_deps.transportRegistry->availableAdapters()) {
+        for (const QVariant& v : m_deps.channelsHub->adapters()) {
             const QVariantMap a = v.toMap();
             if (a.value(QStringLiteral("family")).toString() == family) {
                 return a.contains(QStringLiteral("rosterOps")) &&
@@ -68,17 +68,16 @@ QList<QVariantMap> TuiPageHub::channelRows() const {
         }
         return false;
     };
-    for (const QVariant& v : m_deps.transportRegistry->instances()) {
+    for (const QVariant& v : m_deps.channelsHub->accounts()) {
         QVariantMap a = v.toMap();
         const QString transport = a.value(QStringLiteral("transport")).toString();
         const QString family = a.value(QStringLiteral("family")).toString();
         a[QStringLiteral("rowKind")] = QStringLiteral("account");
         a[QStringLiteral("id")] = transport;
-        a[QStringLiteral("connection")] = m_deps.presence != nullptr
-                                              ? m_deps.presence->connectionState(transport)
-                                              : QStringLiteral("offline");
+        // The connection state rides the mirror account row itself (TransportChanged patches it
+        // in place; the full-list read re-baselines it) — the presence seam is gone.
         rows.append(a);
-        for (const QVariant& rv : m_deps.transportRegistry->conversations(transport)) {
+        for (const QVariant& rv : m_deps.channelsHub->conversations(transport)) {
             const QVariantMap r = rv.toMap();
             const QString convId = r.value(QStringLiteral("id")).toString();
             const QString title = r.value(QStringLiteral("title")).toString();
@@ -94,8 +93,8 @@ QList<QVariantMap> TuiPageHub::channelRows() const {
         }
         // [acct-mgmt] The Contacts group + its contact sub-rows (after the rooms), gated on
         // rosterOps.list. `a`/`f` act on the group row; the contact rows carry Enter/`a`/`x`/`m`.
-        if (m_deps.contacts != nullptr && familyHasRosterList(family)) {
-            const QVariantList contacts = m_deps.contacts->contacts(transport);
+        if (familyHasRosterList(family)) {
+            const QVariantList contacts = m_deps.channelsHub->contacts(transport);
             QVariantMap group;
             group[QStringLiteral("rowKind")] = QStringLiteral("contactsGroup");
             group[QStringLiteral("id")] = transport;
@@ -126,11 +125,11 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
     QString md;
     md += tr("# Channels\n\n");
 
-    // The transports seams can be absent (a stripped-down service graph);
+    // The hub projection can be absent (a stripped-down service graph);
     // degrade to an explicit note instead of rendering an empty page.
-    if (m_deps.transportRegistry == nullptr) {
-        md += tr("_Channels are unavailable: the transports seam is not wired "
-                 "in this mode._\n");
+    if (m_deps.channelsHub == nullptr) {
+        md += tr("_Channels are unavailable: the channels-hub projection is not "
+                 "wired in this mode._\n");
         return md;
     }
 
@@ -247,17 +246,27 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
         const QString convId = row.value(QStringLiteral("convId")).toString();
         const QString label = row.value(QStringLiteral("roomLabel")).toString();
         const QString kind = row.value(QStringLiteral("kind")).toString();
-        const QString pinned = m_deps.daemonNet != nullptr
-                                   ? (kind == QLatin1String("dm")
-                                          ? m_deps.daemonNet->pinnedDmSessionFor(transport, convId)
-                                          : m_deps.daemonNet->pinnedSessionFor(transport, convId))
-                                   : QString();
+        // The pinned session for this room comes from the mirror store's route_pins (the origin_key
+        // encodes the scope: `t|dm|user` for a DM, `t|group|chat|` for a room). M3; empty in mock.
+        QString pinned;
+        if (m_deps.mirror != nullptr) {
+            const QString wantKey =
+                kind == QLatin1String("dm")
+                    ? transport + QStringLiteral("|dm|") + convId
+                    : transport + QStringLiteral("|group|") + convId + QLatin1Char('|');
+            for (const mirror::RoutePin& p : m_deps.mirror->store().snapshot().route_pins) {
+                if (p.origin_key == wantKey) {
+                    pinned = p.session;
+                    break;
+                }
+            }
+        }
         QString line = kind.isEmpty() ? tr("  - %1# %2").arg(mark(i), label)
                                       : tr("  - %1# %2 · %3").arg(mark(i), label, kind);
         if (!pinned.isEmpty()) {
             line += tr(" · ⇄ `%1`").arg(pinned);
         }
-        if (m_deps.transportRegistry->isNewConversation(transport, convId)) {
+        if (m_deps.channelsHub->isNewConversation(transport, convId)) {
             line += tr(" · ✦ new");
         }
         md += line + QLatin1Char('\n');
@@ -267,7 +276,7 @@ QString TuiPageHub::buildChannelsMarkdown(int sel) const {
 
     // --- Add channel (EIO-1 adapter picker; connect deferred) ---------------
     md += tr("## Add channel\n\n");
-    const QVariantList adapters = m_deps.transportRegistry->availableAdapters();
+    const QVariantList adapters = m_deps.channelsHub->adapters();
     if (adapters.isEmpty()) {
         md += tr("_Connect to a daemon to see available channel types._\n");
     }

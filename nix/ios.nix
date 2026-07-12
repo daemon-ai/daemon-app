@@ -163,6 +163,7 @@ let
       export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${depSources.ksyntaxhighlighting}"
       export MICROTEX_SOURCE_DIR="${depSources.microtex}"
       export QRCODEGEN_SOURCE_DIR="${depSources.qrcodegen}"
+      export IMMER_SOURCE_DIR="${depSources.immer}"
       echo "daemon-app iOS devShell"
       echo "  QT_HOST_PATH      = $QT_HOST_PATH"
       echo "  DAEMON_APP_QT_IOS = $DAEMON_APP_QT_IOS"

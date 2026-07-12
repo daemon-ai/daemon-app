@@ -1392,8 +1392,52 @@ until it is re-registered.</source>
         <translation>メッセージを送信できませんでした。</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>以前のメッセージを読み込む</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>メッセージはまだありません</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>未送信 (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>送信</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>残りを送信する</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>失敗</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>送信中…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>送信済み</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>キュー待ち</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>再試行</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>編集</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>破棄</translation>
     </message>
 </context>
 <context>
@@ -2488,17 +2532,6 @@ until it is re-registered.</source>
     <message>
         <source>Unsupported transport</source>
         <translation>サポートされていないトランスポート</translation>
-    </message>
-</context>
-<context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>チャンネル</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM</translation>
     </message>
 </context>
 <context>
@@ -4206,17 +4239,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
-    </message>
-</context>
-<context>
-    <name>MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>エージェント</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ユーザー</translation>
     </message>
 </context>
 <context>
@@ -6093,21 +6115,6 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— 固定済み</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· 派生</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - スペクテーター</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6311,16 +6318,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>SessionDetail 応答のデコードに失敗しました</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>daemon に接続されていません</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>セッションがコマンドを拒否しました</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta に失敗しました</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -6779,10 +6778,6 @@ This only affects the app appearance, not your data.</source>
         <translation>新しいエージェント</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>新しいタグ</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>すべて折りたたむ</translation>
     </message>
@@ -6862,20 +6857,8 @@ This only affects the app appearance, not your data.</source>
         <translation>アーカイブ済み</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>タグ</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>フリート</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>連携</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>新しいタグ</translation>
     </message>
 </context>
 <context>
@@ -8790,12 +8773,6 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_チャンネルは利用できません: このモードではトランスポートの接合部が接続されていません。_
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8862,6 +8839,12 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Disconnected</source>
         <translation>切断されました</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_チャンネルは利用できません: このモードではチャンネルハブ・プロジェクションが接続されていません。_
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9268,17 +9251,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>チャンネル</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9451,16 +9423,8 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
         <translation>SessionDetail 応答のデコードに失敗しました</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>daemon に接続されていません</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>セッションがコマンドを拒否しました</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta に失敗しました</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9534,17 +9498,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>エージェント</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ユーザー</translation>
-    </message>
-</context>
-<context>
     <name>firstrun::FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
@@ -9575,13 +9528,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>モデル %1 がディスク上に見つかりません: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>参加者</translation>
     </message>
 </context>
 <context>

@@ -38,7 +38,7 @@ mirroring an existing example rather than inventing a new pattern:
 
 | Surface | Codec | Repository | Service adapter |
 |---------|-------|------------|-----------------|
-| Sessions (list) | `decodeSessionPage` | `SessionRepository` -> `DaemonCacheStore` | `CachedSessionStore` (`ISessionStore`) |
+| Sessions (list) | `decodeSessionsToMirror` | ingestor -> mirror `sessions` table | `MirrorSessionStore` (`ISessionStore`) |
 | Credentials / accounts | `*Credential*` | `CredentialRepository` | `DaemonAccountsService` |
 | Models | `*Models*` / `ModelCurrent` | `ModelRepository` | `DaemonModelCatalog` |
 | Profiles | `*Profile*` | `ProfileRepository` | `DaemonProfileStore` |

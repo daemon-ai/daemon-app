@@ -15,9 +15,10 @@
 #include "daemon/daemon_auth_flow_service.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_chat_service.h"
-#include "daemon/daemon_persons_service.h"
+#include "daemon/daemon_fetch_executor.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
+#include "daemon/mirror_decode.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 #include "daemon/repositories.h"
@@ -25,10 +26,9 @@
 #include "daemon_api_client_decode.h"
 #include "daemon_api_client_encode.h"
 #include "daemon_api_client_types.h"
+#include "mirror/fetch_job.h"
+#include "mirror/mirror_service.h"
 #include "transports/ichat_service.h"
-#include "transports/ipersons_service.h"
-#include "transports/mock_chat_service.h"
-#include "transports/mock_persons_service.h"
 #include "wire_mux_fixture.h"
 
 #include <memory>
@@ -48,11 +48,9 @@ using daemonapp::daemon::DecodedChatMessage;
 using daemonapp::daemon::DecodedConversation;
 using daemonapp::daemon::DecodedEventsPage;
 using daemonapp::daemon::DecodedNodeEvent;
-using daemonapp::daemon::DecodedPerson;
 using daemonapp::daemon::ModelRepository;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::NodeApiCodec;
-using daemonapp::daemon::PersonsRepository;
 using daemonapp::daemon::SessionRepository;
 using daemonapp::daemon::SubscriptionManager;
 using daemonapp::daemon::TransportRepository;
@@ -340,6 +338,73 @@ QByteArray convHistoryResponse() {
     return encodeResponse(*resp);
 }
 
+// [api/39 §10.2] {"Conversations": conv_page{ one item + removed:[id] + rev }} — a since_rev delta.
+QByteArray convPageDeltaResponse(quint64 rev, const QByteArray& changedId,
+                                 const QByteArray& removedId) {
+    static const QByteArray transport = QByteArrayLiteral("demo/acct");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_conversations_m_c;
+    conv_page& page =
+        resp->api_response_response_conversations_m.response_conversations_Conversations;
+    page.conv_page_items_conversation_info_m_count = 1;
+    conversation_info& cv = page.conv_page_items_conversation_info_m[0];
+    setZ(cv.conversation_info_transport, transport);
+    setZ(cv.conversation_info_id, changedId);
+    cv.conversation_info_kind.conversation_type_choice =
+        conversation_type_r::conversation_type_Dm_tstr_c;
+    cv.conversation_info_title_present = false;
+    cv.conversation_info_topic_present = false;
+    cv.conversation_info_description_present = false;
+    cv.conversation_info_members_present = false;
+    cv.conversation_info_parent_present = false;
+    page.conv_page_next_present = false;
+    page.conv_page_rev = rev;
+    page.conv_page_removed_present = true;
+    page.conv_page_removed.conv_page_removed_tstr_count = 1;
+    setZ(page.conv_page_removed.conv_page_removed_tstr[0], removedId);
+    page.conv_page_origin_ops_present = false;
+    return encodeResponse(*resp);
+}
+
+// [api/39 §10.3] {"Bootstrap": {cursor, epoch, revs{collection->rev}}} — the reconnect probe.
+QByteArray bootstrapResponse(quint64 cursor, quint64 epoch, const QByteArray& coll0, quint64 rev0,
+                             const QByteArray& coll1, quint64 rev1) {
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_bootstrap_m_c;
+    response_bootstrap& b = resp->api_response_response_bootstrap_m;
+    b.Bootstrap_cursor = cursor;
+    b.Bootstrap_epoch = epoch;
+    b.revs_uint64_m_count = 2;
+    setZ(b.revs_uint64_m[0].response_bootstrap_revs_uint64_m_key, coll0);
+    b.revs_uint64_m[0].revs_uint64_m = rev0;
+    setZ(b.revs_uint64_m[1].response_bootstrap_revs_uint64_m_key, coll1);
+    b.revs_uint64_m[1].revs_uint64_m = rev1;
+    return encodeResponse(*resp);
+}
+
+// [api/39 §10.3] A one-record ConvHistory page whose journal envelope carries `origin_op`.
+QByteArray convHistoryOriginResponse(const QByteArray& originOp) {
+    static const QByteArray m0 = QByteArrayLiteral("m0");
+    static const QByteArray bob = QByteArrayLiteral("@bob:demo");
+    static const QByteArray bobName = QByteArrayLiteral("Bob");
+    static const QByteArray t0 = QByteArrayLiteral("hi");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_journal_m_c;
+    journal_page_view& page = resp->api_response_response_journal_m.response_journal_Journal;
+    page.journal_page_view_entries_journal_record_m_count = 1;
+    journal_record& rec = page.journal_page_view_entries_journal_record_m[0];
+    putChatRecord(rec, 10, m0, bob, bobName, t0, 1000);
+    rec.journal_record_origin_op_present = true;
+    rec.journal_record_origin_op.journal_record_origin_op_choice =
+        journal_record_origin_op_r::journal_record_origin_op_origin_op_m_c;
+    setZ(rec.journal_record_origin_op.journal_record_origin_op_origin_op_m, originOp);
+    page.journal_page_view_next_cursor = 10;
+    page.journal_page_view_head_cursor = 10;
+    page.journal_page_view_sealed_after_choice =
+        journal_page_view::journal_page_view_sealed_after_null_m_c;
+    return encodeResponse(*resp);
+}
+
 // {"TransportSettings": account-settings-values{ homeserver -> https://demo, room_limit -> 50 }}.
 QByteArray transportSettingsResponse() {
     static const QByteArray k0 = QByteArrayLiteral("homeserver");
@@ -461,6 +526,13 @@ private slots:
         QCOMPARE(out.at(1).parent, QStringLiteral("!space:demo"));
     }
 
+    // ----- BR flip: the app speaks the api/39 contract (handshake 38→39) -----
+    void daemonApiContractVersionIs39() {
+        // The BR bridge activates the rung-1/2/3 wire shapes vendored at v39: the ONLY app-side
+        // contract-version constant advances to 39, so the connection gate requires an api/39 node.
+        QCOMPARE(NodeApiCodec::kDaemonApiVersion, quint32(39));
+    }
+
     // ----- codec: ConvSend / ConvHistory encode + decode -----
     void convSendEncodeRoundTrip() {
         const QByteArray req = NodeApiCodec::encodeConvSendRequest(
@@ -511,6 +583,129 @@ private slots:
         QCOMPARE(head, quint64(11));
     }
 
+    // ----- BR flip: since_rev / before_cursor / op_id / Bootstrap (api/39 §10.2-10.3) -----
+    void convListSinceRevEncode() {
+        // A full read leaves since_rev absent (byte-identical to v38); a delta read carries it.
+        auto full = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(NodeApiCodec::encodeConvListRequest(QStringLiteral("demo/acct")),
+                          full.get()));
+        QVERIFY(!full->api_request_request_conv_list_m.ConvList_since_rev_present);
+        auto delta = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(
+            NodeApiCodec::encodeConvListRequest(QStringLiteral("demo/acct"), QString(), true, 42),
+            delta.get()));
+        const request_conv_list& l = delta->api_request_request_conv_list_m;
+        QVERIFY(l.ConvList_since_rev_present);
+        QCOMPARE(l.ConvList_since_rev.ConvList_since_rev_choice,
+                 ConvList_since_rev_r::ConvList_since_rev_uint64_m_c);
+        QCOMPARE(quint64(l.ConvList_since_rev.ConvList_since_rev_uint64_m), quint64(42));
+    }
+
+    void rosterListSinceRevEncode() {
+        auto delta = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(
+            NodeApiCodec::encodeRosterListRequest(QStringLiteral("demo/acct"), QString(), true, 7),
+            delta.get()));
+        const request_roster_list& l = delta->api_request_request_roster_list_m;
+        QVERIFY(l.RosterList_since_rev_present);
+        QCOMPARE(quint64(l.RosterList_since_rev.RosterList_since_rev_uint64_m), quint64(7));
+    }
+
+    void personListSinceRevEncode() {
+        // v38 shape: no since_rev key. Delta: the map carries it.
+        auto full = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(NodeApiCodec::encodePersonListRequest(), full.get()));
+        QVERIFY(!full->api_request_request_person_list_m.PersonList_since_rev_present);
+        auto delta = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(NodeApiCodec::encodePersonListRequest(true, 99), delta.get()));
+        const request_person_list& l = delta->api_request_request_person_list_m;
+        QVERIFY(l.PersonList_since_rev_present);
+        QCOMPARE(quint64(l.PersonList_since_rev.PersonList_since_rev_uint64_m), quint64(99));
+    }
+
+    void convHistoryBeforeCursorEncode() {
+        // The backward-window read: before_cursor present, after_cursor absent.
+        auto req = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(NodeApiCodec::encodeConvHistoryRequest(QStringLiteral("demo/acct"),
+                                                                 QStringLiteral("!room:demo"),
+                                                                 false, 0, true, 20, true, 500),
+                          req.get()));
+        const conv_history_args& a =
+            req->api_request_request_conv_history_m.request_conv_history_ConvHistory;
+        QVERIFY(!a.conv_history_args_after_cursor_present);
+        QVERIFY(a.conv_history_args_before_cursor_present);
+        QCOMPARE(quint64(a.conv_history_args_before_cursor.conv_history_args_before_cursor),
+                 quint64(500));
+        QVERIFY(a.conv_history_args_max_present);
+    }
+
+    void convSendOpIdEncode() {
+        // Empty op-id ⇒ absent (v38 shape); a real op-id rides the optional field (dedup key).
+        auto plain = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(NodeApiCodec::encodeConvSendRequest(QStringLiteral("demo/acct"),
+                                                              QStringLiteral("!room:demo"),
+                                                              QStringLiteral("hi")),
+                          plain.get()));
+        QVERIFY(!plain->api_request_request_conv_send_m.request_conv_send_ConvSend
+                     .conv_send_args_op_id_present);
+        auto withOp = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(NodeApiCodec::encodeConvSendRequest(
+                              QStringLiteral("demo/acct"), QStringLiteral("!room:demo"),
+                              QStringLiteral("hi"), QStringLiteral("op-123")),
+                          withOp.get()));
+        const conv_send_args& a =
+            withOp->api_request_request_conv_send_m.request_conv_send_ConvSend;
+        QVERIFY(a.conv_send_args_op_id_present);
+        QCOMPARE(zstr(a.conv_send_args_op_id.conv_send_args_op_id_tstr), QStringLiteral("op-123"));
+    }
+
+    void bootstrapEncodeDecodeRoundTrip() {
+        const QByteArray req = NodeApiCodec::encodeBootstrapRequest();
+        QVERIFY(!req.isEmpty());
+        auto decoded = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(req, decoded.get()));
+        QCOMPARE(decoded->api_request_choice, api_request_r::api_request_request_bootstrap_m_c);
+
+        quint64 cursor = 0;
+        quint64 epoch = 0;
+        QHash<QString, quint64> revs;
+        QVERIFY(
+            NodeApiCodec::decodeBootstrap(bootstrapResponse(100, 3, QByteArrayLiteral("sessions"),
+                                                            5, QByteArrayLiteral("persons"), 8),
+                                          &cursor, &epoch, &revs));
+        QCOMPARE(cursor, quint64(100));
+        QCOMPARE(epoch, quint64(3));
+        QCOMPARE(revs.value(QStringLiteral("sessions")), quint64(5));
+        QCOMPARE(revs.value(QStringLiteral("persons")), quint64(8));
+    }
+
+    void convDeltaPageDecodeSurfacesRemovedAndRev() {
+        std::vector<mirror::Conversation> out;
+        QString next;
+        quint64 rev = 0;
+        QStringList removed;
+        QVERIFY(daemonapp::daemon::decodeConversationsToMirror(
+            convPageDeltaResponse(77, QByteArrayLiteral("!changed:demo"),
+                                  QByteArrayLiteral("!gone:demo")),
+            &out, &next, &rev, &removed));
+        QCOMPARE(out.size(), size_t(1));
+        QCOMPARE(out.at(0).id, QStringLiteral("!changed:demo"));
+        QCOMPARE(rev, quint64(77));
+        QCOMPARE(removed.size(), 1);
+        QCOMPARE(removed.first(), QStringLiteral("!gone:demo"));
+    }
+
+    void chatHistoryDecodeSurfacesOriginOp() {
+        std::vector<mirror::ChatMessage> out;
+        quint64 next = 0;
+        quint64 head = 0;
+        QVERIFY(daemonapp::daemon::decodeChatHistoryToMirror(
+            convHistoryOriginResponse(QByteArrayLiteral("op-abc")), QStringLiteral("demo/acct"),
+            QStringLiteral("!room:demo"), &out, &next, &head));
+        QCOMPARE(out.size(), size_t(1));
+        QCOMPARE(out.at(0).origin_op, QStringLiteral("op-abc")); // provenance rides the envelope
+    }
+
     // ----- codec: PersonList -----
     void personListEncodeDecodeRoundTrip() {
         const QByteArray req = NodeApiCodec::encodePersonListRequest();
@@ -519,16 +714,20 @@ private slots:
         QVERIFY(decodeReq(req, decoded.get()));
         QCOMPARE(decoded->api_request_choice, api_request_r::api_request_request_person_list_m_c);
 
-        QList<DecodedPerson> out;
-        QVERIFY(NodeApiCodec::decodePersons(personsResponse(), &out));
-        QCOMPARE(out.size(), 1);
-        QCOMPARE(out.at(0).id, QStringLiteral("person-1"));
-        QVERIFY(out.at(0).hasAlias);
-        QCOMPARE(out.at(0).alias, QStringLiteral("Bob (all accounts)"));
-        QCOMPARE(out.at(0).endpoints.size(), 1);
-        QCOMPARE(out.at(0).endpoints.at(0).transport, QStringLiteral("demo/acct"));
-        QCOMPARE(out.at(0).endpoints.at(0).contact.id, QStringLiteral("@bob:demo"));
-        QCOMPARE(out.at(0).endpoints.at(0).contact.displayName, QStringLiteral("Bob"));
+        // AD (1a): the ONE production decode path — persons + their endpoint rows land as
+        // mirror entities (the endpoint stamped with its owning person id).
+        std::vector<mirror::Person> persons;
+        std::vector<mirror::PersonEndpoint> endpoints;
+        QVERIFY(daemonapp::daemon::decodePersonsToMirror(personsResponse(), &persons, nullptr,
+                                                         nullptr, &endpoints));
+        QCOMPARE(persons.size(), std::size_t(1));
+        QCOMPARE(persons.at(0).id, QStringLiteral("person-1"));
+        QCOMPARE(persons.at(0).alias, QStringLiteral("Bob (all accounts)"));
+        QCOMPARE(endpoints.size(), std::size_t(1));
+        QCOMPARE(endpoints.at(0).person, QStringLiteral("person-1"));
+        QCOMPARE(endpoints.at(0).transport, QStringLiteral("demo/acct"));
+        QCOMPARE(endpoints.at(0).contact, QStringLiteral("@bob:demo"));
+        QCOMPARE(endpoints.at(0).display_name, QStringLiteral("Bob"));
     }
 
     // ----- codec: TransportSettings read + TransportConfigure -----
@@ -624,21 +823,44 @@ private slots:
         QCOMPARE(decoded->api_request_choice, api_request_r::api_request_request_conv_send_m_c);
     }
 
-    // ----- PersonsRepository over the mux -----
-    void personsRepositoryRefresh() {
+    // ----- DaemonFetchExecutor honors FULL mode (api/39 §10.2) over the mux -----
+    void executorFullModeSendsSinceRevAndAppliesDelta() {
         WireMuxServer fake;
-        QVERIFY2(fake.start(sock(QStringLiteral("persons.sock"))), "listen");
-        fake.setReplyPayload(personsResponse());
+        QVERIFY2(fake.start(sock(QStringLiteral("exec_delta.sock"))), "listen");
+        fake.setReplyPayload(convPageDeltaResponse(9, QByteArrayLiteral("!x:demo"),
+                                                   QByteArrayLiteral("!gone:demo")));
         DaemonTransport tx;
-        tx.setSocketPath(sock(QStringLiteral("persons.sock")));
+        tx.setSocketPath(sock(QStringLiteral("exec_delta.sock")));
         NodeApiClient client(&tx);
-        DaemonCacheStore cache(db(QStringLiteral("persons.db")));
-        PersonsRepository repo(&client, &cache);
-        QSignalSpy refreshed(&repo, &PersonsRepository::personsRefreshed);
-        repo.refresh();
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-        QCOMPARE(repo.persons().size(), 1);
-        QCOMPARE(repo.persons().at(0).id, QStringLiteral("person-1"));
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        daemonapp::daemon::DaemonFetchExecutor exec(&client, svc.ingestor(), svc.scheduler());
+        svc.setFetchExecutor(&exec);
+
+        // A full-mode ConvList with a non-zero since_rev is a delta read.
+        mirror::FetchJob job;
+        job.op = mirror::FetchOp::ConvList;
+        job.scope = QStringLiteral("demo/acct");
+        job.fullMode = true;
+        job.sinceRev = 7;
+        svc.scheduler().enqueue(job);
+
+        // The wire request carried since_rev = 7 (the executor honored full mode).
+        QTRY_VERIFY_WITH_TIMEOUT(!fake.callPayloads().isEmpty(), 3000);
+        auto decoded = std::make_unique<api_request_r>();
+        QVERIFY(decodeReq(fake.callPayloads().first(), decoded.get()));
+        QCOMPARE(decoded->api_request_choice, api_request_r::api_request_request_conv_list_m_c);
+        const request_conv_list& l = decoded->api_request_request_conv_list_m;
+        QVERIFY(l.ConvList_since_rev_present);
+        QCOMPARE(quint64(l.ConvList_since_rev.ConvList_since_rev_uint64_m), quint64(7));
+
+        // The reply applied through the delta seam: the changed conv upserted, rev recorded.
+        QTRY_VERIFY_WITH_TIMEOUT(svc.store().snapshot().conversations.find(mirror::ConversationKey{
+                                     QStringLiteral("demo/acct"), QStringLiteral("!x:demo")}) !=
+                                     nullptr,
+                                 3000);
+        QCOMPARE(svc.ingestor().syncState().collection(QStringLiteral("conversations")).nodeRev,
+                 quint64(9));
     }
 
     // ----- TransportRepository: settings read + configure over the mux -----
@@ -692,30 +914,6 @@ private slots:
                  QStringLiteral("Bob"));
     }
 
-    // ----- DaemonPersonsService projects PersonsRepository into IPersonsService rows -----
-    void daemonPersonsServiceProjects() {
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock(QStringLiteral("personsvc.sock"))), "listen");
-        fake.setReplyPayload(personsResponse());
-        DaemonTransport tx;
-        tx.setSocketPath(sock(QStringLiteral("personsvc.sock")));
-        NodeApiClient client(&tx);
-        DaemonCacheStore cache(db(QStringLiteral("personsvc.db")));
-        PersonsRepository repo(&client, &cache);
-        transports::DaemonPersonsService svc(&repo);
-        QSignalSpy changed(&svc, &transports::IPersonsService::personsChanged);
-        svc.refresh();
-        QTRY_COMPARE_WITH_TIMEOUT(changed.count(), 1, 3000);
-        const QVariantList rows = svc.persons();
-        QCOMPARE(rows.size(), 1);
-        QCOMPARE(rows.at(0).toMap().value(QStringLiteral("id")).toString(),
-                 QStringLiteral("person-1"));
-        const QVariantList eps = rows.at(0).toMap().value(QStringLiteral("endpoints")).toList();
-        QCOMPARE(eps.size(), 1);
-        QCOMPARE(eps.at(0).toMap().value(QStringLiteral("transport")).toString(),
-                 QStringLiteral("demo/acct"));
-    }
-
     // ----- DaemonTransportRegistry: settings surface + accountSchema projection -----
     void daemonRegistrySettings() {
         WireMuxServer fake;
@@ -747,27 +945,6 @@ private slots:
                  QStringLiteral("Password"));
     }
 
-    // ----- Mocks: canned rows + emit on refresh/send (dev stand-ins for the seams) -----
-    void mockPersonsService() {
-        transports::MockPersonsService svc;
-        QSignalSpy changed(&svc, &transports::IPersonsService::personsChanged);
-        svc.refresh();
-        QCOMPARE(changed.count(), 1);
-        QVERIFY(!svc.persons().isEmpty());
-    }
-
-    void mockChatService() {
-        transports::MockChatService svc;
-        QSignalSpy changed(&svc, &transports::IChatService::messagesChanged);
-        svc.send(QStringLiteral("demo/acct"), QStringLiteral("!room:demo"), QStringLiteral("hi"));
-        QCOMPARE(changed.count(), 1);
-        const QVariantList rows =
-            svc.messages(QStringLiteral("demo/acct"), QStringLiteral("!room:demo"));
-        QVERIFY(!rows.isEmpty());
-        QCOMPARE(rows.last().toMap().value(QStringLiteral("text")).toString(),
-                 QStringLiteral("hi"));
-    }
-
     // ----- SubscriptionManager fan-out: MessagesChanged -> ChatRepository, PersonsChanged ->
     // Persons
     void messagesChangedRoutesToChat() {
@@ -791,27 +968,6 @@ private slots:
             daemonapp::test::buildEventsPage({neMessagesChanged("demo/acct", "!room:demo")}, 1, 1));
         // The routed applyMessagesChanged() issues a ConvHistory Call whose Journal reply
         // refreshes.
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-    }
-
-    void personsChangedRoutesToPersons() {
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock(QStringLiteral("subpers.sock"))), "listen");
-        fake.setReplyPayload(personsResponse());
-        DaemonTransport tx;
-        tx.setSocketPath(sock(QStringLiteral("subpers.sock")));
-        NodeApiClient client(&tx);
-        DaemonCacheStore cache(db(QStringLiteral("subpers.db")));
-        SessionRepository sessions(&client, &cache);
-        ApprovalRepository approvals(&client, &cache);
-        ModelRepository models(&client, &cache);
-        PersonsRepository persons(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
-        mgr.setPersonsRepository(&persons);
-        QSignalSpy refreshed(&persons, &PersonsRepository::personsRefreshed);
-        mgr.start();
-        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
-        fake.pushItem(daemonapp::test::buildEventsPage({nePersonsChanged()}, 1, 1));
         QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
     }
 

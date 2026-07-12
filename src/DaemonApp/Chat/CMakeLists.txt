@@ -9,6 +9,8 @@ qt_add_qml_module(da_chat_view
     SOURCES
         chat_conversation_controller.h
         chat_conversation_controller.cpp
+        conv_send_controller.h
+        conv_send_controller.cpp
     QML_FILES
         ChatPage.qml
 )
@@ -23,5 +25,13 @@ target_link_libraries(da_chat_view
         daemon-app::settings
         daemon-app::blockeditor
         daemon-app::composer
+        daemon-app::local
         daemon-app::warnings
+)
+
+# mirror A5 → AD: the chat timeline reads the mirror's ChatWindowModel (unconditional — the
+# mirror is the only data path; the substrate-less legacy rows fork was deleted).
+target_link_libraries(da_chat_view PRIVATE
+    daemon-app::mirror_lens
+    daemon-app::mirror_ingestor
 )

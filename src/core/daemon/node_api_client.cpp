@@ -49,9 +49,12 @@ NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
         connect(m_transport, &DaemonTransport::failed, this,
                 [this](const QString& message) { failAll(message); });
         // An unexpected close (daemon exit / peer disconnect) must not leave exchanges stuck; treat
-        // it as a failure that resets the handshake so the next send reconnects.
-        connect(m_transport, &DaemonTransport::disconnected, this,
-                [this] { failAll(tr("daemon connection closed")); });
+        // it as a failure that resets the handshake so the next send reconnects. Surface a public
+        // disconnected() so the mirror can run its reconnect teardown (§5.6).
+        connect(m_transport, &DaemonTransport::disconnected, this, [this] {
+            failAll(tr("daemon connection closed"));
+            emit disconnected();
+        });
     }
 }
 

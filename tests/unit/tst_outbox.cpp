@@ -538,21 +538,43 @@ private slots:
         QCOMPARE(sent.opId, ids.first()); // the ORIGINAL head, order preserved across the restart
     }
 
-    // ---- no auto-replay (spec 09 §6.8) -----------------------------------------------------
-    void autoReplayGateStaysDisabled() {
-        // Disabled for every api version in A2 — including >= 39 (the BR bridge flips it later).
+    // ---- auto-replay gate flips on rung 3 (spec 09 §6.8) -----------------------------------
+    void autoReplayGateEnabledFromApi39() {
+        // BR flip: auto-replay (unattended drain after reconnect) is enabled per connection iff the
+        // node advertises api/<N> with N >= 39 (dedup + provenance shipped, §10.3). Against api/38
+        // it holds — a blind resend can duplicate (conv_send has no v38 dedup) — and only a manual
+        // tap drains.
         QVERIFY(!Outbox::autoReplayEnabled(38));
-        QVERIFY(!Outbox::autoReplayEnabled(39));
-        QVERIFY(!Outbox::autoReplayEnabled(40));
+        QVERIFY(Outbox::autoReplayEnabled(39));
+        QVERIFY(Outbox::autoReplayEnabled(40));
 
-        // But MANUAL drain always works (the outbox ships fully now; only unattended replay is
-        // gated).
+        // MANUAL drain always works, on every api version (the outbox ships fully now).
         LocalDatabase db(dbPath());
         Outbox ob(&db);
         ob.setGate([](const QString&, VerbClass) { return true; });
         const QString a1 = ob.enqueue(QStringLiteral("ConvSend"), QStringLiteral("t\037A"),
                                       QByteArrayLiteral("a1"), QStringLiteral("a1"));
         ob.drain(); // manual tap
+        QCOMPARE(ob.op(a1).state, OpState::Inflight);
+    }
+
+    // ---- auto-replay drains a held lane on reconnect (spec 09 §6.8) ------------------------
+    void autoReplayDrainsHeldLaneOnReconnect() {
+        // The graph's reconnect handler calls drain() when autoReplayEnabled(api). Simulate it: a
+        // wire-lane op sits pending while the gate is closed (offline), then the api/39 reconnect
+        // drain advances the lane head to inflight — unattended (no user tap).
+        LocalDatabase db(dbPath());
+        Outbox ob(&db);
+        bool connected = false;
+        ob.setGate([&connected](const QString&, VerbClass) { return connected; });
+        const QString a1 = ob.enqueue(QStringLiteral("ConvSend"), QStringLiteral("t\037A"),
+                                      QByteArrayLiteral("a1"), QStringLiteral("a1"));
+        ob.drain(); // offline: the gated wire lane holds
+        QCOMPARE(ob.op(a1).state, OpState::Pending);
+        connected = true;
+        if (Outbox::autoReplayEnabled(39)) {
+            ob.drain(); // reconnect on api/39 ⇒ unattended replay
+        }
         QCOMPARE(ob.op(a1).state, OpState::Inflight);
     }
 

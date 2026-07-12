@@ -1392,8 +1392,52 @@ until it is re-registered.</source>
         <translation>বার্তাটি পাঠানো যায়নি।</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>আগের বার্তাগুলি লোড করুন</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>এখনও কোনো বার্তা নেই</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>অপ্রেরিত (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>পাঠান</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>বাকিগুলি তবুও পাঠান</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>ব্যর্থ</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>পাঠানো হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>পাঠানো হয়েছে</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>সারিবদ্ধ</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>পুনরায় চেষ্টা করুন</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>সম্পাদনা</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>বাতিল করুন</translation>
     </message>
 </context>
 <context>
@@ -2488,17 +2532,6 @@ until it is re-registered.</source>
     <message>
         <source>Unsupported transport</source>
         <translation>অসমর্থিত ট্রান্সপোর্ট</translation>
-    </message>
-</context>
-<context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>চ্যানেল</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM</translation>
     </message>
 </context>
 <context>
@@ -4210,17 +4243,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
-    </message>
-</context>
-<context>
-    <name>MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>এজেন্ট</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ব্যবহারকারী</translation>
     </message>
 </context>
 <context>
@@ -6097,21 +6119,6 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— পিন করা</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· উদ্ভূত</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - দর্শক</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6315,16 +6322,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>SessionDetail প্রতিক্রিয়া ডিকোড করতে ব্যর্থ</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>কোনো daemon-এর সাথে সংযুক্ত নয়</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>সেশন কমান্ডটি প্রত্যাখ্যান করেছে</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta ব্যর্থ হয়েছে</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -6784,10 +6783,6 @@ This only affects the app appearance, not your data.</source>
         <translation>নতুন এজেন্ট</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>নতুন ট্যাগ</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>সব সংকুচিত করুন</translation>
     </message>
@@ -6867,20 +6862,8 @@ This only affects the app appearance, not your data.</source>
         <translation>সংরক্ষণাগারভুক্ত</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>ট্যাগ</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>ফ্লিট</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>ইন্টিগ্রেশন</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>নতুন ট্যাগ</translation>
     </message>
 </context>
 <context>
@@ -8798,12 +8781,6 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_চ্যানেল উপলব্ধ নয়: এই মোডে ট্রান্সপোর্ট সিম যুক্ত করা নেই।_
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8870,6 +8847,12 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Disconnected</source>
         <translation>সংযোগ বিচ্ছিন্ন</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_চ্যানেল উপলব্ধ নয়: এই মোডে চ্যানেল-হাব প্রজেকশন সংযুক্ত নেই।_
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9276,17 +9259,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>চ্যানেল</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9459,16 +9431,8 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
         <translation>SessionDetail প্রতিক্রিয়া ডিকোড করতে ব্যর্থ</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>কোনো daemon-এর সাথে সংযুক্ত নয়</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>সেশন কমান্ডটি প্রত্যাখ্যান করেছে</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta ব্যর্থ হয়েছে</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9542,17 +9506,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>এজেন্ট</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>ব্যবহারকারী</translation>
-    </message>
-</context>
-<context>
     <name>firstrun::FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
@@ -9583,13 +9536,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>মডেল %1 ডিস্কে অনুপস্থিত: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>অংশগ্রহণকারী</translation>
     </message>
 </context>
 <context>

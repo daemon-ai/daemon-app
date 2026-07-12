@@ -32,13 +32,10 @@ target_link_libraries(da_mirror
 # ACTIVE degraded journal, mirror-<id>.db persistence, and the observe seam.
 # ADR-008 FINALIZED (A3, M1): default = coarse signals; the lager candidate was
 # deleted after gate 1 stayed decisively RED on the representative VM TU set
-# (see src/core/mirror/ADR-008-addendum-A3.md). Built ONLY when the header-only
-# immer value substrate is vendored (cmake/Dependencies.cmake sets
-# DAEMON_APP_HAVE_MIRROR_SUBSTRATE and creates the immer target).
-# Platform stacks that do not pass the sources simply skip it; the generated
-# entity layer (da_mirror, above) still builds everywhere.
+# (see src/core/mirror/ADR-008-addendum-A3.md). UNCONDITIONAL (AD, ratified):
+# the mirror IS the data path; cmake/Dependencies.cmake requires the immer pin
+# (every shipped configuration carries it), so there is no substrate-less build.
 # ---------------------------------------------------------------------------
-if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     add_library(da_mirror_substrate STATIC
         journal.cpp
         store.cpp
@@ -84,10 +81,16 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
     add_library(da_mirror_lens STATIC
         table_model.cpp
         conversation_list_model.cpp
+        chat_window_model.cpp
+        person_list_model.cpp
+        contact_list_model.cpp
         table_model.h
         window_model.h
         stable_id.h
         conversation_list_model.h
+        chat_window_model.h
+        person_list_model.h
+        contact_list_model.h
     )
     add_library(daemon-app::mirror_lens ALIAS da_mirror_lens)
 
@@ -117,6 +120,8 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         ingestor.cpp
         write_behind.cpp
         parity.cpp
+        mirror_service.cpp
+        seeder.cpp
         node_event.h
         policy_table.h
         fetch_job.h
@@ -125,6 +130,8 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
         ingestor.h
         write_behind.h
         parity.h
+        mirror_service.h
+        seeder.h
     )
     add_library(daemon-app::mirror_ingestor ALIAS da_mirror_ingestor)
 
@@ -138,4 +145,3 @@ if(DAEMON_APP_HAVE_MIRROR_SUBSTRATE)
             Qt6::Core
             daemon-app::mirror_substrate
     )
-endif()

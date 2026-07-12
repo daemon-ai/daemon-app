@@ -2,12 +2,12 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "auth/auth_flow_controller.h"
-#include "daemonnet/mock_daemonnet.h"
+#include "daemon/mirror_session_store.h"
+#include "daemon/mock_scenario.h"
 #include "fleet/mock_approvals_inbox.h"
-#include "persistence/in_memory_session_store.h"
+#include "mirror/mirror_service.h"
+#include "mirror/seeder.h"
 #include "profiles/mock_profile_store.h"
-#include "transports/mock_persons_service.h"
-#include "transports/mock_transport_registry.h"
 
 #include <QtCore/qstandardpaths.h>
 #include <QtCore/qstring.h>
@@ -25,10 +25,11 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_PagesPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_SidebarPlugin)
 
 // The Sidebar binds the app-global context-property seams (injected by Application::registerContext
-// in production). The test injects the in-repo mocks. Critically it provides a DEMO DaemonNet
-// (whose transportsTree() is non-empty) to prove the legacy transports section is deliberately NOT
-// composed anymore. The AuthFlowController is serviceless so the mounted AuthFlowSheet never binds
-// a redirect sink offscreen.
+// in production). The test seeds the default-scenario MIRROR: the session store projects it and
+// the dedicated IntegrationsTree renders the same mirror through the `Mirror` context property
+// (AD 1a.3 — the registry/persons read seams are gone; the verb-sink `Transports` stays unbound
+// offscreen). The AuthFlowController is serviceless so the mounted AuthFlowSheet never binds a
+// redirect sink offscreen.
 class SidebarTestSetup : public QObject {
     Q_OBJECT
 
@@ -44,31 +45,31 @@ public slots:
             engine->addImportPath(p);
 #endif
         if (m_store == nullptr) {
-            m_daemonNet = new daemonnet::MockDaemonNet(this);
-            m_store = new persistence::InMemorySessionStore(m_daemonNet, this);
+            // AD: the scenario-seeded MIRROR store — the same projection production binds.
+            m_mirror = new mirror::MirrorService(this);
+            m_mirror->openInMemory();
+            mirror::Seeder seeder(m_mirror->store());
+            seeder.seed(
+                daemonapp::daemon::mockScenarioByName(QStringLiteral("default")).mirror.seed);
+            m_store = new daemonapp::daemon::MirrorSessionStore(
+                &m_mirror->store(), &m_mirror->ingestor(), nullptr, this);
             m_profiles = new profiles::MockProfileStore(this);
             m_approvals = new fleet::MockApprovalsInbox(this);
-            m_registry = new transports::MockTransportRegistry(this);
-            m_persons = new transports::MockPersonsService(this);
             m_authFlow = new auth::AuthFlowController(nullptr, this);
         }
         auto* ctx = engine->rootContext();
-        ctx->setContextProperty(QStringLiteral("SessionStore"), m_store);
-        ctx->setContextProperty(QStringLiteral("DaemonNet"), m_daemonNet);
+        ctx->setContextProperty(QStringLiteral("SessionStoreMirror"), m_store);
+        ctx->setContextProperty(QStringLiteral("Mirror"), m_mirror);
         ctx->setContextProperty(QStringLiteral("Profiles"), m_profiles);
         ctx->setContextProperty(QStringLiteral("Approvals"), m_approvals);
-        ctx->setContextProperty(QStringLiteral("Transports"), m_registry);
-        ctx->setContextProperty(QStringLiteral("Persons"), m_persons);
         ctx->setContextProperty(QStringLiteral("AuthFlow"), m_authFlow);
     }
 
 private:
-    daemonnet::MockDaemonNet* m_daemonNet = nullptr;
-    persistence::InMemorySessionStore* m_store = nullptr;
+    mirror::MirrorService* m_mirror = nullptr;
+    daemonapp::daemon::MirrorSessionStore* m_store = nullptr;
     profiles::MockProfileStore* m_profiles = nullptr;
     fleet::MockApprovalsInbox* m_approvals = nullptr;
-    transports::MockTransportRegistry* m_registry = nullptr;
-    transports::MockPersonsService* m_persons = nullptr;
     auth::AuthFlowController* m_authFlow = nullptr;
 };
 

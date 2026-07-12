@@ -134,46 +134,6 @@ bool NodeApiCodec::decodeHealth(const QByteArray& responseCbor, DecodedHealth* o
     return true;
 }
 
-bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
-                                     QString* nextCursor, quint64* rev, QStringList* removed) {
-    if (out == nullptr) {
-        return false;
-    }
-    const auto response =
-        decodeChecked(responseCbor, api_response_r::api_response_response_session_page_m_c);
-    if (!response) {
-        return false;
-    }
-    const session_page& page =
-        response->api_response_response_session_page_m.response_session_page_SessionPage;
-    out->clear();
-    for (size_t i = 0; i < page.session_page_sessions_session_info_m_count; ++i) {
-        out->append(sessionRowFromInfo(page.session_page_sessions_session_info_m[i]));
-    }
-    if (nextCursor != nullptr) {
-        nextCursor->clear();
-        if (page.session_page_next_cursor_present &&
-            page.session_page_next_cursor.session_page_next_cursor_choice ==
-                session_page_next_cursor_r::session_page_next_cursor_session_id_m_c) {
-            *nextCursor =
-                fromZcbor(page.session_page_next_cursor.session_page_next_cursor_session_id_m);
-        }
-    }
-    if (rev != nullptr) {
-        *rev = page.session_page_rev;
-    }
-    if (removed != nullptr) {
-        removed->clear();
-        if (page.session_page_removed_present) {
-            const session_page_removed_r& rm = page.session_page_removed;
-            for (size_t i = 0; i < rm.session_page_removed_session_id_m_count; ++i) {
-                removed->append(fromZcbor(rm.session_page_removed_session_id_m[i]));
-            }
-        }
-    }
-    return true;
-}
-
 namespace {
 QString approvalModeName(int choice) {
     switch (choice) {
@@ -447,6 +407,13 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
             decoded.kind = DecodedNodeEvent::Kind::SessionMetaChanged;
             decoded.session = fromZcbor(m.SessionMetaChanged_session);
             decoded.rev = m.SessionMetaChanged_rev;
+            // [api/39 §10.3 carrier 3] the causing op's client op_id (null/absent ⇒ empty).
+            if (m.SessionMetaChanged_origin_op_present &&
+                m.SessionMetaChanged_origin_op.SessionMetaChanged_origin_op_choice ==
+                    SessionMetaChanged_origin_op_r::SessionMetaChanged_origin_op_origin_op_m_c) {
+                decoded.originOp = fromZcbor(
+                    m.SessionMetaChanged_origin_op.SessionMetaChanged_origin_op_origin_op_m);
+            }
             break;
         }
         case node_event_r::node_event_roster_changed_m_c:
@@ -533,6 +500,14 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
                                          conv_change_r::conv_change_Added_tstr_c
                                      ? QStringLiteral("added")
                                      : QStringLiteral("removed");
+            // [api/39 §10.3 carrier 3] the causing op's client op_id (null/absent ⇒ empty).
+            if (m.ConversationsChanged_origin_op_present &&
+                m.ConversationsChanged_origin_op.ConversationsChanged_origin_op_choice ==
+                    ConversationsChanged_origin_op_r::
+                        ConversationsChanged_origin_op_origin_op_m_c) {
+                decoded.originOp = fromZcbor(
+                    m.ConversationsChanged_origin_op.ConversationsChanged_origin_op_origin_op_m);
+            }
             break;
         }
         case node_event_r::node_event_membership_changed_m_c: {
@@ -1878,6 +1853,32 @@ bool NodeApiCodec::decodeGatewayStatus(const QByteArray& responseCbor, DecodedGa
     if (s.gateway_status_last_error_choice == gateway_status::gateway_status_last_error_tstr_c) {
         out->hasLastError = true;
         out->lastError = fromZcbor(s.gateway_status_last_error_tstr);
+    }
+    return true;
+}
+
+// --- [api/39 §10.3] Bootstrap probe response ---------------------------------------------------
+bool NodeApiCodec::decodeBootstrap(const QByteArray& responseCbor, quint64* cursor, quint64* epoch,
+                                   QHash<QString, quint64>* revs) {
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_bootstrap_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_bootstrap& b = response->api_response_response_bootstrap_m;
+    if (cursor != nullptr) {
+        *cursor = b.Bootstrap_cursor;
+    }
+    if (epoch != nullptr) {
+        *epoch = b.Bootstrap_epoch;
+    }
+    if (revs != nullptr) {
+        revs->clear();
+        revs->reserve(static_cast<int>(b.revs_uint64_m_count));
+        for (size_t i = 0; i < b.revs_uint64_m_count; ++i) {
+            revs->insert(fromZcbor(b.revs_uint64_m[i].response_bootstrap_revs_uint64_m_key),
+                         b.revs_uint64_m[i].revs_uint64_m);
+        }
     }
     return true;
 }

@@ -5,9 +5,9 @@ import QtQuick
 import QtTest
 import DaemonApp.Sidebar
 
-// [integrations wire v38] Work package AC (sidebar composition): the REAL IntegrationsTree.qml
-// renderer, driven by the mock Transports / Persons seams injected as the app-global context
-// properties. Guards that (a) the tree populates from the shared IntegrationsTreeModel, (b)
+// [integrations wire v38 → AD 1a.3] Work package AC (sidebar composition): the REAL
+// IntegrationsTree.qml renderer, driven by a SEEDED MIRROR injected as the app-global `Mirror`
+// context property (the tree's one read source in both modes). Guards that (a) the tree populates from the shared IntegrationsTreeModel, (b)
 // activating a conversation row routes through to the component's conversationActivated signal
 // (the seam the shell hands to the chat-tab dispatch), and (c) the schema-driven add-account flow
 // hands off to the interactive AuthFlowSheet (the auth handoff A2 left dangling).
@@ -44,7 +44,7 @@ TestCase {
     function test_populated_from_mock_services() {
         var m = findChild(tree, "integrationsTreeModel");
         verify(m !== null, "the shared IntegrationsTreeModel is reachable");
-        verify(m.rowCount() > 0, "tree populated from the mock Transports seam");
+        verify(m.rowCount() > 0, "tree populated from the seeded mirror");
         verify(findConversationRow(m) >= 0, "at least one conversation row rendered");
     }
 

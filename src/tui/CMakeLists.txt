@@ -46,10 +46,13 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Session/subagent_model.cpp
     ../DaemonApp/Tabs/tab_model.h
     ../DaemonApp/Tabs/tab_model.cpp
-    # [integrations wire v38] Native-chat tab view-model, shared verbatim with the GUI
-    # (ChatPage.qml). Toolkit-agnostic: only QObject + the transports IChatService seam.
+    # [integrations wire v38 → mirror M2] Native-chat tab view-models, shared verbatim with the
+    # GUI (ChatPage.qml): the conversation controller (mirror-window read path where the substrate
+    # is built) + the ConvSend outbox-lane controller with its per-conversation pending strip.
     ../DaemonApp/Chat/chat_conversation_controller.h
     ../DaemonApp/Chat/chat_conversation_controller.cpp
+    ../DaemonApp/Chat/conv_send_controller.h
+    ../DaemonApp/Chat/conv_send_controller.cpp
     ../DaemonApp/Command/command_registry.h
     ../DaemonApp/Command/command_registry.cpp
     # File tree + editor view-models, shared verbatim with the GUI.
@@ -58,8 +61,6 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Files/file_finder_model.h
     ../DaemonApp/Files/file_finder_model.cpp
     # Participants section model, shared verbatim with the GUI.
-    ../DaemonApp/Participants/participants_model.h
-    ../DaemonApp/Participants/participants_model.cpp
     ../DaemonApp/Editor/app/code_editor_controller.h
     ../DaemonApp/Editor/app/code_editor_controller.cpp
     ../DaemonApp/Editor/app/line_model.h
@@ -89,7 +90,6 @@ target_include_directories(da_tui_viewmodels PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Chat"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Command"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Files"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Participants"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Editor"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Editor/app"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Memory"
@@ -111,12 +111,22 @@ target_link_libraries(da_tui_viewmodels
         # The memory view-models talk to the memory-inspection seam.
         daemon-app::memory
         # [integrations wire v38] IntegrationsTreeModel / AccountManagementController bind the
-        # transport-adapter + person registry seams (ITransportRegistry / IPersonsService);
+        # transport-adapter VERB seam (ITransportRegistry; reads live on the mirror);
         # ChatConversationController binds the transports IChatService seam.
         daemon-app::transports
         daemon-app::uimodels
+        # mirror A5: ConvSendController rides the durable outbox (always built); PUBLIC so the
+        # daemon-tui shell's includes of conv_send_controller.h resolve outbox_types.h.
+        daemon-app::local
     PRIVATE
         daemon-app::warnings
+)
+
+# mirror A5 → AD: the shared chat controller reads the mirror window (unconditional — the
+# mirror is the only data path; the substrate-less legacy fork was deleted).
+target_link_libraries(da_tui_viewmodels PUBLIC
+    daemon-app::mirror_lens
+    daemon-app::mirror_ingestor
 )
 
 # ---------------------------------------------------------------------------
@@ -218,6 +228,9 @@ qt_add_executable(daemon-tui
     session_list_view.cpp
     queue_strip_view.h
     queue_strip_view.cpp
+    # [mirror M2] Chat pending strip: the ConvSend outbox lens beside the timeline (§8.4).
+    chat_pending_strip_view.h
+    chat_pending_strip_view.cpp
     attachment_bar_view.h
     attachment_bar_view.cpp
     status_bar_view.h
@@ -226,8 +239,6 @@ qt_add_executable(daemon-tui
     tab_strip_view.cpp
     file_tree_view.h
     file_tree_view.cpp
-    participants_view.h
-    participants_view.cpp
     code_editor_view.h
     code_editor_view.cpp
     composer_chrome.h
@@ -299,7 +310,7 @@ target_link_libraries(daemon-tui
         daemon-app::profiles
         daemon-app::fleet
         daemon-app::automation
-        # The Channels hub page projects the transport-registry + presence seams.
+        # The Channels hub page renders the shared ChannelsHubModel mirror projection.
         daemon-app::transports
         daemon-app::session
         daemon-app::daemon_client

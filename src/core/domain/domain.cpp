@@ -7,7 +7,6 @@
 #include "domain/ids.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
-#include "domain/tag.h"
 #include "domain/unit_node.h"
 
 namespace domain {
@@ -15,7 +14,6 @@ namespace {
 
 const int kSessionId = qRegisterMetaType<Session>();
 const int kUnitNodeId = qRegisterMetaType<UnitNode>();
-const int kTagId = qRegisterMetaType<Tag>();
 const int kListScopeId = qRegisterMetaType<ListScope>();
 const int kProfileRefId = qRegisterMetaType<ProfileRef>();
 const int kUnitIdId = qRegisterMetaType<UnitId>();

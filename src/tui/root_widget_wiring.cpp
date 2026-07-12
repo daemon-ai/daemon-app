@@ -6,9 +6,10 @@
 #include "chat_conversation_controller.h"
 #include "command_registry.h"
 #include "composer_session_controller.h"
+#include "conv_send_controller.h"
+#include "daemon/channels_hub_model.h"        // AD (1a.3): the Channels page repaint source
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // live refresh of the Users & Access page
-#include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
 #include "feedback/ifeedback.h"     // complete type for the transcript thumbs-feedback submit
 #include "fleet/iapprovals_inbox.h" // complete type for the footer pending-approvals count (TOOL-8)
@@ -20,8 +21,8 @@
 #include "memory_list_model.h"
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
-#include "participants_model.h"
-#include "participants_view.h"
+#include "mirror/mirror_service.h" // Store::committed drives the Routing page re-render (M3)
+#include "mirror/store.h"
 #include "persistence/isession_store.h"
 #include "platform/autostart/autostart_controller.h" // live refresh of the Startup settings row
 #include "profiles/iprofile_store.h" // complete type for the persona (soulChanged) repaint hook
@@ -38,7 +39,6 @@
 #include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2: live-refresh the inventory
 #include "transcript_exporter.h"
 #include "transports/icontacts_service.h"
-#include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
@@ -121,8 +121,8 @@ void RootWidget::wireModelBindings() {
     // SessionStore.changed() -> _resolveTitle() in TranscriptPage.qml). The
     // mid-turn reload guard lives in refreshTranscript(); titles are safe to
     // refresh any time.
-    connect(m_services.store, &persistence::ISessionStore::changed, this,
-            [this] { rwdetail::refreshTranscriptTabTitles(m_tabModel, m_services.store); });
+    connect(m_services.storeMirror, &persistence::ISessionStore::changed, this,
+            [this] { rwdetail::refreshTranscriptTabTitles(m_tabModel, m_services.storeMirror); });
 }
 
 void RootWidget::wirePageLiveRefresh() {
@@ -163,10 +163,11 @@ void RootWidget::wirePageLiveRefresh() {
     if (m_services.tools != nullptr) {
         liveRefresh(m_services.tools->tools(), TabModel::Settings);
     }
-    // The Routing page projects the DaemonNet pin table (no row model): re-render the open page
-    // when the pins / rooms / accounts change (B6/ROU).
-    if (m_services.daemonNet != nullptr) {
-        connect(m_services.daemonNet, &daemonnet::IDaemonNet::changed, this,
+    // The Routing page projects the mirror store's pin table (route_pins): re-render the open page
+    // whenever the store commits (a routing fetch landing is a commit; the refresh is a no-op
+    // unless the Routing page is active). Daemon mode only (the store is null in mock).
+    if (m_services.mirrorService != nullptr) {
+        connect(&m_services.mirrorService->store(), &mirror::Store::committed, this,
                 [this] { refreshPageIfActive(TabModel::Routing); });
     }
     liveRefresh(m_services.cron->jobs(), TabModel::Cron);
@@ -190,32 +191,20 @@ void RootWidget::wirePageLiveRefresh() {
     // The Channels page projects the transports seams, which are plain signal
     // emitters (no row models): re-render the open page when the adapter list,
     // the configured accounts, an account's rooms or a connection state change
-    // (GUI parity: ChannelsPage.qml's Connections re-read on the same signals).
-    if (m_services.transportRegistry != nullptr) {
-        auto* reg = m_services.transportRegistry;
-        connect(reg, &transports::ITransportRegistry::adaptersChanged, this,
+    // (GUI parity: ChannelsPage.qml's Connections re-read on the same signals). AD (1a.3): the
+    // Channels page reads the SHARED mirror projection; its four change signals are the ONE
+    // repaint source (accounts/adapters/rooms/contacts — including presence, which rides the
+    // account rows now).
+    if (m_services.channelsHub != nullptr) {
+        auto* hub = m_services.channelsHub;
+        connect(hub, &daemonapp::daemon::ChannelsHubModel::adaptersChanged, this,
                 [this] { refreshPageIfActive(TabModel::Channels); });
-        connect(reg, &transports::ITransportRegistry::instancesChanged, this,
+        connect(hub, &daemonapp::daemon::ChannelsHubModel::accountsChanged, this,
                 [this] { refreshPageIfActive(TabModel::Channels); });
-        connect(reg, &transports::ITransportRegistry::conversationsChanged, this,
+        connect(hub, &daemonapp::daemon::ChannelsHubModel::conversationsChanged, this,
                 [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
-        // [waveB:app-v30] D2: the per-tab-enter ConvList refetch-all is RETIRED. Conversations are
-        // seeded once per connect (the connect-ready baseline in AppServiceGraph) and kept fresh by
-        // the ConversationsChanged / MembershipChanged feed events + the TransportChanged-connected
-        // seed — no client polling. The conversationsChanged wire above still repaints on arrival.
-    }
-    if (m_services.presence != nullptr) {
-        connect(m_services.presence, &transports::IPresenceService::presenceChanged, this,
+        connect(hub, &daemonapp::daemon::ChannelsHubModel::contactsChanged, this,
                 [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
-    }
-    // [acct-mgmt] The Contacts seam re-projects on a roster refresh / mutation / the node's
-    // ContactsChanged feed event; repaint the Channels page so the contact rows update (GUI
-    // parity: ChannelsPage's Connections re-read on contactsChanged).
-    if (m_services.contacts != nullptr) {
-        connect(m_services.contacts, &transports::IContactsService::contactsChanged, this,
-                [this](const QString&, const QVariantList&) {
-                    refreshPageIfActive(TabModel::Channels);
-                });
     }
     // The Settings page projects the daemon config + the app-pref store; re-render
     // it whenever either seam reports a write (an edit made on the page itself, or
@@ -364,7 +353,7 @@ void RootWidget::wireSessionList() {
     connect(m_listView, &SessionListView::pinToggleRequested, this, [this](int row) {
         const QString id = m_list->idAt(row);
         if (!id.isEmpty()) {
-            m_services.store->setPinned(id, !m_services.store->isPinned(id));
+            m_services.storeMirror->setPinned(id, !m_services.storeMirror->isPinned(id));
         }
     });
     connect(m_listView, &SessionListView::deleteRequested, this, [this](int row) {
@@ -375,44 +364,44 @@ void RootWidget::wireSessionList() {
         auto* confirm =
             new ConfirmDialog(tr("Delete session"), tr("Permanently delete this session?"), this);
         connect(confirm, &ConfirmDialog::confirmed, this,
-                [this, id] { m_services.store->deleteSession(id); });
+                [this, id] { m_services.storeMirror->deleteSession(id); });
     });
     connect(m_listView, &SessionListView::exportRequested, this, [this](int row) {
         const QString id = m_list->idAt(row);
         if (id.isEmpty()) {
             return;
         }
-        QString name = m_services.store->title(id);
+        QString name = m_services.storeMirror->title(id);
         if (name.isEmpty()) {
             name = QStringLiteral("session");
         }
         const QString path = QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
-        m_exporter->exportToPath(m_services.store, id, path);
+        m_exporter->exportToPath(m_services.storeMirror, id, path);
     });
     connect(m_listView, &SessionListView::renameRequested, this, [this](int row) {
         const QString id = m_list->idAt(row);
         if (id.isEmpty()) {
             return;
         }
-        auto* dialog = new TextPromptDialog(tr("Rename session"), m_services.store->title(id),
+        auto* dialog = new TextPromptDialog(tr("Rename session"), m_services.storeMirror->title(id),
                                             /*masked=*/false, this);
         connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
             if (!text.trimmed().isEmpty()) {
-                m_services.store->renameSession(id, text.trimmed());
+                m_services.storeMirror->renameSession(id, text.trimmed());
             }
         });
     });
     connect(m_listView, &SessionListView::moveRequested, this, [this](int row, int delta) {
         const QString id = m_list->idAt(row);
         if (!id.isEmpty()) {
-            m_services.store->moveSession(id, delta);
+            m_services.storeMirror->moveSession(id, delta);
         }
     });
     // Pin/archive/rename are node-owned: the store sends a SessionUpdateMeta intent and the roster
     // re-projects from the node's reply. A rejected/failed write must not look applied - surface it
     // through the TUI notification path (GUI parity: the SessionStore.metaUpdateFailed -> Kit.Toast
     // in Main.qml). The in-memory/mock store never emits this, so this is inert off daemon mode.
-    connect(m_services.store, &persistence::ISessionStore::metaUpdateFailed, this,
+    connect(m_services.storeMirror, &persistence::ISessionStore::metaUpdateFailed, this,
             [](const QString& /*sessionId*/, const QString& message) {
                 rwdetail::emitDesktopNotification(
                     RootWidget::tr("Session update failed"),
@@ -588,11 +577,11 @@ void RootWidget::handleComposerCommand(const QString& command) {
             return;
         }
         const QString id = m_active->sessionId;
-        auto* dialog = new TextPromptDialog(tr("Rename session"), m_services.store->title(id),
+        auto* dialog = new TextPromptDialog(tr("Rename session"), m_services.storeMirror->title(id),
                                             /*masked=*/false, this);
         connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
             if (!text.trimmed().isEmpty()) {
-                m_services.store->renameSession(id, text.trimmed());
+                m_services.storeMirror->renameSession(id, text.trimmed());
             }
         });
         return;
@@ -602,12 +591,12 @@ void RootWidget::handleComposerCommand(const QString& command) {
             return;
         }
         const QString id = m_active->sessionId;
-        QString name = m_services.store->title(id);
+        QString name = m_services.storeMirror->title(id);
         if (name.isEmpty()) {
             name = QStringLiteral("session");
         }
         const QString path = QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
-        m_exporter->exportToPath(m_services.store, id, path);
+        m_exporter->exportToPath(m_services.storeMirror, id, path);
         return;
     }
     if (command == QStringLiteral("compress")) {
@@ -700,10 +689,17 @@ void RootWidget::wireComposer() {
     // document). Background tabs keep their own orchestrators running independently.
     connect(m_composerSession, &ComposerSessionController::submitted, this,
             [this](const QString& text, const QString& refs) {
-                // [integrations wire v38] A native chat tab: send via ConvSend (no local
-                // echo — the node's MessagesChanged brings the line back authoritatively).
+                // [integrations wire v38 → mirror M2] A native chat tab: with the durable
+                // ConvSend lane live (daemon mode), enqueue THEN drain on this explicit user
+                // action (§6.8 manual drain — anything held back shows in the pending strip;
+                // no local echo ever, R2). Mock/fallback keeps the legacy direct send.
                 if (m_activeChat != nullptr) {
-                    m_activeChat->send(text);
+                    if (m_activeChatSend != nullptr && m_activeChatSend->laneActive()) {
+                        m_activeChatSend->send(text);
+                        m_activeChatSend->drain();
+                    } else {
+                        m_activeChat->send(text);
+                    }
                     return;
                 }
                 if (m_active != nullptr) {
@@ -758,6 +754,19 @@ void RootWidget::wireComposer() {
             m_composer->setFocus();
         }
     });
+
+    // [mirror M2] Chat pending strip (§6.5 edit affordance): 'e' on a rejected entry reopens its
+    // text in the composer — the re-send mints a NEW op-id (the old one was discarded).
+    if (m_chatPending != nullptr) {
+        connect(m_chatPending, &ChatPendingStripView::editRequested, this,
+                [this](const QString& text) {
+                    if (m_composer != nullptr) {
+                        m_composer->setText(text);
+                        m_composer->moveCursorToEnd();
+                        m_composer->setFocus();
+                    }
+                });
+    }
 
     // Attachment chips bind to the shared session; Ctrl+O on the composer opens
     // the workspace attach picker (the GUI's "+" menu -> Files flow, served by
@@ -852,7 +861,7 @@ void RootWidget::wireSessionStreaming(TabSession* s) {
             if (m_services.settings != nullptr &&
                 m_services.settings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
                 const QString convTitle = s->controller->hasSession()
-                                              ? m_services.store->title(s->sessionId)
+                                              ? m_services.storeMirror->title(s->sessionId)
                                               : tr("daemon");
                 rwdetail::emitDesktopNotification(convTitle, tr("The turn finished."));
             }
@@ -883,7 +892,7 @@ void RootWidget::wireSessionStreaming(TabSession* s) {
             terminal()->setTitle(tr("\u25cf daemon \u2014 needs %1").arg(what));
         }
         const QString convTitle = (m_active != nullptr && m_active->controller->hasSession())
-                                      ? m_services.store->title(m_active->sessionId)
+                                      ? m_services.storeMirror->title(m_active->sessionId)
                                       : tr("daemon");
         rwdetail::emitDesktopNotification(convTitle, tr("The turn needs your %1.").arg(what));
     });

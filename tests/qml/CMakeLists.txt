@@ -216,6 +216,8 @@ target_link_libraries(tst_integrations
         da_sidebarplugin
         daemon-app::transports
         daemon-app::auth
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 target_compile_definitions(tst_integrations
     PRIVATE
@@ -228,10 +230,10 @@ set_tests_properties(tst_integrations PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
 )
 
-# [integrations wire v38] tst_sidebar (work package AC): the REAL Sidebar.qml composition. Injects
-# the mock seams incl. a DEMO DaemonNet (non-empty transportsTree()) to prove the legacy transports
-# section is deliberately NOT re-composed, while the new IntegrationsTree is mounted + populated and
-# its conversation activation propagates to the Sidebar's conversationActivated signal.
+# tst_sidebar: the REAL Sidebar.qml composition. Injects the mock seams (the mock fleet seed backs
+# the session store) to prove the fleet SidebarModel renders no transport section (the legacy
+# transports-tree sidebar path was deleted in M3), while the IntegrationsTree is mounted + populated
+# and its conversation activation propagates to the Sidebar's conversationActivated signal.
 qt_add_executable(tst_sidebar tst_sidebar_main.cpp)
 target_link_libraries(tst_sidebar
     PRIVATE
@@ -256,6 +258,9 @@ target_link_libraries(tst_sidebar
         daemon-app::daemonnet
         daemon-app::fleet
         daemon-app::uimodels
+        # AD: the scenario-seeded mirror store replaces the deleted InMemory fixture.
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 target_compile_definitions(tst_sidebar
     PRIVATE

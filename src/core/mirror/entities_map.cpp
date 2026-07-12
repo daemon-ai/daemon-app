@@ -7,7 +7,11 @@
 
 #include "entities_map_gen.h"
 
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QString>
+#include <QStringList>
 
 namespace mirror {
 namespace {
@@ -76,6 +80,64 @@ QString presencePrimitive(const ::presence_primitive_t_r& p) {
     return {};
 }
 
+// connection-state enum → the lowercase token convention the TransportChanged event decode uses
+// (connectionStateName parity — the full-list read and the patch-in-place write identical state).
+QString connectionToken(const ::connection_state_r& c) {
+    switch (c.connection_state_choice) {
+    case ::connection_state_r::connection_state_Offline_tstr_c:
+        return QStringLiteral("offline");
+    case ::connection_state_r::connection_state_Connecting_tstr_c:
+        return QStringLiteral("connecting");
+    case ::connection_state_r::connection_state_Connected_tstr_c:
+        return QStringLiteral("connected");
+    case ::connection_state_r::connection_state_Disconnecting_tstr_c:
+        return QStringLiteral("disconnecting");
+    case ::connection_state_r::connection_state_Error_tstr_c:
+        return QStringLiteral("error");
+    }
+    return {};
+}
+
+// presence-state enum → lowercase token (presenceStateName parity).
+QString presenceToken(const ::presence_state_r& p) {
+    switch (p.presence_state_choice) {
+    case ::presence_state_r::presence_state_Unknown_tstr_c:
+        return QStringLiteral("unknown");
+    case ::presence_state_r::presence_state_Offline_tstr_c:
+        return QStringLiteral("offline");
+    case ::presence_state_r::presence_state_Available_tstr_c:
+        return QStringLiteral("available");
+    case ::presence_state_r::presence_state_Idle_tstr_c:
+        return QStringLiteral("idle");
+    case ::presence_state_r::presence_state_Away_tstr_c:
+        return QStringLiteral("away");
+    case ::presence_state_r::presence_state_Busy_tstr_c:
+        return QStringLiteral("busy");
+    }
+    return {};
+}
+
+// disconnect-reason enum → coarse lowercase token (disconnectReasonName parity).
+QString disconnectToken(const ::disconnect_reason_r& r) {
+    switch (r.disconnect_reason_choice) {
+    case ::disconnect_reason_r::disconnect_reason_UserRequested_tstr_c:
+        return QStringLiteral("user_requested");
+    case ::disconnect_reason_r::disconnect_reason_NetworkError_tstr_c:
+        return QStringLiteral("network_error");
+    case ::disconnect_reason_r::disconnect_reason_AuthenticationFailed_tstr_c:
+        return QStringLiteral("authentication_failed");
+    case ::disconnect_reason_r::disconnect_reason_ReplacedByOtherClient_tstr_c:
+        return QStringLiteral("replaced_by_other_client");
+    case ::disconnect_reason_r::disconnect_reason_InvalidSettings_tstr_c:
+        return QStringLiteral("invalid_settings");
+    case ::disconnect_reason_r::disconnect_reason_CertificateError_tstr_c:
+        return QStringLiteral("certificate_error");
+    case ::disconnect_reason_r::disconnect_reason_Other_tstr_c:
+        return QStringLiteral("other");
+    }
+    return {};
+}
+
 // content-hash ([* uint] byte list) → lowercase hex string (the #blob_hash derivation, §3.3).
 QString contentHashHex(const ::content_hash& h) {
     QString out;
@@ -98,6 +160,141 @@ QString participantDisplay(const ::participant_r& p) {
     return {};
 }
 
+// origin#origin_key: the canonical, order-stable pin key (mirrors daemon-node's `origin_pin_key`
+// and the client-side `daemonnet::originKey`), named ONCE here per the RoutePin entity-map
+// provenance (chat-route.origin#origin_key). A group scope always appends `|<thread>` (empty when
+// absent) so the key is stable across the thread-present/absent cases.
+QString originKeyOf(const ::origin& o) {
+    const QString t = qstr(o.origin_transport);
+    switch (o.origin_scope.origin_scope_t_choice) {
+    case ::origin_scope_t_r::origin_scope_t_origin_scope_dm_m_c:
+        return t + QStringLiteral("|dm|") +
+               qstr(o.origin_scope.origin_scope_t_origin_scope_dm_m.Dm_user);
+    case ::origin_scope_t_r::origin_scope_t_origin_scope_group_m_c: {
+        const ::origin_scope_group& g = o.origin_scope.origin_scope_t_origin_scope_group_m;
+        const QString thread = g.Group_thread_choice == ::origin_scope_group::Group_thread_tstr_c
+                                   ? qstr(g.Group_thread_tstr)
+                                   : QString();
+        return t + QStringLiteral("|group|") + qstr(g.Group_chat) + QLatin1Char('|') + thread;
+    }
+    case ::origin_scope_t_r::origin_scope_t_origin_scope_api_m_c:
+        return t + QStringLiteral("|api|") +
+               qstr(o.origin_scope.origin_scope_t_origin_scope_api_m.Api_key);
+    default:
+        return t + QStringLiteral("|internal");
+    }
+}
+
+// isolation_policy enum → canonical string (entity-map provenance chat-route.isolation).
+QString isolationPolicy(const ::isolation_policy_r& p) {
+    switch (p.isolation_policy_choice) {
+    case ::isolation_policy_r::isolation_policy_PerUser_tstr_c:
+        return QStringLiteral("PerUser");
+    case ::isolation_policy_r::isolation_policy_PerChat_tstr_c:
+        return QStringLiteral("PerChat");
+    case ::isolation_policy_r::isolation_policy_PerThread_tstr_c:
+        return QStringLiteral("PerThread");
+    case ::isolation_policy_r::isolation_policy_Shared_tstr_c:
+        return QStringLiteral("Shared");
+    }
+    return {};
+}
+
+// session-state enum → canonical string (entity-map provenance session-info.state). The Suspended
+// variant carries a job id on the wire; the mirror row keeps only the discriminator string (the
+// job id is not a Session field), consistent with the other union-discriminator mappings (§3.3).
+QString sessionState(const ::session_state_r& s) {
+    switch (s.session_state_choice) {
+    case ::session_state_r::session_state_Active_tstr_c:
+        return QStringLiteral("Active");
+    case ::session_state_r::session_state_suspended_m_c:
+        return QStringLiteral("Suspended");
+    case ::session_state_r::session_state_Ready_tstr_c:
+        return QStringLiteral("Ready");
+    case ::session_state_r::session_state_Completed_tstr_c:
+        return QStringLiteral("Completed");
+    case ::session_state_r::session_state_Unknown_tstr_c:
+        return QStringLiteral("Unknown");
+    }
+    return {};
+}
+
+// lifecycle enum → canonical string (session-info.lifecycle / unit-node context).
+QString lifecycleStr(const ::lifecycle_r& l) {
+    switch (l.lifecycle_choice) {
+    case ::lifecycle_r::lifecycle_Durable_tstr_c:
+        return QStringLiteral("Durable");
+    case ::lifecycle_r::lifecycle_Live_tstr_c:
+        return QStringLiteral("Live");
+    }
+    return {};
+}
+
+// session-role enum → canonical string (session-info.role / unit-node.role).
+QString sessionRole(const ::session_role_r& r) {
+    switch (r.session_role_choice) {
+    case ::session_role_r::session_role_Primary_tstr_c:
+        return QStringLiteral("Primary");
+    case ::session_role_r::session_role_ManagedChild_tstr_c:
+        return QStringLiteral("ManagedChild");
+    case ::session_role_r::session_role_EphemeralSubagent_tstr_c:
+        return QStringLiteral("EphemeralSubagent");
+    }
+    return {};
+}
+
+// unit-kind enum → canonical string (unit-node.kind).
+QString unitKind(const ::unit_kind_r& k) {
+    switch (k.unit_kind_choice) {
+    case ::unit_kind_r::unit_kind_Engine_tstr_c:
+        return QStringLiteral("Engine");
+    case ::unit_kind_r::unit_kind_Host_tstr_c:
+        return QStringLiteral("Host");
+    case ::unit_kind_r::unit_kind_Orchestrator_tstr_c:
+        return QStringLiteral("Orchestrator");
+    }
+    return {};
+}
+
+// unit-state enum → canonical string (unit-node.state). Finished additionally carries an
+// end_reason on the wire, mapped into the sibling end_reason field (AD; the engine's child
+// end-reason read re-homed off the legacy fleet cache), §3.3.
+QString unitState(const ::unit_state_r& s) {
+    switch (s.unit_state_choice) {
+    case ::unit_state_r::unit_state_Running_tstr_c:
+        return QStringLiteral("Running");
+    case ::unit_state_r::unit_state_finished_m_c:
+        return QStringLiteral("Finished");
+    case ::unit_state_r::unit_state_Unknown_tstr_c:
+        return QStringLiteral("Unknown");
+    }
+    return {};
+}
+
+// transcript-role enum → canonical string (transcript-block-message.role).
+QString transcriptRole(const ::transcript_role_r& r) {
+    switch (r.transcript_role_choice) {
+    case ::transcript_role_r::transcript_role_Assistant_tstr_c:
+        return QStringLiteral("Assistant");
+    case ::transcript_role_r::transcript_role_User_tstr_c:
+        return QStringLiteral("User");
+    case ::transcript_role_r::transcript_role_System_tstr_c:
+        return QStringLiteral("System");
+    }
+    return {};
+}
+
+// delegation-lifetime enum → canonical string (unit-node.lifetime).
+QString delegationLifetime(const ::delegation_lifetime_r& l) {
+    switch (l.delegation_lifetime_choice) {
+    case ::delegation_lifetime_r::delegation_lifetime_Persistent_tstr_c:
+        return QStringLiteral("Persistent");
+    case ::delegation_lifetime_r::delegation_lifetime_Ephemeral_tstr_c:
+        return QStringLiteral("Ephemeral");
+    }
+    return {};
+}
+
 } // namespace
 
 AccessUser map_access_user(const ::access_user& in) {
@@ -108,9 +305,148 @@ AccessUser map_access_user(const ::access_user& in) {
 }
 
 Adapter map_adapter(const ::adapter_info& in) {
+    // AD (1a) arm: connect-refresh → TransportAdapters. The per-verb ops maps (wire v33) are
+    // serialized into ONE canonical-JSON column (`ops_json`, camelCase keys — the convention the
+    // deleted registry rows used); an ABSENT/null wire map is an absent JSON key, so consumers
+    // keep the "no per-verb info ⇒ coarse capability fallback" distinction.
     Adapter out;
-    (void)in;
-    // TODO(mirror-map): populate Adapter from wire per entity-map.toml provenance.
+    out.family = qstr(in.adapter_info_family);
+    out.display_name = qstr(in.adapter_info_display_name);
+    out.cap_rooms = in.adapter_info_capabilities.adapter_capabilities_rooms;
+    out.cap_direct_messages = in.adapter_info_capabilities.adapter_capabilities_direct_messages;
+    out.cap_file_transfer = in.adapter_info_capabilities.adapter_capabilities_file_transfer;
+    if (in.adapter_info_directory_present) {
+        out.directory = in.adapter_info_directory.adapter_info_directory;
+    }
+    QJsonObject ops;
+    if (in.adapter_info_conversation_ops_present &&
+        in.adapter_info_conversation_ops.adapter_info_conversation_ops_choice ==
+            ::adapter_info_conversation_ops_r::adapter_info_conversation_ops_conversation_ops_m_c) {
+        const ::conversation_ops& c =
+            in.adapter_info_conversation_ops.adapter_info_conversation_ops_conversation_ops_m;
+        ops.insert(
+            QStringLiteral("conversationOps"),
+            QJsonObject{{QStringLiteral("create"), c.conversation_ops_create},
+                        {QStringLiteral("joinChannel"), c.conversation_ops_join_channel},
+                        {QStringLiteral("leave"), c.conversation_ops_leave},
+                        {QStringLiteral("delete"), c.conversation_ops_delete},
+                        {QStringLiteral("send"), c.conversation_ops_send},
+                        {QStringLiteral("setTopic"), c.conversation_ops_set_topic},
+                        {QStringLiteral("setTitle"), c.conversation_ops_set_title},
+                        {QStringLiteral("setDescription"), c.conversation_ops_set_description}});
+    }
+    if (in.adapter_info_membership_ops_present &&
+        in.adapter_info_membership_ops.adapter_info_membership_ops_choice ==
+            ::adapter_info_membership_ops_r::adapter_info_membership_ops_membership_ops_m_c) {
+        const ::membership_ops& m =
+            in.adapter_info_membership_ops.adapter_info_membership_ops_membership_ops_m;
+        ops.insert(QStringLiteral("membershipOps"),
+                   QJsonObject{{QStringLiteral("invite"), m.membership_ops_invite},
+                               {QStringLiteral("remove"), m.membership_ops_remove},
+                               {QStringLiteral("ban"), m.membership_ops_ban},
+                               {QStringLiteral("setRole"), m.membership_ops_set_role}});
+    }
+    if (in.adapter_info_contacts_ops_present &&
+        in.adapter_info_contacts_ops.adapter_info_contacts_ops_choice ==
+            ::adapter_info_contacts_ops_r::adapter_info_contacts_ops_contacts_ops_m_c) {
+        const ::contacts_ops& c =
+            in.adapter_info_contacts_ops.adapter_info_contacts_ops_contacts_ops_m;
+        ops.insert(QStringLiteral("contactsOps"),
+                   QJsonObject{{QStringLiteral("getProfile"), c.contacts_ops_get_profile},
+                               {QStringLiteral("actionMenu"), c.contacts_ops_action_menu},
+                               {QStringLiteral("setAlias"), c.contacts_ops_set_alias}});
+    }
+    if (in.adapter_info_roster_ops_present &&
+        in.adapter_info_roster_ops.adapter_info_roster_ops_choice ==
+            ::adapter_info_roster_ops_r::adapter_info_roster_ops_roster_ops_m_c) {
+        const ::roster_ops& r = in.adapter_info_roster_ops.adapter_info_roster_ops_roster_ops_m;
+        ops.insert(QStringLiteral("rosterOps"),
+                   QJsonObject{{QStringLiteral("list"), r.roster_ops_list},
+                               {QStringLiteral("add"), r.roster_ops_add},
+                               {QStringLiteral("update"), r.roster_ops_update},
+                               {QStringLiteral("remove"), r.roster_ops_remove}});
+    }
+    if (!ops.isEmpty()) {
+        out.ops_json = QString::fromUtf8(QJsonDocument(ops).toJson(QJsonDocument::Compact));
+    }
+    // account-settings-schema → canonical JSON rows {key,label,required,kind,default,
+    // placeholder,choices} — the SAME shape the add/edit-account wizard consumed off the deleted
+    // registry rows (kind tokens = the codec's authFieldKindName vocabulary, "Text" default).
+    if (in.adapter_info_account_schema_present &&
+        in.adapter_info_account_schema.adapter_info_account_schema
+            .account_settings_schema_fields_present) {
+        const auto& fields = in.adapter_info_account_schema.adapter_info_account_schema
+                                 .account_settings_schema_fields;
+        QJsonArray schema;
+        for (size_t i = 0; i < fields.account_settings_schema_fields_auth_param_field_m_count;
+             ++i) {
+            const ::auth_param_field& f =
+                fields.account_settings_schema_fields_auth_param_field_m[i];
+            QJsonObject row;
+            row.insert(QStringLiteral("key"), qstr(f.auth_param_field_key));
+            row.insert(QStringLiteral("label"), qstr(f.auth_param_field_label));
+            row.insert(QStringLiteral("required"), f.auth_param_field_required);
+            QString kind = QStringLiteral("Text");
+            if (f.auth_param_field_kind_present) {
+                switch (f.auth_param_field_kind.auth_param_field_kind.auth_field_kind_choice) {
+                case ::auth_field_kind_r::auth_field_kind_Password_tstr_c:
+                    kind = QStringLiteral("Password");
+                    break;
+                case ::auth_field_kind_r::auth_field_kind_Number_tstr_c:
+                    kind = QStringLiteral("Number");
+                    break;
+                case ::auth_field_kind_r::auth_field_kind_Choice_tstr_c:
+                    kind = QStringLiteral("Choice");
+                    break;
+                case ::auth_field_kind_r::auth_field_kind_Text_tstr_c:
+                    break;
+                }
+            }
+            row.insert(QStringLiteral("kind"), kind);
+            if (f.auth_param_field_default_present &&
+                f.auth_param_field_default.auth_param_field_default_choice ==
+                    ::auth_param_field_default_r::auth_param_field_default_tstr_c) {
+                row.insert(QStringLiteral("default"),
+                           qstr(f.auth_param_field_default.auth_param_field_default_tstr));
+            }
+            if (f.auth_param_field_placeholder_present &&
+                f.auth_param_field_placeholder.auth_param_field_placeholder_choice ==
+                    ::auth_param_field_placeholder_r::auth_param_field_placeholder_tstr_c) {
+                row.insert(QStringLiteral("placeholder"),
+                           qstr(f.auth_param_field_placeholder.auth_param_field_placeholder_tstr));
+            }
+            if (f.auth_param_field_choices_present) {
+                QJsonArray choices;
+                for (size_t j = 0;
+                     j < f.auth_param_field_choices.auth_param_field_choices_tstr_count; ++j) {
+                    choices.append(
+                        qstr(f.auth_param_field_choices.auth_param_field_choices_tstr[j]));
+                }
+                row.insert(QStringLiteral("choices"), choices);
+            }
+            schema.append(row);
+        }
+        if (!schema.isEmpty()) {
+            out.schema_json =
+                QString::fromUtf8(QJsonDocument(schema).toJson(QJsonDocument::Compact));
+        }
+    }
+    // policy-entry rows {key,label,value} → canonical JSON (rendered verbatim, never keyed on).
+    if (in.adapter_info_policies_present) {
+        QJsonArray policies;
+        for (size_t i = 0; i < in.adapter_info_policies.adapter_info_policies_policy_entry_m_count;
+             ++i) {
+            const ::policy_entry& pe =
+                in.adapter_info_policies.adapter_info_policies_policy_entry_m[i];
+            policies.append(QJsonObject{{QStringLiteral("key"), qstr(pe.policy_entry_key)},
+                                        {QStringLiteral("label"), qstr(pe.policy_entry_label)},
+                                        {QStringLiteral("value"), qstr(pe.policy_entry_value)}});
+        }
+        if (!policies.isEmpty()) {
+            out.policies_json =
+                QString::fromUtf8(QJsonDocument(policies).toJson(QJsonDocument::Compact));
+        }
+    }
     return out;
 }
 
@@ -274,9 +610,72 @@ CustomProvider map_custom_provider(const ::custom_provider& in) {
 }
 
 FleetUnit map_fleet_unit(const ::unit_node& in) {
+    // A7 arm (M4): FleetChanged → Tree. The supervision-tree node flattened into a fleet_units row
+    // per entity-map.toml provenance (unit-node.*). Nullable-optional members decode to "" when the
+    // wire choice is null / the member is absent.
     FleetUnit out;
-    (void)in;
-    // TODO(mirror-map): populate FleetUnit from wire per entity-map.toml provenance.
+    out.id = qstr(in.unit_node_id);
+    out.kind = unitKind(in.unit_node_kind);
+    out.state = unitState(in.unit_node_state);
+    // unit-state-finished.end_reason ("" unless the state is the Finished arm) — the node's
+    // terminal reason for a child session (AD: the engine's childEndReason mirror source).
+    if (in.unit_node_state.unit_state_choice == ::unit_state_r::unit_state_finished_m_c) {
+        out.end_reason = qstr(in.unit_node_state.unit_state_finished_m.Finished_end_reason);
+    }
+    if (in.unit_node_work_choice == ::unit_node::unit_node_work_tstr_c) {
+        out.work = qstr(in.unit_node_work_tstr);
+    }
+    if (in.unit_node_profile_present &&
+        in.unit_node_profile.unit_node_profile_choice ==
+            ::unit_node_profile_r::unit_node_profile_profile_ref_m_c) {
+        out.profile = qstr(in.unit_node_profile.unit_node_profile_profile_ref_m);
+    }
+    if (in.unit_node_session_present &&
+        in.unit_node_session.unit_node_session_choice ==
+            ::unit_node_session_r::unit_node_session_session_id_m_c) {
+        out.session = qstr(in.unit_node_session.unit_node_session_session_id_m);
+    }
+    if (in.unit_node_title_present &&
+        in.unit_node_title.unit_node_title_choice == ::unit_node_title_r::unit_node_title_tstr_c) {
+        out.title = qstr(in.unit_node_title.unit_node_title_tstr);
+    }
+    // role (null => Primary, entity-map note): a null wire choice canonicalizes to Primary.
+    if (in.unit_node_role_present && in.unit_node_role.unit_node_role_choice ==
+                                         ::unit_node_role_r::unit_node_role_session_role_m_c) {
+        out.role = sessionRole(in.unit_node_role.unit_node_role_session_role_m);
+    } else {
+        out.role = QStringLiteral("Primary");
+    }
+    if (in.unit_node_lifetime_present &&
+        in.unit_node_lifetime.unit_node_lifetime_choice ==
+            ::unit_node_lifetime_r::unit_node_lifetime_delegation_lifetime_m_c) {
+        out.lifetime =
+            delegationLifetime(in.unit_node_lifetime.unit_node_lifetime_delegation_lifetime_m);
+    }
+    out.child_count = static_cast<int>(in.unit_node_children_unit_id_m_count);
+    // G2 (M5): the ordered children edge (0x1f-joined) — the §3.5 unitsByParent relation the fleet
+    // TREE render reconstructs pre-order (root = a node no child list names). Kept verbatim off the
+    // wire so a straight join preserves the node's listed child order.
+    QStringList kids;
+    kids.reserve(static_cast<qsizetype>(in.unit_node_children_unit_id_m_count));
+    for (size_t i = 0; i < in.unit_node_children_unit_id_m_count; ++i) {
+        kids.push_back(qstr(in.unit_node_children_unit_id_m[i]));
+    }
+    out.child_ids = kids.join(QChar(0x1f));
+    // engine identity (v29 engine-selector): "Core" | "Foreign" + the foreign agent name, so the
+    // tree renders the engine chip without a per-node profile join.
+    if (in.unit_node_engine_present &&
+        in.unit_node_engine.unit_node_engine_choice ==
+            ::unit_node_engine_r::unit_node_engine_engine_selector_m_c) {
+        const ::engine_selector_r& es = in.unit_node_engine.unit_node_engine_engine_selector_m;
+        if (es.engine_selector_choice == ::engine_selector_r::engine_selector_Core_tstr_c) {
+            out.engine = QStringLiteral("Core");
+        } else {
+            out.engine = QStringLiteral("Foreign");
+            out.engine_agent = qstr(es.engine_selector_engine_foreign_m.engine_foreign_Foreign
+                                        .engine_foreign_agent_agent);
+        }
+    }
     return out;
 }
 
@@ -338,9 +737,22 @@ Person map_person(const ::person& in) {
 }
 
 PersonEndpoint map_person_endpoint(const ::person_endpoint& in) {
+    // AD (1a) arm: PersonsChanged → PersonList; endpoints ride each `person` row. Note `person`
+    // (the owning id) is the enclosing person's scope — the caller stamps it; the payload carries
+    // transport + the endpoint's contact-info (id, display name, presence — the tree's dot).
     PersonEndpoint out;
-    (void)in;
-    // TODO(mirror-map): populate PersonEndpoint from wire per entity-map.toml provenance.
+    out.transport = qstr(in.person_endpoint_transport);
+    const ::contact_info& c = in.person_endpoint_contact;
+    out.contact = qstr(c.contact_info_id);
+    if (c.contact_info_display_name_present &&
+        c.contact_info_display_name.contact_info_display_name_choice ==
+            ::contact_info_display_name_r::contact_info_display_name_tstr_c) {
+        out.display_name = qstr(c.contact_info_display_name.contact_info_display_name_tstr);
+    }
+    if (c.contact_info_presence_present) {
+        out.presence_primitive =
+            presencePrimitive(c.contact_info_presence.contact_info_presence.presence_primitive);
+    }
     return out;
 }
 
@@ -380,16 +792,39 @@ RoleInfo map_role_info(const ::role_info& in) {
 }
 
 Room map_room(const ::room_info& in) {
+    // A6 arm: TransportRooms → Rooms. `transport` rides the payload (room_info carries it); the
+    // executor also stamps it from the request scope so the (transport, room) key matches the
+    // fetch.
     Room out;
-    (void)in;
-    // TODO(mirror-map): populate Room from wire per entity-map.toml provenance.
+    out.transport = qstr(in.room_info_transport);
+    out.room = qstr(in.room_info_room);
+    if (in.room_info_name_present &&
+        in.room_info_name.room_info_name_choice == ::room_info_name_r::room_info_name_tstr_c) {
+        out.name = qstr(in.room_info_name.room_info_name_tstr);
+    }
+    if (in.room_info_session_present &&
+        in.room_info_session.room_info_session_choice ==
+            ::room_info_session_r::room_info_session_session_id_m_c) {
+        out.session = qstr(in.room_info_session.room_info_session_session_id_m);
+    }
     return out;
 }
 
 RoutePin map_route_pin(const ::chat_route& in) {
+    // A6 arm: RoutingListChats → ChatRoutes. origin_key is the derived canonical pin key (§3.3);
+    // transport is the origin's transport instance.
     RoutePin out;
-    (void)in;
-    // TODO(mirror-map): populate RoutePin from wire per entity-map.toml provenance.
+    out.origin_key = originKeyOf(in.chat_route_origin);
+    out.transport = qstr(in.chat_route_origin.origin_transport);
+    out.session = qstr(in.chat_route_session);
+    if (in.chat_route_profile_present &&
+        in.chat_route_profile.chat_route_profile_choice ==
+            ::chat_route_profile_r::chat_route_profile_profile_ref_m_c) {
+        out.profile = qstr(in.chat_route_profile.chat_route_profile_profile_ref_m);
+    }
+    if (in.chat_route_isolation_present) {
+        out.isolation = isolationPolicy(in.chat_route_isolation.chat_route_isolation);
+    }
     return out;
 }
 
@@ -401,9 +836,51 @@ SavedPresence map_saved_presence(const ::saved_presence& in) {
 }
 
 Session map_session(const ::session_info& in) {
+    // A7 arm (M4): RosterChanged → SessionsQuery (base fields); SessionMetaChanged → SessionGet
+    // hydrates model + checkpoints onto this base (decodeSessionDetailToMirror). Per
+    // entity-map.toml provenance (session-info.*). Nullable-optional members decode to "" / 0 when
+    // null/absent.
     Session out;
-    (void)in;
-    // TODO(mirror-map): populate Session from wire per entity-map.toml provenance.
+    out.session = qstr(in.session_info_session);
+    out.state = sessionState(in.session_info_state);
+    if (in.session_info_title_present && in.session_info_title.session_info_title_choice ==
+                                             ::session_info_title_r::session_info_title_tstr_c) {
+        out.title = qstr(in.session_info_title.session_info_title_tstr);
+    }
+    if (in.session_info_bound_profile_present &&
+        in.session_info_bound_profile.session_info_bound_profile_choice ==
+            ::session_info_bound_profile_r::session_info_bound_profile_profile_ref_m_c) {
+        out.bound_profile =
+            qstr(in.session_info_bound_profile.session_info_bound_profile_profile_ref_m);
+    }
+    if (in.session_info_last_activity_ms_present &&
+        in.session_info_last_activity_ms.session_info_last_activity_ms_choice ==
+            ::session_info_last_activity_ms_r::session_info_last_activity_ms_uint64_m_c) {
+        out.last_activity_ms =
+            in.session_info_last_activity_ms.session_info_last_activity_ms_uint64_m;
+    }
+    if (in.session_info_lifecycle_present) {
+        out.lifecycle = lifecycleStr(in.session_info_lifecycle.session_info_lifecycle);
+    }
+    if (in.session_info_role_present) {
+        out.role = sessionRole(in.session_info_role.session_info_role);
+    }
+    if (in.session_info_parent_present &&
+        in.session_info_parent.session_info_parent_choice ==
+            ::session_info_parent_r::session_info_parent_session_id_m_c) {
+        out.parent = qstr(in.session_info_parent.session_info_parent_session_id_m);
+    }
+    if (in.session_info_pinned_present) {
+        out.pinned = in.session_info_pinned.session_info_pinned;
+    }
+    if (in.session_info_archived_present) {
+        out.archived = in.session_info_archived.session_info_archived;
+    }
+    if (in.session_info_rewindable_present) {
+        out.rewindable = in.session_info_rewindable.session_info_rewindable;
+    }
+    // model + checkpoints are hydrated via SessionGet (session-detail); the base SessionsQuery row
+    // leaves them empty/0 until the detail read merges them (decodeSessionDetailToMirror).
     return out;
 }
 
@@ -415,16 +892,114 @@ ToolInfo map_tool_info(const ::tool_info& in) {
 }
 
 TranscriptBlock map_transcript_block(const ::journal_record& in) {
+    // G2 (M5): the wire-decode / offline-reload feed (SessionHistory → journal-record → Block
+    // payload). The twin of MirrorTranscriptSink::toMirrorBlock (which sources the engine's
+    // coalesced cache row). `session` is the SessionHistory request scope — the decode caller
+    // stamps it (§3.6 merging rule), like map_chat_message's transport/conv scope. Only the Block
+    // payload carries a transcript block; a Management/Chat record maps to an empty (kind-less) row
+    // the caller skips.
     TranscriptBlock out;
-    (void)in;
-    // TODO(mirror-map): populate TranscriptBlock from wire per entity-map.toml provenance.
+    out.seq = in.journal_record_seq;
+    if (in.journal_record_origin_op_present &&
+        in.journal_record_origin_op.journal_record_origin_op_choice ==
+            ::journal_record_origin_op_r::journal_record_origin_op_origin_op_m_c) {
+        out.origin_op = qstr(in.journal_record_origin_op.journal_record_origin_op_origin_op_m);
+    }
+    if (in.journal_record_payload.journal_record_payload_t_choice !=
+        ::journal_record_payload_t_r::journal_record_payload_t_journal_record_payload_block_m_c) {
+        return out;
+    }
+    const ::transcript_block_r& block =
+        in.journal_record_payload.journal_record_payload_t_journal_record_payload_block_m
+            .Block_block;
+    switch (block.transcript_block_choice) {
+    case ::transcript_block_r::transcript_block_message_m_c:
+        out.kind = QStringLiteral("Message");
+        out.role = transcriptRole(block.transcript_block_message_m.Message_role);
+        out.text = qstr(block.transcript_block_message_m.Message_text);
+        break;
+    case ::transcript_block_r::transcript_block_tool_call_m_c:
+        out.kind = QStringLiteral("ToolCall");
+        out.call_id = qstr(block.transcript_block_tool_call_m.ToolCall_call_id);
+        out.name = qstr(block.transcript_block_tool_call_m.ToolCall_name);
+        out.args_summary = qstr(block.transcript_block_tool_call_m.ToolCall_args_summary);
+        break;
+    case ::transcript_block_r::transcript_block_tool_result_m_c: {
+        out.kind = QStringLiteral("ToolResult");
+        const ::transcript_block_tool_result& tr = block.transcript_block_tool_result_m;
+        out.call_id = qstr(tr.ToolResult_call_id);
+        out.ok = tr.ToolResult_ok;
+        out.summary = qstr(tr.ToolResult_summary);
+        // Structured detail (tool-detail = {kind, body}); the body byte-array is UTF-8 text (JSON
+        // by convention) — decode once here so the fence projection emits it verbatim (matches
+        // legacy).
+        if (tr.ToolResult_detail_present &&
+            tr.ToolResult_detail.ToolResult_detail_choice ==
+                ::ToolResult_detail_r::ToolResult_detail_tool_detail_m_c) {
+            const ::tool_detail& d = tr.ToolResult_detail.ToolResult_detail_tool_detail_m;
+            out.detail_kind = qstr(d.tool_detail_kind);
+            out.detail_body = qstr(d.tool_detail_body);
+        }
+        break;
+    }
+    case ::transcript_block_r::transcript_block_request_m_c:
+        out.kind = QStringLiteral("Request");
+        break;
+    case ::transcript_block_r::transcript_block_content_m_c:
+        out.kind = QStringLiteral("Content");
+        break;
+    }
     return out;
 }
 
 TransportAccount map_transport_account(const ::transport_instance_info& in) {
+    // AD (1a) arm: connect-refresh → TransportInstances (the full account list); TransportChanged
+    // patches the same row in place between reads. The connection/presence/reason tokens are the
+    // SAME lowercase strings the event decode produces (connectionStateName et al.), so the two
+    // feed paths write byte-identical row state.
     TransportAccount out;
-    (void)in;
-    // TODO(mirror-map): populate TransportAccount from wire per entity-map.toml provenance.
+    out.transport = qstr(in.transport_instance_info_transport);
+    out.family = qstr(in.transport_instance_info_family);
+    out.display_name = qstr(in.transport_instance_info_display_name);
+    out.enabled = true; // wire default (absent = enabled)
+    if (in.transport_instance_info_connection_present) {
+        out.connection = connectionToken(
+            in.transport_instance_info_connection.transport_instance_info_connection);
+    }
+    if (in.transport_instance_info_presence_present) {
+        out.presence =
+            presenceToken(in.transport_instance_info_presence.transport_instance_info_presence);
+    }
+    if (in.transport_instance_info_bound_profile_present &&
+        in.transport_instance_info_bound_profile.transport_instance_info_bound_profile_choice ==
+            ::transport_instance_info_bound_profile_r::
+                transport_instance_info_bound_profile_profile_ref_m_c) {
+        out.bound_profile = qstr(in.transport_instance_info_bound_profile
+                                     .transport_instance_info_bound_profile_profile_ref_m);
+    }
+    if (in.transport_instance_info_reason_present &&
+        in.transport_instance_info_reason.transport_instance_info_reason_choice ==
+            ::transport_instance_info_reason_r::
+                transport_instance_info_reason_disconnect_reason_m_c) {
+        out.reason = disconnectToken(
+            in.transport_instance_info_reason.transport_instance_info_reason_disconnect_reason_m);
+    }
+    if (in.transport_instance_info_message_present &&
+        in.transport_instance_info_message.transport_instance_info_message_choice ==
+            ::transport_instance_info_message_r::transport_instance_info_message_tstr_c) {
+        out.message = qstr(in.transport_instance_info_message.transport_instance_info_message_tstr);
+    }
+    if (in.transport_instance_info_fatal_present) {
+        out.fatal = in.transport_instance_info_fatal.transport_instance_info_fatal;
+    }
+    if (in.transport_instance_info_enabled_present) {
+        out.enabled = in.transport_instance_info_enabled.transport_instance_info_enabled;
+    }
+    if (in.transport_instance_info_label_present &&
+        in.transport_instance_info_label.transport_instance_info_label_choice ==
+            ::transport_instance_info_label_r::transport_instance_info_label_tstr_c) {
+        out.label = qstr(in.transport_instance_info_label.transport_instance_info_label_tstr);
+    }
     return out;
 }
 

@@ -3,8 +3,12 @@
 
 #include "chat_conversation_controller.h"
 
+#include "mirror/chat_window_model.h"
+#include "mirror/mirror_service.h"
 #include "transports/ichat_service.h"
 
+#include <QAbstractItemModel>
+#include <QChar>
 #include <QStringList>
 
 namespace {
@@ -20,6 +24,10 @@ bool fieldFlag(const QVariantMap& row, const char* key) {
 } // namespace
 
 ChatConversationController::ChatConversationController(QObject* parent) : QObject(parent) {}
+
+ChatConversationController::~ChatConversationController() {
+    teardownTimeline();
+}
 
 QObject* ChatConversationController::service() const {
     return m_serviceObject;
@@ -43,19 +51,50 @@ void ChatConversationController::setService(QObject* service) {
     emit serviceChanged();
 }
 
+QObject* ChatConversationController::mirror() const {
+    return m_mirrorObject;
+}
+
+void ChatConversationController::setMirror(QObject* mirror) {
+    if (m_mirrorObject == mirror) {
+        return;
+    }
+    m_mirrorObject = mirror;
+    // Rebind the read path for the current conversation (if any) onto/off the mirror.
+    if (!m_transport.isEmpty()) {
+        rebindTimeline();
+    }
+    emit mirrorChanged();
+}
+
+int ChatConversationController::messageCount() const {
+    if (m_timeline != nullptr) {
+        return m_timeline->rowCount();
+    }
+    return static_cast<int>(m_rows.size());
+}
+
 void ChatConversationController::open(const QString& transport, const QString& conversation) {
-    if (m_transport != transport || m_conversation != conversation) {
+    const bool changed = m_transport != transport || m_conversation != conversation;
+    if (changed) {
         m_transport = transport;
         m_conversation = conversation;
         emit conversationChanged();
-        // Rebinding to a new conversation must not leak the prior transcript: clear
-        // first, then project whatever the service already has cached.
+    }
+    rebindTimeline();
+    if (mirrorActive()) {
+        // Mirror read path (M2): the window lens + the visibility declaration made in
+        // rebindTimeline() are everything — the INGESTOR owns the top-up fetch (§5.8).
+        return;
+    }
+    if (changed) {
+        // Legacy path: rebinding must not leak the prior transcript — clear first, then project
+        // whatever the service already has cached.
         applyRows(m_service != nullptr ? m_service->messages(transport, conversation)
                                        : QVariantList());
     }
-    // Ask the node for the full transcript (the v38 wire pages forward-only, so the
-    // initial fetch is the whole history). The authoritative rows land via
-    // messagesChanged and re-project.
+    // Ask the node for the transcript (v38 pages forward-only, so the initial fetch is the whole
+    // history). The authoritative rows land via messagesChanged and re-project.
     if (m_service != nullptr) {
         m_service->refreshHistory(transport, conversation);
     }
@@ -73,6 +112,9 @@ void ChatConversationController::send(const QString& text) {
 
 void ChatConversationController::onMessagesChanged(const QString& transport, const QString& conv,
                                                    const QVariantList& rows) {
+    if (mirrorActive()) {
+        return; // the mirror window is the read path; legacy rows are dual-write bookkeeping
+    }
     // Filter to the bound conversation so a backgrounded tab's controller ignores
     // other conversations' traffic.
     if (transport != m_transport || conv != m_conversation) {
@@ -122,4 +164,96 @@ QString ChatConversationController::projectMarkdown(const QVariantList& rows) {
         blocks.append(QStringLiteral("**%1**\n\n%2").arg(author, body));
     }
     return blocks.join(QStringLiteral("\n\n"));
+}
+
+// ---------------------------------------------------------------------------
+// Mirror read path (M2 → AD): unconditional — the mirror is the only data path.
+// ---------------------------------------------------------------------------
+
+bool ChatConversationController::canLoadEarlier() const {
+    const auto* wm = static_cast<const mirror::ChatWindowModel*>(m_timeline);
+    return wm != nullptr && wm->hasMoreOlder();
+}
+
+void ChatConversationController::loadEarlier() {
+    if (auto* wm = static_cast<mirror::ChatWindowModel*>(m_timeline)) {
+        wm->requestOlder(0); // 0 = the model's default page size
+    }
+}
+
+void ChatConversationController::rebindTimeline() {
+    teardownTimeline();
+    auto* svc = qobject_cast<mirror::MirrorService*>(m_mirrorObject);
+    if (svc == nullptr || m_transport.isEmpty()) {
+        reprojectFromTimeline(); // legacy markdown stays whatever applyRows() set
+        return;
+    }
+    const mirror::ChatMessageScope scope{m_transport, m_conversation};
+    auto* timeline = new mirror::ChatWindowModel(svc->store(), scope, this);
+    m_timeline = timeline;
+
+    // Journal-delta row ops → one markdown re-projection per change wave (§8.1).
+    const auto reproject = [this] { reprojectFromTimeline(); };
+    connect(timeline, &QAbstractItemModel::rowsInserted, this, reproject);
+    connect(timeline, &QAbstractItemModel::rowsRemoved, this, reproject);
+    connect(timeline, &QAbstractItemModel::rowsMoved, this, reproject);
+    connect(timeline, &QAbstractItemModel::dataChanged, this, reproject);
+    connect(timeline, &QAbstractItemModel::modelReset, this, reproject);
+
+    // Demand-paging mediation (§4.6): the lens declares intent; the ingestor decides. count == 0
+    // is WindowModel's has-more wake signal, not a request — surface it as a property change.
+    connect(timeline, &mirror::TableModelBase::olderRequested, this,
+            [this, svc](const QString& scopeKey, int count) {
+                if (count <= 0) {
+                    emit canLoadEarlierChanged();
+                    return;
+                }
+                if (auto* wm = static_cast<mirror::ChatWindowModel*>(m_timeline)) {
+                    if (!svc->ingestor().requestOlder(scopeKey, count)) {
+                        wm->setHasMoreOlder(false); // end-of-history until BR's before_cursor
+                    }
+                }
+            });
+
+    // Visibility declaration (§5.8): the ingestor tops the window up from the stored cursor.
+    svc->ingestor().beginObserving(QStringLiteral("chat"), scope.serialize());
+
+    reprojectFromTimeline();
+    emit canLoadEarlierChanged();
+}
+
+void ChatConversationController::teardownTimeline() {
+    if (m_timeline == nullptr) {
+        return;
+    }
+    if (auto* svc = qobject_cast<mirror::MirrorService*>(m_mirrorObject)) {
+        const auto* wm = static_cast<const mirror::ChatWindowModel*>(m_timeline);
+        svc->ingestor().endObserving(QStringLiteral("chat"), wm->scope().serialize());
+    }
+    m_timeline->deleteLater();
+    m_timeline = nullptr;
+}
+
+void ChatConversationController::reprojectFromTimeline() {
+    if (m_timeline == nullptr) {
+        return;
+    }
+    // Project the canonical ChatMessage roles into the same oldest-first markdown the BlockEditor
+    // renders on both surfaces. The canonical entity carries author/text/error/edited (§3.1); the
+    // legacy system/notice/action styling flags are not entity fields — a G-series entity-map
+    // extension, documented in the ledger.
+    QStringList blocks;
+    const int n = m_timeline->rowCount();
+    blocks.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        const QModelIndex idx = m_timeline->index(i, 0);
+        const QString author =
+            m_timeline->data(idx, mirror::ChatWindowModel::AuthorRole).toString();
+        const QString text = m_timeline->data(idx, mirror::ChatWindowModel::TextRole).toString();
+        const QString error = m_timeline->data(idx, mirror::ChatWindowModel::ErrorRole).toString();
+        const QString body = !error.isEmpty() ? (QStringLiteral("\u26a0 ") + text) : text;
+        blocks.append(QStringLiteral("**%1**\n\n%2").arg(author, body));
+    }
+    m_markdown = blocks.join(QStringLiteral("\n\n"));
+    emit markdownChanged();
 }

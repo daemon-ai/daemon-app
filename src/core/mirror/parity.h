@@ -32,6 +32,15 @@ struct Result {
 // Extract mirror Contact keys for one transport (vs the legacy ContactsRepository roster).
 [[nodiscard]] QSet<QString> contactKeys(const MirrorModel& snapshot, const QString& transport);
 
+// Extract mirror Session keys (canonical serialize() == the authoritative session id) for the
+// whole roster, for mirror-vs-mirror feeder comparison (mock Seeder vs daemon ingestor delivery
+// (spec 09 §13 M4: "parity asserts vs legacy roster until deletion").
+[[nodiscard]] QSet<QString> sessionKeys(const MirrorModel& snapshot);
+
+// Extract mirror FleetUnit keys (canonical serialize() == the unit id) for the whole fleet, for
+// comparison against the legacy fleet-tree row-set (§13 M4 FleetUnit unification).
+[[nodiscard]] QSet<QString> fleetUnitKeys(const MirrorModel& snapshot);
+
 // Log a mismatch under the daemon.mirror.parity category (dev builds); returns matches() so
 // callers can `Q_ASSERT` in debug scenarios (§13 "log-on-mismatch in dev").
 bool checkAndLog(const QString& domain, const Result& result);

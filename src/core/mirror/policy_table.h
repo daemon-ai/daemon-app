@@ -38,6 +38,11 @@ enum class FetchOp : quint8 {
     RoutingListChats,
     TransportRooms,
     Bootstrap,
+    // AD (1a): the tree/hub vertical's connect-refresh reads (no dedicated node event — the
+    // adapter catalog is static per node build; the account LIST re-baselines on connect and is
+    // patched in place by TransportChanged between reads).
+    TransportAdapters,
+    TransportInstances,
 };
 
 // The primary action classification for an arm (§5.2 "Action (interim)" column, coarsened to the

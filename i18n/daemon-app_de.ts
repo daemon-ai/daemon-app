@@ -1392,8 +1392,52 @@ bis er erneut registriert wird.</translation>
         <translation>Die Nachricht konnte nicht gesendet werden.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>Frühere Nachrichten laden</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Noch keine Nachrichten</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Nicht gesendet (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Senden</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Verbleibende trotzdem senden</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Wird gesendet…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Gesendet</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>In Warteschlange</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Erneut versuchen</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Bearbeiten</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>Verwerfen</translation>
     </message>
 </context>
 <context>
@@ -2488,17 +2532,6 @@ bis er erneut registriert wird.</translation>
     <message>
         <source>Unsupported transport</source>
         <translation>Nicht unterstützter Transport</translation>
-    </message>
-</context>
-<context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Kanäle</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
     </message>
 </context>
 <context>
@@ -4210,17 +4243,6 @@ Danke — es geht weiter mit: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
-    </message>
-</context>
-<context>
-    <name>MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Benutzer</translation>
     </message>
 </context>
 <context>
@@ -6097,21 +6119,6 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— angeheftet</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· abgeleitet</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - Zuschauer</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6315,16 +6322,8 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>SessionDetail-Antwort konnte nicht dekodiert werden</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Nicht mit einem Daemon verbunden</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Die Sitzung hat den Befehl abgelehnt</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta fehlgeschlagen</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -6784,10 +6783,6 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
         <translation>Neuer Agent</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Neues Tag</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Alle einklappen</translation>
     </message>
@@ -6867,20 +6862,8 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
         <translation>Archiviert</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Tags</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Flotte</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Integrationen</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Neues Tag</translation>
     </message>
 </context>
 <context>
@@ -8798,12 +8781,6 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Kanäle sind nicht verfügbar: die Transport-Schnittstelle ist in diesem Modus nicht angebunden._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8870,6 +8847,12 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <message>
         <source>Disconnected</source>
         <translation>Getrennt</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Kanäle sind nicht verfügbar: die Channels-Hub-Projektion ist in diesem Modus nicht angebunden._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9276,17 +9259,6 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Kanäle</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9459,16 +9431,8 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
         <translation>SessionDetail-Antwort konnte nicht dekodiert werden</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Nicht mit einem Daemon verbunden</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Die Sitzung hat den Befehl abgelehnt</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta fehlgeschlagen</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9542,17 +9506,6 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Benutzer</translation>
-    </message>
-</context>
-<context>
     <name>firstrun::FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
@@ -9583,13 +9536,6 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Modell %1 fehlt auf dem Datenträger: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Teilnehmer</translation>
     </message>
 </context>
 <context>

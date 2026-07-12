@@ -19,7 +19,6 @@
 #include "daemon/node_api_codec.h"
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
-#include "daemonnet/idaemonnet.h"
 #include "feedback/ifeedback.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/iapprovals_inbox.h"
@@ -40,6 +39,11 @@
 #include "platform/wasm_contracts.h"
 #include "profiles/iprofile_store.h"
 #include "session/icheckpoint_timeline.h"
+
+// [mirror M2] Complete types for the Mirror/Outbox context-property upcasts (spec 09 §2/§6).
+#include "daemon/channels_hub_model.h" // complete type for the ChannelsHub context property
+#include "mirror/mirror_service.h"
+#include "outbox.h"
 #include "session/isession_settings.h"
 #include "settings/isettings_store.h"
 #include "setup/agent_setup_model.h"
@@ -48,8 +52,6 @@
 #include "transcript_exporter.h"
 #include "transports/ichat_service.h"
 #include "transports/icontacts_service.h"
-#include "transports/ipersons_service.h"
-#include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "turn_engine_factory.h"
 #include "update/update_manager.h"
@@ -197,7 +199,8 @@ Application::Application(QObject* parent)
     if (qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection) !=
         nullptr) {
         m_turnEngines = new DaemonTurnEngineFactory(m_services.nodeApi, m_services.cache,
-                                                    m_services.subscriptions, this);
+                                                    m_services.subscriptions,
+                                                    m_services.transcriptMirrorSink, this);
     } else {
         m_turnEngines = new MockTurnEngineFactory(this);
     }
@@ -252,8 +255,12 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // onLanguageChanged, wired in completeWiring once the singleton exists).
     m_engine = &engine;
 
-    // Shared store; QML view models bind their `store` property to this.
-    engine.rootContext()->setContextProperty(QStringLiteral("SessionStore"), m_services.store);
+    // mirror A7 (M4) → AD: the ONE session store EVERY session/fleet consumer binds (6→1
+    // unification) — the real MirrorSessionStore projection in both modes (daemon: ingestor-fed;
+    // mock: scenario-seeded). The legacy `SessionStore` rollback binding died with the legacy
+    // stores.
+    engine.rootContext()->setContextProperty(QStringLiteral("SessionStoreMirror"),
+                                             m_services.storeMirror);
 
     // Shared footer status model: the StatusBar footer renders it and the active
     // session's turn feeds it (see TranscriptPage.qml), so both halves of the
@@ -371,8 +378,8 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("Tools"), m_services.tools);
     engine.rootContext()->setContextProperty(QStringLiteral("Dashboard"), m_services.dashboard);
 
-    // Automation facade (mock) backing the cron manager. (The routing manager binds DaemonNet
-    // below — the legacy intent->model `Routing` store is retired, B6/ROU.)
+    // Automation facade (mock) backing the cron manager. (The routing manager reads the mirror
+    // store; see the RoutingActions context property below.)
     engine.rootContext()->setContextProperty(QStringLiteral("Cron"), m_services.cron);
 
     // Transport-adapter seams (mock): the multi-protocol "Add channel" picker + configured
@@ -380,20 +387,28 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // daemon-transport-adapter-spec.md + docs/multi-protocol-client-surface.md.
     engine.rootContext()->setContextProperty(QStringLiteral("Transports"),
                                              m_services.transportRegistry);
-    engine.rootContext()->setContextProperty(QStringLiteral("Presence"), m_services.presence);
+    // AD (1a.3): the SHARED channels-hub projection — ChannelsPage's READS (accounts, adapters,
+    // rooms, contacts, connection state) come from the mirror through this model in BOTH modes;
+    // `Transports`/`Contacts` stay bound as the VERB sinks only.
+    engine.rootContext()->setContextProperty(QStringLiteral("ChannelsHub"), m_services.channelsHub);
     // [acct-mgmt] Transport contacts / roster (Phase D, wire v34): the per-account Contacts section
     // in ChannelsPage binds this seam (RosterList + contact ops).
     engine.rootContext()->setContextProperty(QStringLiteral("Contacts"), m_services.contacts);
-    // [integrations wire v38] The cross-transport person registry (PersonList): the integrations
-    // tree's Persons sections bind this seam (endpoints per transport).
-    engine.rootContext()->setContextProperty(QStringLiteral("Persons"), m_services.persons);
     // [integrations wire v38] Native chat (A4): ChatPage's ChatConversationController binds this
     // IChatService seam (ConvHistory transcript + ConvSend + MessagesChanged refresh).
     engine.rootContext()->setContextProperty(QStringLiteral("Chat"), m_services.chat);
+    // [mirror M2] The mirror composition root + durable outbox (spec 09 §2/§6). Daemon mode only
+    // at M2 (null in mock — the chat surfaces fall back to the legacy seams until A8's seeder):
+    // ChatPage reads the ChatWindowModel timeline via `Mirror` and routes sends through the
+    // ConvSend outbox lane via `Outbox` (manual drain; §6.8 auto-replay stays off).
+    engine.rootContext()->setContextProperty(QStringLiteral("Mirror"), m_services.mirrorService);
+    engine.rootContext()->setContextProperty(QStringLiteral("Outbox"), m_services.outbox);
 
-    // The unified mock DaemonNet (actors/places + sessions-as-nodes); surfaces project from it. See
-    // multi-protocol-client-surface.md §1 + the DaemonNet meta-plan.
-    engine.rootContext()->setContextProperty(QStringLiteral("DaemonNet"), m_services.daemonNet);
+    // Routing manager (M3): the RoutingPage's RoutingManagerController reads the pin table off the
+    // mirror store (`Mirror`) and drives pin/unbind mutations through the node-authoritative
+    // RoutingActions seam (RoutingRepository IS-A daemonnet::IRoutingActions; null in mock).
+    engine.rootContext()->setContextProperty(QStringLiteral("RoutingActions"),
+                                             m_services.routingRepository);
 
     // Per-session override + checkpoint facades (mock) backing the composer popovers.
     engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"),
@@ -564,8 +579,8 @@ void Application::announceReloadSentinels() const {
         std::fflush(stdout);
     }
 
-    // (1b) Re-emit the cache-row count once the per-user namespace is active, BEFORE the on-ready
-    // refreshSessions() re-fetch. The per-user db is opened by AuthOk (cache->setUserNamespace in
+    // (1b) Re-emit the cache-row count once the per-user namespace is active, BEFORE the
+    // on-ready baseline re-fetches. The per-user db is opened by AuthOk (cache->setUserNamespace in
     // app_service_graph.cpp, which fires on NodeApiClient::authenticated and precedes "ready"); on
     // a resume that db is the IDBFS-preloaded copy, so this reading is a true PRE-FETCH proof that
     // the SQLite cache survived the reload (the reload-survival harness asserts rows>0 on load 2
@@ -666,7 +681,8 @@ QString Application::runHeadlessChat(const QString& prompt, int timeoutMs, const
     settle(600); // let the on-ready refreshes drain off the single-in-flight queue first
 
     auto* engine =
-        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions, this);
+        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions,
+                             m_services.transcriptMirrorSink, this);
     engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
     engine->setProfile(profile); // PRO-5: bind the turn to the selected profile (empty = active)
 
@@ -760,18 +776,21 @@ QString Application::runHeadlessFleet(int timeoutMs) {
     }
     settle(600);
     FleetRepository* repo = m_services.fleetRepository;
-    if (repo == nullptr) {
+    mirror::MirrorService* svc = m_services.mirrorService;
+    if (repo == nullptr || svc == nullptr) {
         return {};
     }
+    // AD: the tree feed is the mirror's — refetch the Tree into `fleet_units` and count the
+    // mirrored rows (the same read path the Fleet page renders).
     int units = -1;
     {
         QEventLoop loop;
-        const auto c = connect(repo, &FleetRepository::treeRefreshed, this, [&] {
-            units = static_cast<int>(repo->cachedUnits().size());
+        const auto c = connect(&svc->store(), &mirror::Store::committed, this, [&] {
+            units = static_cast<int>(svc->store().snapshot().fleet_units.size());
             loop.quit();
         });
         QTimer::singleShot(qMax(2000, timeoutMs / 2), &loop, &QEventLoop::quit);
-        repo->refreshTree();
+        svc->ingestor().refetchFleet();
         loop.exec();
         disconnect(c);
     }
@@ -1004,7 +1023,8 @@ QString Application::runHeadlessHitl(const QString& prompt, const QString& decis
     settle(600);
 
     auto* engine =
-        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions, this);
+        new DaemonTurnEngine(m_services.nodeApi, m_services.cache, m_services.subscriptions,
+                             m_services.transcriptMirrorSink, this);
     engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
 
     QString answer;

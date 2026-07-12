@@ -1392,8 +1392,52 @@ until it is re-registered.</source>
         <translation>无法发送消息。</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>加载更早的消息</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>暂无消息</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>未发送 (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>发送</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>仍然发送其余消息</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>失败</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>发送中…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>已发送</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>已排队</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>重试</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>编辑</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>丢弃</translation>
     </message>
 </context>
 <context>
@@ -2488,17 +2532,6 @@ until it is re-registered.</source>
     <message>
         <source>Unsupported transport</source>
         <translation>不支持的传输方式</translation>
-    </message>
-</context>
-<context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>频道</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>私信</translation>
     </message>
 </context>
 <context>
@@ -4206,17 +4239,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
-    </message>
-</context>
-<context>
-    <name>MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>智能体</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>用户</translation>
     </message>
 </context>
 <context>
@@ -6093,21 +6115,6 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— 已固定</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· 派生</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - 旁观者</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6311,16 +6318,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>解码 SessionDetail 响应失败</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>未连接到 daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>会话拒绝了该命令</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta 失败</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -6779,10 +6778,6 @@ This only affects the app appearance, not your data.</source>
         <translation>新建智能体</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>新建标签</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>全部折叠</translation>
     </message>
@@ -6862,20 +6857,8 @@ This only affects the app appearance, not your data.</source>
         <translation>已归档</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>标签</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>编队</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>集成</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>新建标签</translation>
     </message>
 </context>
 <context>
@@ -8790,12 +8773,6 @@ _未选择智能体。_
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_频道不可用：此模式下未接通传输接缝。_
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8862,6 +8839,12 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Disconnected</source>
         <translation>已断开连接</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_频道不可用：此模式下未接入频道中枢投影。_
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9268,17 +9251,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>频道</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>私信</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9451,16 +9423,8 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
         <translation>解码 SessionDetail 响应失败</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>未连接到 daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>会话拒绝了该命令</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta 失败</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9534,17 +9498,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>智能体</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>用户</translation>
-    </message>
-</context>
-<context>
     <name>firstrun::FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
@@ -9575,13 +9528,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>磁盘上缺少模型 %1：%2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>参与者</translation>
     </message>
 </context>
 <context>

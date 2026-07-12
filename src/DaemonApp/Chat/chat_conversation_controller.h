@@ -13,22 +13,26 @@ namespace transports {
 class IChatService;
 }
 
-// [integrations wire v38] Native-chat tab view-model (A4). The single shared
+class QAbstractItemModel;
+
+// [integrations wire v38 → mirror M2] Native-chat tab view-model. The single shared
 // presentation layer both the QML GUI (ChatPage.qml) and the Tui Widgets TUI
 // (RootWidget chat tabs) bind: it owns one conversation's transcript projection
-// and the send intent, over the IChatService seam.
+// and the send intent.
 //
-// It re-derives NO domain state — the node owns the transcript. On open() it asks
-// the service to refreshHistory(); the authoritative rows arrive via
-// messagesChanged() (driven by the node's MessagesChanged event) and are projected
-// oldest-first into a single markdown document rendered by the EXISTING BlockEditor
-// (loadMarkdown). send() forwards to the service and never echoes locally — the sent
-// line appears only when the node's own MessagesChanged round-trips back. sendFailed
-// surfaces as a non-blocking notice per the house pattern.
+// READ PATH (M2 → AD, spec 09 §8): the timeline reads the mirror's ChatWindowModel
+// — journal-delta row ops off the one canonical ChatMessage entity — and open()
+// only DECLARES visibility (beginObserving, §5.8); the ingestor owns the top-up
+// fetch. Demand paging rides loadEarlier() → olderRequested →
+// Ingestor::requestOlder. Both modes bind a live mirror (daemon: ingestor-fed;
+// mock: scenario-seeded); the legacy IChatService rows path survives only as the
+// bare-test fallback until the seam dies with the tree/hub vertical (AD 1a).
 //
-// The controller filters the service's per-(transport, conversation) signals to its
-// own bound conversation, so a backgrounded chat tab keeps its transcript current
-// while another tab is foregrounded.
+// It re-derives NO domain state — the node owns the transcript; rows are projected
+// oldest-first into one markdown document rendered by the EXISTING BlockEditor
+// (loadMarkdown). send() (the legacy/mock write path) never echoes locally; in
+// mirror mode the surfaces route sends through ConvSendController's outbox lane
+// instead (§6.4) and pending intent renders ONLY in the pending strip (R2).
 class ChatConversationController : public QObject {
     Q_OBJECT
     QML_ELEMENT
@@ -37,6 +41,9 @@ class ChatConversationController : public QObject {
     // `Chat` context property. Held as QObject* so QML can assign the context property
     // without a registered pointer metatype (mirrors SessionController::store).
     Q_PROPERTY(QObject* service READ service WRITE setService NOTIFY serviceChanged)
+    // The mirror composition root (`Mirror` context property; live in BOTH modes since
+    // A8/AD). Opaque QObject* so QML can assign it without a registered pointer metatype.
+    Q_PROPERTY(QObject* mirror READ mirror WRITE setMirror NOTIFY mirrorChanged)
     Q_PROPERTY(QString transport READ transport NOTIFY conversationChanged)
     Q_PROPERTY(QString conversation READ conversation NOTIFY conversationChanged)
     // The whole transcript projected as one markdown document (oldest-first). The
@@ -44,28 +51,38 @@ class ChatConversationController : public QObject {
     Q_PROPERTY(QString markdown READ markdown NOTIFY markdownChanged)
     Q_PROPERTY(int messageCount READ messageCount NOTIFY markdownChanged)
     Q_PROPERTY(bool empty READ empty NOTIFY markdownChanged)
+    // Demand paging (§4.6): whether older history may exist (mirror mode; false on the
+    // legacy path — v38 loads the whole reachable transcript up front there).
+    Q_PROPERTY(bool canLoadEarlier READ canLoadEarlier NOTIFY canLoadEarlierChanged)
 
 public:
     explicit ChatConversationController(QObject* parent = nullptr);
+    ~ChatConversationController() override;
 
     [[nodiscard]] QObject* service() const;
     void setService(QObject* service);
+    [[nodiscard]] QObject* mirror() const;
+    void setMirror(QObject* mirror);
 
     [[nodiscard]] QString transport() const { return m_transport; }
     [[nodiscard]] QString conversation() const { return m_conversation; }
     [[nodiscard]] QString markdown() const { return m_markdown; }
-    [[nodiscard]] int messageCount() const { return static_cast<int>(m_rows.size()); }
-    [[nodiscard]] bool empty() const { return m_rows.isEmpty(); }
+    [[nodiscard]] int messageCount() const;
+    [[nodiscard]] bool empty() const { return messageCount() == 0; }
+    [[nodiscard]] bool canLoadEarlier() const;
+    // The mirror timeline lens (a ChatWindowModel; null on the legacy path) — surfaces
+    // and tests may bind it directly.
+    [[nodiscard]] QAbstractItemModel* timelineModel() const { return m_timeline; }
 
-    // Bind (or rebind) this controller to a conversation: adopt (transport,
-    // conversation), project any already-cached rows immediately, then ask the
-    // service for the full transcript (refreshHistory). Rebinding to a new
-    // conversation clears the prior projection first.
+    // Bind (or rebind) this controller to a conversation. Mirror mode: build the
+    // window lens + declare visibility (the ingestor tops up, §5.8). Legacy mode:
+    // project any cached rows, then refreshHistory().
     Q_INVOKABLE void open(const QString& transport, const QString& conversation);
-    // Send a plain-text line to the bound conversation (ConvSend). No local echo —
-    // the authoritative row lands via messagesChanged. No-op without a service /
-    // an open conversation / non-blank text.
+    // Send a plain-text line via the LEGACY seam (mock mode / fallback). No local
+    // echo. Mirror-mode surfaces route through ConvSendController instead.
     Q_INVOKABLE void send(const QString& text);
+    // Demand-page older history (mirror mode; no-op on the legacy path).
+    Q_INVOKABLE void loadEarlier();
 
     // The oldest-first markdown projection of `rows` (a list of IChatService message
     // maps). Static + pure so it is unit-testable and shared by both surfaces.
@@ -73,10 +90,12 @@ public:
 
 signals:
     void serviceChanged();
+    void mirrorChanged();
     void conversationChanged();
     void markdownChanged();
-    // A ConvSend for THIS conversation failed on the node/transport. The surface
-    // shows a non-blocking toast (GUI) / footer notice (TUI).
+    void canLoadEarlierChanged();
+    // A ConvSend for THIS conversation failed on the node/transport (legacy path).
+    // The surface shows a non-blocking toast (GUI) / footer notice (TUI).
     void sendFailed(const QString& message);
 
 private:
@@ -86,9 +105,17 @@ private:
     void onServiceSendFailed(const QString& transport, const QString& conv, const QString& message);
     // Adopt `rows` as the current transcript and re-project the markdown.
     void applyRows(const QVariantList& rows);
+    // Mirror mode internals (bodies live behind the substrate define in the .cpp;
+    // no-ops without it).
+    void rebindTimeline();
+    void teardownTimeline();
+    void reprojectFromTimeline();
+    [[nodiscard]] bool mirrorActive() const { return m_timeline != nullptr; }
 
     QPointer<QObject> m_serviceObject;             // the QObject the QML property holds
     transports::IChatService* m_service = nullptr; // qobject_cast of m_serviceObject
+    QPointer<QObject> m_mirrorObject;              // MirrorService (opaque at this layer)
+    QAbstractItemModel* m_timeline = nullptr;      // owned child; ChatWindowModel in mirror mode
     QString m_transport;
     QString m_conversation;
     QVariantList m_rows;

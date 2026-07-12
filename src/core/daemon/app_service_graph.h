@@ -24,9 +24,6 @@ class IConnectionService;
 namespace feedback {
 class IFeedback;
 }
-namespace daemonnet {
-class IDaemonNet;
-}
 namespace firstrun {
 class FirstRunModel;
 }
@@ -71,20 +68,29 @@ class IToolInventory; // [wave2:app-approvals-safety] D2
 namespace transports {
 class IChatService;
 class IContactsService;
-class IPersonsService;
-class IPresenceService;
 class ITransportRegistry;
 } // namespace transports
 namespace update {
 class UpdateManager;
 }
+// mirror A5 (spec 09 wave M2): the live mirror substrate wired beside the legacy paths
+// (dual-write). Forward-declared so this widely-included header stays free of the mirror headers;
+// the pointers are null when the immer substrate is not built.
+namespace mirror {
+class MirrorService;
+class LocalDatabase;
+class Outbox;
+} // namespace mirror
 
 namespace daemonapp::daemon {
+
+class DaemonFetchExecutor; // mirror A5: FetchExecutor over NodeApiClient (Daemon mode)
+class ChannelsHubModel;
+class MockScenarioHost; // mirror A8: the mock scenario driver (Mock mode; §9)
 
 class AgentRepository;
 class ContactsRepository; // [acct-mgmt] transport contacts / roster (wire v34)
 class ChatRepository;     // [integrations wire v38] native chat (ConvHistory / ConvSend)
-class PersonsRepository;  // [integrations wire v38] person registry (PersonList)
 class EngineIdentity;
 class ApprovalRepository;
 class AuthRepository;
@@ -105,6 +111,7 @@ class SessionRepository;
 class SubscriptionManager;
 class ToolRepository;        // [wave2:app-approvals-safety] D2
 class FingerprintRepository; // [wave2:app-approvals-safety] D4
+class ITranscriptMirrorSink; // A7T: engine transcript stream -> mirror window (substrate only)
 
 enum class ServiceMode {
     Mock,
@@ -113,14 +120,15 @@ enum class ServiceMode {
 
 // The shared GUI/TUI service bundle.
 //
-// ServiceMode::Daemon is only partially live today: `connection` (real Health probe) and `store`
-// (sessions projected from DaemonCacheStore via NodeApi SessionsQuery) are daemon-backed, while
-// `fs`, `daemonConfig`, `memory`, `modelCatalog`, `accounts`, the fleet group
-// (`roster`/`fleetTree`/`approvals`/`dashboard`), `routing`/`cron`, `sessionSettings`, and
-// `checkpoints` remain mock-backed until each grows its own daemon adapter. createAppServiceGraph()
-// logs this at startup in daemon mode so the partial state is not mistaken for fully live.
+// createAppServiceGraph() logs the daemon mode's live-seam census at startup so a partially-live
+// state is never mistaken for fully live.
 struct AppServiceGraph {
-    persistence::ISessionStore* store = nullptr;
+    // mirror A7 (M4) → AD: THE session store — a MirrorSessionStore projecting the mirror
+    // `sessions` table + transcript windows in BOTH modes (daemon: ingestor-fed; mock:
+    // scenario-seeded). Session-meta mutations ride the outbox lane; create rides the direct
+    // SessionCreate seam. The legacy stores (CachedSessionStore / InMemorySessionStore) are
+    // deleted. NEVER null once the graph is built.
+    persistence::ISessionStore* storeMirror = nullptr;
     settings::ISettingsStore* settings = nullptr;
     connection::IConnectionService* connection = nullptr;
     config::IDaemonConfig* daemonConfig = nullptr;
@@ -150,16 +158,13 @@ struct AppServiceGraph {
     tools::IToolInventory* tools = nullptr;
     fleet::IDashboard* dashboard = nullptr;
     automation::ICronStore* cron = nullptr;
+    // AD (1a.4): the transport-registry + contacts seams are VERB SINKS only (room lifecycle,
+    // account management, contact ops) — daemon mode builds them; mock leaves them null and the
+    // surfaces read the mirror. The presence/persons READ seams died with the tree/hub port
+    // (connection+presence ride the mirror account rows; persons × endpoints are mirror tables).
     transports::ITransportRegistry* transportRegistry = nullptr;
-    transports::IPresenceService* presence = nullptr;
-    // [acct-mgmt] Transport contacts / roster (Phase D). Mock-backed by default; a
-    // DaemonContactsService replaces it in Daemon mode (projects ContactsRepository).
     transports::IContactsService* contacts = nullptr;
-    // [integrations wire v38] Person registry + native chat seams. Mock-backed by default; the
-    // Daemon* services replace them in Daemon mode (projecting PersonsRepository / ChatRepository).
-    transports::IPersonsService* persons = nullptr;
     transports::IChatService* chat = nullptr;
-    daemonnet::IDaemonNet* daemonNet = nullptr;
     session::ISessionSettings* sessionSettings = nullptr;
     session::ICheckpointTimeline* checkpoints = nullptr;
     // Release-feed / auto-update surface (packaging/UPDATES.md). Inert unless the
@@ -193,10 +198,9 @@ struct AppServiceGraph {
     // [acct-mgmt] Transport contacts / roster (RosterList/Add/Update/Remove + contact ops, wire
     // v34); Daemon mode only (the DaemonContactsService projects it).
     ContactsRepository* contactsRepository = nullptr;
-    // [integrations wire v38] Person registry (PersonList) + native chat (ConvHistory / ConvSend);
-    // Daemon mode only (the DaemonPersonsService / DaemonChatService project them). The
-    // SubscriptionManager routes PersonsChanged / MessagesChanged into them.
-    PersonsRepository* personsRepository = nullptr;
+    // [integrations wire v38] Native chat (ConvHistory / ConvSend); Daemon mode only (the
+    // DaemonChatService projects it). The SubscriptionManager routes MessagesChanged into it.
+    // (PersonsRepository died with the tree port — PersonList feeds the mirror via the ingestor.)
     ChatRepository* chatRepository = nullptr;
     RoutingRepository* routingRepository = nullptr; // Routing pins (B6/ROU); Daemon mode only
     // The foreign-agent catalog (foreign engines; wire v29): backs the new-agent dialog's engine
@@ -215,6 +219,31 @@ struct AppServiceGraph {
     // The node-wide event feed consumer (L3): owns the single EventsSince stream + routes
     // notifications. Non-null only in Daemon mode.
     SubscriptionManager* subscriptions = nullptr;
+
+    // --- mirror A5 (spec 09 wave M2): the live mirror substrate, wired beside the legacy paths
+    // (dual-write, §13). The ingestor is the single writer; it is fed the node event stream through
+    // the daemon bridge and drives fetches over the DaemonFetchExecutor (Daemon mode). The M2 read
+    // lenses (ChatWindowModel / PersonListModel / ContactListModel / ConversationListModel) read
+    // this store; the outbox owns the ConvSend + turn-prompt lanes (§6). Null when the immer
+    // substrate is not built into this stack. ---
+    mirror::MirrorService* mirrorService = nullptr;
+    DaemonFetchExecutor* mirrorExecutor = nullptr; // Daemon mode only
+    mirror::LocalDatabase* localDb = nullptr; // precious local-<id>.db (outbox + sidecar, §4.5)
+    mirror::Outbox* outbox = nullptr;         // durable write queue (§6): ConvSend + turn-prompt
+    // A7T (spec 09 §13 wave M4 sub-step 6): the turn engine dual-writes its coalesced transcript
+    // blocks here so w_transcript_blocks tracks the live/rebaselined transcript. Non-null only in
+    // Daemon mode with the substrate; null (no-op) otherwise. The read facade
+    // (MirrorSessionStore::content) still delegates to the legacy cache — the flip is withheld on
+    // the entity-field gap (LEDGER-a7t).
+    ITranscriptMirrorSink* transcriptMirrorSink = nullptr;
+    // AD (1a.3): the SHARED channels-hub view-model (GUI ChannelsPage context property + the TUI
+    // channels hub page) — accounts/adapters/conversations/contacts projected from the mirror in
+    // BOTH modes. NEVER null once the graph is built.
+    ChannelsHubModel* channelsHub = nullptr;
+    // mirror A8 (spec 09 §9, wave M5): the mock scenario driver — the Seeder (the mock single
+    // Writer) + scripted timeline + scripted verb outcomes + the api/<N> mock Hello. Mock mode
+    // with the substrate only; null everywhere else.
+    MockScenarioHost* mockHost = nullptr;
 };
 
 // Resolve the service mode from the DAEMON_APP_SERVICE_MODE environment variable

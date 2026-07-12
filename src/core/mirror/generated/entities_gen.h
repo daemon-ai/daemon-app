@@ -152,6 +152,8 @@ struct Adapter {
     Q_PROPERTY(bool cap_direct_messages MEMBER cap_direct_messages)
     Q_PROPERTY(bool cap_file_transfer MEMBER cap_file_transfer)
     Q_PROPERTY(QString ops_json MEMBER ops_json)
+    Q_PROPERTY(QString schema_json MEMBER schema_json)
+    Q_PROPERTY(QString policies_json MEMBER policies_json)
 
 public:
     QString family;
@@ -161,6 +163,8 @@ public:
     bool cap_direct_messages = false;
     bool cap_file_transfer = false;
     QString ops_json;
+    QString schema_json;
+    QString policies_json;
 
     [[nodiscard]] AdapterKey key() const {
         return AdapterKey{family};
@@ -674,6 +678,7 @@ struct FleetUnit {
     Q_PROPERTY(QString id MEMBER id)
     Q_PROPERTY(QString kind MEMBER kind)
     Q_PROPERTY(QString state MEMBER state)
+    Q_PROPERTY(QString end_reason MEMBER end_reason)
     Q_PROPERTY(QString work MEMBER work)
     Q_PROPERTY(QString profile MEMBER profile)
     Q_PROPERTY(QString session MEMBER session)
@@ -681,11 +686,15 @@ struct FleetUnit {
     Q_PROPERTY(QString role MEMBER role)
     Q_PROPERTY(QString lifetime MEMBER lifetime)
     Q_PROPERTY(int child_count MEMBER child_count)
+    Q_PROPERTY(QString engine MEMBER engine)
+    Q_PROPERTY(QString engine_agent MEMBER engine_agent)
+    Q_PROPERTY(QString child_ids MEMBER child_ids)
 
 public:
     QString id;
     QString kind;
     QString state;
+    QString end_reason;
     QString work;
     QString profile;
     QString session;
@@ -693,6 +702,9 @@ public:
     QString role;
     QString lifetime;
     int child_count = 0;
+    QString engine;
+    QString engine_agent;
+    QString child_ids;
 
     [[nodiscard]] FleetUnitKey key() const {
         return FleetUnitKey{id};
@@ -970,12 +982,14 @@ struct PersonEndpoint {
     Q_PROPERTY(QString transport MEMBER transport)
     Q_PROPERTY(QString contact MEMBER contact)
     Q_PROPERTY(QString display_name MEMBER display_name)
+    Q_PROPERTY(QString presence_primitive MEMBER presence_primitive)
 
 public:
     QString person;
     QString transport;
     QString contact;
     QString display_name;
+    QString presence_primitive;
 
     [[nodiscard]] PersonEndpointKey key() const {
         return PersonEndpointKey{person, transport, contact};
@@ -1394,6 +1408,9 @@ struct TranscriptBlock {
     Q_PROPERTY(QString summary MEMBER summary)
     Q_PROPERTY(bool ok MEMBER ok)
     Q_PROPERTY(QString origin_op MEMBER origin_op)
+    Q_PROPERTY(QString args_summary MEMBER args_summary)
+    Q_PROPERTY(QString detail_kind MEMBER detail_kind)
+    Q_PROPERTY(QString detail_body MEMBER detail_body)
 
 public:
     QString session;
@@ -1406,6 +1423,9 @@ public:
     QString summary;
     bool ok = false;
     QString origin_op;
+    QString args_summary;
+    QString detail_kind;
+    QString detail_body;
 
     [[nodiscard]] TranscriptBlockScope scope() const {
         return TranscriptBlockScope{session};

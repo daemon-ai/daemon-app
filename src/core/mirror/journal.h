@@ -50,6 +50,14 @@ public:
     // Boot: seed the counter from the persisted MAX(rev) so minting stays monotonic across
     // restarts (§4.3). Safe only before any stamp().
     void seedHead(quint64 persistedMaxRev) noexcept { head_rev_ = persistedMaxRev; }
+
+    // Adopt-time rebase (boot AND per-identity reopen, §4.5): drop the in-memory tail — a prior
+    // identity's deltas must never leak into the newly-opened file or its consumers — and jump the
+    // counter plus EVERY registered consumer watermark to the new persisted head. The write-behind
+    // consumer thereby resumes exactly at the new head (its rows are already durable in the file
+    // just opened); lens consumers must re-derive from the adopted snapshot (their journal history
+    // is gone by definition — the A6 re-prime seam).
+    void rebase(quint64 newHead);
     [[nodiscard]] quint64 headRev() const noexcept { return head_rev_; }
     [[nodiscard]] std::size_t size() const noexcept { return records_.size(); }
     [[nodiscard]] const std::deque<JournalRecord>& records() const noexcept { return records_; }

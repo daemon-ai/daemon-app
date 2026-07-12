@@ -2,8 +2,9 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "cache_test_support.h"
+#include "daemon/mirror_session_store.h"
 #include "i_turn_engine.h"
-#include "persistence/in_memory_session_store.h"
+#include "mirror/mirror_service.h"
 #include "profiles/mock_profile_store.h"
 #include "session/mock_session_settings.h"
 #include "session_controller.h"
@@ -12,6 +13,7 @@
 #include "turn_controller.h"
 #include "turn_engine_factory.h"
 
+#include <memory>
 #include <QSignalSpy>
 #include <QtTest>
 
@@ -58,6 +60,26 @@ public:
 };
 
 } // namespace
+
+// AD: the production MirrorSessionStore over an in-memory mirror replaces the deleted InMemory
+// fixture. The direct-create seam is answered synchronously here (the unit-test twin of the
+// scenario host's scripted SessionCreate): createRequested -> a minted id seeded back through
+// onNodeSessionCreated, so SessionController::createSession() adopts in-line like before.
+struct SyncCreateMirrorStore {
+    mirror::MirrorService svc;
+    std::unique_ptr<daemonapp::daemon::MirrorSessionStore> store;
+    int seq = 0;
+    SyncCreateMirrorStore() {
+        svc.openInMemory();
+        store =
+            std::make_unique<daemonapp::daemon::MirrorSessionStore>(&svc.store(), &svc.ingestor());
+        QObject::connect(store.get(), &daemonapp::daemon::MirrorSessionStore::createRequested,
+                         store.get(), [this](const QString& profileId) {
+                             store->onNodeSessionCreated(QStringLiteral("s-t-%1").arg(++seq),
+                                                         profileId);
+                         });
+    }
+};
 
 // Exercises the shared submit pipeline (SessionOrchestrator): submit starts
 // the turn and populates the status-stack todos; the todos clear a beat after the
@@ -145,9 +167,9 @@ private slots:
     }
 
     void submitAppendsUserTextToSession() {
-        persistence::InMemorySessionStore store;
+        SyncCreateMirrorStore fx;
         SessionController controller;
-        controller.setStore(&store);
+        controller.setStore(fx.store.get());
         const QString id = controller.createSession(QString());
         QVERIFY(!id.isEmpty());
 
@@ -163,9 +185,9 @@ private slots:
     }
 
     void invokeCommandNewCreatesSession() {
-        persistence::InMemorySessionStore store;
+        SyncCreateMirrorStore fx;
         SessionController controller;
-        controller.setStore(&store);
+        controller.setStore(fx.store.get());
         QVERIFY(!controller.hasSession());
 
         SessionOrchestrator orch;
@@ -204,9 +226,9 @@ private slots:
     // #6b: the per-session profile selection (a display name in the popover/overlay) reaches the
     // turn engine as the canonical profile id the node resolves for Submit.profile.
     void sessionProfileReachesTurnEngine() {
-        persistence::InMemorySessionStore store;
+        SyncCreateMirrorStore fx;
         SessionController controller;
-        controller.setStore(&store);
+        controller.setStore(fx.store.get());
         const QString sid = controller.createSession(QString());
         QVERIFY(!sid.isEmpty());
 
@@ -234,9 +256,9 @@ private slots:
     // #6b: no per-session override means empty reaches the engine, which the encoder omits from
     // Submit so the node applies its active profile.
     void emptyProfileMeansNodeActive() {
-        persistence::InMemorySessionStore store;
+        SyncCreateMirrorStore fx;
         SessionController controller;
-        controller.setStore(&store);
+        controller.setStore(fx.store.get());
         const QString sid = controller.createSession(QString());
         QVERIFY(!sid.isEmpty());
 
@@ -260,9 +282,9 @@ private slots:
     // #6b: changing the override on the bound session re-binds the engine live (via changed()),
     // without waiting for the next submit.
     void profileChangePropagatesLive() {
-        persistence::InMemorySessionStore store;
+        SyncCreateMirrorStore fx;
         SessionController controller;
-        controller.setStore(&store);
+        controller.setStore(fx.store.get());
         const QString sid = controller.createSession(QString());
         QVERIFY(!sid.isEmpty());
 

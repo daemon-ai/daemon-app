@@ -4,10 +4,11 @@
 #include "app/code_editor_controller.h"
 #include "app/transcript_log.h"
 #include "chat_conversation_controller.h"
+#include "chat_pending_strip_view.h"
 #include "command_registry.h"
 #include "composer_session_controller.h"
+#include "conv_send_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
-#include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -16,8 +17,6 @@
 #include "memory_list_model.h"
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
-#include "participants_model.h"
-#include "participants_view.h"
 #include "persistence/isession_store.h"
 #include "root_widget.h"
 #include "root_widget_detail.h"
@@ -70,13 +69,18 @@
 #include <Tui/ZWidget.h>
 #include <Tui/ZWindow.h>
 
-// [integrations wire v38] Per-native-chat-tab state (A4): the shared conversation
-// view-model bound to the IChatService seam, plus the document the shared
-// TranscriptView renders. The controller re-projects on every MessagesChanged, so a
-// backgrounded chat tab keeps its transcript current.
+// [mirror M2] Complete type for the setMirror(QObject*) upcast of graph.mirrorService.
+#include "mirror/mirror_service.h"
+
+// [integrations wire v38 → mirror M2] Per-native-chat-tab state: the shared conversation
+// view-model (mirror-window read path in daemon mode, IChatService rows otherwise) + the ConvSend
+// outbox-lane controller (durable sends + the per-conversation pending strip lens) + the document
+// the shared TranscriptView renders. The controllers re-project on every journal delta /
+// MessagesChanged, so a backgrounded chat tab keeps its transcript current.
 struct ChatTab {
     int tabId = -1;
     ChatConversationController* controller = nullptr;
+    ConvSendController* sendController = nullptr;
     be::DocumentStore doc;
 };
 
@@ -84,23 +88,23 @@ void RootWidget::previewSessionTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
-    m_tabModel->previewTranscript(sessionId,
-                                  rwdetail::resolveSessionTabTitle(m_services.store, sessionId));
+    m_tabModel->previewTranscript(
+        sessionId, rwdetail::resolveSessionTabTitle(m_services.storeMirror, sessionId));
 }
 
 void RootWidget::openSessionPinnedTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
-    m_tabModel->openTranscriptPinned(sessionId,
-                                     rwdetail::resolveSessionTabTitle(m_services.store, sessionId));
+    m_tabModel->openTranscriptPinned(
+        sessionId, rwdetail::resolveSessionTabTitle(m_services.storeMirror, sessionId));
 }
 
 void RootWidget::newTranscriptTab() {
-    if (m_services.store == nullptr || m_tabModel == nullptr) {
+    if (m_services.storeMirror == nullptr || m_tabModel == nullptr) {
         return;
     }
-    const QString id = m_services.store->newSessionId(domain::UnitId());
+    const QString id = m_services.storeMirror->newSessionId(domain::UnitId());
     m_tabModel->openTranscriptPinned(id, tr("New session"));
     // A new tab is a natural place to start typing.
     if (m_composer != nullptr) {
@@ -168,9 +172,17 @@ ChatTab* RootWidget::ensureChatTab(int tabId) {
     chat->tabId = tabId;
     chat->controller = new ChatConversationController(this);
     chat->controller->setService(m_services.chat);
+    // [mirror M2] The timeline reads the mirror's chat window in daemon mode (null in mock —
+    // the legacy IChatService rows path stays until A8's seeder).
+    chat->controller->setMirror(m_services.mirrorService);
+    // [mirror M2] Sends route through the durable ConvSend outbox lane when live (§6.4/§6.8);
+    // the same controller backs the pending strip (per-conversation lens). Null outbox (mock)
+    // keeps the legacy direct-send fallback in the submit dispatch.
+    chat->sendController = new ConvSendController(this);
+    chat->sendController->setOutbox(m_services.outbox);
     // Re-render this tab's document whenever the authoritative rows change (initial
-    // history load, a MessagesChanged refresh, or a send round-trip); repaint only
-    // when it is the foreground tab.
+    // history load, a journal delta / MessagesChanged refresh, or a send round-trip);
+    // repaint only when it is the foreground tab.
     connect(chat->controller, &ChatConversationController::markdownChanged, this, [this, chat] {
         chat->doc.loadMarkdown(chat->controller->markdown());
         if (m_activeChat == chat->controller && m_transcript != nullptr) {
@@ -186,8 +198,17 @@ ChatTab* RootWidget::ensureChatTab(int tabId) {
                     RootWidget::tr("Message not sent"),
                     message.isEmpty() ? RootWidget::tr("Couldn't send the message.") : message);
             });
+    // A lane rejection (§6.5): same non-blocking notice; the pending strip keeps the durable
+    // retry/edit/discard affordances.
+    connect(chat->sendController, &ConvSendController::sendRejected, this,
+            [](const QString& message) {
+                rwdetail::emitDesktopNotification(
+                    RootWidget::tr("Message not sent"),
+                    message.isEmpty() ? RootWidget::tr("Couldn't send the message.") : message);
+            });
     m_chatTabs.insert(tabId, chat);
     chat->controller->open(m_tabModel->transportAt(row), m_tabModel->conversationAt(row));
+    chat->sendController->open(m_tabModel->transportAt(row), m_tabModel->conversationAt(row));
     return chat;
 }
 
@@ -200,6 +221,12 @@ void RootWidget::activateChatTab(int tabId) {
     showEditor(false);
     m_active = nullptr;
     m_activeChat = chat->controller;
+    m_activeChatSend = chat->sendController;
+    // [mirror M2] Bind the pending strip to THIS conversation's lane lens (§8.4); it collapses
+    // to 0 height when the lane is empty.
+    if (m_chatPending != nullptr) {
+        m_chatPending->setController(chat->sendController);
+    }
     if (m_composerChrome != nullptr) {
         m_composerChrome->setTurn(nullptr);
     }
@@ -229,10 +256,15 @@ void RootWidget::destroyChatTab(int tabId) {
     ChatTab* chat = it.value();
     if (m_activeChat == chat->controller) {
         m_activeChat = nullptr;
+        m_activeChatSend = nullptr;
+        if (m_chatPending != nullptr) {
+            m_chatPending->setController(nullptr);
+        }
         if (m_transcript != nullptr) {
             m_transcript->setDocument(&m_pageDoc);
         }
     }
+    delete chat->sendController;
     delete chat->controller;
     delete chat;
     m_chatTabs.erase(it);
@@ -249,6 +281,10 @@ void RootWidget::activateTranscriptTab(int tabId) {
     showEditor(false);
     m_active = s;
     m_activeChat = nullptr;
+    m_activeChatSend = nullptr;
+    if (m_chatPending != nullptr) {
+        m_chatPending->setController(nullptr);
+    }
     if (m_transcript != nullptr) {
         m_transcript->setDocument(&s->doc);
         m_transcript->setSearch(&s->search);
@@ -277,6 +313,10 @@ void RootWidget::activateFileTab(int tabId) {
     closeTranscriptSearch();
     m_active = nullptr;
     m_activeChat = nullptr;
+    m_activeChatSend = nullptr;
+    if (m_chatPending != nullptr) {
+        m_chatPending->setController(nullptr);
+    }
     editor::CodeEditorController* c =
         m_fileTabs != nullptr ? m_fileTabs->ensureFileSession(tabId) : nullptr;
     if (m_editorView != nullptr) {
@@ -296,6 +336,10 @@ void RootWidget::activatePageTab(int row) {
     showEditor(false);
     m_active = nullptr;
     m_activeChat = nullptr;
+    m_activeChatSend = nullptr;
+    if (m_chatPending != nullptr) {
+        m_chatPending->setController(nullptr);
+    }
     const int kind = m_tabModel->kindAt(row);
     // Per-agent Memory tab: re-scope the shared memory models to this tab's
     // agent (profile == bank) before projecting. Switching between agents'
@@ -336,6 +380,8 @@ void RootWidget::showEditor(bool on) {
         m_composerChrome->setVisible(stack);
     if (m_queue != nullptr)
         m_queue->setVisible(stack);
+    if (m_chatPending != nullptr)
+        m_chatPending->setVisible(stack);
     if (m_subagents != nullptr)
         m_subagents->setVisible(stack);
     if (m_todos != nullptr)
@@ -374,9 +420,6 @@ void RootWidget::toggleExplorer() {
     }
     const bool show = !m_fileTreeView->isVisible();
     m_fileTreeView->setVisible(show);
-    if (m_participantsView != nullptr) {
-        m_participantsView->setVisible(show);
-    }
     if (show) {
         m_fileTreeView->setFocus();
     }

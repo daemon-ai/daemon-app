@@ -34,12 +34,8 @@ public:
         TitleRole,
         SnippetRole,
         ModifiedRole,
-        UnitNameRole,  // resolved owning unit name ("" if none)
-        UnitKindRole,  // domain::UnitKind of the owning unit (cosmetic)
-        TagNamesRole,  // QStringList of tag names
-        TagColorsRole, // QStringList of tag colors, parallel to TagNamesRole
-        CurrentRole,   // true for the currently-selected row (identity match)
-        PinnedRole,    // true when the session is pinned (floats to top)
+        CurrentRole, // true for the currently-selected row (identity match)
+        PinnedRole,  // true when the session is pinned (floats to top)
     };
 
     explicit SessionsListModel(QObject* parent = nullptr);
@@ -84,7 +80,6 @@ signals:
 private:
     void reload();
     void applyFilter();
-    void rebuildLookups();
     [[nodiscard]] QString computeScopeTitle() const;
     void setCurrentId(const QString& id); // records id + emits + repaints
     void emitCurrentChanged();            // dataChanged(CurrentRole) for all rows
@@ -95,7 +90,5 @@ private:
     QString m_scopeTitle;
     QList<domain::Session> m_all;
     QList<domain::Session> m_filtered;
-    QHash<QString, QPair<QString, int>> m_unitInfo; // unit id -> (name, kind)
-    QHash<int, QPair<QString, QString>> m_tagInfo;  // tag id -> (name, color)
     QString m_currentId; // selected session id (identity-stable), "" = none
 };

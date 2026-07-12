@@ -16,17 +16,11 @@ namespace persistence {
 class ISessionStore;
 }
 
-namespace daemonnet {
-class IDaemonNet;
-}
-
 namespace profiles {
 class IProfileStore;
 }
 
-namespace domain {
-struct UnitNode;
-}
+namespace domain {}
 
 // Flattened supervision-tree sidebar (VSCode AsyncDataTree style): a single flat
 // list of rows where the unit tree is rendered as indented rows. Rows are: All
@@ -45,10 +39,6 @@ class SidebarModel : public QAbstractListModel {
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(QObject* store READ store WRITE setStore NOTIFY storeChanged)
-    // The DaemonNet seam: the source for the co-equal "Integrations" section (events-IO axis; the
-    // user-facing name for the transport-adapter tree). Bound from QML to the shared `DaemonNet`
-    // context property. Null => no Integrations section is shown.
-    Q_PROPERTY(QObject* daemonNet READ daemonNet WRITE setDaemonNet NOTIFY daemonNetChanged)
     // The profile store (agents == profiles; daemon-supervision-spec §0). The FLEET section renders
     // one agent row per ProfileInfo from here (NOT from the node's tree()). Bound from QML to the
     // shared `Profiles` context property. Null => the node root shows with no agents.
@@ -96,9 +86,6 @@ public:
     [[nodiscard]] QObject* store() const;
     void setStore(QObject* store);
 
-    [[nodiscard]] QObject* daemonNet() const;
-    void setDaemonNet(QObject* net);
-
     [[nodiscard]] QObject* profiles() const;
     void setProfiles(QObject* profiles);
 
@@ -140,7 +127,6 @@ public:
     // and calls ProfileRepository::createProfile(spec) (A2). Renamed intent from the earlier
     // "new chat" so the "+" mints an agent, not a bare session.
     Q_INVOKABLE void createRootUnit();
-    Q_INVOKABLE void createTag();
 
     // Row index of the current selection (-1 if it is hidden/none). Lets QML keep
     // the view scrolled to the selection after keyboard navigation.
@@ -148,7 +134,6 @@ public:
 
 signals:
     void storeChanged();
-    void daemonNetChanged();
     void profilesChanged();
     void nodeLabelChanged();
     void treeChanged();
@@ -213,15 +198,14 @@ private:
     void rebuild();
     // Build the FLEET membership view (daemon-supervision-spec §0): the node/connection ROOT row,
     // then one agent row per profile, then each expanded agent's sessions (ByProfile). Sourced from
-    // the profile store + the session store, NOT from the node's tree()/unitChildren().
+    // the profile store + the session store, NOT from the node's supervision tree read.
     void appendFleetMembership();
     // The agent rows (id/name/model) projected from the bound profile store, or empty when none.
     [[nodiscard]] QList<QVariantMap> agentRows() const;
     // Collect the Fleet membership expand keys currently foldable (the node root + agents that have
     // sessions), for the header's expand-all/collapse-all + anyExpanded.
     void collectFleetExpandKeys(QSet<QString>& out) const;
-    void appendTransportRows();
-    // Push a collapsible section header (Fleet/Tags/Integrations); `sectionKey` keys
+    // Push a collapsible section header (Fleet/Tags); `sectionKey` keys
     // its fold state in m_sectionCollapsed.
     void pushSectionHeader(const QString& label, domain::NodeType type, const QString& sectionKey);
     [[nodiscard]] bool isExpanded(const QString& id) const;
@@ -233,14 +217,10 @@ private:
     [[nodiscard]] bool rowIsCurrent(const Row& r) const;
     void emitCurrentChanged(); // dataChanged(CurrentRole) for all rows
     [[nodiscard]] int adjacentSelectableRow(int from, int delta) const;
-    [[nodiscard]] int parentRow(int row) const;
-    // True when the current selection is `rootId` or a descendant of it.
-    [[nodiscard]] bool selectionInSubtree(const QString& rootId) const;
     // Collect the ids of every foldable transport node (accounts + conversation groups).
     void collectTransportExpandableIds(QSet<QString>& out) const;
 
     persistence::ISessionStore* m_store = nullptr;
-    daemonnet::IDaemonNet* m_net = nullptr;
     profiles::IProfileStore* m_profiles = nullptr;
     QString m_nodeLabel;
     QList<Row> m_rows;

@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
-#include "daemonnet/mock_daemonnet.h"
-#include "persistence/in_memory_session_store.h"
+#include "daemon/mirror_session_store.h"
+#include "daemon/mock_scenario.h"
+#include "mirror/mirror_service.h"
+#include "mirror/seeder.h"
+#include "persistence/isession_store.h"
 #include "profiles/iprofile_store.h"
 #include "sidebar_model.h"
 #include "uimodels/variant_list_model.h"
 
+#include <memory>
 #include <QSignalSpy>
 #include <QtTest>
 #include <utility>
-
-using daemonnet::MockDaemonNet;
-using persistence::InMemorySessionStore;
 
 namespace {
 QVariantMap agentRow(const QString& id, const QString& name, const QString& provider,
@@ -34,7 +35,7 @@ QList<QVariantMap> twoAgentRows() {
                      QStringLiteral("daemon_api"), QString(), false)};
 }
 
-// A roster mirroring MockDaemonNet's unit->profile binding (its seeded sessions carry
+// A roster mirroring the mock seed's unit->profile binding (its seeded sessions carry
 // boundProfile prof-1/2/3), so agent rows resolve real ByProfile session leaves from the store.
 // prof-3 deliberately owns no non-archived session (a leaf agent, not foldable).
 QList<QVariantMap> rosterRows() {
@@ -77,6 +78,23 @@ private:
 };
 } // namespace
 
+namespace {
+// AD: the scenario-seeded MIRROR store replaces the deleted InMemory fixture — the SAME
+// MirrorSessionStore + seed data production renders (mock composition), so the model tests
+// observe the real projection semantics (Agent scope = boundProfile, counts, titles).
+struct MirrorFixture {
+    mirror::MirrorService svc;
+    std::unique_ptr<daemonapp::daemon::MirrorSessionStore> store;
+    MirrorFixture() {
+        svc.openInMemory();
+        mirror::Seeder seeder(svc.store());
+        seeder.seed(daemonapp::daemon::mockScenarioByName(QStringLiteral("default")).mirror.seed);
+        store =
+            std::make_unique<daemonapp::daemon::MirrorSessionStore>(&svc.store(), &svc.ingestor());
+    }
+};
+} // namespace
+
 // Exercises the sidebar model: the Fleet MEMBERSHIP view (node/connection root -> agent rows ==
 // profiles -> per-agent session leaves; daemon-supervision-spec §0), its expand/collapse and
 // identity-based selection, the collapsible section headers, and the co-equal Integrations tree.
@@ -100,7 +118,7 @@ private:
 
     // An agent's non-archived session count, straight from the store's ByProfile scope (the same
     // query the model issues), so expectations track the seed instead of magic numbers.
-    static int agentSessions(const InMemorySessionStore& store, const QString& profileId) {
+    static int agentSessions(const persistence::ISessionStore& store, const QString& profileId) {
         return store.sessionCount({domain::NodeType::Agent, -1, domain::UnitId(), profileId});
     }
 
@@ -108,8 +126,8 @@ private slots:
     // The Fleet membership view is a fixed-shape tree: the node/connection ROOT at depth 0, one
     // agent row per profile at depth 1, and each agent's session leaves at depth 2.
     void fleetMembershipFlattensWithDepths() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -133,8 +151,8 @@ private slots:
     // row is NodeType::Agent bound to its profile id, counting (and folding) its sessions; an
     // agent with no sessions is a plain leaf; a session leaf carries profile + session ids.
     void exposesFleetMembershipRoles() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -169,8 +187,8 @@ private slots:
     // Collapsing an agent hides exactly its session leaves; collapsing the node root hides the
     // whole membership body (agents included); expanding restores both.
     void toggleExpandFoldsAgentAndRoot() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -201,8 +219,8 @@ private slots:
 
     // Activating the node root scopes the list to ALL of this node's sessions.
     void activateNodeRootScopesAllSessions() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -222,8 +240,8 @@ private slots:
     // Activating an agent row scopes the session list to its profile (ByProfile; the profile id
     // rides the string slot as the lens key).
     void activateAgentScopesByProfile() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -241,8 +259,8 @@ private slots:
     // Activating a session leaf under an agent opens its transcript (sessionActivated), not a
     // list scope — the same contract as an Integrations session leaf.
     void activateAgentSessionLeafOpensTranscript() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -259,7 +277,8 @@ private slots:
 
     // Separator rows (Fleet / Tags headers) are not selectable and emit nothing.
     void separatorsAreNotSelectable() {
-        InMemorySessionStore store;
+        MirrorFixture fx;
+        auto& store = *fx.store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -276,8 +295,8 @@ private slots:
     // sticking to a row index. Folding a SIBLING agent rebuilds the list but must leave the
     // selected agent highlighted.
     void currentRoleTracksIdentityAcrossRebuild() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -299,8 +318,8 @@ private slots:
     // silent reassignment); re-expanding restores the SAME leaf as current — the selection is
     // stored by identity, never by row index.
     void selectionIdentitySurvivesFoldAndUnfold() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -322,7 +341,8 @@ private slots:
     // Up/Down move the selection between adjacent selectable rows, skipping
     // separators; Enter re-emits the current scope.
     void keyboardNavigationMovesSelection() {
-        InMemorySessionStore store;
+        MirrorFixture fx;
+        auto& store = *fx.store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -345,8 +365,8 @@ private slots:
     // Left collapses the node root in place; Right re-expands it, then descends to its first
     // agent; Left on an expanded agent folds it while the selection stays put.
     void arrowKeysExpandCollapseAndTraverse() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -376,8 +396,8 @@ private slots:
     // Collapse-all folds the whole membership (root included: agents + leaves hidden, the root
     // row remains); expand-all restores it. anyExpanded drives the header's toggle.
     void expandAllAndCollapseAllToggleWholeTree() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -401,8 +421,8 @@ private slots:
     // collapseAll while an agent is selected keeps the selection identity: the row is hidden
     // (inside the folded root), and expandAll surfaces the SAME agent as current again.
     void collapseAllKeepsSelectionIdentity() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -421,8 +441,8 @@ private slots:
     // The Fleet "+" mints an AGENT (a profile) through the create-agent flow: it requests the
     // form and adds NO client-side row (the agent appears via the post-create profile re-list).
     void createRootUnitRequestsAgentCreation() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -438,169 +458,14 @@ private slots:
         QCOMPARE(scoped.count(), 0);        // the selection is untouched
     }
 
-    // Creating a tag adds a tag row and selects it.
-    void createTagAddsAndSelects() {
-        InMemorySessionStore store;
-        SidebarModel model;
-        model.setStore(&store);
-
-        QSignalSpy spy(&model, &SidebarModel::scopeSelected);
-        model.createTag();
-
-        const int created = findRow(model, QStringLiteral("New tag"));
-        QVERIFY(created >= 0);
-        QCOMPARE(roleAt<int>(model, created, SidebarModel::NodeTypeRole), 5); // Tag
-        QVERIFY(roleAt<bool>(model, created, SidebarModel::CurrentRole));
-        QCOMPARE(spy.takeLast().at(0).toInt(), 5);
-    }
-
-    // --- The co-equal Integrations section (events-IO axis) -----------------
-    //
-    // [integrations wire v38] Work package AC decided the sidebar composition: the finished
-    // IntegrationsTree (its own shared IntegrationsTreeModel over the transport registry + persons
-    // seams) now owns the integrations surface, and the shell no longer binds a DaemonNet to the
-    // fleet SidebarModel — so this transportsTree()-driven section is NOT composed into the real
-    // GUI/TUI sidebar anymore (guarded by the QML tst_sidebar composition test + the TUI mount).
-    // The model's transport-section support below is RETAINED (still bindable, still unit-tested):
-    // the transportsTree() projection it consumes stays live on IDaemonNet for its other consumer,
-    // the routing manager (RoutingManagerController). These tests therefore continue to exercise
-    // the model in isolation with an explicit setDaemonNet(), independent of the shell placement.
-
-    // With a DaemonNet source, an "Integrations" header + the capability-driven tree
-    // appear alongside the Fleet/Tags sections, each instance expanded to its taxonomy.
-    void transportsSectionShape() {
-        InMemorySessionStore store;
-        MockDaemonNet net;
-        SidebarModel model;
-        model.setStore(&store);
-        model.setDaemonNet(&net);
-
-        // The header (NodeType::TransportSeparator == 8) is a non-selectable separator,
-        // presented to the user as "Integrations".
-        const int header = findRow(model, QStringLiteral("Integrations"));
-        QVERIFY(header >= 0);
-        QVERIFY(roleAt<bool>(model, header, SidebarModel::IsSeparatorRole));
-        QCOMPARE(roleAt<int>(model, header, SidebarModel::NodeTypeRole), 8);
-
-        // Four transport accounts, two messaging (with presence) + two generic.
-        const int matrix = findRow(model, QStringLiteral("matrix /@bot:hs.org"));
-        const int internal = findRow(model, QStringLiteral("internal (rooms)"));
-        const int cron = findRow(model, QStringLiteral("cron"));
-        const int http = findRow(model, QStringLiteral("http /api"));
-        QVERIFY(matrix >= 0 && internal >= 0 && cron >= 0 && http >= 0);
-        QCOMPARE(roleAt<int>(model, matrix, SidebarModel::NodeTypeRole), 9); // Transport
-        QCOMPARE(roleAt<QString>(model, matrix, SidebarModel::TxKindRole),
-                 QStringLiteral("account"));
-        QCOMPARE(roleAt<QString>(model, matrix, SidebarModel::PresenceRole),
-                 QStringLiteral("available"));
-
-        // Matrix groups its conversations under Channels + Direct Messages.
-        QVERIFY(findRow(model, QStringLiteral("Channels")) >= 0);
-        QVERIFY(findRow(model, QStringLiteral("Direct Messages")) >= 0);
-
-        // #secops is a Channel conversation; @alice a Dm; design-review a GroupDm.
-        const int secops = findRow(model, QStringLiteral("#secops"));
-        QVERIFY(secops >= 0);
-        QCOMPARE(roleAt<QString>(model, secops, SidebarModel::ConvTypeRole),
-                 QStringLiteral("channel"));
-        QCOMPARE(roleAt<QString>(model, secops, SidebarModel::SessionIdRole),
-                 QStringLiteral("s-secops"));
-        QCOMPARE(roleAt<QString>(model, secops, SidebarModel::SubLabelRole),
-                 QStringLiteral("triage"));
-        QCOMPARE(roleAt<QString>(model, findRow(model, QStringLiteral("@alice")),
-                                 SidebarModel::ConvTypeRole),
-                 QStringLiteral("dm"));
-
-        // Generic transports skip conversation groups: jobs/callers sit directly under.
-        QVERIFY(findRow(model, QStringLiteral("nightly-backup")) >= 0);
-        QVERIFY(findRow(model, QStringLiteral("key: dashboard")) >= 0);
-    }
-
-    // Selecting a conversation/job leaf with a session opens it (sessionActivated),
-    // not a list scope.
-    void transportLeafOpensSession() {
-        InMemorySessionStore store;
-        MockDaemonNet net;
-        SidebarModel model;
-        model.setStore(&store);
-        model.setDaemonNet(&net);
-
-        QSignalSpy opened(&model, &SidebarModel::sessionActivated);
-        QSignalSpy scoped(&model, &SidebarModel::scopeSelected);
-        model.activate(findRow(model, QStringLiteral("#secops")));
-
-        QCOMPARE(opened.count(), 1);
-        QCOMPARE(opened.takeFirst().at(0).toString(), QStringLiteral("s-secops"));
-        QCOMPARE(scoped.count(), 0);
-    }
-
-    // Selecting a transport account scopes the list to its sessions (ByTransport,
-    // the lens key in the string slot).
-    void transportAccountScopesList() {
-        InMemorySessionStore store;
-        MockDaemonNet net;
-        SidebarModel model;
-        model.setStore(&store);
-        model.setDaemonNet(&net);
-
-        QSignalSpy scoped(&model, &SidebarModel::scopeSelected);
-        QSignalSpy opened(&model, &SidebarModel::sessionActivated);
-        model.activate(findRow(model, QStringLiteral("matrix /@bot:hs.org")));
-
-        QCOMPARE(scoped.count(), 1);
-        const QList<QVariant> args = scoped.takeFirst();
-        QCOMPARE(args.at(0).toInt(), 6); // NodeType::ByTransport
-        QCOMPARE(args.at(2).toString(), QStringLiteral("matrix/@bot:hs.org"));
-        QCOMPARE(opened.count(), 0);
-    }
-
-    // Empty-tree honesty: a DaemonNet whose transports tree is empty renders NO Integrations
-    // section at all — no header, no rows, nothing foldable — while the co-equal sections render
-    // as usual. (The daemon graph now projects a live DaemonDaemonNet rather than an empty seed;
-    // this remains the model's contract for the genuinely-empty case, e.g. a node with no
-    // configured transports.)
-    void emptyTransportsTreeRendersNoIntegrationsSection() {
-        InMemorySessionStore store;
-        MockDaemonNet net(daemonnet::TransportsSeed::Empty);
-        SidebarModel model;
-        model.setStore(&store);
-        model.setDaemonNet(&net);
-
-        QVERIFY(findRow(model, QStringLiteral("Integrations")) < 0);
-        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) < 0);
-        QVERIFY(findRow(model, QStringLiteral("cron")) < 0);
-        QVERIFY(!model.anyTransportExpanded());
-        // Fleet/Tags are unaffected.
-        QVERIFY(findRow(model, QStringLiteral("Fleet")) >= 0);
-        QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
-    }
-
-    // Collapsing a transport account hides its whole conversation subtree.
-    void transportAccountCollapses() {
-        InMemorySessionStore store;
-        MockDaemonNet net;
-        SidebarModel model;
-        model.setStore(&store);
-        model.setDaemonNet(&net);
-
-        QVERIFY(findRow(model, QStringLiteral("#secops")) >= 0);
-        const int matrix = findRow(model, QStringLiteral("matrix /@bot:hs.org"));
-        QVERIFY(roleAt<bool>(model, matrix, SidebarModel::HasChildrenRole));
-        model.toggleExpand(matrix);
-
-        QVERIFY(findRow(model, QStringLiteral("Channels")) < 0);
-        QVERIFY(findRow(model, QStringLiteral("#secops")) < 0);
-        // A sibling account is untouched.
-        QVERIFY(findRow(model, QStringLiteral("internal (rooms)")) >= 0);
-    }
-
     // --- Fleet membership (agents == profiles) -------------------------------
 
     // Agent rows carry NO secondary label: provider/model configuration crowds the agent name
     // in the tree (it lives in Settings > Profiles); the sublabel role stays reserved for
     // transport leaves.
     void agentRowsCarryNoSecondaryLabel() {
-        InMemorySessionStore store;
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(twoAgentRows(), QStringLiteral("anthropic"));
         SidebarModel model;
         model.setStore(&store);
@@ -621,8 +486,8 @@ private slots:
     // Folding the Fleet header hides its whole membership body (node root + agents + leaves)
     // while the header stays, and its ExpandedRole flips; other sections are untouched.
     void fleetSectionHeaderCollapses() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
+        MirrorFixture fx;
+        auto& store = *fx.store;
         FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
@@ -644,115 +509,12 @@ private slots:
         QVERIFY(!roleAt<bool>(model, fleetAfter, SidebarModel::ExpandedRole));
         QVERIFY(findRow(model, QStringLiteral("Local node")) < 0);
         QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
-        // Other sections remain.
-        QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
+        // Other sections remain. (The Tags section died with the dead store members — AD 1a.4.)
         QVERIFY(findRow(model, QStringLiteral("All Sessions")) >= 0);
 
         // Re-expand restores the body.
         model.toggleExpand(findRow(model, QStringLiteral("Fleet")));
         QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0);
-    }
-
-    // The Tags section folds independently of Fleet.
-    void tagsSectionHeaderCollapses() {
-        InMemorySessionStore store;
-        SidebarModel model;
-        model.setStore(&store);
-
-        // A seeded demo tag exists under the Tags header.
-        QVERIFY(!store.tags().isEmpty());
-        const QString firstTag = store.tags().first().name;
-        QVERIFY(findRow(model, firstTag) >= 0);
-
-        model.toggleExpand(findRow(model, QStringLiteral("Tags")));
-        QVERIFY(findRow(model, firstTag) < 0);
-        QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
-        // Fleet is unaffected: its node root row is still rendered.
-        QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0);
-    }
-
-    // The Integrations section folds its whole transport tree.
-    void integrationsSectionHeaderCollapses() {
-        InMemorySessionStore store;
-        MockDaemonNet net;
-        SidebarModel model;
-        model.setStore(&store);
-        model.setDaemonNet(&net);
-
-        const int header = findRow(model, QStringLiteral("Integrations"));
-        QVERIFY(header >= 0);
-        QVERIFY(roleAt<bool>(model, header, SidebarModel::HasChildrenRole));
-        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) >= 0);
-
-        model.toggleExpand(header);
-        QVERIFY(findRow(model, QStringLiteral("Integrations")) >= 0);
-        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) < 0);
-        QVERIFY(findRow(model, QStringLiteral("#secops")) < 0);
-
-        model.toggleExpand(findRow(model, QStringLiteral("Integrations")));
-        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) >= 0);
-    }
-
-    // Tags section is ordered above the Fleet section in the flattened list.
-    void tagsSectionIsAboveFleet() {
-        InMemorySessionStore store;
-        SidebarModel model;
-        model.setStore(&store);
-
-        const int tags = findRow(model, QStringLiteral("Tags"));
-        const int fleet = findRow(model, QStringLiteral("Fleet"));
-        QVERIFY(tags >= 0 && fleet >= 0);
-        QVERIFY2(tags < fleet, "Tags section must render above the Fleet section");
-    }
-
-    // The Integrations header's expand-all/collapse-all folds/unfolds the whole
-    // transport tree (the events-IO equivalent of Fleet's control).
-    void integrationsExpandAllCollapseAll() {
-        InMemorySessionStore store;
-        MockDaemonNet net;
-        SidebarModel model;
-        model.setStore(&store);
-        model.setDaemonNet(&net);
-
-        QVERIFY(model.anyTransportExpanded()); // expanded by default
-
-        model.collapseAllTransports();
-        QVERIFY(!model.anyTransportExpanded());
-        // Accounts stay (top of the section); their children are folded away.
-        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) >= 0);
-        QVERIFY(findRow(model, QStringLiteral("Channels")) < 0);
-        QVERIFY(findRow(model, QStringLiteral("#secops")) < 0);
-
-        model.expandAllTransports();
-        QVERIFY(model.anyTransportExpanded());
-        QVERIFY(findRow(model, QStringLiteral("Channels")) >= 0);
-        QVERIFY(findRow(model, QStringLiteral("#secops")) >= 0);
-    }
-
-    // Fleet and Integrations expand/collapse-all are independent: one must not
-    // clobber the other's fold state (they share m_collapsed across id namespaces).
-    void fleetAndIntegrationsExpandAllAreIndependent() {
-        MockDaemonNet net;
-        InMemorySessionStore store(&net);
-        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
-        SidebarModel model;
-        model.setStore(&store);
-        model.setProfiles(&profiles);
-        model.setDaemonNet(&net);
-
-        // Fold one transport account by hand.
-        model.toggleExpand(findRow(model, QStringLiteral("matrix /@bot:hs.org")));
-        QVERIFY(findRow(model, QStringLiteral("Channels")) < 0);
-
-        // Fleet expand-all must leave that transport account folded.
-        model.expandAll();
-        QVERIFY(findRow(model, QStringLiteral("Channels")) < 0);
-
-        // Conversely, fold an agent, then Integrations expand-all keeps it folded.
-        model.toggleExpand(findRow(model, QStringLiteral("Coder")));
-        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) < 0);
-        model.expandAllTransports();
-        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) < 0);
     }
 };
 

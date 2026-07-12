@@ -1392,8 +1392,52 @@ kadar başlatılamaz.</translation>
         <translation>Mesaj gönderilemedi.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>Önceki mesajları yükle</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Henüz mesaj yok</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Gönderilmemiş (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Gönder</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Kalanları yine de gönder</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Başarısız</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Gönderiliyor…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Gönderildi</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Kuyrukta</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Yeniden dene</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Düzenle</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>At</translation>
     </message>
 </context>
 <context>
@@ -2488,17 +2532,6 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Unsupported transport</source>
         <translation>Desteklenmeyen taşıma</translation>
-    </message>
-</context>
-<context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Kanallar</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM&apos;ler</translation>
     </message>
 </context>
 <context>
@@ -4206,17 +4239,6 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
-    </message>
-</context>
-<context>
-    <name>MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>Aracı</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Kullanıcı</translation>
     </message>
 </context>
 <context>
@@ -6093,21 +6115,6 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— sabitlendi</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· türetildi</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - izleyici</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6311,16 +6318,8 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>SessionDetail yanıtı çözülemedi</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Bir daemon&apos;a bağlı değil</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Oturum komutu reddetti</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta başarısız oldu</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -6779,10 +6778,6 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <translation>Yeni aracı</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Yeni etiket</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Tümünü daralt</translation>
     </message>
@@ -6862,20 +6857,8 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <translation>Arşivlenmiş</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Etiketler</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Filo</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Entegrasyonlar</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Yeni etiket</translation>
     </message>
 </context>
 <context>
@@ -8790,12 +8773,6 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Kanallar kullanılamıyor: bu modda taşıma katmanı bağlanmamış._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8862,6 +8839,12 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>Disconnected</source>
         <translation>Bağlantı kesildi</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Kanallar kullanılamıyor: kanal merkezi projeksiyonu bu modda bağlı değil._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9268,17 +9251,6 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Kanallar</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DM&apos;ler</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9451,16 +9423,8 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
         <translation>SessionDetail yanıtı çözülemedi</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Bir daemon&apos;a bağlı değil</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Oturum komutu reddetti</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>SessionUpdateMeta başarısız oldu</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9534,17 +9498,6 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>Aracı</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>Kullanıcı</translation>
-    </message>
-</context>
-<context>
     <name>firstrun::FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
@@ -9575,13 +9528,6 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Model %1 diskte eksik: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Katılımcılar</translation>
     </message>
 </context>
 <context>

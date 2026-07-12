@@ -68,26 +68,31 @@ inline constexpr SeamMigrationTarget kTargets[] = {
     {"IAccountsService", "CredentialApi / AuthApi", kAccountsMigration,
      SeamMigrationStatus::MockOnly},
     {"IFleetTree", "Tree / Unit / Pause / Resume / Scale",
-     "LANDED (Phase 5b): DaemonFleetTree projects the cached Tree query (daemon_fleet_units, "
-     "offline-first) into the fleet rows; pause/resume/scale issue the wire control op (PRO-10 "
-     "control is meaningful only on orchestrator units - engine leaves return Unsupported).",
+     "MIRRORED (G2, M5): MirrorFleetTree projects the ONE generated mirror FleetUnit entity "
+     "(child_ids edge -> pre-order depth; engine/lifetime/role off the wire unit-node) into the "
+     "fleet rows, re-derived on FleetUnit journal deltas (connect-gated like the mirror roster - "
+     "live supervision state is not persisted); pause/resume/scale issue the wire control op via "
+     "FleetRepository (PRO-10 control is meaningful only on orchestrator units - engine leaves "
+     "return Unsupported).",
      SeamMigrationStatus::DaemonAligned},
     {"ISessionRoster + IDashboard + IApprovalsInbox", "SessionsQuery / Tree / ApprovalsPending",
      "LANDED (Phase 5): DaemonApprovalsInbox + DaemonSessionRoster (offline-first over the "
-     "CachedSessionStore projection) + DaemonDashboard (counters derived from roster/fleet/"
+     "MirrorSessionStore projection) + DaemonDashboard (counters derived from roster/fleet/"
      "approvals, health from the connection). Wired in daemon mode. Degraded (presentation only, "
      "not domain re-derivation): suspend/resume is a client-local cosmetic overlay and "
      "tokens/rewindable are placeholders - no session-lifecycle / per-session-token wire op yet.",
      SeamMigrationStatus::DaemonAligned},
     {"IDaemonConfig", "ProfileApi / SessionOverlay / node capabilities / ISettingsStore",
      kConfigMigration, SeamMigrationStatus::MockOnly},
-    {"IDaemonNet (routing slice)",
+    {"Routing (routing slice)",
      "RoutingListChats / RoutingBindChat / RoutingUnbindChat / RoutingSet / TransportRooms",
-     "LANDED (B6/ROU, wire v28): RoutingRepository speaks the Routing* pin ops + TransportRooms; "
-     "DaemonDaemonNet projects them through the IDaemonNet seam the RoutingPage/RouteDialog bind. "
-     "Honest residuals: resolve() answers from the pin table only (no read op for the lower "
-     "precedence rungs), bindingRules() is empty (config-time, no wire read), and the "
-     "delivery/handover panel stays inert until the delivery_targets/handover re-point.",
+     "MIRRORED (M3, wire v28): the routing pin table lives on the mirror store (RoutingListChats "
+     "-> "
+     "route_pins; TransportRooms -> rooms), read by RoutingManagerController; RoutingRepository is "
+     "the node-authoritative DIRECT mutation seam (RoutingBindChat/Unbind). Honest residuals: "
+     "resolve() answers Pin (a pinned origin) else Default (no read op for the lower precedence "
+     "rungs), binding rules are empty (config-time, no wire read), and the delivery/handover panel "
+     "stays inert until the SessionGet delivery seam / handover re-point land.",
      SeamMigrationStatus::DaemonAligned},
     {"ICronStore", kCronMigration, kCronMigration, SeamMigrationStatus::MockOnly},
     {"ICheckpointTimeline", "CheckpointList / CheckpointRewind",
@@ -102,11 +107,12 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      "FsWatchPoll cursor loop (reset -> re-list). Wired in daemon mode; mock keeps "
      "LocalDiskFsService.",
      SeamMigrationStatus::DaemonAligned},
-    {"ITransportRegistry + IPresenceService", "TransportAdapters / TransportInstances / ConvList",
-     "LANDED (Phase 6a, story 04): DaemonTransportRegistry projects the node's TransportAdapters "
-     "(the 'Add channel' picker) + the offline-first daemon_transport_instances cache; "
-     "DaemonPresenceService derives the EIO-9 status dots from the same instances (connection is "
-     "coarse + poll/refresh today - real live presence is a deferred backend follow-up). ConvList "
+    {"ITransportRegistry (verbs) + mirror reads",
+     "TransportAdapters / TransportInstances / ConvList",
+     "LANDED (Phase 6a → AD 1a): the tree/hub/channels READS project the mirror "
+     "(adapters/transport_accounts/conversations/persons+endpoints; the EIO-9 status dots ride "
+     "the account rows). DaemonTransportRegistry survives as the VERB seam (room lifecycle, "
+     "account management, settings/two-phase forms). ConvList "
      "(EIO-8) enumerates live rooms per account. Read-only: connect (EIO-2)/disconnect (EIO-7) "
      "deferred.",
      SeamMigrationStatus::DaemonAligned},

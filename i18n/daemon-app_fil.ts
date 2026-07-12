@@ -1392,8 +1392,52 @@ hanggang muli itong mairehistro.</translation>
         <translation>Hindi naipadala ang mensahe.</translation>
     </message>
     <message>
+        <source>Load earlier messages</source>
+        <translation>I-load ang mga naunang mensahe</translation>
+    </message>
+    <message>
         <source>No messages yet</source>
         <translation>Wala pang mga mensahe</translation>
+    </message>
+    <message>
+        <source>Unsent (%1)</source>
+        <translation>Hindi naipadala (%1)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ipadala</translation>
+    </message>
+    <message>
+        <source>Send remaining anyway</source>
+        <translation>Ipadala pa rin ang natitira</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Nabigo</translation>
+    </message>
+    <message>
+        <source>Sending…</source>
+        <translation>Ipinapadala…</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Naipadala</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Nakapila</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Subukang muli</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>I-edit</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation>Itapon</translation>
     </message>
 </context>
 <context>
@@ -2488,17 +2532,6 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Unsupported transport</source>
         <translation>Hindi suportadong transport</translation>
-    </message>
-</context>
-<context>
-    <name>DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Mga Channel</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
     </message>
 </context>
 <context>
@@ -4210,17 +4243,6 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Daemon</source>
         <translation>Daemon</translation>
-    </message>
-</context>
-<context>
-    <name>MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>User</translation>
     </message>
 </context>
 <context>
@@ -6097,21 +6119,6 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     </message>
 </context>
 <context>
-    <name>RoutingTopology</name>
-    <message>
-        <source>— pinned</source>
-        <translation>— naka-pin</translation>
-    </message>
-    <message>
-        <source>·· derived</source>
-        <translation>·· hinango</translation>
-    </message>
-    <message>
-        <source>- - spectator</source>
-        <translation>- - manonood</translation>
-    </message>
-</context>
-<context>
     <name>SafetySettingsSection</name>
     <message>
         <source>Approvals</source>
@@ -6315,16 +6322,8 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Nabigo sa pag-decode ng tugon ng SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Hindi nakakonekta sa isang daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Tinanggihan ng session ang command</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Nabigo ang SessionUpdateMeta</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -6784,10 +6783,6 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>Bagong agent</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Bagong tag</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>I-collapse lahat</translation>
     </message>
@@ -6867,20 +6862,8 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>Naka-archive</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Mga Tag</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Fleet</translation>
-    </message>
-    <message>
-        <source>Integrations</source>
-        <translation>Mga Integration</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Bagong tag</translation>
     </message>
 </context>
 <context>
@@ -8798,12 +8781,6 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Hindi available ang mga channel: hindi nakakabit ang transports seam sa mode na ito._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8870,6 +8847,12 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <message>
         <source>Disconnected</source>
         <translation>Nadiskonekta</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Hindi available ang mga channel: hindi nakakabit ang channels-hub projection sa mode na ito._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9276,17 +9259,6 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     </message>
 </context>
 <context>
-    <name>daemonapp::daemon::DaemonDaemonNet</name>
-    <message>
-        <source>Channels</source>
-        <translation>Mga Channel</translation>
-    </message>
-    <message>
-        <source>DMs</source>
-        <translation>DMs</translation>
-    </message>
-</context>
-<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -9459,16 +9431,8 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
         <translation>Nabigo sa pag-decode ng tugon ng SessionDetail</translation>
     </message>
     <message>
-        <source>Not connected to a daemon</source>
-        <translation>Hindi nakakonekta sa isang daemon</translation>
-    </message>
-    <message>
         <source>The session rejected the command</source>
         <translation>Tinanggihan ng session ang command</translation>
-    </message>
-    <message>
-        <source>SessionUpdateMeta failed</source>
-        <translation>Nabigo ang SessionUpdateMeta</translation>
     </message>
     <message>
         <source>SessionCreate failed</source>
@@ -9542,17 +9506,6 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     </message>
 </context>
 <context>
-    <name>daemonnet::MockDaemonNet</name>
-    <message>
-        <source>Agent</source>
-        <translation>Agent</translation>
-    </message>
-    <message>
-        <source>User</source>
-        <translation>User</translation>
-    </message>
-</context>
-<context>
     <name>firstrun::FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
@@ -9583,13 +9536,6 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Nawawala sa disk ang model na %1: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Mga Kalahok</translation>
     </message>
 </context>
 <context>

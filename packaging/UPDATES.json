@@ -2,7 +2,7 @@
   "updates": {
     "daemon-app": {
       "open-source": {
-        "latest-version": "0.1.0",
+        "latest-version": "0.2.0",
         "release-notes": "Browser persistence polish: durable settings + IDBFS SQLite cache across reloads, silent re-auth, reconnect UX, browser file open/save and clipboard flows, clear-local-data.",
         "download-url": "",
         "changelog-url": ""

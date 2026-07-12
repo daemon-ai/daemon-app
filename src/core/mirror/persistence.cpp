@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <QDateTime>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMetaProperty>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStringList>
@@ -41,6 +44,25 @@ QStringList schemaStatements() {
 
 qint64 nowMsWall() {
     return QDateTime::currentMSecsSinceEpoch();
+}
+
+// Rebuild one windowed entity from its persisted canonical JSON payload (the write-behind's
+// meta-object dump; the entity CBOR encoder replaces the format with BR). Generic over the
+// Q_GADGET properties so no per-field code; the scope fields + window key are then overwritten
+// from the row columns, which are authoritative.
+template <typename T>
+T gadgetFromPayload(const QByteArray& payload) {
+    T m;
+    const QJsonObject obj = QJsonDocument::fromJson(payload).object();
+    const QMetaObject& mo = T::staticMetaObject;
+    for (int i = mo.propertyOffset(); i < mo.propertyCount(); ++i) {
+        const QMetaProperty p = mo.property(i);
+        const auto it = obj.constFind(QString::fromLatin1(p.name()));
+        if (it != obj.constEnd()) {
+            p.writeOnGadget(&m, it->toVariant());
+        }
+    }
+    return m;
 }
 
 } // namespace
@@ -170,6 +192,27 @@ quint64 Persistence::persistedJournalHead() const {
     return 0;
 }
 
+QSet<QString> Persistence::persistedOriginOps() const {
+    QSet<QString> out;
+    if (!isOpen()) {
+        return out;
+    }
+    // The retention-tail scan that supplies the outbox's two-phase boot reconciliation (§6.6): the
+    // distinct non-null provenance op-ids that already landed in the persisted mirror journal. A2
+    // does the idempotent local cleanup (Outbox::reconcileLandedOps); A1 owns this surface.
+    QSqlQuery q(db_);
+    if (q.exec(QStringLiteral("SELECT DISTINCT origin_op FROM mirror_journal "
+                              "WHERE origin_op IS NOT NULL AND origin_op != ''"))) {
+        while (q.next()) {
+            const QString op = q.value(0).toString();
+            if (!op.isEmpty()) {
+                out.insert(op);
+            }
+        }
+    }
+    return out;
+}
+
 bool Persistence::writeBehind(const WriteBatch& batch) {
     if (!db_.transaction()) {
         last_error_ = db_.lastError().text();
@@ -286,12 +329,144 @@ bool Persistence::writeBehind(const WriteBatch& batch) {
         }
     }
 
-    // Class-W window rows (chat) + window_meta — same transaction (§4.5/§4.6).
-    for (const WindowRowWrite& w : batch.windowUpserts) {
+    // AD (1a): the tree/hub M-tables — endpoints, the adapter catalog, the account list (E1).
+    for (const PersonEndpoint& e : batch.personEndpointUpserts) {
         QSqlQuery up(db_);
         up.prepare(QStringLiteral(
-            "INSERT OR REPLACE INTO w_chat_messages(scope,cursor,payload,origin_op,last_rev)"
-            " VALUES(?,?,?,?,?)"));
+            "INSERT OR REPLACE INTO m_person_endpoints"
+            "(key,person,transport,contact,display_name,presence_primitive,last_rev,fetched_at_ms)"
+            " VALUES(?,?,?,?,?,?,?,?)"));
+        const QString key = e.key().serialize();
+        up.addBindValue(key);
+        up.addBindValue(e.person);
+        up.addBindValue(e.transport);
+        up.addBindValue(e.contact);
+        up.addBindValue(e.display_name);
+        up.addBindValue(e.presence_primitive);
+        up.addBindValue(static_cast<qulonglong>(lastRevFor(key)));
+        up.addBindValue(static_cast<qlonglong>(at));
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const PersonEndpointKey& key : batch.personEndpointTombstones) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM m_person_endpoints WHERE key=?"));
+        del.addBindValue(key.serialize());
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const Adapter& a : batch.adapterUpserts) {
+        QSqlQuery up(db_);
+        up.prepare(QStringLiteral("INSERT OR REPLACE INTO m_adapters"
+                                  "(key,family,display_name,directory,cap_rooms,"
+                                  "cap_direct_messages,cap_file_transfer,ops_json,schema_json,"
+                                  "policies_json,last_rev,fetched_at_ms)"
+                                  " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)"));
+        const QString key = a.key().serialize();
+        up.addBindValue(key);
+        up.addBindValue(a.family);
+        up.addBindValue(a.display_name);
+        up.addBindValue(a.directory ? 1 : 0);
+        up.addBindValue(a.cap_rooms ? 1 : 0);
+        up.addBindValue(a.cap_direct_messages ? 1 : 0);
+        up.addBindValue(a.cap_file_transfer ? 1 : 0);
+        up.addBindValue(a.ops_json);
+        up.addBindValue(a.schema_json);
+        up.addBindValue(a.policies_json);
+        up.addBindValue(static_cast<qulonglong>(lastRevFor(key)));
+        up.addBindValue(static_cast<qlonglong>(at));
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const AdapterKey& key : batch.adapterTombstones) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM m_adapters WHERE key=?"));
+        del.addBindValue(key.serialize());
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const TransportAccount& t : batch.transportAccountUpserts) {
+        QSqlQuery up(db_);
+        up.prepare(QStringLiteral(
+            "INSERT OR REPLACE INTO m_transport_accounts"
+            "(key,transport,family,display_name,connection,presence,bound_profile,reason,message,"
+            "fatal,enabled,label,settings_json,last_rev,fetched_at_ms)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"));
+        const QString key = t.key().serialize();
+        up.addBindValue(key);
+        up.addBindValue(t.transport);
+        up.addBindValue(t.family);
+        up.addBindValue(t.display_name);
+        up.addBindValue(t.connection);
+        up.addBindValue(t.presence);
+        up.addBindValue(t.bound_profile);
+        up.addBindValue(t.reason);
+        up.addBindValue(t.message);
+        up.addBindValue(t.fatal ? 1 : 0);
+        up.addBindValue(t.enabled ? 1 : 0);
+        up.addBindValue(t.label);
+        up.addBindValue(t.settings_json);
+        up.addBindValue(static_cast<qulonglong>(lastRevFor(key)));
+        up.addBindValue(static_cast<qlonglong>(at));
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const TransportAccountKey& key : batch.transportAccountTombstones) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM m_transport_accounts WHERE key=?"));
+        del.addBindValue(key.serialize());
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+
+    // Class-W window rows (chat + transcripts) + window_meta — same transaction (§4.5/§4.6).
+    // Scope CLEARS run first: a rebaseline wipe precedes its replacement generation's upserts.
+    for (const QString& scope : batch.transcriptWindowClears) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM w_transcript_blocks WHERE scope=?"));
+        del.addBindValue(scope);
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+        QSqlQuery delMeta(db_);
+        delMeta.prepare(
+            QStringLiteral("DELETE FROM window_meta WHERE kind='TranscriptBlock' AND scope=?"));
+        delMeta.addBindValue(scope);
+        if (!delMeta.exec()) {
+            last_error_ = delMeta.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const WindowRowWrite& w : batch.windowUpserts) {
+        QSqlQuery up(db_);
+        up.prepare(w.kind == QLatin1String("TranscriptBlock")
+                       ? QStringLiteral("INSERT OR REPLACE INTO "
+                                        "w_transcript_blocks(scope,seq,payload,origin_op,last_rev)"
+                                        " VALUES(?,?,?,?,?)")
+                       : QStringLiteral("INSERT OR REPLACE INTO "
+                                        "w_chat_messages(scope,cursor,payload,origin_op,last_rev)"
+                                        " VALUES(?,?,?,?,?)"));
         up.addBindValue(w.scope);
         up.addBindValue(static_cast<qulonglong>(w.cursor));
         up.addBindValue(w.payload);
@@ -377,7 +552,7 @@ bool Persistence::writeBehind(const WriteBatch& batch) {
     return true;
 }
 
-bool Persistence::loadInto(MirrorModel& model) {
+bool Persistence::loadInto(MirrorModel& model, int chatWindowLimit) {
     QSqlQuery q(db_);
     if (!q.exec(
             QStringLiteral("SELECT transport,id,kind,title,topic,description,parent,member_count "
@@ -442,8 +617,172 @@ bool Persistence::loadInto(MirrorModel& model) {
         }
         model.persons = pt.persistent();
     }
-    // Chat windows are the disposable class-W cache; a cold window fills forward on demand
-    // (§4.6 interim) rather than reloading rows — deliberately not rebuilt here.
+
+    // AD (1a): the tree/hub M-tables — endpoints, the adapter catalog, the account list (E1
+    // offline integrations tree / channels hub).
+    QSqlQuery eq(db_);
+    if (eq.exec(QStringLiteral("SELECT person,transport,contact,display_name,presence_primitive "
+                               "FROM m_person_endpoints"))) {
+        auto et = model.person_endpoints.transient();
+        while (eq.next()) {
+            PersonEndpoint e;
+            e.person = eq.value(0).toString();
+            e.transport = eq.value(1).toString();
+            e.contact = eq.value(2).toString();
+            e.display_name = eq.value(3).toString();
+            e.presence_primitive = eq.value(4).toString();
+            et.insert(e);
+        }
+        model.person_endpoints = et.persistent();
+    }
+    QSqlQuery aq(db_);
+    if (aq.exec(QStringLiteral("SELECT family,display_name,directory,cap_rooms,"
+                               "cap_direct_messages,cap_file_transfer,ops_json,schema_json,"
+                               "policies_json FROM m_adapters"))) {
+        auto at2 = model.adapters.transient();
+        while (aq.next()) {
+            Adapter a;
+            a.family = aq.value(0).toString();
+            a.display_name = aq.value(1).toString();
+            a.directory = aq.value(2).toBool();
+            a.cap_rooms = aq.value(3).toBool();
+            a.cap_direct_messages = aq.value(4).toBool();
+            a.cap_file_transfer = aq.value(5).toBool();
+            a.ops_json = aq.value(6).toString();
+            a.schema_json = aq.value(7).toString();
+            a.policies_json = aq.value(8).toString();
+            at2.insert(a);
+        }
+        model.adapters = at2.persistent();
+    }
+    QSqlQuery tq2(db_);
+    if (tq2.exec(QStringLiteral(
+            "SELECT transport,family,display_name,connection,presence,bound_profile,reason,"
+            "message,fatal,enabled,label,settings_json FROM m_transport_accounts"))) {
+        auto tt = model.transport_accounts.transient();
+        while (tq2.next()) {
+            TransportAccount t;
+            t.transport = tq2.value(0).toString();
+            t.family = tq2.value(1).toString();
+            t.display_name = tq2.value(2).toString();
+            t.connection = tq2.value(3).toString();
+            t.presence = tq2.value(4).toString();
+            t.bound_profile = tq2.value(5).toString();
+            t.reason = tq2.value(6).toString();
+            t.message = tq2.value(7).toString();
+            t.fatal = tq2.value(8).toBool();
+            t.enabled = tq2.value(9).toBool();
+            t.label = tq2.value(10).toString();
+            t.settings_json = tq2.value(11).toString();
+            tt.insert(t);
+        }
+        model.transport_accounts = tt.persistent();
+    }
+    // Class-W chat windows (E1 offline render): rebuild each scope's persisted CONTIGUOUS TAIL —
+    // rows are read newest-first bounded by the §4.6 policy max, then reversed into cursor order.
+    // The on-disk row set is a superset of the in-memory window (eviction trims memory only), so
+    // the newest N rows ARE the contiguous tail. Reconnect tops up forward from the seeded per-conv
+    // cursor (MirrorService seeds it from newest_cursor), never re-appending what boot restored.
+    QSqlQuery sq(db_);
+    if (sq.exec(QStringLiteral("SELECT DISTINCT scope FROM w_chat_messages"))) {
+        auto wt = model.chat.transient();
+        while (sq.next()) {
+            const QString scopeKey = sq.value(0).toString();
+            const QStringList sp = scopeKey.split(QChar(0x1f));
+            const ChatMessageScope scope{sp.value(0), sp.value(1)};
+
+            QSqlQuery rq(db_);
+            rq.prepare(QStringLiteral("SELECT cursor,payload FROM w_chat_messages WHERE scope=? "
+                                      "ORDER BY cursor DESC LIMIT ?"));
+            rq.addBindValue(scopeKey);
+            rq.addBindValue(chatWindowLimit > 0 ? chatWindowLimit : -1); // -1 = no LIMIT (sqlite)
+            if (!rq.exec()) {
+                continue;
+            }
+            std::vector<ChatMessage> newestFirst;
+            while (rq.next()) {
+                auto m = gadgetFromPayload<ChatMessage>(rq.value(1).toByteArray());
+                m.transport = scope.transport;
+                m.conv = scope.conv;
+                m.cursor = rq.value(0).toULongLong();
+                newestFirst.push_back(std::move(m));
+            }
+            if (newestFirst.empty()) {
+                continue;
+            }
+
+            Window<ChatMessage> win;
+            auto items = win.items.transient();
+            qint64 bytes = 0;
+            for (std::size_t i = newestFirst.size(); i > 0; --i) {
+                const ChatMessage& m = newestFirst[i - 1]; // reversed: oldest-first
+                bytes += static_cast<qint64>(reflect::gadget_dump(m).size());
+                items.push_back(immer::box<ChatMessage>{m});
+            }
+            win.items = items.persistent();
+            win.meta.item_count = static_cast<int>(win.items.size());
+            win.meta.byte_count = bytes; // same measure the in-memory append accounting uses
+            win.meta.oldest_cursor = newestFirst.back().cursor;
+            win.meta.newest_cursor = newestFirst.front().cursor;
+            QSqlQuery mq(db_);
+            mq.prepare(QStringLiteral(
+                "SELECT contiguous_to_head FROM window_meta WHERE kind='ChatMessage' AND scope=?"));
+            mq.addBindValue(scopeKey);
+            if (mq.exec() && mq.next()) {
+                win.meta.contiguous_to_head = mq.value(0).toBool();
+            }
+            wt.set(scope, std::move(win));
+        }
+        model.chat = wt.persistent();
+    }
+
+    // AD (1b.3): class-W transcript windows (E1 offline transcript render — the durability the
+    // deleted legacy cache leg provided). Whole-scope reload in seq order: the window is bounded
+    // by the session's replayed generation (the rebaseline clear wipes stale rows), so no LIMIT.
+    QSqlQuery tsq(db_);
+    if (tsq.exec(QStringLiteral("SELECT DISTINCT scope FROM w_transcript_blocks"))) {
+        auto wt = model.transcripts.transient();
+        while (tsq.next()) {
+            const QString scopeKey = tsq.value(0).toString();
+            const TranscriptBlockScope scope{scopeKey};
+
+            QSqlQuery rq(db_);
+            rq.prepare(QStringLiteral(
+                "SELECT seq,payload FROM w_transcript_blocks WHERE scope=? ORDER BY seq ASC"));
+            rq.addBindValue(scopeKey);
+            if (!rq.exec()) {
+                continue;
+            }
+            Window<TranscriptBlock> win;
+            auto items = win.items.transient();
+            qint64 bytes = 0;
+            int count = 0;
+            quint64 first = 0;
+            quint64 last = 0;
+            while (rq.next()) {
+                auto b = gadgetFromPayload<TranscriptBlock>(rq.value(1).toByteArray());
+                b.session = scopeKey;
+                b.seq = rq.value(0).toULongLong();
+                if (count == 0) {
+                    first = b.seq;
+                }
+                last = b.seq;
+                bytes += static_cast<qint64>(reflect::gadget_dump(b).size());
+                items.push_back(immer::box<TranscriptBlock>{b});
+                ++count;
+            }
+            if (count == 0) {
+                continue;
+            }
+            win.items = items.persistent();
+            win.meta.item_count = count;
+            win.meta.byte_count = bytes;
+            win.meta.oldest_cursor = first;
+            win.meta.newest_cursor = last;
+            wt.set(scope, std::move(win));
+        }
+        model.transcripts = wt.persistent();
+    }
     return true;
 }
 

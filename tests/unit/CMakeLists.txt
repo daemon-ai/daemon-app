@@ -241,8 +241,9 @@ add_test(NAME tst_checkpoint_repository COMMAND tst_checkpoint_repository)
 set_tests_properties(tst_checkpoint_repository PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_routing_repository: the real routing manager backend (B6/ROU, wire v28) -
-# RoutingListChats/BindChat/UnbindChat + TransportRooms over the WireMuxServer fixture, plus the
-# DaemonDaemonNet IDaemonNet projection (pins, pin-table resolve, QML chip helpers).
+# RoutingListChats/BindChat/UnbindChat + TransportRooms over the WireMuxServer fixture (the same
+# wire shapes the mirror decode-to-mirror bridge maps into route_pins/rooms; see
+# tst_routing_projection for the mirror landing).
 qt_add_executable(tst_routing_repository tst_routing_repository.cpp)
 target_link_libraries(tst_routing_repository
     PRIVATE
@@ -459,21 +460,6 @@ target_link_libraries(tst_subscription_manager
 add_test(NAME tst_subscription_manager COMMAND tst_subscription_manager)
 set_tests_properties(tst_subscription_manager PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_daemon_fleet_tree: the Phase 5b daemon-backed fleet seam - offline render from cache, a Tree
-# query populating cache+model, and a PRO-10 control rejection (Unsupported) reverting the optimistic
-# pause overlay, all over the WireMuxServer fixture.
-qt_add_executable(tst_daemon_fleet_tree tst_daemon_fleet_tree.cpp)
-target_link_libraries(tst_daemon_fleet_tree
-    PRIVATE
-        Qt6::Test
-        Qt6::Network
-        daemon-app::daemon_client
-        daemon-app::fleet
-        daemon-app::uimodels
-)
-add_test(NAME tst_daemon_fleet_tree COMMAND tst_daemon_fleet_tree)
-set_tests_properties(tst_daemon_fleet_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-
 # tst_daemon_roster_dashboard: the Phase 5 daemon-backed roster + dashboard seams - offline-first
 # roster projected from the CachedSessionStore, the client-local suspend overlay + close->archive,
 # and the dashboard counters derived from roster/fleet/approvals/connection.
@@ -485,6 +471,8 @@ target_link_libraries(tst_daemon_roster_dashboard
         daemon-app::daemon_client
         daemon-app::fleet
         daemon-app::uimodels
+        daemon-app::mirror_ingestor
+        daemon-app::local
 )
 add_test(NAME tst_daemon_roster_dashboard COMMAND tst_daemon_roster_dashboard)
 set_tests_properties(tst_daemon_roster_dashboard PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -518,7 +506,7 @@ set_tests_properties(tst_file_finder_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 
 # tst_daemon_transports: the Phase 6a Channels read surface - the transport codec facade round-trips
 # (Adapters/TransportInstances/Conversations via cbor_encode_api_response), and DaemonTransportRegistry
-# + DaemonPresenceService render offline-first from cache and populate over the WireMuxServer fixture.
+# render offline-first from cache and populate over the WireMuxServer fixture.
 qt_add_executable(tst_daemon_transports tst_daemon_transports.cpp)
 target_link_libraries(tst_daemon_transports
     PRIVATE
@@ -534,8 +522,8 @@ set_tests_properties(tst_daemon_transports PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 # tst_integrations_seams (A1 app/core-seams; wire v38): the integrations foundation the later app
 # packages consume — the v38 codec wrappers (enriched auth-param-field, AuthFlowKind::UserPassword,
 # ConversationInfo.parent + Space, AdapterInfo.account_schema, ConvSend/ConvHistory, PersonList,
-# TransportSettings/Configure, MessagesChanged/PersonsChanged), the ChatRepository / PersonsRepository
-# + transport-settings repository surface, the daemon + mock IChatService/IPersonsService seams, and
+# TransportSettings/Configure, MessagesChanged/PersonsChanged), the ChatRepository
+# + transport-settings repository surface, the daemon IChatService seam, and
 # the SubscriptionManager fan-out — over the vendored zcbor codec + the WireMuxServer fixture.
 qt_add_executable(tst_integrations_seams tst_integrations_seams.cpp)
 target_link_libraries(tst_integrations_seams
@@ -576,31 +564,154 @@ target_link_libraries(tst_app_service_graph
 add_test(NAME tst_app_service_graph COMMAND tst_app_service_graph)
 set_tests_properties(tst_app_service_graph PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_daemonnet: the P2 IDaemonNet typed read seam - unit tree accessors, the
-# All/Archived/Unit-subtree/Tag scope folds, the ByTransport/ByPeer lens grouping,
-# and sessionDetail/content by SessionId, all over the one mock DaemonNet seed.
-qt_add_executable(tst_daemonnet tst_daemonnet.cpp)
-target_link_libraries(tst_daemonnet
-    PRIVATE
-        Qt6::Test
-        daemon-app::daemonnet
-        daemon-app::domain
-)
-add_test(NAME tst_daemonnet COMMAND tst_daemonnet)
-set_tests_properties(tst_daemonnet PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+# tst_routing_projection: the M3 routing read path on the MIRROR store - the ingestor's
+# deliverRoutePins (global replace-and-prune over route_pins) + deliverRooms (per-transport
+# replace-and-prune over rooms), plus the map_route_pin/map_room decode round-trip. Replaces the
+# deleted tst_daemonnet / tst_routing_model (the node owns routing precedence; the client reads the
+# store's pin table). Only built where the immer substrate is present.
+    qt_add_executable(tst_routing_projection tst_routing_projection.cpp)
+    target_link_libraries(tst_routing_projection
+        PRIVATE
+            Qt6::Test
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+    )
+    add_test(NAME tst_routing_projection COMMAND tst_routing_projection)
+    set_tests_properties(tst_routing_projection PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_routing_model: the routing-manager model on MockDaemonNet - resolve() precedence
-# (pin > rule > account-bound > default), the pin/handover/bindAccount mutations, and the
-# routes/delivery/accounts projections.
-qt_add_executable(tst_routing_model tst_routing_model.cpp)
-target_link_libraries(tst_routing_model
-    PRIVATE
-        Qt6::Test
-        daemon-app::daemonnet
-        daemon-app::domain
-)
-add_test(NAME tst_routing_model COMMAND tst_routing_model)
-set_tests_properties(tst_routing_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+# tst_mirror_sessions_fleet: the M4 sessions/fleet fetch-ingest vertical on the MIRROR store - the
+# map_session/map_fleet_unit decode round-trip (SessionsQuery/Tree/SessionGet), the ingestor's
+# deliverSessions (global replace-and-prune over sessions), deliverFleetUnits (replace-and-prune
+# over fleet_units + rev record) and deliverSession (keyed hydration upsert). The M4 parity
+# infrastructure that unblocks the session/fleet consumer sub-gates. Only built where the immer
+# substrate is present.
+    qt_add_executable(tst_mirror_sessions_fleet tst_mirror_sessions_fleet.cpp)
+    target_link_libraries(tst_mirror_sessions_fleet
+        PRIVATE
+            Qt6::Test
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+    )
+    add_test(NAME tst_mirror_sessions_fleet COMMAND tst_mirror_sessions_fleet)
+    set_tests_properties(tst_mirror_sessions_fleet PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_mirror_session_store: the M4 mirror-backed ISessionStore (the 6->1 projection the session
+# consumers rebind onto) - DUAL-DECODER PARITY of the same SessionPage bytes through the legacy
+# and mirror (decodeSessionsToMirror
+# -> ingestor -> MirrorSessionStore) paths, the scoped views, the journal-filtered changed(), and
+# the legacy mutation/transcript delegation + signal relays. Only built with the substrate.
+    qt_add_executable(tst_mirror_session_store tst_mirror_session_store.cpp)
+    target_include_directories(tst_mirror_session_store
+        PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Session"
+    )
+    target_link_libraries(tst_mirror_session_store
+        PRIVATE
+            Qt6::Test
+            Qt6::Quick
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+            daemon-app::persistence
+            daemon-app::domain
+            daemon-app::session_view
+            daemon-app::export
+            daemon-app::local # AD: the session-meta outbox lane (LocalDatabase + Outbox)
+    )
+    add_test(NAME tst_mirror_session_store COMMAND tst_mirror_session_store)
+    set_tests_properties(tst_mirror_session_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_mirror_transcript_parity (M4 sub-step 6, A7T): the transcript re-homing parity harness - the
+# SAME coalesced block stream driven through the legacy cache projection (CachedSessionStore::
+# content) and the mirror projection (MirrorTranscriptSink -> ingestor -> w_transcript_blocks ->
+# MirrorSessionStore::mirrorContent), asserting msg-fence byte-equality per scenario and PINNING the
+# argsSummary/detail entity-field gap that withholds the facade flip. Only built with the substrate.
+    qt_add_executable(tst_mirror_transcript_parity tst_mirror_transcript_parity.cpp)
+    target_link_libraries(tst_mirror_transcript_parity
+        PRIVATE
+            Qt6::Test
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+            daemon-app::persistence
+            daemon-app::domain
+    )
+    add_test(NAME tst_mirror_transcript_parity COMMAND tst_mirror_transcript_parity)
+    set_tests_properties(tst_mirror_transcript_parity PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_mirror_fleet_tree (G2/M5): the fleet TREE ported onto the mirror (replaces the deleted
+# tst_daemon_fleet_tree). Re-expresses the still-relevant behaviors on the mirror path: an
+# offline render from the seeded mirror fleet_units (depth/kind/status from the child_ids edge),
+# the wire engine chip decoded off the mirror FleetUnit, refresh() enqueuing a Tree refetch, and a
+# PRO-10 control rejection (Unsupported) reverting the optimistic pause overlay over the
+# WireMuxServer fixture. Only built with the substrate.
+    qt_add_executable(tst_mirror_fleet_tree tst_mirror_fleet_tree.cpp)
+    target_link_libraries(tst_mirror_fleet_tree
+        PRIVATE
+            Qt6::Test
+            Qt6::Network
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::daemon_codec
+            daemon-app::fleet
+            daemon-app::uimodels
+    )
+    add_test(NAME tst_mirror_fleet_tree COMMAND tst_mirror_fleet_tree)
+    set_tests_properties(tst_mirror_fleet_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_sessions_list_mirror (M4 sub-gate 1): the roster list consumer on the mirror path - the
+# shared SessionsListModel (GUI SessionsList/ArchivedSection + TUI SessionListView) over
+# MirrorSessionStore: mirror deliveries render + live-update, the Archived/Agent scopes drive the
+# ingestor's scoped SessionsQuery jobs and project the additively-delivered rows, and the
+# documented M4 degradations (no snippet/tags) hold. Only built with the substrate.
+    qt_add_executable(tst_sessions_list_mirror tst_sessions_list_mirror.cpp)
+    target_include_directories(tst_sessions_list_mirror
+        PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/SessionsList"
+    )
+    target_link_libraries(tst_sessions_list_mirror
+        PRIVATE
+            Qt6::Test
+            Qt6::Qml
+            Qt6::Quick
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::persistence
+            daemon-app::domain
+            daemon-app::sessionslist
+    )
+    add_test(NAME tst_sessions_list_mirror COMMAND tst_sessions_list_mirror)
+    set_tests_properties(tst_sessions_list_mirror PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_sidebar_mirror (M4 sub-gate 2): the sidebar session section on the mirror path - the shared
+# SidebarModel over MirrorSessionStore: All Sessions/Archived counts, the Fleet membership agent
+# counts + session leaves (ByProfile over mirror bound_profile), live updates on mirror deltas.
+# Only built with the substrate.
+    qt_add_executable(tst_sidebar_mirror tst_sidebar_mirror.cpp)
+    target_include_directories(tst_sidebar_mirror
+        PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Sidebar"
+    )
+    target_link_libraries(tst_sidebar_mirror
+        PRIVATE
+            Qt6::Test
+            Qt6::Qml
+            Qt6::Quick
+            daemon-app::mirror_ingestor
+            daemon-app::mirror_substrate
+            daemon-app::daemon_client
+            daemon-app::persistence
+            daemon-app::domain
+            daemon-app::profiles
+            daemon-app::sidebar
+    )
+    add_test(NAME tst_sidebar_mirror COMMAND tst_sidebar_mirror)
+    set_tests_properties(tst_sidebar_mirror PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_graph_model: the reusable Daemon Kit graph model - generic node/edge ingestion, degree, the
 # normalized force layout, and edges()/nodeById/neighborsOf.
@@ -753,14 +864,21 @@ target_link_libraries(tst_profile_store
 add_test(NAME tst_profile_store COMMAND tst_profile_store)
 set_tests_properties(tst_profile_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_fleet_ops: the Phase 6 ops mocks - roster state transitions, fleet
-# pause/resume, approvals resolve, and the dashboard's derived live counters.
+# tst_fleet_ops: the surviving ops mocks after M5 - fleet pause/resume, approvals resolve, and
+# MockDashboard's derived live counters over the ONE roster implementation both modes run
+# (DaemonSessionRoster over an ISessionStore; MockSessionRoster died with the M5 cutover).
 qt_add_executable(tst_fleet_ops tst_fleet_ops.cpp)
 target_link_libraries(tst_fleet_ops
     PRIVATE
         Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
         daemon-app::fleet
+        daemon-app::persistence
         daemon-app::uimodels
+        # AD: the scenario-seeded mirror + the session-meta lane are the fixtures now.
+        daemon-app::mirror_ingestor
+        daemon-app::local
 )
 add_test(NAME tst_fleet_ops COMMAND tst_fleet_ops)
 set_tests_properties(tst_fleet_ops PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -801,18 +919,6 @@ target_link_libraries(tst_theme_palette
 add_test(NAME tst_theme_palette COMMAND tst_theme_palette)
 set_tests_properties(tst_theme_palette PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_store: exercises the in-memory store's uniformly-recursive agent tree -
-# roots, arbitrary depth, subtree-folded counts/scopes, and creation.
-qt_add_executable(tst_store tst_store.cpp)
-target_link_libraries(tst_store
-    PRIVATE
-        Qt6::Test
-        daemon-app::domain
-        daemon-app::persistence
-)
-
-add_test(NAME tst_store COMMAND tst_store)
-set_tests_properties(tst_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_sidebar_model: exercises the flattened agent-tree sidebar model - recursive
 # depths, tree roles, expand/collapse, and node-scope selection.
@@ -829,13 +935,15 @@ target_link_libraries(tst_sidebar_model
         daemon-app::persistence
         daemon-app::daemonnet
         daemon-app::sidebar
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 
 add_test(NAME tst_sidebar_model COMMAND tst_sidebar_model)
 set_tests_properties(tst_sidebar_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_integrations_tree (A2 app/tree-ui): the integrations tree view-model composed directly from
-# ITransportRegistry + IPersonsService (account roots -> capability-gated sections -> space/parent
+# the mirror projection (account roots -> capability-gated sections -> space/parent
 # nesting -> rooms/DMs/persons, unknown-parent-as-root), its activation intents (conversation ->
 # A4's activation seam), and the schema-driven AccountManagementController (add hand-off to the auth
 # flow, edit merge-configure with masked-field omission, remove).
@@ -851,30 +959,10 @@ target_link_libraries(tst_integrations_tree
         daemon-app::transports
         daemon-app::uimodels
         daemon-app::sidebar
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tst_integrations_tree COMMAND tst_integrations_tree)
 set_tests_properties(tst_integrations_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-
-# tst_participants_model: the right sidebar's Participants section model (shared by
-# the GUI and TUI) - the collapsible header, the seeded Agent/User rows with their
-# green "available" presence dots, and the section fold.
-qt_add_executable(tst_participants_model tst_participants_model.cpp)
-target_include_directories(tst_participants_model
-    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Participants"
-)
-target_link_libraries(tst_participants_model
-    PRIVATE
-        Qt6::Test
-        Qt6::Qml
-        Qt6::Quick
-        daemon-app::domain
-        daemon-app::persistence
-        daemon-app::daemonnet
-        daemon-app::participants
-)
-
-add_test(NAME tst_participants_model COMMAND tst_participants_model)
-set_tests_properties(tst_participants_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_turn_controller: exercises the shared turn-lifecycle FSM (the C++ port of
 # TurnSimulator.qml) - a started turn runs its scripted events to completion and
@@ -999,7 +1087,7 @@ set_tests_properties(tst_tab_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offsc
 # view-model BOTH surfaces bind — history load on open, the oldest-first markdown projection
 # of ConvHistory rows, send-without-local-echo, authoritative MessagesChanged refresh (fg + bg),
 # per-conversation signal filtering, and sendFailed surfacing. Compiles the controller source
-# directly and links the transports seam (IChatService + MockChatService).
+# directly and links the transports seam (IChatService; a test-local recording fixture).
 qt_add_executable(tst_chat_conversation_controller
     tst_chat_conversation_controller.cpp
     ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/chat_conversation_controller.cpp
@@ -1013,9 +1101,56 @@ target_link_libraries(tst_chat_conversation_controller
         Qt6::Test
         Qt6::Qml
         daemon-app::transports
+        # AD: the controller's mirror read path is unconditional (substrate always on).
+        daemon-app::mirror_lens
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tst_chat_conversation_controller COMMAND tst_chat_conversation_controller)
 set_tests_properties(tst_chat_conversation_controller
+    PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_conv_send_lane (mirror A5): ConvSend routed through the durable outbox lane (spec 09 §7,
+# §6.4/§6.5/§6.8, §8.4) — the ConvSendController shared VM + the per-conversation PendingOpsModel
+# strip. Compiles the controller source directly and links the local (outbox) module.
+qt_add_executable(tst_conv_send_lane
+    tst_conv_send_lane.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/conv_send_controller.cpp
+)
+set_target_properties(tst_conv_send_lane PROPERTIES AUTOMOC ON)
+target_include_directories(tst_conv_send_lane
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat"
+)
+target_link_libraries(tst_conv_send_lane
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        Qt6::Sql
+        daemon-app::local
+)
+add_test(NAME tst_conv_send_lane COMMAND tst_conv_send_lane)
+set_tests_properties(tst_conv_send_lane PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_chat_conversation_mirror (mirror A5 → AD): the chat controller's MIRROR read path —
+# window-lens rebinding on open (visibility declaration → ingestor top-up), journal-delta
+# re-projection, per-conversation isolation, and demand-paging end-of-history mediation.
+qt_add_executable(tst_chat_conversation_mirror
+    tst_chat_conversation_mirror.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/chat_conversation_controller.cpp
+)
+set_target_properties(tst_chat_conversation_mirror PROPERTIES AUTOMOC ON)
+target_include_directories(tst_chat_conversation_mirror
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat"
+)
+target_link_libraries(tst_chat_conversation_mirror
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        daemon-app::transports
+        daemon-app::mirror_lens
+        daemon-app::mirror_ingestor
+)
+add_test(NAME tst_chat_conversation_mirror COMMAND tst_chat_conversation_mirror)
+set_tests_properties(tst_chat_conversation_mirror
     PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_session_orchestrator: the shared submit pipeline - submit starts the
@@ -1035,6 +1170,8 @@ target_link_libraries(tst_session_orchestrator
         daemon-app::profiles
         daemon-app::persistence
         daemon-app::domain
+        daemon-app::daemon_client
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tst_session_orchestrator COMMAND tst_session_orchestrator)
 set_tests_properties(tst_session_orchestrator PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -1226,12 +1363,88 @@ endif()
 # and dual-write parity. Gated on the ingestor library (which is gated on the vendored substrate).
 if(TARGET daemon-app::mirror_ingestor)
     foreach(_itst tst_mirror_policy_table tst_mirror_fetch_scheduler tst_mirror_ingestor
-                  tst_mirror_write_behind tst_mirror_parity)
+                  tst_mirror_write_behind tst_mirror_parity tst_mirror_service)
         qt_add_executable(${_itst} ${_itst}.cpp)
         target_link_libraries(${_itst} PRIVATE Qt6::Test daemon-app::mirror_ingestor)
         add_test(NAME ${_itst} COMMAND ${_itst})
         set_tests_properties(${_itst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endforeach()
+
+    # tst_mirror_e1_offline (mirror A5): the E1 cold-boot-offline scenario (spec 09 §12) spanning
+    # BOTH DBs — mirror-<id>.db (last-known node truth) + local-<id>.db (surviving pending ops), no
+    # connection, no auto-replay. Links the ingestor (MirrorService) + the local (outbox) module.
+    if(TARGET daemon-app::local)
+        qt_add_executable(tst_mirror_e1_offline tst_mirror_e1_offline.cpp)
+        target_link_libraries(tst_mirror_e1_offline
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::mirror_lens
+                    daemon-app::local)
+        add_test(NAME tst_mirror_e1_offline COMMAND tst_mirror_e1_offline)
+        set_tests_properties(tst_mirror_e1_offline PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
+    # tst_mock_daemon_parity (mirror A8, M5 exit gate): the SAME MockScenario through both
+    # feeders — the real mock graph (Seeder) vs a daemon-shaped ingestor delivery — renders
+    # equivalently at the shared-VM layer (tables via parity helpers, ConversationListModel/
+    # ChatWindowModel lenses, the MirrorSessionStore projection); journal origins record the
+    # feeder (seeder vs refetch_diff) while the state is identical (§9/§13).
+    if(TARGET daemon-app::daemon_client)
+        qt_add_executable(tst_mock_daemon_parity tst_mock_daemon_parity.cpp)
+        target_link_libraries(tst_mock_daemon_parity
+            PRIVATE Qt6::Test Qt6::Network daemon-app::daemon_client daemon-app::persistence
+                    daemon-app::domain)
+        add_test(NAME tst_mock_daemon_parity COMMAND tst_mock_daemon_parity)
+        set_tests_properties(tst_mock_daemon_parity
+            PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
+    # tst_mock_scenario (mirror A8, M5): the mock scenario catalog (spec 09 §9) — mirror rows
+    # derived from the ONE SeedBundle (id agreement), canonical string vocabulary, seeded chat
+    # windows scope seeded conversations, the MANDATORY rejection/timeout verb rules, the api38/
+    # empty variants, and the DAEMON_APP_MOCK_SCENARIO selector.
+    if(TARGET daemon-app::daemon_client)
+        qt_add_executable(tst_mock_scenario tst_mock_scenario.cpp)
+        target_link_libraries(tst_mock_scenario
+            PRIVATE Qt6::Test daemon-app::daemon_client)
+        add_test(NAME tst_mock_scenario COMMAND tst_mock_scenario)
+        set_tests_properties(tst_mock_scenario PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
+    # tst_mirror_seeder (mirror A8): the mock-mode single Writer (spec 09 §9, §5.1) — seed() +
+    # scripted timeline write through the SAME apply/commit pipeline (journal origin = Seeder), a
+    # lens renders the seeded rows (parity by construction), and the verb script resolves
+    # ok/reject/timeout with an arg matcher (the MANDATORY rejection fixtures, §6.5). Links the
+    # ingestor (which hosts the seeder) + the lens (the parity-by-construction check).
+    if(TARGET daemon-app::mirror_lens)
+        qt_add_executable(tst_mirror_seeder tst_mirror_seeder.cpp)
+        target_link_libraries(tst_mirror_seeder
+            PRIVATE Qt6::Test daemon-app::mirror_ingestor daemon-app::mirror_lens)
+        add_test(NAME tst_mirror_seeder COMMAND tst_mirror_seeder)
+        set_tests_properties(tst_mirror_seeder PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+
+    # tst_provenance_landing (mirror A8): the provenance-landing seam deferred to A8 by BR/A7
+    # (spec 09 §5.1/§6.6) — MirrorService::provenanceStamped re-emits each commit's journal
+    # origin_op, driving Outbox::onProvenanceStamped end-to-end (ack→echo→landed; rejection→paused
+    # lane; ack-without-echo→expire; api/38 ack terminal). Links the ingestor (the single-writer
+    # commit path) + the local (outbox) module.
+    if(TARGET daemon-app::local)
+        qt_add_executable(tst_provenance_landing tst_provenance_landing.cpp)
+        target_link_libraries(tst_provenance_landing
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::local)
+        add_test(NAME tst_provenance_landing COMMAND tst_provenance_landing)
+        set_tests_properties(tst_provenance_landing
+            PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+        # tst_mock_both_modes (mirror A8): both ingestor modes + the auto-replay gate in a MOCK
+        # (Seeder-fed) stack, selected by the scenario's configurable api/<N> Hello (§9/§5.6/§6.8)
+        # — full(39): Bootstrap + auto-replay drain; degraded(38): staleness scan + lanes hold.
+        qt_add_executable(tst_mock_both_modes tst_mock_both_modes.cpp)
+        target_link_libraries(tst_mock_both_modes
+            PRIVATE Qt6::Test Qt6::Sql daemon-app::mirror_ingestor daemon-app::local)
+        add_test(NAME tst_mock_both_modes COMMAND tst_mock_both_modes)
+        set_tests_properties(tst_mock_both_modes
+            PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
 
     # The daemon bridge translation (DecodedNodeEvent → mirror::NodeEvent): the second compile-time
     # exhaustiveness layer tying the app's generated wire enum to the policy table (spec §5.1/§12).
@@ -1250,7 +1463,8 @@ endif()
 # ConversationListModel role-map demonstrator. Every model instantiation runs under
 # QAbstractItemModelTester (§12). Gated on the lens target being built (needs the substrate).
 if(TARGET daemon-app::mirror_lens)
-    foreach(_ltst tst_mirror_stable_id tst_mirror_table_model tst_mirror_window_model)
+    foreach(_ltst tst_mirror_stable_id tst_mirror_table_model tst_mirror_window_model
+                  tst_mirror_m2_lenses)
         qt_add_executable(${_ltst} ${_ltst}.cpp)
         target_link_libraries(${_ltst} PRIVATE Qt6::Test daemon-app::mirror_lens)
         add_test(NAME ${_ltst} COMMAND ${_ltst})

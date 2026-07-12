@@ -131,6 +131,48 @@ private slots:
         QCOMPARE(exec.last(FetchOp::ConvHistory).afterCursor, quint64(5));
     }
 
+    void beginObservingChatTopsUpFromStoredCursor() {
+        // §5.8 + §4.6: a visible chat scope declares itself and the INGESTOR issues the top-up —
+        // forward from the stored per-conv cursor (never a lens-driven refetch, never from 0 once
+        // a cursor exists).
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        ing.beginObserving(QStringLiteral("chat"), QStringLiteral("m\x1f!r"));
+        QVERIFY(exec.has(FetchOp::ConvHistory, QStringLiteral("m\x1f!r")));
+        QCOMPARE(exec.last(FetchOp::ConvHistory).afterCursor, quint64(0)); // cold scope
+
+        std::vector<ChatMessage> page = {chat("m", "!r", 1, "x"), chat("m", "!r", 2, "y")};
+        ing.deliverChatPage(QStringLiteral("m"), QStringLiteral("!r"), page, 2, 2);
+        ing.fetchCompleted(exec.last(FetchOp::ConvHistory));
+
+        ing.endObserving(QStringLiteral("chat"), QStringLiteral("m\x1f!r"));
+        ing.beginObserving(QStringLiteral("chat"), QStringLiteral("m\x1f!r"));
+        QCOMPARE(exec.last(FetchOp::ConvHistory).afterCursor, quint64(2)); // tail read, not 0
+    }
+
+    void requestOlderColdWindowFillsForwardThenEnds() {
+        // §4.6 demand paging against v38: a COLD window forward-fills from 0 (true); once the
+        // window holds the reachable tail, older history is not expressible (false) until BR's
+        // before_cursor — the mediator surfaces end-of-history.
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        QVERIFY(ing.requestOlder(QStringLiteral("m\x1f!r"), 64)); // cold: a fill is coming
+        QVERIFY(exec.has(FetchOp::ConvHistory, QStringLiteral("m\x1f!r")));
+        QCOMPARE(exec.last(FetchOp::ConvHistory).afterCursor, quint64(0));
+
+        std::vector<ChatMessage> page = {chat("m", "!r", 1, "x")};
+        ing.deliverChatPage(QStringLiteral("m"), QStringLiteral("!r"), page, 1, 1);
+        QVERIFY(!ing.requestOlder(QStringLiteral("m\x1f!r"), 64)); // tail held: end-of-history
+    }
+
     void chatWindowAppendsWithMeta() {
         // Windows v1 (§4.6): window items + window_meta accounting.
         CoarseObserve obs;
@@ -164,6 +206,58 @@ private slots:
         QCOMPARE(store.snapshot().conversations.size(), std::size_t(1));
         QVERIFY(store.snapshot().conversations.find(
                     ConversationKey{QStringLiteral("m"), QStringLiteral("!a")}) != nullptr);
+    }
+
+    void onConnectedFullModeIssuesBootstrapProbe() {
+        // §5.6 full (BR): an api/39 connect issues ONE Bootstrap probe — not a blind full scan of
+        // every collection. The executor decodes the probe and calls onBootstrap for the deltas.
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+        ing.onConnected(39, /*hasRevFields=*/true);
+        QCOMPARE(exec.count(FetchOp::Bootstrap), 1);
+        QVERIFY(!exec.has(FetchOp::SessionsQuery, QString())); // no degraded staleness scan
+    }
+
+    void onConnectedDegradedScansStaleNotBootstrap() {
+        // §5.6 interim (api/38): no Bootstrap; the degraded staleness scan re-baselines instead.
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+        ing.onConnected(38, /*hasRevFields=*/false);
+        QCOMPARE(exec.count(FetchOp::Bootstrap), 0);
+        QVERIFY(exec.has(FetchOp::SessionsQuery, QString()));
+    }
+
+    void deliverConversationsDeltaUpsertsRemovedOnlyNoPrune() {
+        // §5.6 full / §10.2: a since_rev delta carries ONLY changed items + a `removed` list.
+        // Absent keys are UNCHANGED (never pruned — the essential difference from the full-list
+        // path), and the collection rev is recorded on markFresh for the next rev-gate.
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+        ing.deliverConversations(QStringLiteral("m"), {conv("m", "!a", "A"), conv("m", "!b", "B")},
+                                 true);
+        QCOMPARE(store.snapshot().conversations.size(), std::size_t(2));
+
+        // Delta: change !a, remove nothing. !b is absent from the page but MUST survive (a
+        // full-list deliver would prune it here).
+        ing.deliverConversationsDelta(QStringLiteral("m"), {conv("m", "!a", "A2")}, {}, 5, true);
+        QCOMPARE(store.snapshot().conversations.size(), std::size_t(2));
+        QCOMPARE(ing.syncState().collection(QStringLiteral("conversations")).nodeRev, quint64(5));
+
+        // Delta: remove !b via the tombstone list.
+        ing.deliverConversationsDelta(QStringLiteral("m"), {}, {QStringLiteral("!b")}, 6, true);
+        QCOMPARE(store.snapshot().conversations.size(), std::size_t(1));
+        QVERIFY(store.snapshot().conversations.find(
+                    ConversationKey{QStringLiteral("m"), QStringLiteral("!a")}) != nullptr);
+        QCOMPARE(ing.syncState().collection(QStringLiteral("conversations")).nodeRev, quint64(6));
     }
 
     void diffBeforeWriteSuppressesNoOpDelivery() {
@@ -350,6 +444,156 @@ private slots:
         ing.setObservationMaxAgeMs(QStringLiteral("contacts"), 60000);
         ing.beginObserving(QStringLiteral("contacts"), QStringLiteral("matrix-1"));
         QCOMPARE(exec.count(FetchOp::RosterList), 0); // fresh + within max-age ⇒ no fetch
+    }
+
+    // --- AD (1a): the tree/hub deliver arms ----------------------------------------------------
+
+    // TransportAdapters full list: replace-and-prune (the catalog is node-authoritative).
+    void adaptersReplaceAndPrune() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        Adapter matrix;
+        matrix.family = QStringLiteral("matrix");
+        matrix.display_name = QStringLiteral("Matrix");
+        Adapter irc;
+        irc.family = QStringLiteral("irc");
+        ing.deliverAdapters({matrix, irc}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().adapters.size(), std::size_t(2));
+
+        // The next full read no longer lists irc: it prunes; matrix updates in place.
+        matrix.display_name = QStringLiteral("Matrix (v2)");
+        ing.deliverAdapters({matrix}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().adapters.size(), std::size_t(1));
+        const Adapter* m = store.snapshot().adapters.find(AdapterKey{QStringLiteral("matrix")});
+        QVERIFY(m != nullptr);
+        QCOMPARE(m->display_name, QStringLiteral("Matrix (v2)"));
+    }
+
+    // TransportInstances full list: replace-and-prune; a TransportChanged patch between reads
+    // updates the SAME row (the two feed paths share the lowercase token vocabulary).
+    void transportAccountsReplacePruneAndPatchInterplay() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        TransportAccount a;
+        a.transport = QStringLiteral("matrix/@you:hs");
+        a.family = QStringLiteral("matrix");
+        a.connection = QStringLiteral("offline");
+        TransportAccount b;
+        b.transport = QStringLiteral("irc/you");
+        ing.deliverTransportAccounts({a, b}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().transport_accounts.size(), std::size_t(2));
+
+        // The live event patches connection in place (§5.2) without touching identity fields.
+        NodeEvent e = ev(NodeEventKind::TransportChanged);
+        e.transport = a.transport;
+        e.connection = QStringLiteral("connected");
+        ing.ingest(e);
+        const TransportAccount* row =
+            store.snapshot().transport_accounts.find(TransportAccountKey{a.transport});
+        QVERIFY(row != nullptr);
+        QCOMPARE(row->connection, QStringLiteral("connected"));
+        QCOMPARE(row->family, QStringLiteral("matrix"));
+
+        // The next full read drops the removed account and keeps the patched state fresh.
+        a.connection = QStringLiteral("connected");
+        ing.deliverTransportAccounts({a}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().transport_accounts.size(), std::size_t(1));
+    }
+
+    // PersonList carries persons AND endpoints: the final page replaces BOTH tables — endpoints
+    // of a pruned person can never linger (the tree's Persons section ghost rule).
+    void personEndpointsReplaceWithPersons() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        Person alice;
+        alice.id = QStringLiteral("p-alice");
+        Person bob;
+        bob.id = QStringLiteral("p-bob");
+        PersonEndpoint ea;
+        ea.person = alice.id;
+        ea.transport = QStringLiteral("matrix/@you:hs");
+        ea.contact = QStringLiteral("@alice:hs");
+        PersonEndpoint eb;
+        eb.person = bob.id;
+        eb.transport = QStringLiteral("matrix/@you:hs");
+        eb.contact = QStringLiteral("@bob:hs");
+        ing.deliverPersons({alice, bob}, {ea, eb}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().persons.size(), std::size_t(2));
+        QCOMPARE(store.snapshot().person_endpoints.size(), std::size_t(2));
+
+        // Bob vanishes from the registry: his row AND his endpoint go together.
+        ing.deliverPersons({alice}, {ea}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().persons.size(), std::size_t(1));
+        QCOMPARE(store.snapshot().person_endpoints.size(), std::size_t(1));
+        QVERIFY(store.snapshot().person_endpoints.find(eb.key()) == nullptr);
+    }
+
+    // The delta read (api/39): a CHANGED person's endpoint set replaces wholesale; a REMOVED
+    // person's endpoints are tombstoned with its row; untouched persons keep theirs.
+    void personsDeltaReplacesChangedEndpointSets() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        Person alice;
+        alice.id = QStringLiteral("p-alice");
+        Person bob;
+        bob.id = QStringLiteral("p-bob");
+        PersonEndpoint ea1;
+        ea1.person = alice.id;
+        ea1.transport = QStringLiteral("matrix/@you:hs");
+        ea1.contact = QStringLiteral("@alice:hs");
+        PersonEndpoint eb;
+        eb.person = bob.id;
+        eb.transport = QStringLiteral("matrix/@you:hs");
+        eb.contact = QStringLiteral("@bob:hs");
+        ing.deliverPersons({alice, bob}, {ea1, eb}, /*isFinalPage=*/true);
+
+        // Alice changed: her endpoint moved to a new contact id; Bob is untouched (absent).
+        PersonEndpoint ea2;
+        ea2.person = alice.id;
+        ea2.transport = QStringLiteral("matrix/@you:hs");
+        ea2.contact = QStringLiteral("@alice2:hs");
+        ing.deliverPersonsDelta({alice}, {ea2}, /*removed=*/{}, /*rev=*/7, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().person_endpoints.size(), std::size_t(2));
+        QVERIFY(store.snapshot().person_endpoints.find(ea1.key()) == nullptr);
+        QVERIFY(store.snapshot().person_endpoints.find(ea2.key()) != nullptr);
+        QVERIFY(store.snapshot().person_endpoints.find(eb.key()) != nullptr);
+
+        // Bob removed: his row + endpoints tombstone together.
+        ing.deliverPersonsDelta({}, {}, {QStringLiteral("p-bob")}, /*rev=*/8,
+                                /*isFinalPage=*/true);
+        QVERIFY(store.snapshot().persons.find(PersonKey{QStringLiteral("p-bob")}) == nullptr);
+        QVERIFY(store.snapshot().person_endpoints.find(eb.key()) == nullptr);
+    }
+
+    // The connect-time staleness scan covers the tree/hub collections: adapters + transports
+    // baseline ops are issued when stale (degraded reconnect, §5.6).
+    void reconnectScansAdaptersAndTransports() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+        ing.syncState().markStale(QStringLiteral("adapters"));
+        ing.syncState().markStale(QStringLiteral("transports"));
+        ing.onConnected(38, /*hasRevFields=*/false); // degraded: staleness scan
+        QVERIFY(exec.has(FetchOp::TransportAdapters, QString()));
+        QVERIFY(exec.has(FetchOp::TransportInstances, QString()));
     }
 };
 

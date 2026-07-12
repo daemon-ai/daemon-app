@@ -14,6 +14,11 @@ QByteArray NodeApiCodec::encodeHealthRequest() {
     return encodeSimple(api_request_r::api_request_request_health_m_c);
 }
 
+// [api/39 §10.3] The Bootstrap probe: a payload-free request (`request-bootstrap = "Bootstrap"`).
+QByteArray NodeApiCodec::encodeBootstrapRequest() {
+    return encodeSimple(api_request_r::api_request_request_bootstrap_m_c);
+}
+
 QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 sinceRev,
                                                     const QString& byProfile, const QString& after,
                                                     bool archivedScope,
@@ -206,14 +211,24 @@ QByteArray NodeApiCodec::encodeSessionGetRequest(const QString& sessionId) {
 QByteArray NodeApiCodec::encodeSessionUpdateMetaRequest(const QString& sessionId,
                                                         std::optional<bool> pinned,
                                                         std::optional<bool> archived,
-                                                        std::optional<QString> title) {
+                                                        std::optional<QString> title,
+                                                        const QString& opId) {
     // Buffers outlive the encode: zcbor borrows into their bytes across encodeWithFill.
     const QByteArray sessionUtf8 = sessionId.toUtf8();
     const QByteArray titleUtf8 = title.has_value() ? title->toUtf8() : QByteArray();
+    const QByteArray opIdUtf8 = opId.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_session_update_meta_m_c, [&](api_request_r& request) {
             request_session_update_meta& meta = request.api_request_request_session_update_meta_m;
             setZcbor(meta.SessionUpdateMeta_session, sessionUtf8);
+            // [api/39 §10.3] op-id idempotency + provenance key (absent when empty — a direct
+            // legacy call without a lane op).
+            meta.SessionUpdateMeta_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                meta.SessionUpdateMeta_op_id.SessionUpdateMeta_op_id_choice =
+                    SessionUpdateMeta_op_id_r::SessionUpdateMeta_op_id_tstr_c;
+                setZcbor(meta.SessionUpdateMeta_op_id.SessionUpdateMeta_op_id_tstr, opIdUtf8);
+            }
             session_meta_patch& patch = meta.SessionUpdateMeta_patch;
             // Each optional-and-nullable field: present == the key is in the map; we only ever
             // send the value arm (never the wire `null` clear arm).

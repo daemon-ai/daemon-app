@@ -4,12 +4,11 @@
 import QtQuick
 import QtQuick.Layouts
 import DaemonApp.Theme
-import DaemonApp.Participants
 import DaemonApp.Files
 
-// The right side panel: the "Participants" section stacked above the file Explorer
-// (mirroring how the left sidebar stacks its sections). Re-exposes the Explorer's
-// activation/collapse signals so the shell can wire them exactly as before.
+// The right side panel: the file Explorer. (The permanently-empty Participants section died
+// with the legacy store members — AD 1a.4.) Re-exposes the Explorer's activation/collapse
+// signals so the shell can wire them exactly as before.
 Rectangle {
     id: root
 
@@ -27,14 +26,6 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
-
-        // --- Participants section (sized to its content) -------------------
-        Participants {
-            id: participants
-            Layout.fillWidth: true
-        }
-
-        Rectangle { Layout.fillWidth: true; implicitHeight: Theme.hairline; color: Theme.border }
 
         // --- File Explorer (fills the rest) -------------------------------
         FileExplorer {

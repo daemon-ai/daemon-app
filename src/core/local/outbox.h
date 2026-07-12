@@ -18,9 +18,10 @@ namespace mirror {
 // retry-with-backoff, pause-on-rejection, and a uniform provenance-keyed confirm contract, all
 // backed by the precious `local-<id>.db` (§4.5).
 //
-// A2 ships the outbox fully but with **manual drain only**: `drain()` is invoked by an explicit
-// user action, never automatically after reconnect. Auto-replay (§6.8) is a hard-disabled gate
-// here; the BR bridge flips it on per connection once the node advertises api >= 39.
+// The outbox ships fully with a capability-gated auto-replay (§6.8): `drain()` is invoked by an
+// explicit user action always, and additionally, unattended, after reconnect to an api >= 39 node
+// (rung 3's op-id dedup makes a resend safe). Against api/38 the wire lanes hold after reconnect
+// (manual drain only) — `autoReplayEnabled()` is the per-connection gate the graph consults.
 //
 // The outbox never touches the wire itself: `drain()` marks the lane head inflight and emits
 // `sendRequested`; the owning verb seam performs the wire call and reports back via `onAck` /
@@ -65,9 +66,10 @@ public:
     QString enqueue(const QString& verb, const QString& scope, const QByteArray& payload,
                     const QString& display);
 
-    // Manual drain (spec 09 §6.3): advance ready lanes' heads to inflight and emit `sendRequested`,
+    // Drain (spec 09 §6.3): advance ready lanes' heads to inflight and emit `sendRequested`,
     // honoring the gate, per-lane single in-flight, the global cap, backoff eligibility, and lane
-    // pauses. NEVER called automatically in A2 (no auto-replay, §6.8).
+    // pauses. Called on an explicit manual tap always, and unattended after reconnect when
+    // `autoReplayEnabled(apiVersion)` (§6.8).
     void drain();
 
     // Wire outcomes reported by the owning verb seam:
@@ -113,10 +115,10 @@ public:
     // schedule is unit-testable without a clock.
     [[nodiscard]] static qint64 backoffMs(int attempts);
 
-    // Auto-replay gate (spec 09 §6.8). HARD-DISABLED in A2: returns false for every api version,
-    // including >= 39. Auto-replay is enabled per connection later by the BR bridge; here the
-    // outbox only ever drains on an explicit manual tap. The `apiVersion` argument documents the
-    // seam (and lets a later package relax it without changing call sites).
+    // Auto-replay gate (spec 09 §6.8): true iff `apiVersion` >= 39 (rung 3's op-id dedup +
+    // provenance shipped), enabling unattended drain after reconnect. Against api/38 it returns
+    // false and the wire lanes hold for a manual tap (a blind resend can duplicate). Pure + static
+    // so the gate is unit-testable and the graph can consult it per connection.
     [[nodiscard]] static bool autoReplayEnabled(int apiVersion);
 
 signals:

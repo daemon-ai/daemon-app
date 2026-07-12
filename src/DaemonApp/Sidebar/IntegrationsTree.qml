@@ -33,7 +33,7 @@ Rectangle {
             switch (convType) {
             case "channel": return FontIcons.fa_hashtag;
             case "dm": return FontIcons.fa_user;
-            case "groupdm": return FontIcons.fa_users;
+            case "group_dm": return FontIcons.fa_users;
             default: return FontIcons.fa_comments;
             }
         default: return FontIcons.fa_comments;
@@ -52,8 +52,8 @@ Rectangle {
     IntegrationsTreeModel {
         id: treeModel
         objectName: "integrationsTreeModel"
+        mirror: (typeof Mirror !== "undefined") ? Mirror : null
         registry: (typeof Transports !== "undefined") ? Transports : null
-        persons: (typeof Persons !== "undefined") ? Persons : null
     }
 
     AccountManagementController {

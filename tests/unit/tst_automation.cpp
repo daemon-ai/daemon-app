@@ -12,7 +12,7 @@ using uimodels::VariantListModel;
 
 // Guards the Phase 7 cron mock: create/update/runNow/enable/remove + restart persistence. (The
 // legacy intent->model routing mock was retired at wire v28 — routing is the origin->session pin
-// table on IDaemonNet, covered by tst_routing_model + tst_routing_repository.)
+// table on the mirror store, covered by tst_routing_projection + tst_routing_repository.)
 class TestAutomation : public QObject {
     Q_OBJECT
 

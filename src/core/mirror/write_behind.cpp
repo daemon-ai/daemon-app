@@ -12,9 +12,10 @@ namespace {
 // Canonical JSON payload of a Q_GADGET entity via its meta-object (declaration-ordered, stable).
 // A stand-in for canonical CBOR of the entity (spec §4.5 W payload) until the entity CBOR encoder
 // lands with BR; sufficient for the disposable cache, and byte-deterministic for the E4 dump.
-QByteArray gadgetJson(const ChatMessage& m) {
+template <typename T>
+QByteArray gadgetJson(const T& m) {
     QJsonObject obj;
-    const QMetaObject& mo = ChatMessage::staticMetaObject;
+    const QMetaObject& mo = T::staticMetaObject;
     for (int i = mo.propertyOffset(); i < mo.propertyCount(); ++i) {
         const QMetaProperty p = mo.property(i);
         obj.insert(QString::fromLatin1(p.name()), QJsonValue::fromVariant(p.readOnGadget(&m)));
@@ -67,6 +68,7 @@ bool WriteBehind::flush() {
     batch.journalRecords = deltas;
 
     QSet<QString> chatScopesTouched;
+    QSet<QString> transcriptScopesTouched;
     for (const JournalRecord& r : deltas) {
         const QStringList parts = r.key.split(QChar(0x1f));
         switch (r.kind) {
@@ -97,6 +99,35 @@ bool WriteBehind::flush() {
             }
             break;
         }
+        // AD (1a): the tree/hub M-tables persist like the other M rows, so a cold offline boot
+        // renders the integrations tree / channels hub from the last-known state (E1).
+        case EntityKind::PersonEndpoint: {
+            const PersonEndpointKey key{parts.value(0), parts.value(1), parts.value(2)};
+            if (r.op == JournalOp::Tombstone) {
+                batch.personEndpointTombstones.push_back(key);
+            } else if (const PersonEndpoint* v = snap.person_endpoints.find(key)) {
+                batch.personEndpointUpserts.push_back(*v);
+            }
+            break;
+        }
+        case EntityKind::Adapter: {
+            const AdapterKey key{parts.value(0)};
+            if (r.op == JournalOp::Tombstone) {
+                batch.adapterTombstones.push_back(key);
+            } else if (const Adapter* v = snap.adapters.find(key)) {
+                batch.adapterUpserts.push_back(*v);
+            }
+            break;
+        }
+        case EntityKind::TransportAccount: {
+            const TransportAccountKey key{parts.value(0)};
+            if (r.op == JournalOp::Tombstone) {
+                batch.transportAccountTombstones.push_back(key);
+            } else if (const TransportAccount* v = snap.transport_accounts.find(key)) {
+                batch.transportAccountUpserts.push_back(*v);
+            }
+            break;
+        }
         case EntityKind::ChatMessage: {
             // key = transport␟conv␟cursor (§4.6 window item key).
             if (parts.size() >= 3) {
@@ -111,6 +142,38 @@ bool WriteBehind::flush() {
                             w.kind = QStringLiteral("ChatMessage");
                             w.scope = scope.serialize();
                             w.cursor = cursor;
+                            w.payload = gadgetJson(boxed.get());
+                            w.originOp = r.origin_op;
+                            w.lastRev = r.rev;
+                            batch.windowUpserts.push_back(std::move(w));
+                            break;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        case EntityKind::TranscriptBlock: {
+            // AD (1b.3): the transcript window persists like chat, so the mirror path carries the
+            // durability the deleted legacy cache leg provided (offline cold-boot transcript
+            // render, E1). key = session␟seq for an item upsert; key = session (scope only) for a
+            // clearWindow tombstone (the engine's journal-rebaseline wipe).
+            if (r.op == JournalOp::Tombstone && parts.size() == 1) {
+                batch.transcriptWindowClears.push_back(parts.value(0));
+                break;
+            }
+            if (parts.size() >= 2) {
+                const TranscriptBlockScope scope{parts.value(0)};
+                const quint64 seq = parts.value(1).toULongLong();
+                transcriptScopesTouched.insert(scope.serialize());
+                if (snap.transcripts.count(scope)) {
+                    const Window<TranscriptBlock>& win = snap.transcripts[scope];
+                    for (const auto& boxed : win.items) {
+                        if (boxed.get().seq == seq) {
+                            WindowRowWrite w;
+                            w.kind = QStringLiteral("TranscriptBlock");
+                            w.scope = scope.serialize();
+                            w.cursor = seq;
                             w.payload = gadgetJson(boxed.get());
                             w.originOp = r.origin_op;
                             w.lastRev = r.rev;
@@ -137,6 +200,21 @@ bool WriteBehind::flush() {
             const WindowMeta& meta = snap.chat[scope].meta;
             WindowMetaWrite mw;
             mw.kind = QStringLiteral("ChatMessage");
+            mw.scope = scopeKey;
+            mw.itemCount = meta.item_count;
+            mw.byteCount = meta.byte_count;
+            mw.oldestCursor = meta.oldest_cursor;
+            mw.newestCursor = meta.newest_cursor;
+            mw.contiguousToHead = meta.contiguous_to_head;
+            batch.windowMeta.push_back(std::move(mw));
+        }
+    }
+    for (const QString& scopeKey : transcriptScopesTouched) {
+        const TranscriptBlockScope scope{scopeKey};
+        if (snap.transcripts.count(scope)) {
+            const WindowMeta& meta = snap.transcripts[scope].meta;
+            WindowMetaWrite mw;
+            mw.kind = QStringLiteral("TranscriptBlock");
             mw.scope = scopeKey;
             mw.itemCount = meta.item_count;
             mw.byteCount = meta.byte_count;

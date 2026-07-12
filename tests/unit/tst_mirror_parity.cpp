@@ -18,6 +18,16 @@ Conversation conv(const QString& t, const QString& id) {
     c.id = id;
     return c;
 }
+Session sess(const QString& id) {
+    Session s;
+    s.session = id;
+    return s;
+}
+FleetUnit unit(const QString& id) {
+    FleetUnit u;
+    u.id = id;
+    return u;
+}
 } // namespace
 
 class TstMirrorParity : public QObject {
@@ -57,6 +67,41 @@ private slots:
         // A mirror that matches the legacy transport-registry conversation list passes parity.
         const QSet<QString> legacy = {QStringLiteral("m\x1f!a"), QStringLiteral("m\x1f!b")};
         QVERIFY(parity::compareKeys(keys, legacy).matches());
+    }
+
+    // AD: the session key-set extractor — the mirror-vs-mirror feeder-parity input (the legacy
+    // CachedSessionStore comparison died with the class). Key = the authoritative session id.
+    void sessionKeysExtractAndCompare() {
+        CoarseObserve obs;
+        Store store(obs);
+        store.beginBatch()
+            .upsert(sess(QStringLiteral("s-a")))
+            .upsert(sess(QStringLiteral("s-b")))
+            .commit();
+        const QSet<QString> keys = parity::sessionKeys(store.snapshot());
+        QCOMPARE(keys.size(), 2);
+        QVERIFY(keys.contains(QStringLiteral("s-a")));
+        // A sibling feeder's snapshot carrying the same two sessions passes; drift is reported.
+        const QSet<QString> match = {QStringLiteral("s-a"), QStringLiteral("s-b")};
+        QVERIFY(parity::compareKeys(keys, match).matches());
+        const QSet<QString> drift = {QStringLiteral("s-a")};
+        const parity::Result r = parity::compareKeys(keys, drift);
+        QVERIFY(!r.matches());
+        QCOMPARE(r.onlyInMirror, QStringList{QStringLiteral("s-b")});
+    }
+
+    // AD: the FleetUnit key-set extractor (mirror-vs-mirror feeder parity; unit ids).
+    void fleetUnitKeysExtractAndCompare() {
+        CoarseObserve obs;
+        Store store(obs);
+        store.beginBatch()
+            .upsert(unit(QStringLiteral("u-a")))
+            .upsert(unit(QStringLiteral("u-b")))
+            .commit();
+        const QSet<QString> keys = parity::fleetUnitKeys(store.snapshot());
+        QCOMPARE(keys.size(), 2);
+        const QSet<QString> sibling = {QStringLiteral("u-a"), QStringLiteral("u-b")};
+        QVERIFY(parity::compareKeys(keys, sibling).matches());
     }
 };
 

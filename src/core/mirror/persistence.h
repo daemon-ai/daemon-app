@@ -14,6 +14,7 @@
 #include "mirror/journal.h"
 #include "mirror/model.h"
 
+#include <QSet>
 #include <QSqlDatabase>
 #include <QString>
 #include <vector>
@@ -77,8 +78,19 @@ struct WriteBatch {
     std::vector<ContactKey> contactTombstones;
     std::vector<Person> personUpserts;
     std::vector<PersonKey> personTombstones;
+    // AD (1a): the tree/hub M-tables (offline-first integrations tree / channels hub, E1).
+    std::vector<PersonEndpoint> personEndpointUpserts;
+    std::vector<PersonEndpointKey> personEndpointTombstones;
+    std::vector<Adapter> adapterUpserts;
+    std::vector<AdapterKey> adapterTombstones;
+    std::vector<TransportAccount> transportAccountUpserts;
+    std::vector<TransportAccountKey> transportAccountTombstones;
     std::vector<WindowRowWrite> windowUpserts;
     std::vector<WindowMetaWrite> windowMeta;
+    // AD (1b.3): a clearWindow scope tombstone (the engine's journal-rebaseline transcript wipe)
+    // drops the scope's persisted rows + meta BEFORE this batch's upserts apply, so a wiped
+    // generation never survives a reboot. Scope keys of w_transcript_blocks.
+    std::vector<QString> transcriptWindowClears;
     std::vector<JournalRecord> journalRecords;
 
     bool advanceWatermark = false;
@@ -94,7 +106,11 @@ struct WriteBatch {
 class Persistence {
 public:
     // schema_version the generated DDL targets (mirror_schema_gen.sql / spec §4.5).
-    static constexpr int kSchemaVersion = 11;
+    // v15 (AD 1a): m_person_endpoints gained presence_primitive (the tree's per-person dot) and
+    // m_adapters gained schema_json + policies_json (the add-account form + the node-labeled
+    // policy rows — the wizard/hub sources); a mismatch drops-and-rebuilds (disposable cache),
+    // no migration.
+    static constexpr int kSchemaVersion = 15;
 
     Persistence() = default;
     ~Persistence();
@@ -116,12 +132,22 @@ public:
     // The persisted journal head (MAX(rev)) — seeds the in-memory counter at boot (§4.3).
     [[nodiscard]] quint64 persistedJournalHead() const;
 
+    // The distinct non-null provenance op-ids in the persisted mirror journal (§6.6 two-phase
+    // boot reconciliation): the retention-tail scan the outbox's idempotent local cleanup
+    // (Outbox::reconcileLandedOps) consumes so a crash between "delta persisted" and "op row
+    // deleted" resolves to the op being deleted. A1's surface; A2 does the cleanup.
+    [[nodiscard]] QSet<QString> persistedOriginOps() const;
+
     // One transaction: rows + journal + watermark + cursor (B7). Rolls back on any failure.
     bool writeBehind(const WriteBatch& batch);
 
     // Boot load: rebuild the M tables via transients + read watermarks/cursors, return the model.
-    // (Conversation is loaded; other M tables are the same mechanical shape.)
-    [[nodiscard]] bool loadInto(MirrorModel& model);
+    // (Conversation is loaded; other M tables are the same mechanical shape.) Class-W chat windows
+    // are rebuilt from w_chat_messages/window_meta as the persisted contiguous tail, bounded per
+    // scope by `chatWindowLimit` (the §4.6 chat policy max; <= 0 = unbounded) so a cold boot
+    // renders the last-known timeline offline (E1); forward-fill-on-demand remains the reconnect
+    // top-up path.
+    [[nodiscard]] bool loadInto(MirrorModel& model, int chatWindowLimit = 500);
 
     [[nodiscard]] quint64 loadWatermark(const QString& consumer) const;
     [[nodiscard]] quint64 loadCursor(const QString& name, quint64* epochOut = nullptr) const;

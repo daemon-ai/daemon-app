@@ -4,7 +4,6 @@
 #include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_contacts_service.h"
-#include "daemon/daemon_presence_service.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
 #include "daemon/node_api_client.h"
@@ -12,8 +11,6 @@
 #include "daemon/repositories.h"
 #include "daemon_api_client_encode.h"
 #include "daemon_api_client_types.h"
-#include "transports/mock_contacts_service.h"
-#include "transports/mock_transport_registry.h"
 #include "uimodels/variant_list_model.h"
 #include "wire_mux_fixture.h"
 
@@ -38,7 +35,6 @@ using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::NodeApiCodec;
 using daemonapp::daemon::TransportRepository;
 using daemonapp::test::WireMuxServer;
-using transports::DaemonPresenceService;
 using transports::DaemonTransportRegistry;
 
 namespace {
@@ -687,48 +683,6 @@ private slots:
         QVERIFY(!nullRow.contains(QStringLiteral("directory")));
     }
 
-    // [acct-mgmt] The mock's canned families carry differing per-verb ops so offline dev
-    // exercises the gating: matrix allows delete/ban/setRole, the Rooms loopback does not — the
-    // exact bits the GUI buttons / TUI keys read.
-    void mockAdvertisesPerVerbOps() {
-        transports::MockTransportRegistry mock;
-        const QVariantList adapters = mock.availableAdapters();
-        QCOMPARE(adapters.size(), 2);
-        const QVariantMap matrix = adapters.at(0).toMap();
-        const QVariantMap rooms = adapters.at(1).toMap();
-        QCOMPARE(matrix.value(QStringLiteral("family")).toString(), QStringLiteral("matrix"));
-        QCOMPARE(rooms.value(QStringLiteral("family")).toString(), QStringLiteral("room"));
-        QVERIFY(matrix.value(QStringLiteral("conversationOps"))
-                    .toMap()
-                    .value(QStringLiteral("delete"))
-                    .toBool());
-        QVERIFY(!rooms.value(QStringLiteral("conversationOps"))
-                     .toMap()
-                     .value(QStringLiteral("delete"))
-                     .toBool());
-        QVERIFY(matrix.value(QStringLiteral("membershipOps"))
-                    .toMap()
-                    .value(QStringLiteral("ban"))
-                    .toBool());
-        QVERIFY(!rooms.value(QStringLiteral("membershipOps"))
-                     .toMap()
-                     .value(QStringLiteral("ban"))
-                     .toBool());
-        QVERIFY(!rooms.value(QStringLiteral("membershipOps"))
-                     .toMap()
-                     .value(QStringLiteral("setRole"))
-                     .toBool());
-        // Both canned families still advertise join/create/invite (functional offline flows).
-        QVERIFY(rooms.value(QStringLiteral("conversationOps"))
-                    .toMap()
-                    .value(QStringLiteral("joinChannel"))
-                    .toBool());
-        QVERIFY(rooms.value(QStringLiteral("membershipOps"))
-                    .toMap()
-                    .value(QStringLiteral("invite"))
-                    .toBool());
-    }
-
     void instancesRoundTrip() {
         QList<DecodedTransportInstance> out;
         QVERIFY(NodeApiCodec::decodeTransportInstances(instancesResponse(), &out));
@@ -898,9 +852,15 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(members.count(), 2, 3000);
         const QList<QByteArray> calls = fake.callPayloads();
         QCOMPARE(calls.size(), 3); // ConvGet, MemberSetRole, ConvGet
-        QCOMPARE(calls.at(1),
-                 NodeApiCodec::encodeMemberSetRoleRequest(t, c, QStringLiteral("@bob:matrix.org"),
-                                                          QStringLiteral("Voice")));
+        // AD (1a.2, §10.3 rung 3): the sent frame is the SetRole encode PLUS a freshly-minted
+        // retry-safety op_id, so byte-equality holds only up to the random key — assert the
+        // fixed prefix and the op_id tail instead.
+        const QByteArray withoutOpId = NodeApiCodec::encodeMemberSetRoleRequest(
+            t, c, QStringLiteral("@bob:matrix.org"), QStringLiteral("Voice"));
+        QVERIFY(calls.at(1).contains("MemberSetRole"));
+        QVERIFY(calls.at(1).contains("op_id"));
+        QVERIFY(!withoutOpId.contains("op_id"));
+        QVERIFY(calls.at(1).size() > withoutOpId.size());
         QCOMPARE(calls.at(2), NodeApiCodec::encodeConvGetRequest(t, c));
     }
 
@@ -921,17 +881,15 @@ private slots:
         NodeApiClient client(&transport);
         TransportRepository repo(&client, &cache);
         DaemonTransportRegistry registry(&repo);
-        DaemonPresenceService presence(&repo);
 
         const QVariantList accounts = registry.instances();
         QCOMPARE(accounts.size(), 1);
         QCOMPARE(accounts.at(0).toMap().value(QStringLiteral("transport")).toString(),
                  QStringLiteral("matrix/@bot:hs"));
-        QCOMPARE(presence.connectionState(QStringLiteral("matrix/@bot:hs")),
-                 QStringLiteral("connected"));
-        QCOMPARE(presence.presence(QStringLiteral("matrix/@bot:hs")), QStringLiteral("available"));
-        // An unknown transport degrades to offline/unknown.
-        QCOMPARE(presence.connectionState(QStringLiteral("nope")), QStringLiteral("offline"));
+        // (Connection/presence render from the mirror account rows since AD 1a — the presence
+        // seam is gone; the cached row keeps the raw state for the repo's own consumers.)
+        QCOMPARE(cache.transportInstances().at(0).connection, QStringLiteral("connected"));
+        QCOMPARE(cache.transportInstances().at(0).presence, QStringLiteral("available"));
     }
 
     // [acct-mgmt] wire v35: a cached disabled+labeled account overlays displayName with the label
@@ -1043,30 +1001,6 @@ private slots:
                  NodeApiCodec::encodeTransportSetLabelRequest(t, /*hasLabel=*/false, QString()));
     }
 
-    // [acct-mgmt] wire v35: the mock registry mutates its canned account so the enable/rename paths
-    // are exercisable offline: setEnabled toggles enabled, setLabel overlays displayName.
-    void mockRegistryEnableLabelPaths() {
-        transports::MockTransportRegistry mock;
-        const QString t =
-            mock.instances().at(0).toMap().value(QStringLiteral("transport")).toString();
-        QVERIFY(mock.instances().at(0).toMap().value(QStringLiteral("enabled")).toBool());
-
-        QSignalSpy changed(&mock, &transports::ITransportRegistry::instancesChanged);
-        mock.setEnabled(t, false);
-        QCOMPARE(changed.count(), 1);
-        QVERIFY(!mock.instances().at(0).toMap().value(QStringLiteral("enabled")).toBool());
-
-        mock.setLabel(t, QStringLiteral("Work bot"));
-        QCOMPARE(changed.count(), 2);
-        const QVariantMap row = mock.instances().at(0).toMap();
-        QCOMPARE(row.value(QStringLiteral("displayName")).toString(), QStringLiteral("Work bot"));
-        QCOMPARE(row.value(QStringLiteral("label")).toString(), QStringLiteral("Work bot"));
-
-        mock.setLabel(t, QString()); // clear → back to the raw display name
-        QCOMPARE(mock.instances().at(0).toMap().value(QStringLiteral("displayName")).toString(),
-                 QStringLiteral("@you:matrix.org"));
-    }
-
     // [acct-mgmt] wire v35: DaemonAccountsService.rename persists the label over the wire
     // (CredentialSetLabel) and rebuilds the account rows from the refetched credential-info.label —
     // no client-local label mutation (the m_meta rename path is gone).
@@ -1108,15 +1042,13 @@ private slots:
         DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("ch.db")));
         TransportRepository repo(&tx.client, &cache);
         DaemonTransportRegistry registry(&repo);
-        DaemonPresenceService presence(&repo);
 
         QSignalSpy instances(&registry, &transports::ITransportRegistry::instancesChanged);
         repo.refreshInstances();
         QTRY_COMPARE_WITH_TIMEOUT(instances.count(), 1, 3000);
         QCOMPARE(cache.transportInstances().size(), 1);
         QCOMPARE(registry.instances().size(), 1);
-        QCOMPARE(presence.connectionState(QStringLiteral("matrix/@bot:hs")),
-                 QStringLiteral("connected"));
+        QCOMPARE(cache.transportInstances().at(0).connection, QStringLiteral("connected"));
 
         // EIO-8: a live ConvList populates the per-account rooms.
         fake.setReplyPayload(conversationsResponse());
@@ -1185,50 +1117,6 @@ private slots:
         repo.applyTransportChanged(QStringLiteral("nope"), QStringLiteral("connected"), QString(),
                                    false, QString(), false, QString(), false, false);
         QCOMPARE(cache.transportInstances().size(), 1);
-    }
-
-    // [acct-mgmt] The Mock registry carries canned rooms/members so the room-lifecycle UI works
-    // offline (UI-first): it reports an account with rooms, ConvGet-style members, and the verbs
-    // mutate the canned state + emit the same change signals the daemon registry does.
-    void mockRegistryOfflineRoomFlows() {
-        transports::MockTransportRegistry mock;
-        const QVariantList accounts = mock.instances();
-        QCOMPARE(accounts.size(), 1);
-        const QString t = accounts.at(0).toMap().value(QStringLiteral("transport")).toString();
-        QVERIFY(!t.isEmpty());
-        QVERIFY(!mock.conversations(t).isEmpty());
-        const QString conv =
-            mock.conversations(t).at(0).toMap().value(QStringLiteral("id")).toString();
-
-        // conversationMembers → membersChanged with the canned roster.
-        QSignalSpy members(&mock, &transports::ITransportRegistry::membersChanged);
-        mock.conversationMembers(t, conv);
-        QCOMPARE(members.count(), 1);
-        QVERIFY(!members.at(0).at(2).toList().isEmpty());
-
-        // Join adds a room → conversationsChanged; the new room is present.
-        QSignalSpy convs(&mock, &transports::ITransportRegistry::conversationsChanged);
-        mock.joinRoom(t, QVariantMap{{QStringLiteral("name"), QStringLiteral("newbie")}});
-        QCOMPARE(convs.count(), 1);
-        bool found = false;
-        for (const QVariant& rv : mock.conversations(t)) {
-            if (rv.toMap().value(QStringLiteral("title")).toString() == QLatin1String("newbie")) {
-                found = true;
-            }
-        }
-        QVERIFY(found);
-
-        // setRole mutates the member in place.
-        mock.memberSetRole(t, conv,
-                           members.at(0)
-                               .at(2)
-                               .toList()
-                               .at(0)
-                               .toMap()
-                               .value(QStringLiteral("contactId"))
-                               .toString(),
-                           QStringLiteral("Voice"));
-        QVERIFY(members.count() >= 2);
     }
 
     // [waveB:app-v30] D1: the two teardown intents encode to the right request arms.
@@ -1506,29 +1394,6 @@ private slots:
         svc.getProfile(t, QStringLiteral("@alice:matrix.org"));
         QTRY_COMPARE_WITH_TIMEOUT(prof.count(), 1, 3000);
         QCOMPARE(prof.at(0).at(2).toString(), QStringLiteral("Alice\n@alice:matrix.org"));
-    }
-
-    // The mock service exposes canned per-transport contacts offline; mutations emit
-    // contactsChanged.
-    void mockContactsCannedData() {
-        transports::MockContactsService mock;
-        const QString t = QStringLiteral("matrix/@you:matrix.org");
-        QVERIFY(mock.contacts(t).size() >= 1);
-        QSignalSpy changed(&mock, &transports::IContactsService::contactsChanged);
-        mock.addContact(t, QStringLiteral("@new:matrix.org"));
-        QCOMPARE(changed.count(), 1);
-        bool found = false;
-        for (const QVariant& v : mock.contacts(t)) {
-            if (v.toMap().value(QStringLiteral("id")).toString() ==
-                QStringLiteral("@new:matrix.org")) {
-                found = true;
-            }
-        }
-        QVERIFY(found);
-        // getProfile fires profileReady (the canned profile string).
-        QSignalSpy prof(&mock, &transports::IContactsService::profileReady);
-        mock.getProfile(t, QStringLiteral("@new:matrix.org"));
-        QCOMPARE(prof.count(), 1);
     }
 };
 

@@ -81,8 +81,6 @@ add_library(da_daemon_client STATIC
     daemon_session_settings.cpp
     daemon_checkpoint_timeline.h
     daemon_checkpoint_timeline.cpp
-    daemon_daemonnet.h
-    daemon_daemonnet.cpp
     daemon_approvals_inbox.h
     daemon_approvals_inbox.cpp
     # [wave2:app-engines] shared engine-identity facade (C3/C4/C5)
@@ -95,8 +93,6 @@ add_library(da_daemon_client STATIC
     subscription_manager.cpp
     daemon_fs_service.h
     daemon_fs_service.cpp
-    daemon_fleet_tree.h
-    daemon_fleet_tree.cpp
     daemon_session_roster.h
     daemon_session_roster.cpp
     daemon_dashboard.h
@@ -105,16 +101,10 @@ add_library(da_daemon_client STATIC
     daemon_transport_registry.cpp
     daemon_contacts_service.h
     daemon_contacts_service.cpp
-    daemon_persons_service.h
-    daemon_persons_service.cpp
     daemon_chat_service.h
     daemon_chat_service.cpp
-    daemon_presence_service.h
-    daemon_presence_service.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
-    cached_session_store.h
-    cached_session_store.cpp
     app_service_graph.h
     app_service_graph.cpp
     client_cache_schema.h
@@ -125,6 +115,11 @@ add_library(da_daemon_client STATIC
     seam_migration.h
     integration_slice.h
     cache_consolidation_policy.h
+    # mirror A5: the decode-to-mirror bridge (CBOR reply -> mirror entities via the G1 mappers).
+    # Always built (needs only the generated entities/mappers); the codec stays confined here.
+    mirror_decode.h
+    mirror_decode.cpp
+    ingestor_bridge.h
 )
 add_library(daemon-app::daemon_client ALIAS da_daemon_client)
 
@@ -163,6 +158,9 @@ target_link_libraries(da_daemon_client
         # exposes QtWebSockets types.
         Qt6::WebSockets
         daemon-app::daemon_codec
+        # mirror A5: the generated entities + human-owned mappers (decode-to-mirror bridge). Always
+        # available (built everywhere); the codec + mappers are confined to this lib (07§10).
+        daemon-app::mirror
         # Browser-persistence + network-wakeup seams (all no-ops off wasm, private - no public
         # daemon_client header exposes platform types):
         #  - DaemonCacheStore calls platform::scheduleIdbfsSync() / installUnloadFlush() (W1/W2).
@@ -170,3 +168,42 @@ target_link_libraries(da_daemon_client
         daemon-app::platform
         daemon-app::warnings
 )
+
+# mirror A5 → AD: the ingestor over NodeApiClient (spec 09 §5) + the mirror-backed stores +
+# the mock scenario host. UNCONDITIONAL (AD, ratified): the mirror is the only data path.
+    target_sources(da_daemon_client PRIVATE
+        daemon_fetch_executor.h
+        daemon_fetch_executor.cpp
+        # mirror A7 (M4): the mirror-backed ISessionStore the session/fleet consumers rebind onto
+        # (6->1 session-shape unification); BOTH modes since A8 (mock projects the seeded mirror).
+        mirror_session_store.h
+        mirror_session_store.cpp
+        channels_hub_model.h
+        channels_hub_model.cpp
+        # A7T/G2: the ONE msg-fence transcript projection grammar (mirror TranscriptBlock ->
+        # content markdown), shared by MirrorSessionStore::content() and the mock seeder's derived
+        # legacy baseline so both sides are byte-equal by construction.
+        transcript_projection.h
+        transcript_projection.cpp
+        # A7T (M4 sub-step 6): the app-local transcript stream re-homed onto the mirror window.
+        # The engine-facing ITranscriptMirrorSink is mirror-free (always buildable); the concrete
+        # adapter needs the ingestor, so it is substrate-gated here.
+        transcript_mirror_sink.h
+        mirror_transcript_sink.h
+        mirror_transcript_sink.cpp
+        # mirror A8 (M5): the mock scenario catalog (the ONLY mock seed source) + the host that
+        # drives it (Seeder + timeline + scripted verb outcomes + the api/<N> mode select).
+        mock_scenario.h
+        mock_scenario.cpp
+        mock_scenario_host.h
+        mock_scenario_host.cpp
+        # G2 (M5): the fleet TREE projected from the mirror FleetUnit entity (replaces the legacy
+        # DaemonFleetTree). Needs the mirror store/ingestor, so it is substrate-gated here.
+        mirror_fleet_tree.h
+        mirror_fleet_tree.cpp
+    )
+    target_link_libraries(da_daemon_client PUBLIC
+        daemon-app::mirror_ingestor
+        daemon-app::mirror_lens
+        daemon-app::local
+    )

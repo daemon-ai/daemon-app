@@ -428,11 +428,14 @@ qint64 Outbox::backoffMs(int attempts) {
     return std::min<qint64>(v, 60000);
 }
 
-bool Outbox::autoReplayEnabled(int /*apiVersion*/) {
-    // HARD-DISABLED in A2 for EVERY api version (spec 09 §6.8). Auto-replay is enabled per
-    // connection later by the BR bridge once api >= 39; here the outbox only ever drains on an
-    // explicit manual tap. The apiVersion parameter documents the seam a later package relaxes.
-    return false;
+bool Outbox::autoReplayEnabled(int apiVersion) {
+    // Auto-replay gate (spec 09 §6.8): unattended drain after reconnect is enabled PER CONNECTION
+    // iff the node advertises api/<N> with N >= 39 — rung 3's op-id dedup + provenance shipped, so
+    // a resend reuses its op_id and the node dedups on (principal, op_id), returning the ORIGINAL
+    // result with no side effect. Against api/38 the lane holds after reconnect (manual drain
+    // only): conv_send has no v38 dedup, so a blind resend can duplicate. The outbox always drains
+    // on an explicit manual tap regardless; only the unattended replay is capability-gated.
+    return apiVersion >= 39;
 }
 
 } // namespace mirror

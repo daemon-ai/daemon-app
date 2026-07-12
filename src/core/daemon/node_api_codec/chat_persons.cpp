@@ -143,10 +143,11 @@ DecodedChatMessage decodeChatMessageStruct(const chat_message& m) {
 } // namespace
 
 QByteArray NodeApiCodec::encodeConvSendRequest(const QString& transport, const QString& conv,
-                                               const QString& text) {
+                                               const QString& text, const QString& opId) {
     const QByteArray t = transport.toUtf8();
     const QByteArray c = conv.toUtf8();
     const QByteArray tx = text.toUtf8();
+    const QByteArray op = opId.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_conv_send_m_c, [&](api_request_r& request) {
             conv_send_args& a = request.api_request_request_conv_send_m.request_conv_send_ConvSend;
@@ -157,12 +158,22 @@ QByteArray NodeApiCodec::encodeConvSendRequest(const QString& transport, const Q
             setZcbor(a.conv_send_args_message.user_msg_text, tx);
             a.conv_send_args_message.user_msg_attachments_present = false;
             a.conv_send_args_message.user_msg_notice_present = false;
+            // [api/39 §10.3] The optional op_id: the outbox mints it and reuses it across retries
+            // so the node dedups on (principal, op_id) and stamps `origin_op` provenance. Empty ⇒
+            // absent (byte-identical to the v38 shape for a send that carries no op-id).
+            a.conv_send_args_op_id_present = !opId.isEmpty();
+            if (!opId.isEmpty()) {
+                a.conv_send_args_op_id.conv_send_args_op_id_choice =
+                    conv_send_args_op_id_r::conv_send_args_op_id_tstr_c;
+                setZcbor(a.conv_send_args_op_id.conv_send_args_op_id_tstr, op);
+            }
         });
 }
 
 QByteArray NodeApiCodec::encodeConvHistoryRequest(const QString& transport, const QString& conv,
                                                   bool hasAfter, quint64 afterCursor, bool hasMax,
-                                                  quint32 max) {
+                                                  quint32 max, bool hasBefore,
+                                                  quint64 beforeCursor) {
     const QByteArray t = transport.toUtf8();
     const QByteArray c = conv.toUtf8();
     return encodeWithFill(
@@ -174,6 +185,13 @@ QByteArray NodeApiCodec::encodeConvHistoryRequest(const QString& transport, cons
             a.conv_history_args_after_cursor_present = hasAfter;
             if (hasAfter) {
                 a.conv_history_args_after_cursor.conv_history_args_after_cursor = afterCursor;
+            }
+            // [api/39 §10.2] The optional before_cursor: a BACKWARD window — the `max` records with
+            // cursor < beforeCursor, newest-anchored. Forward (after_cursor) and backward
+            // (before_cursor) are mutually exclusive; the caller passes at most one.
+            a.conv_history_args_before_cursor_present = hasBefore;
+            if (hasBefore) {
+                a.conv_history_args_before_cursor.conv_history_args_before_cursor = beforeCursor;
             }
             a.conv_history_args_max_present = hasMax;
             if (hasMax) {
@@ -218,48 +236,19 @@ bool NodeApiCodec::decodeConvHistory(const QByteArray& responseCbor, QList<Decod
     return true;
 }
 
-QByteArray NodeApiCodec::encodePersonListRequest() {
-    return encodeSimple(api_request_r::api_request_request_person_list_m_c);
-}
-
-bool NodeApiCodec::decodePersons(const QByteArray& responseCbor, QList<DecodedPerson>* out) {
-    if (out == nullptr) {
-        return false;
+QByteArray NodeApiCodec::encodePersonListRequest(bool hasSinceRev, quint64 sinceRev) {
+    if (!hasSinceRev) {
+        return encodeSimple(api_request_r::api_request_request_person_list_m_c);
     }
-    const auto response =
-        decodeChecked(responseCbor, api_response_r::api_response_response_persons_m_c);
-    if (!response) {
-        return false;
-    }
-    const response_persons& rp = response->api_response_response_persons_m;
-    out->clear();
-    // [api/39] Persons became a rev+delta list: the roster now lives under `items`, alongside a
-    // per-collection `rev` and optional `removed`/`origin_ops` deltas. The v38-behaving client only
-    // consumes the full `items` snapshot (re-fetched on PersonsChanged); rev/removed/origin_ops are
-    // decoded-and-ignored until the later SyncState flip wires them.
-    for (size_t i = 0; i < rp.Persons_items_person_m_count; ++i) {
-        const person& p = rp.Persons_items_person_m[i];
-        DecodedPerson d;
-        d.id = fromZcbor(p.person_id);
-        if (p.person_alias_present &&
-            p.person_alias.person_alias_choice == person_alias_r::person_alias_tstr_c) {
-            d.hasAlias = true;
-            d.alias = fromZcbor(p.person_alias.person_alias_tstr);
-        }
-        if (p.person_endpoints_present) {
-            for (size_t j = 0; j < p.person_endpoints.person_endpoints_person_endpoint_m_count;
-                 ++j) {
-                const person_endpoint& ep =
-                    p.person_endpoints.person_endpoints_person_endpoint_m[j];
-                DecodedPersonEndpoint dep;
-                dep.transport = fromZcbor(ep.person_endpoint_transport);
-                dep.contact = decodeContactInfoStruct(ep.person_endpoint_contact);
-                d.endpoints.append(dep);
-            }
-        }
-        out->append(d);
-    }
-    return true;
+    // [api/39 §10.2] since_rev ⇒ delta read (changed persons + `removed` + `rev`).
+    return encodeWithFill(
+        api_request_r::api_request_request_person_list_m_c, [&](api_request_r& request) {
+            request_person_list& l = request.api_request_request_person_list_m;
+            l.PersonList_since_rev_present = true;
+            l.PersonList_since_rev.PersonList_since_rev_choice =
+                PersonList_since_rev_r::PersonList_since_rev_uint64_m_c;
+            l.PersonList_since_rev.PersonList_since_rev_uint64_m = static_cast<uint64_t>(sinceRev);
+        });
 }
 
 QByteArray NodeApiCodec::encodeTransportSettingsRequest(const QString& transport) {

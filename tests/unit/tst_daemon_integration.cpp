@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "daemon/cache_consolidation_policy.h"
-#include "daemon/cached_session_store.h"
 #include "daemon/client_cache_schema.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_transport.h"
@@ -12,7 +11,6 @@
 #include "daemon/repositories.h"
 #include "daemon/seam_migration.h"
 #include "domain/ids.h"
-#include "persistence/in_memory_session_store.h"
 #include "wire_mux_fixture.h"
 
 #include <array>
@@ -187,18 +185,15 @@ private slots:
         QCOMPARE(decoded, QByteArray("abc", 3));
     }
 
-    void cacheSchemaUsesDaemonIdsAndStructuredBlocks() {
-        QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateSessionsSql)
-                    .contains("session_id TEXT PRIMARY KEY"));
+    void cacheSchemaCoversOnlyNonMigratedDomains() {
+        // v11 (AD): the roster/fleet/transcript tables are GONE — those domains live on the
+        // mirror. The cache keeps cursors + profiles + fs + transports/conversations.
         QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateSyncCursorsSql)
                     .contains("cursor TEXT"));
-        // The transcript is cached as coalesced blocks (the retired
-        // daemon_session_log/daemon_approvals tables are gone; pending approvals are live, the
-        // transcript renders from these blocks).
-        QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateTranscriptBlocksSql)
-                    .contains("daemon_transcript_blocks"));
         QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateProfilesSql)
                     .contains("spec_cbor BLOB"));
+        QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateTransportInstancesSql)
+                    .contains("daemon_transport_instances"));
     }
 
     void firstSliceIsOrderedForThinClientBootstrap() {
@@ -217,47 +212,14 @@ private slots:
                  QStringView(u"persist-cursor"));
     }
 
-    void cacheStorePersistsRowsAndCursors() {
+    void cacheStorePersistsCursors() {
         QTemporaryDir dir;
         QVERIFY(dir.isValid());
         daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("cache.db")));
         QVERIFY(cache.isOpen());
-
-        daemonapp::daemon::CachedSessionRow session;
-        session.sessionId = QStringLiteral("s1");
-        session.title = QStringLiteral("Hello");
-        session.state = QStringLiteral("Active");
-        session.updatedAtMs = 10;
-        QVERIFY(cache.upsertSession(session));
-        QCOMPARE(cache.sessions().size(), 1);
-        QCOMPARE(cache.sessions().first().sessionId, QStringLiteral("s1"));
-
-        // The generic cursor KV (used for the roster rev, per-session watermark/epoch,
-        // events-since).
-        QVERIFY(cache.setCursor(QStringLiteral("roster-rev"), QStringLiteral("7"), 12));
-        QCOMPARE(cache.cursor(QStringLiteral("roster-rev")), QStringLiteral("7"));
-    }
-
-    void repositoriesUseCache() {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("cache.db")));
-        daemonapp::daemon::SessionRepository sessions(nullptr, &cache);
-
-        daemonapp::daemon::CachedSessionRow row;
-        row.sessionId = QStringLiteral("s2");
-        row.state = QStringLiteral("Ready");
-        row.updatedAtMs = 20;
-        QVERIFY(sessions.upsertCachedSession(row));
-        QCOMPARE(sessions.cachedSessions().first().sessionId, QStringLiteral("s2"));
-    }
-
-    void domainSessionsCarryDaemonIds() {
-        persistence::InMemorySessionStore store;
-        const auto sessions = store.sessions(domain::ListScope{});
-        QVERIFY(!sessions.isEmpty());
-        QVERIFY(!sessions.first().sessionId.isEmpty());
-        QVERIFY(sessions.first().id >= 0);
+        // The generic cursor KV (per-session watermark/epoch, events-since).
+        QVERIFY(cache.setCursor(QStringLiteral("events-since"), QStringLiteral("7"), 12));
+        QCOMPARE(cache.cursor(QStringLiteral("events-since")), QStringLiteral("7"));
     }
 
     void clientFailsAndRecoversOnBadSocket() {
@@ -315,7 +277,7 @@ private slots:
             return SeamMigrationStatus::MockOnly;
         };
         QCOMPARE(find("ISessionRoster"), SeamMigrationStatus::DaemonAligned);
-        QCOMPARE(find("IDaemonNet (routing slice)"), SeamMigrationStatus::DaemonAligned);
+        QCOMPARE(find("Routing (routing slice)"), SeamMigrationStatus::DaemonAligned);
         QCOMPARE(find("ICronStore"), SeamMigrationStatus::MockOnly);
         QCOMPARE(find("ICheckpointTimeline"), SeamMigrationStatus::DaemonAligned);
     }
@@ -341,37 +303,37 @@ private slots:
         QVERIFY(cache.isOpen());
         const QString basePath = cache.databasePath();
 
-        // User A's roster.
+        // User A's cached profiles (a surviving cache domain — the roster moved to the mirror).
         cache.setUserNamespace(QStringLiteral("user-A-opaque-id"));
         const QString pathA = cache.databasePath();
         QVERIFY(pathA != basePath); // a distinct, per-user db file
-        daemonapp::daemon::CachedSessionRow a;
-        a.sessionId = QStringLiteral("a-secret-session");
-        a.title = QStringLiteral("A only");
-        a.state = QStringLiteral("Active");
+        daemonapp::daemon::CachedProfileRow a;
+        a.profileRef = QStringLiteral("a-secret-profile");
+        a.displayName = QStringLiteral("A only");
+        a.specCbor = QByteArrayLiteral("\xa0");
         a.updatedAtMs = 1;
         QVERIFY(cache.isOpen());
-        QVERIFY(cache.upsertSession(a));
-        QCOMPARE(cache.sessions().size(), 1);
+        QVERIFY(cache.upsertProfile(a));
+        QCOMPARE(cache.profiles().size(), 1);
 
         // Switch to user B: a different db file, and none of A's rows are visible.
         cache.setUserNamespace(QStringLiteral("user-B-opaque-id"));
         const QString pathB = cache.databasePath();
         QVERIFY(pathB != pathA);
-        QVERIFY(cache.sessions().isEmpty()); // no cross-user leak
-        daemonapp::daemon::CachedSessionRow b;
-        b.sessionId = QStringLiteral("b-session");
-        b.state = QStringLiteral("Active");
+        QVERIFY(cache.profiles().isEmpty()); // no cross-user leak
+        daemonapp::daemon::CachedProfileRow b;
+        b.profileRef = QStringLiteral("b-profile");
+        b.specCbor = QByteArrayLiteral("\xa0");
         b.updatedAtMs = 2;
-        QVERIFY(cache.upsertSession(b));
-        QCOMPARE(cache.sessions().size(), 1);
-        QCOMPARE(cache.sessions().first().sessionId, QStringLiteral("b-session"));
+        QVERIFY(cache.upsertProfile(b));
+        QCOMPARE(cache.profiles().size(), 1);
+        QCOMPARE(cache.profiles().first().profileRef, QStringLiteral("b-profile"));
 
         // Back to A: A's row is still there (its own db), B's is not.
         cache.setUserNamespace(QStringLiteral("user-A-opaque-id"));
         QCOMPARE(cache.databasePath(), pathA);
-        QCOMPARE(cache.sessions().size(), 1);
-        QCOMPARE(cache.sessions().first().sessionId, QStringLiteral("a-secret-session"));
+        QCOMPARE(cache.profiles().size(), 1);
+        QCOMPARE(cache.profiles().first().profileRef, QStringLiteral("a-secret-profile"));
 
         // Empty namespace resets to the shared/default db (pre-auth / local-trust).
         cache.setUserNamespace(QString());
@@ -417,22 +379,6 @@ private slots:
         QVERIFY(health.services.isEmpty());
         QCOMPARE(daemonapp::daemon::NodeApiCodec::responseKind(response),
                  daemonapp::daemon::ApiResponseKind::Health);
-    }
-
-    void codecDecodesSessionPageResponse() {
-        // {"SessionPage": {"sessions": [ {"session": "s1", "state": "Active"} ], "rev": 0}}
-        // (L4 added the required "rev" field; "removed" is optional and omitted here.)
-        const QByteArray response(
-            "\xA1\x6BSessionPage\xA2\x68sessions\x81\xA2\x67session\x62s1\x65state\x66"
-            "Active\x63rev\x00",
-            54);
-        QList<daemonapp::daemon::CachedSessionRow> rows;
-        quint64 rev = 999;
-        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeSessionPage(response, &rows, nullptr, &rev));
-        QCOMPARE(rows.size(), 1);
-        QCOMPARE(rows.first().sessionId, QStringLiteral("s1"));
-        QCOMPARE(rows.first().state, QStringLiteral("Active"));
-        QCOMPARE(rev, static_cast<quint64>(0));
     }
 
     void codecEncodesSubscribeRequest() {
@@ -602,10 +548,11 @@ private slots:
         QCOMPARE(epoch, static_cast<quint64>(0));
     }
 
-    // Bug fix 1b: a SessionCreated reply upserts a minimal cached row immediately (the All
-    // Sessions list must not wait on the debounced roster refetch), emits sessionCreated for the
-    // auto-select path, and issues an immediate non-debounced SessionsQuery for the full row.
-    void sessionCreateUpsertsCacheAndRefreshes() {
+    // The direct SessionCreate seam (§7): a SessionCreated reply emits sessionCreated with the
+    // node-minted id + the echoed profile — the adoption hook the orchestrator/sidebar
+    // auto-select on. (AD: the legacy cache placeholder write + immediate cache refetch died;
+    // the authoritative row lands via the mirror ingestor's RosterChanged arm.)
+    void sessionCreateEmitsAdoptionSignal() {
         QTemporaryDir dir;
         QVERIFY(dir.isValid());
         const QString path = dir.filePath(QStringLiteral("create.sock"));
@@ -620,27 +567,13 @@ private slots:
         daemonapp::daemon::SessionRepository sessions(&client, &cache);
 
         QSignalSpy created(&sessions, &daemonapp::daemon::SessionRepository::sessionCreated);
-        QSignalSpy refreshed(&sessions, &daemonapp::daemon::SessionRepository::sessionsRefreshed);
         QVERIFY(created.isValid());
-        QVERIFY(refreshed.isValid());
 
         sessions.createSession(QStringLiteral("agent-x"));
         QTRY_COMPARE_WITH_TIMEOUT(created.count(), 1, 3000);
         QCOMPARE(created.at(0).at(0).toString(), QStringLiteral("s-node-1"));
         QCOMPARE(created.at(0).at(1).toString(), QStringLiteral("agent-x"));
-
-        // The minimal row is in the cache before any roster refetch resolves, and the store-level
-        // refresh signal fired so the UI reprojects now.
-        QCOMPARE(cache.sessions().size(), 1);
-        QCOMPARE(cache.sessions().first().sessionId, QStringLiteral("s-node-1"));
-        QCOMPARE(cache.sessions().first().profileRef, QStringLiteral("agent-x"));
-        QCOMPARE(cache.sessions().first().state, QStringLiteral("Ready"));
-        QVERIFY(cache.sessions().first().title.isEmpty());
-        QVERIFY(refreshed.count() >= 1);
-
-        // The immediate authoritative refetch went out (Call #2, no debounce). Its canned reply
-        // is not a SessionPage here; only the dispatch is under test.
-        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() >= 2, 3000);
+        QCOMPARE(fake.requestCount(), 1); // ONE wire call: the create itself, no cache refetch
     }
 
     // Bug fix 1b (failure surfacing): a failed create must not vanish silently — both the node's
@@ -665,7 +598,6 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 3000);
         QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("no such profile"));
         QCOMPARE(created.count(), 0);
-        QVERIFY(cache.sessions().isEmpty());
 
         // Transport-level failure (no listener at all) routes through handleFailure's new
         // create-correlation arm rather than being dropped.
@@ -676,6 +608,38 @@ private slots:
         QSignalSpy deadFailed(&deadSessions, &daemonapp::daemon::SessionRepository::refreshFailed);
         deadSessions.createSession(QString());
         QTRY_COMPARE_WITH_TIMEOUT(deadFailed.count(), 1, 3000);
+    }
+
+    // AD (1a.2, §10.3 rung 3): the direct room-lifecycle verbs carry the client-minted
+    // retry-safety op_id when provided, and omit the key entirely when not (absent ≠ null).
+    void roomVerbsCarryRetrySafetyOpIds() {
+        daemonapp::daemon::ConvJoinForm join;
+        join.name = QStringLiteral("ops");
+        const QByteArray withId = daemonapp::daemon::NodeApiCodec::encodeConvJoinRequest(
+            QStringLiteral("matrix/@you:hs"), join, QStringLiteral("op-join-1"));
+        QVERIFY(withId.contains("op_id"));
+        QVERIFY(withId.contains("op-join-1"));
+        const QByteArray withoutId = daemonapp::daemon::NodeApiCodec::encodeConvJoinRequest(
+            QStringLiteral("matrix/@you:hs"), join);
+        QVERIFY(!withoutId.contains("op_id"));
+
+        daemonapp::daemon::ConvCreateForm create;
+        const QByteArray created = daemonapp::daemon::NodeApiCodec::encodeConvCreateRequest(
+            QStringLiteral("matrix/@you:hs"), create, QStringLiteral("op-create-1"));
+        QVERIFY(created.contains("op_id"));
+        QVERIFY(created.contains("op-create-1"));
+
+        const QByteArray invite = daemonapp::daemon::NodeApiCodec::encodeMemberInviteRequest(
+            QStringLiteral("matrix/@you:hs"), QStringLiteral("!room:hs"), QStringLiteral("@bob:hs"),
+            QStringLiteral("op-inv-1"));
+        QVERIFY(invite.contains("op_id"));
+        QVERIFY(invite.contains("op-inv-1"));
+
+        const QByteArray setRole = daemonapp::daemon::NodeApiCodec::encodeMemberSetRoleRequest(
+            QStringLiteral("matrix/@you:hs"), QStringLiteral("!room:hs"), QStringLiteral("@bob:hs"),
+            QStringLiteral("Op"), QStringLiteral("op-role-1"));
+        QVERIFY(setRole.contains("op_id"));
+        QVERIFY(setRole.contains("op-role-1"));
     }
 
     // SessionUpdateMeta encodes ONLY the touched field(s): a pin patch carries "pinned" but not
@@ -705,135 +669,6 @@ private slots:
         QVERIFY(!titleReq.contains("archived"));
         // The no-op (all-nullopt) case is guarded at the repository (updateSessionMeta returns
         // early), not the facade - see sessionUpdateMetaOfflineSurfacesFailure / the repo guard.
-    }
-
-    // Node-authoritative pin: CachedSessionStore::setPinned sends a SessionUpdateMeta intent (NOT a
-    // local cache write) and, on the node's Ok, issues the authoritative SessionsQuery refetch. The
-    // cache is NOT mutated client-side - the row reflects only what the node's reply projects.
-    void setPinnedSendsIntentNoLocalWrite() {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        const QString path = dir.filePath(QStringLiteral("meta.sock"));
-        daemonapp::test::WireMuxServer fake;
-        // Ok for the SessionUpdateMeta, then an (empty) SessionPage for the authoritative refetch.
-        fake.setReplySequence({okResponse(), sessionPageResponse({}, nullptr, 9)});
-        QVERIFY2(fake.start(path), "listen");
-
-        daemonapp::daemon::DaemonTransport transport;
-        transport.setSocketPath(path);
-        daemonapp::daemon::NodeApiClient client(&transport);
-        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("meta.db")));
-        // A pre-existing cached row (unpinned): if setPinned wrote the cache locally it would flip
-        // here; node-authoritative means it must NOT.
-        daemonapp::daemon::CachedSessionRow row;
-        row.sessionId = QStringLiteral("s1");
-        row.state = QStringLiteral("Active");
-        row.pinned = false;
-        QVERIFY(cache.upsertSession(row));
-
-        daemonapp::daemon::SessionRepository sessions(&client, &cache);
-        daemonapp::daemon::CachedSessionStore store(&cache, &sessions);
-        QSignalSpy failed(&sessions, &daemonapp::daemon::SessionRepository::metaUpdateFailed);
-
-        store.setPinned(domain::SessionId(QStringLiteral("s1")), true);
-
-        // The SessionUpdateMeta intent went out carrying the pin patch (and not a local write).
-        QTRY_VERIFY_WITH_TIMEOUT(!fake.callPayloads().isEmpty(), 3000);
-        const QByteArray first = fake.callPayloads().first();
-        QVERIFY(first.contains("SessionUpdateMeta"));
-        QVERIFY(first.contains("s1"));
-        QVERIFY(first.contains("pinned"));
-        // On Ok, the authoritative refetch (SessionsQuery) follows.
-        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() >= 2, 3000);
-        QCOMPARE(failed.count(), 0);
-        // The cache row's pinned flag was never flipped client-side (the empty authoritative page
-        // pruned nothing here because updatedAt makes it a delta-less replace; the point is no
-        // OPTIMISTIC local pin happened before/without the node).
-    }
-
-    // A node-rejected SessionUpdateMeta (ApiError) surfaces through metaUpdateFailed with the
-    // node's reason - never a silent no-op that looks applied - and does NOT trigger a refetch.
-    void sessionUpdateMetaSurfacesNodeError() {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        const QString path = dir.filePath(QStringLiteral("meta-err.sock"));
-        daemonapp::test::WireMuxServer fake;
-        // Keep the message < 24 bytes: the fixture's short cborText helper only emits a 1-byte
-        // (0x60|len) text head.
-        fake.setReplyPayload(errorOtherResponse("not the owner"));
-        QVERIFY2(fake.start(path), "listen");
-
-        daemonapp::daemon::DaemonTransport transport;
-        transport.setSocketPath(path);
-        daemonapp::daemon::NodeApiClient client(&transport);
-        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("meta-err.db")));
-        daemonapp::daemon::SessionRepository sessions(&client, &cache);
-
-        QSignalSpy failed(&sessions, &daemonapp::daemon::SessionRepository::metaUpdateFailed);
-        sessions.updateSessionMeta(QStringLiteral("s1"), std::nullopt, std::nullopt,
-                                   QStringLiteral("New title"));
-        QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 3000);
-        QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("s1"));
-        QCOMPARE(failed.at(0).at(1).toString(), QStringLiteral("not the owner"));
-        // Error path issues NO authoritative refetch (only the one update call was sent).
-        QCOMPARE(fake.requestCount(), 1);
-    }
-
-    // Offline (no client): a node-owned meta write cannot be faked locally - it surfaces as a
-    // failure rather than a silent no-op that would look applied.
-    void sessionUpdateMetaOfflineSurfacesFailure() {
-        daemonapp::daemon::SessionRepository sessions(nullptr, nullptr);
-        QSignalSpy failed(&sessions, &daemonapp::daemon::SessionRepository::metaUpdateFailed);
-        sessions.updateSessionMeta(QStringLiteral("s1"), true, std::nullopt, std::nullopt);
-        QCOMPARE(failed.count(), 1);
-        QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("s1"));
-    }
-
-    // Wire v24 roster page loop: a full refresh follows next_cursor to completion, the
-    // continuation query carries `after`, and the replace + prune runs ONCE over the whole
-    // accumulated set — a stale cached session is gone at the end, both pages' rows are present,
-    // and sessionsRefreshed fires exactly once.
-    void sessionsFullRefreshPagesToCompletion() {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        const QString path = dir.filePath(QStringLiteral("roster.sock"));
-        daemonapp::test::WireMuxServer fake;
-        fake.setReplySequence({sessionPageResponse({QByteArrayLiteral("s1")}, "s1", 7),
-                               sessionPageResponse({QByteArrayLiteral("s2")}, nullptr, 7)});
-        QVERIFY2(fake.start(path), "listen");
-
-        daemonapp::daemon::DaemonTransport transport;
-        transport.setSocketPath(path);
-        daemonapp::daemon::NodeApiClient client(&transport);
-        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("roster.db")));
-        // A stale cached row the full listing no longer contains: the loop's final replace must
-        // prune it (pruning per page would also have dropped s2 between the pages).
-        daemonapp::daemon::CachedSessionRow stale;
-        stale.sessionId = QStringLiteral("stale-1");
-        stale.state = QStringLiteral("Active");
-        stale.updatedAtMs = 1;
-        QVERIFY(cache.upsertSession(stale));
-
-        daemonapp::daemon::SessionRepository sessions(&client, &cache);
-        QSignalSpy refreshed(&sessions, &daemonapp::daemon::SessionRepository::sessionsRefreshed);
-        sessions.refreshSessions();
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-        QTest::qWait(100); // settle: a per-page emit or a runaway loop would fire again
-        QCOMPARE(refreshed.count(), 1);
-
-        // The merged roster holds both pages' rows; the stale row was pruned.
-        QStringList ids;
-        for (const auto& row : cache.sessions()) {
-            ids << row.sessionId;
-        }
-        ids.sort();
-        QCOMPARE(ids, (QStringList{QStringLiteral("s1"), QStringLiteral("s2")}));
-
-        // The continuation query carried the first page's next_cursor as `after`.
-        const QList<QByteArray> calls = fake.callPayloads();
-        QCOMPARE(calls.size(), 2);
-        QCOMPARE(calls.at(1), daemonapp::daemon::NodeApiCodec::encodeSessionsQueryRequest(
-                                  false, 0, QString(), QStringLiteral("s1")));
     }
 };
 

@@ -1,260 +1,226 @@
-# daemon-app client sync architecture — target design
+# daemon-app client data architecture — the mirror
 
-Status: research / design proposal (no code yet).
+Status: **shipped.** This is the architecture, not a proposal. The client's data layer is the
+mirror: one typed value tree that mirrors the node's authoritative state, fed by a single writer,
+observed through a revision journal, rendered by lenses, and mutated only through verb seams and a
+durable outbox. Every read surface (sessions, fleet, routing pins, conversations, contacts,
+persons, adapters, accounts, transcripts, chat, models, profiles, approvals) projects the mirror in
+BOTH the daemon and mock feeders; no pre-mirror data path remains.
 
-Companion to the authoritative wire spec `daemon-node/docs/specs/daemon-sync-protocol-spec.md` (the
-multiplexed/streaming transport, epoch-safe resync, `EventsSince` feed, and delta lists) and to
-[`multi-protocol-client-surface.md`](multi-protocol-client-surface.md). New daemon-backed seams should
-also follow the [adapter recipe](../src/core/daemon/README.md).
-
-This document specifies the **client half**: how `daemon-app` consumes the target sync protocol so it
-stays in sync across disconnects/restarts/focus changes at minimal bandwidth. It maps the wire layers
-(L0–L4) onto concrete Qt components and states exactly which current behaviors each supersedes. The
-wire shapes themselves are normative in the daemon-node spec; this doc does not redefine them.
+This document is the in-repo map of the implemented design. The normative contract lives in the
+superproject architecture spec `docs/architecture/09-specification.md` (with `07-client-inventory.md`
+as the pre-program baseline and the ADRs for the ratified decisions); the wire protocol is
+normative in `daemon-node`'s sync-protocol spec. The per-package build history is recorded in
+`src/core/mirror/LEDGER-*.md`, and the closing audit + known-debt register in `LEDGER-a9.md`. The
+enforceable rules distilled for review are in the repo `AGENTS.md` ("Data layer — the mirror is the
+only client model").
 
 ---
 
 ## 0. Conclusions up front
 
-1. **`NodeApiClient` becomes a multiplexer, not a single-in-flight queue.** Today it serializes every
-   consumer behind one in-flight request ([`node_api_client.h`](../src/core/daemon/node_api_client.h)).
-   The target client tags each exchange with the wire `stream id`, demultiplexes `Reply`/`Item`/
-   `End`/`Reset` frames to the owning consumer, and supports long-lived push subscriptions alongside
-   one-shot commands.
-2. **A `SubscriptionManager` owns focus, which is a *set* of sessions, not one.** The GUI/TUI can
-   have several session tabs open at once (plus settings/other tabs), so several detailed
-   subscriptions are live concurrently - one per open session tab (and a fleet/rooms multi-pane can
-   add more). The manager keeps a `session id -> subscription` map (each its own `stream_id`,
-   `(epoch, cursor)` watermark, and cache slice); one `EventsSince` feed covers every session **not**
-   currently subscribed; nothing polls unfocused sessions. The L0 multiplexer makes N concurrent
-   streams cheap (one connection, no head-of-line blocking), and the daemon holds no cross-session
-   client state, so this is purely a client-side bookkeeping concern.
-3. **A durable `SyncCache` is wired up and *read*.** The dormant `daemon_sync_cursors` table and a new
-   durable transcript cache become the resume substrate; reconnect/refocus replays from cache + a
-   short journal delta, not a full re-stream.
-4. **A `ReconnectOrchestrator` replaces the full-refetch-on-ready.** On reconnect it resumes the
-   events feed from its cursor, re-baselines the focused session via the `(epoch, seq)` check, and
-   delta-syncs lists — instead of re-pulling everything.
+1. **There is one client model.** The `mirror::Store` holds an `immer` value tree — an
+   `immer::table` per entity kind plus windows and relation indexes — and it is the single source
+   every surface projects from. The pre-program fracture (a split-brain `IDaemonNet` graph *and*
+   per-domain repositories with an arbitrary sqlite cache subset) is gone.
+2. **One writer, one journal.** `mirror::Ingestor` (daemon) or `mirror::Seeder` (mock) is the only
+   component that writes the store. Each commit stamps a revision journal; lenses consume ordered
+   journal deltas (with tombstones), never re-derive order per consumer.
+3. **Intent flows out through seams + the outbox; the loop closes through the node.** Verb seams
+   are stateless. Offline-durable mutations go through durable `mirror::Outbox` lanes; a mutation's
+   domain effect becomes visible only when the node's provenance-stamped delta lands in the store —
+   never by locally mutating a mirrored row.
+4. **Entities are generated.** One typed struct per entity, generated from `entity-map.toml` + the
+   `daemon-node` CDDL contract, guarded by a drift gate. Role maps read the typed entity, so the
+   5-way conversation / 6-way session / 4-way contact row forks the client used to carry collapse
+   to one shape each.
 
 ---
 
-## 1. Component map (target)
+## 1. Component map
 
 ```mermaid
 flowchart TB
-  subgraph ui [UI / view-models]
-    transcript[TranscriptPage / EditorController]
-    roster[Sessions/Sidebar models]
-    badges[StatusBar / approvals badges]
+  subgraph node [daemon-node]
+    NODE["authoritative state (wire v39: rungs 1-3)"]
   end
-  subgraph sync [sync layer]
-    submgr["SubscriptionManager (N per-tab session streams + 1 EventsSince)"]
-    reconn[ReconnectOrchestrator]
-    cache[(SyncCache: roster+transcript+cursors+epoch)]
+  subgraph wire [wire]
+    MUX["NodeApiClient (stream-id demux) + vendored zcbor codec + entity emitter"]
   end
-  mux[NodeApiClient multiplexer stream_id demux]
-  transport[DaemonTransport]
-  submgr --> mux
-  reconn --> mux
-  mux --> transport
-  submgr --> cache
-  reconn --> cache
-  cache --> transcript
-  cache --> roster
-  submgr --> transcript
-  submgr --> badges
+  subgraph write [single writer]
+    ING["mirror::Ingestor - policy table, fetch jobs, cursors/epochs, reconnect"]
+    SEED["mirror::Seeder - scenario seed + scripted timeline (mock)"]
+  end
+  subgraph model [the mirror]
+    STORE["mirror::Store - immer value tree: immer::table per entity + windows + indexes"]
+    JOURNAL["revision journal - rev, kind, key, op (tombstones), origin, origin_op"]
+    MDB[("mirror-<id>.db - disposable cache, schema v15")]
+  end
+  subgraph out [intent]
+    VERB["verb seams (stateless; op-id plumbing)"]
+    OB["mirror::Outbox - durable lanes, drain, provenance landing"]
+    LDB[("local-<id>.db - precious: outbox, sidecar, drafts")]
+  end
+  subgraph lens [projections]
+    TM["mirror::TableModel / WindowModel lenses + scalar readers"]
+  end
+  UI["GUI + TUI + WASM (one shared C++ view-model layer)"]
+
+  NODE <--> MUX --> ING --> STORE
+  SEED --> STORE
+  STORE --> JOURNAL
+  JOURNAL --> TM
+  JOURNAL --> MDB
+  TM --> UI
+  UI --> VERB
+  VERB --> OB --> MUX
+  VERB --> MUX
+  OB --> LDB
+  OB --> TM
+  JOURNAL -- provenance (origin_op) --> OB
 ```
 
----
-
-## 2. L0 client — `NodeApiClient` as a multiplexer
-
-- **Stream-id table.** Replace the single `m_inFlight`/`m_currentCorrelation` with a map
-  `stream id → handler`. `Call` is sent with a fresh monotonic id; `Reply` resolves and frees a
-  one-shot id; `Item` dispatches a stream chunk to the owning handler; `End` closes the stream
-  (clean or with an error); `Cancel` is sent on teardown. The existing `correlationId` API can be
-  preserved as a thin wrapper over one-shot `Call`s during migration.
-- **No more head-of-line blocking.** Health, commands, and subscriptions are independent streams;
-  the 30 s per-request timeout (kept from Phase 1) applies per one-shot exchange, while streams use
-  the keepalive/`End` liveness from the wire spec §3.3.
-- **`Reset` handling.** A `Reset{epoch, head_seq}` frame is routed to the stream's handler and
-  triggers re-baseline (§4) — the client never silently skips lost frames.
-- **Interim (pre-envelope).** Per the wire spec §2.6, the client may first open a **dedicated
-  `DaemonTransport` connection** for each long-poll subscription while commands stay on the shared
-  client. This is the migration bridge; the multiplexer is the destination.
-
-Supersedes: the single-in-flight FIFO model in
-[`node_api_client.cpp`](../src/core/daemon/node_api_client.cpp).
+Data flows one way: node → ingestor → store + journal → lenses → surfaces. Intent flows surfaces →
+verb seams → (outbox lane or direct wire) → node, and the effect returns through the same
+node→ingestor read path.
 
 ---
 
-## 3. L1 client — push/long-poll subscription, no busy-poll
+## 2. The store — one typed value tree
 
-- **`DaemonTurnEngine` stops busy-polling.** The 120 ms `m_pollTimer`
-  ([`daemon_turn_engine.cpp`](../src/DaemonApp/Turn/daemon_turn_engine.cpp)) is removed. Under L0 the
-  engine opens a push `Subscribe` stream and renders `Item` batches as they arrive; on the interim
-  connection it issues `Subscribe{wait_ms}` and re-issues on each return. Idle-but-active turns cost
-  no traffic.
-- **State mapping is unchanged.** `thinking`/`streaming`/`stalled` and the HITL park/`awaitingInput`
-  flow stay as-is; only the *delivery* of `LogPage`s changes. The decode path
-  (`decodeLogPageEntries`) is shared between push and long-poll.
-- **Phase 1 resume folds into reset detection (§4):** the "stalled → retry from `m_cursor`" backoff
-  remains for a pure transport blip, but a blip that coincides with an epoch change becomes a
-  re-baseline instead of a same-cursor retry.
+`mirror::Store` (`src/core/mirror/store.h`) owns a root `immer` value composed of an `immer::table`
+per entity kind, plus windowed collections and relation indexes. Its only mutation surface is a
+`Batch` obtained by the writer; the read surface is `mirror::Reader`, which has no write API by
+construction (a `friend`/cast to reach one is the review reject enforced by AGENTS.md law 1).
 
-Supersedes: `kPollIntervalMs` busy-poll; the dead `SessionRepository::subscribe()` is replaced by the
-`SubscriptionManager` path.
-
----
-
-## 4. L2 client — epoch tracking, reset detection, journal re-baseline
-
-- **Track `(epoch, cursor)` per session**, not just `seq`. On each page/`Item`, apply the wire spec
-  §4.3 decision: continue, or re-baseline on `epoch` increase / `head_seq < cursor` / `Reset`.
-- **Re-baseline from the journal.** On reset, the client calls `SessionHistory{after_cursor}` from the
-  persisted journal cursor, honors `sealed_after` (truncate the rendered transcript to the seal
-  boundary — the existing rewind boundary), applies the journal delta de-duplicated by `(epoch, seq)`,
-  then resumes the live subscription at the new epoch. This closes the daemon-restart desync that
-  Phase 1 supervision can trigger.
-- **HITL safety across reconnect.** A re-baseline must re-surface an unanswered parked `Request`
-  (durable as a `transcript-block-request`) so an approval prompt is not lost; the engine re-enters
-  `awaitingInput` for it.
-
-Supersedes: the absence of any `head_seq`/epoch check in the turn engine; the unused durable journal.
+- **Entity classes** (`M` mirrored+persisted, `W` windowed, `L` live-in-memory, `T` transient) are
+  declared once in `entity-map.toml` and generated (§7). The census is complete against the v39
+  read surface — including entities that previously had no client representation at all.
+- **Commit discipline.** One commit per applied batch; the commit is the single observation point.
+  A debug fingerprint records which component wrote (`Ingestor` xor `Seeder`) — a second writer
+  asserts (§14.3).
+- **Persistence — two databases.** `mirror-<id>.db` (schema **v15**) is a disposable, per-identity
+  cache: a version mismatch drops and rebuilds it (it is never authoritative, so a torn write is
+  recovered by re-fetching). `local-<id>.db` is precious: the outbox, the client-local sidecar, and
+  drafts live there and survive cache nukes and app updates. Writes are batched write-behind
+  (`immer::diff` over successive roots), not per-row.
 
 ---
 
-## 5. The applied-seq watermark — the one rule that makes streaming safe
+## 3. The journal — active from wave 0
 
-This is the client invariant the wire spec §4.8 depends on, called out separately because it is the
-single most load-bearing piece of client state.
+Every commit appends journal records `{rev, kind, key, op, origin, origin_op}` (op includes
+tombstones for removes). The journal is the ordered delivery channel to lenses and the basis for:
 
-- The transcript ingest (`EditorController`/`TranscriptIngest`) keeps a per-`(session, epoch)`
-  **applied-seq watermark `W`** and **applies an entry iff `seq > W`** (then advances `W`).
-- This is mandatory because `TextDelta`s are *additive*: replaying one doubles text, so dedup is by
-  `seq`, never by content or block identity. The watermark makes every other mechanism (overlap
-  between journal backfill and live backlog, idempotent reconnect retry, push/long-poll equivalence)
-  correct by construction.
-- `W` is persisted in `SyncCache` (§7) so a cold start resumes without re-applying cached entries.
+- **Delta projection** (§5): lenses replay records above their watermark into exact row ops.
+- **Provenance landing** (§6): a record carrying `origin_op == op_id` marks the originating outbox
+  op landed/visible.
+- **The parity assert** (debug/CI): journal-replay of a scope must equal the `immer::diff` of the
+  two snapshots — the invariant that keeps the delta path honest (§4.4/§12).
 
 ---
 
-## 6. Lazy focus — the client snapshot↔stream handoff
+## 4. The ingestor — the single wire writer
 
-When the user focuses a session that the `EventsSince` feed says is actively streaming, the
-`SubscriptionManager` runs the wire spec §4.8 handoff. Order is everything:
+`mirror::Ingestor` (`src/core/mirror/ingestor.{h,cpp}`) absorbs what used to be a
+`SubscriptionManager` plus a 19-call connect-ready refetch storm plus per-callsite refresh folklore:
 
-1. **Subscribe first.** Open the live `Subscribe{session, after_seq = W}` (push, or long-poll on the
-   interim) **before** fetching history, so tokens generated during the load are already captured in
-   the live stream's backlog (the server attaches backlog+live atomically). Mark the session
-   `loading`.
-2. **Backfill behind it.** If the cache lacks history below the live log's retained low-water mark,
-   fetch `SessionHistory{after_cursor}` up to its head `seq = B` and render coalesced blocks; apply
-   live entries with `seq > B`.
-3. **Apply by `(epoch, seq)`**, dropping `seq <= W` (§5), asserting contiguity. A gap not explained by
-   an in-progress backfill ⇒ re-`Subscribe{after_seq = W}`.
-4. **Flip to `streaming` at a definite point:** when applied `seq >= head_seq` reported by the first
-   page. Before that the UI shows a catching-up affordance, not a half-rendered guess.
-5. **Edges:** an `epoch` increase or a `Reset` mid-load routes to the §4 re-baseline (from the journal)
-   rather than continuing; a transport drop resumes idempotently from `W`.
-
-Each open session tab runs this handoff independently, keyed by its session id and `stream_id`, so
-several can be `loading`/`streaming` at once with no shared state between them (the per-`(session,
-epoch)` watermark §5 is a map). Closing a tab `cancelStream`s just that subscription; the session
-then falls back to the `EventsSince` feed (§8). A session opened in two tabs shares one subscription
-(ref-counted) rather than opening two streams for the same log.
-
-Supersedes: today's turn-only, single-session, cursor-from-0 model — focusing a non-active or
-mid-stream session (let alone several at once) has no defined load path in the current client.
+- **Event→action policy table** (`policy_table.h`): one row per `NodeEvent` arm declaring the
+  action (fetch / patch-in-place / nudge / mark-stale-scan), the fetch op, and the coalescing lane.
+  The `switch` is exhaustive over the `NodeEvent` enum with no `default`, so a new wire arm that
+  omits its row fails to compile.
+- **Fetch jobs** (`fetch_job.h`, `fetch_scheduler.{h,cpp}`): the repositories' fetch cores are
+  absorbed as declarative jobs the scheduler runs; the connect-ready storm becomes a staleness scan.
+- **Cursors, epochs, reconnect** (`sync_state.{h,cpp}`): per-(session, epoch) applied-seq watermarks
+  and the node-wide feed cursor persist across restarts; reconnect resumes from the cursor and
+  re-baselines from the journal on an epoch increase / `head_seq < cursor` / `Reset`.
+- **Both modes** (§5.6 of the spec): degraded `refetch_diff` against api/38 and full `wire_delta`
+  (Bootstrap + `since_rev`) against api/39, switched per collection the first time api/39 is seen.
+- **Diff-before-write** so a re-fetch that changes nothing produces no journal churn.
+- **Staleness ownership**: `ensureFresh` is the ingestor's; lenses declare visibility only — a
+  timer or refetch call in a lens is a defect (§5.8, AGENTS.md law 10).
 
 ---
 
-## 7. Durable `SyncCache` — offline-first read (wired)
+## 5. Projections — lenses over the journal
 
-[`client_cache_schema.h`](../src/core/daemon/client_cache_schema.h) (schema **v3**) defines the live
-tables: `daemon_sessions`, `daemon_transcript_blocks`, `daemon_profiles`, `daemon_fs_entries`, and the
-generic `daemon_sync_cursors`. The client is **offline-first for reads**: agents, sessions, and
-transcripts render from this cache with no daemon connection.
+Collection view-models subclass one generic adapter, `mirror::TableModel<Entity>`
+(`table_model.h`): it consumes its kind/scope's journal deltas above a watermark and emits exact
+`beginInsertRows`/`beginRemoveRows`/`dataChanged` through a maintained sort-key index (node-supplied
+ordering only — presentation sort, never domain derivation). Tombstones arrive as ordered removes;
+model resets are forbidden outside initial population (§8.1, AGENTS.md law 3). Windowed collections
+use `WindowModel` (`window_model.h`). 64-bit stable ids back `QModelIndex::internalId` (fixing the
+32-bit collision the old Sink-style hashing risked).
 
-- **Sessions roster** — `daemon_sessions` (delta-merged + pruned by `SessionRepository`);
-  [`CachedSessionStore`](../src/core/daemon/cached_session_store.cpp) reloads it in its ctor, so the
-  sidebar/list render at startup before any connect. A per-session latest-message snippet
-  (`latestTranscriptSnippets()`) backs the offline preview + content search.
-- **Transcript** — coalesced `daemon_transcript_blocks`; `CachedSessionStore::content()` projects it
-  and the turn engine renders without a live `Subscribe` (the stream resumes past the persisted
-  `(epoch, seq)` watermark when online).
-- **Profiles (agents)** — `daemon_profiles` is live (Phase 4 closeout): `ProfileRepository` persists
-  each profile on `ProfileGet` (raw spec bytes + active flag) and prunes deleted ones on a live
-  `ProfileList`; `DaemonProfileStore` seeds from it in its ctor so the Profiles UI shows last-known
-  agents offline.
-- **Resync cursors** — `roster-rev`, `events-since`, per-session `watermark`/`epoch` in
-  `daemon_sync_cursors`.
-
-Retired in the Phase 4 closeout: the dead `daemon_session_log` + `SessionRepository::subscribe()`
-live-log pull path (the turn engine streams via the mux `Open` + the transcript cache); the transient
-`daemon_approvals` table (pending approvals are live via `ApprovalsPending` + the L3 `ApprovalPending`
-event); the unused `SqliteSessionStore`; and the write-only `sessions-query`/`session:journal`
-cursors. **Future:** offline **modify + resync** (a `daemon_outbox` of edits replayed on reconnect with
-a revision-conflict policy) and a cold-start journal-delta optimization (fetch only past the watermark
-rather than always re-baselining from seq 0).
+Each concrete VM contributes only its role map (`roleNames()` + a `data()` switch reading the typed
+generated entity). This is where the 5-way/6-way/4-way row-shape forks died: the entity is the only
+shape, and it cannot fork without failing the drift gate. Scalar/detail surfaces read through the
+coarse observe seam (`observe.h`, `observe_coarse.*`; the lager-vs-coarse decision landed on coarse
+per ADR-008). Projections are GUI-free C++; the TUI binds the same models through
+`DisplayRoleAdapter`.
 
 ---
 
-## 8. L3 client — the `EventsSince` consumer
+## 6. Intent — verb seams and the outbox
 
-- **One feed, focus-driven detail.** The `SubscriptionManager` keeps a single `EventsSince` stream
-  alongside its set of per-tab session subscriptions, and routes notifications: a `SessionAdvanced`
-  for a session that **is** subscribed (any open tab) nudges that session's own detail subscription;
-  for an unsubscribed one it just marks the roster row / badge; `RosterChanged`/`SessionMetaChanged`
-  mark roster rows stale (refetch lazily / on view); `ApprovalPending` updates the approvals badge;
-  `DownloadProgress` updates the Models hub without the 600 ms `ModelDownloads` poll; `ResyncNeeded`
-  triggers a baseline refetch of the named scope.
-- **No speculative fan-out.** The client opens a detailed `Subscribe` only for sessions an open tab
-  is actually showing (possibly several); it never subscribes to a session no tab shows just to keep
-  a badge fresh — that is what the single feed is for. Detail is loaded per tab, on focus, via §6.
-
-Supersedes: full-refetch-on-ready as the only awareness mechanism; the `ModelDownloads` 600 ms poll
-(becomes event-driven); roster staleness between reconnects.
-
----
-
-## 9. L4 client — `ReconnectOrchestrator`
-
-Replaces the edge-triggered full refresh in
-[`app_service_graph.cpp`](../src/core/daemon/app_service_graph.cpp). On a transition into `ready`:
-
-1. Resume the `EventsSince` feed from the persisted feed cursor (or full-baseline if absent /
-   `ResyncNeeded`).
-2. Re-baseline **every open-tab** session via the `(epoch, seq)` check (§4/§6) — one re-baseline per
-   live subscription, concurrently; leave unsubscribed sessions to the feed.
-3. Delta-sync the roster via `SessionsQuery{since_rev}` and prune `removed`; refetch other small lists
-   (profiles/credentials/models) full for now, event-gated later (wire spec §6.2).
-
-The "refresh fires only on transition into ready" guard from Phase 1 stays; the *content* of that
-refresh changes from full-everything to feed-resume + focused re-baseline + roster delta.
-
-Supersedes: the unconditional full `SessionsQuery`+profiles+credentials+models+approvals refetch on
-every reconnect.
+- **Verb seams** are small stateless QObjects: they read the store, have no store write API, and
+  hold no domain state (§7, AGENTS.md law 5). Direct verbs in the rung-3 set mint an op-id per call
+  and reuse it across retries.
+- **The outbox** (`src/core/local/outbox.*`) is a durable state machine with per-lane ordering.
+  The §6.4 census is fixed: `chat-send`, `conv-meta`, `roster-edit`, `session-meta`, `turn-prompt`.
+  Enqueue commits to `local-<id>.db` before any send, so a queued mutation survives crash/restart.
+- **Pending is not a row.** A pending mutation renders only through the outbox lens (pending strip /
+  queue panel), never as a mirrored entity — the mirror never contains a row the node did not
+  confirm (§14.7).
+- **Confirmation is provenance-keyed, uniformly.** An ack (`Ok`) moves an op to `accepted`; a
+  journal delta carrying `origin_op == op_id` moves it to `landed`. No verb defines its own matching
+  and domain ids play no role (§6.6, §14.13). Auto-replay after reconnect is enabled per-connection
+  only against api/39 (dedup + provenance shipped); against api/38 lanes hold for a manual "send"
+  tap (§6.8).
+- **Rejection UX** (§6.5): a node rejection pauses the lane; every rejected entry offers
+  retry/edit/discard in both GUI and TUI, and the failure also surfaces on the initiating seam's
+  typed signal. Never silent divergence.
 
 ---
 
-## 10. Migration order (mirrors the wire spec §8)
+## 7. Codegen — the entity emitter and the drift gate
 
-1. **L2 + L1 long-poll on a dedicated connection** — wire up cursors/epoch + journal re-baseline + the
-   applied-seq watermark (§5), move the turn off the 120 ms poll. No multiplexer yet. Fixes
-   correctness + the worst bandwidth.
-2. **L0 multiplexer + push** — convert `NodeApiClient` to stream-id demux; fold the interim
-   connections into one.
-3. **L3 `EventsSince` consumer + `SubscriptionManager` (incl. the §6 lazy-focus handoff)** —
-   out-of-focus awareness; retire the `ModelDownloads` poll.
-4. **L4 `ReconnectOrchestrator` + roster delta** — delta reconnect + pruning.
+`entity-map.toml` (human-owned) maps each entity's fields to the `daemon-node` CDDL wire shapes;
+the entity emitter generates the typed structs, mappers, and reflection (`generated/`,
+`entities_map.cpp`, `entity_reflect.h`). Rules:
 
-### 10.1 Test alignment
+- Never hand-edit generated regions or the vendored codec (`src/core/daemon/codec/{generated,
+  vendor}`). Change `entity-map.toml` + the CDDL, then regenerate via the superproject
+  `just update-codec`.
+- The **drift gate** fails the build if the vendored/generated copies diverge from the pinned
+  contract — this is what makes "a second client-side shape for a mirrored entity" a build failure
+  rather than a review note (§3.6, §14.1).
 
-Extend `daemon-app` unit coverage (e.g. a `tst_sync_resync` analogous to `tst_connection_resilience`)
-for: epoch-increase → journal re-baseline; `head_seq < cursor` → re-baseline; `Reset` → re-baseline;
-applied-seq watermark drops `seq <= W` (no doubled deltas); lazy focus of a mid-stream session loses
-no tokens and reaches `head_seq` (§6); **two concurrent session subscriptions stay independent** (a
-`Reset`/epoch bump on one does not disturb the other's watermark/cache); parked `Request` survives a
-reconnect; multiplexer demux of interleaved `Reply`/`Item`. The end-to-end kill+restart-mid-turn and "idle turn produces no busy-poll"
-assertions live in `system-tests` per the wire spec §7.4.
+---
+
+## 8. Mock mode — same store, different feeder
+
+Mock mode is the same store / journal / lenses fed by `mirror::Seeder` (`seeder.*`) instead of the
+ingestor, so mock⇄daemon parity holds by construction (§9). A `mirror::Scenario` is a declarative
+seed set + scripted timeline + `apiVersion` (38/39) + `VerbScript`; the mock host plays it on an
+injectable clock and answers the outbox's `sendRequested` from the script (`ok`/`reject`/`timeout`/
+`delay`), including the mandatory rejection fixture. `DAEMON_APP_MOCK_SCENARIO` selects `default |
+api38 | empty`. There are no per-seam data mocks and no mock-only behavior below the verb boundary
+(§14.5). See AGENTS.md "Mock mode" for the operational rules.
+
+---
+
+## 9. What this superseded
+
+The pre-program client (baseline in `07-client-inventory.md`) carried two competing data
+philosophies at once: a mock-first `IDaemonNet` "unified net model" that only ever half-landed on
+the daemon side, and per-domain `I*Service` seams over wire repositories with a sqlite cache that
+covered an arbitrary subset of domains. The consequences it documented — a split-brain seam, 5/6/4
+divergent row layouts per entity, per-callsite refresh policy, a 19-call connect storm, mock/daemon
+shape forks — are the exact defects the mirror removes. The migration deleted `IDaemonNet` +
+`MockDaemonNet` + `DaemonDaemonNet` + the legacy sidebar path (M3), the `CachedSessionStore` /
+`SessionRepository` session spine and the fleet/routing caches (M4/AD), the per-seam data mocks
+(M5/AD), and the transcript dual-write (so the mirror sink is the single transcript writer). The
+surviving repositories are wire fetch/verb feeders for the ingestor and the direct verb seams — not
+read models. The full deleted-vs-survivor census with reproducible counts is in
+`src/core/mirror/LEDGER-a9.md` (the F6 audit).

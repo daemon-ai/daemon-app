@@ -20,9 +20,9 @@ class SessionRepository;
 
 namespace fleet {
 
-// Daemon-backed, offline-first session roster: projects the (already offline-first)
-// CachedSessionStore into the ISessionRoster VariantListModel, mirroring DaemonFleetTree. Renders
-// the last-known sessions from cache with no connection and rebuilds on ISessionStore::changed.
+// Daemon-backed, offline-first session roster: projects the bound ISessionStore (the mirror-backed
+// storeMirror since M4) into the ISessionRoster VariantListModel, mirroring MirrorFleetTree.
+// Renders the last-known sessions with no connection and rebuilds on ISessionStore::changed.
 //
 // Scope (F6/DEL-6): "active" projects the AllSessions scope; "archived" projects the Archived
 // scope (fetched on demand from the node — TopLevel excludes archived rows) with per-row
@@ -33,7 +33,8 @@ namespace fleet {
 //
 // There is no session-lifecycle wire op today, so the client suspend/resume buttons keep a
 // client-local cosmetic overlay (m_suspended) over the wire state; close archives client-side
-// (CachedSessionStore::setArchived), which drops the row from the AllSessions scope. A durable
+// (the session-meta lane's SessionUpdateMeta), which drops the row from the AllSessions scope
+// once the node's echo lands. A durable
 // Suspend/Close op is a follow-up.
 class DaemonSessionRoster : public ISessionRoster {
     Q_OBJECT

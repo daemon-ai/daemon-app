@@ -24,6 +24,14 @@ void Journal::appendPersisted(const JournalRecord& rec) {
     head_rev_ = std::max(head_rev_, rec.rev);
 }
 
+void Journal::rebase(quint64 newHead) {
+    records_.clear();
+    head_rev_ = newHead;
+    for (auto it = watermarks_.begin(); it != watermarks_.end(); ++it) {
+        it.value() = newHead;
+    }
+}
+
 void Journal::registerConsumer(const QString& name, quint64 at) {
     watermarks_.insert(name, at);
 }

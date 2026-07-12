@@ -68,7 +68,9 @@ qint64 Store::nowMs() const {
 
 void Store::adoptLoaded(MirrorModel model, quint64 persistedJournalHead) {
     current_ = std::move(model);
-    journal_.seedHead(persistedJournalHead);
+    // Rebase, not just seed: on a per-identity reopen the in-memory tail + consumer watermarks
+    // must jump to the new file's head (a no-op on the empty-journal cold-boot path).
+    journal_.rebase(persistedJournalHead);
     // Publish the loaded snapshot so any early observers render from cache (offline-first).
     CommitInfo info;
     info.revFrom = persistedJournalHead;
