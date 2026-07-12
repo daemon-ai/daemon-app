@@ -6,10 +6,15 @@ program's closing act). Base: `integrations/app` @ `4e69f2f` (the G2×A8 merge).
 migration/compatibility with pre-mirror versions, no legacy paths kept as "insurance" once their
 replacement is proven.**
 
-## STATUS — Phase 1b COMPLETE + every deletion it unlocks LANDED; Phase 1a not started
+## STATUS — PACKAGE COMPLETE: Phase 1b + Phase 1a + every gated deletion LANDED
 
-Executed this resume (each sub-step RED→GREEN, full GUI+TUI+tests build, ctest zero failures,
-format/tidy, committed; trajectory 147 → 146, the −1 being the deleted `tst_store`):
+The program's closing implementation act is done: **zero legacy data paths remain** — every read
+surface projects the mirror in both modes, every mutation runs its §7/§6.4-declared seam/lane,
+and the four transport/persons mocks (the exit criterion) are deleted. Final census below;
+Phase-1a commits in the "Phase 1a — LANDED" section.
+
+Phase 1b + its deletions (the first resume; trajectory 147 → 146, the −1 being the deleted
+`tst_store`):
 
 | commit | sub-step | net LOC |
 |---|---|---|
@@ -21,8 +26,8 @@ format/tidy, committed; trajectory 147 → 146, the −1 being the deleted `tst_
 | `58c5593` | **P2-B3** legacy READ machinery deleted: `CachedSessionStore`, `InMemorySessionStore`, `MockFleetSource` (bundle → `daemonnet::defaultSeedBundle()`), `MockFleetTree` (mock tree = the SAME `MirrorFleetTree`); `graph.store` + `SessionStore` context property gone; parity legacy legs → GOLDEN literals + pipeline-integrity; i18n −4 obsolete entries | −2,123 |
 | `460d285` + `99cb820` | **P2-B4** legacy FEEDERS retired: SessionRepository slimmed to create/submit/detail; FleetRepository = control seam only (`controlAcked` → mirror Tree refetch); RoutingRepository = mutation seam only (`mutationApplied` → mirror pin refetch; the LEDGER-a6 in-memory cache residual DELETED); SubscriptionManager migrated arms retired; DaemonCacheStore drops daemon_sessions/daemon_fleet_units/daemon_transcript_blocks (cache schema v10→v11); connect-ready storm slimmed | −1,318 |
 
-Branch totals vs base: **114 files, +2,349 / −4,958 (net −2,609 LOC)**; ctest 146/146 green;
-i18n drift green; clang-format/clang-tidy clean on all touched TUs.
+Phase-1b-era branch totals (superseded — see the Phase-1a section for the FINAL package totals):
+114 files, +2,349 / −4,958 (net −2,609 LOC); ctest 146/146 green at that boundary.
 
 ## Settled decisions (verified this pass — do NOT re-litigate)
 
@@ -256,23 +261,88 @@ SURVIVORS (with reason):
 - Mirror-internal invariants kept: journal-replay ≡ snapshot-diff, mock-vs-daemon feeder parity,
   the S1-S9 grammar now pinned as GOLDEN literals + sink→window→projection pipeline-integrity.
 
-Straggler-sweep candidates recorded for the NEXT batch (not yet deleted; each needs a QML/UX or
-facade-boundary judgment): the codec facade's now-orphaned `decodeSessionPage`/`decodeTree`/
-`encodeRoutingSetRequest`/`decodeChatRoutes`/`decodeRooms`/`encodeRoutingListChatsRequest`/
-`encodeTransportRoomsRequest` arms; the permanently-empty Participants section + Tags sidebar
-section and `ISessionStore`'s dead `tags()`/`participants()`/`unitChildren()`/`unit()`/
-`createUnit()`/`createTag()` interface members (+ SidebarModel's Unit/Tag arms) — these are
-user-visible surface removals; `SessionController::appendUserText` is now presentation-local
-(§8.5) and the mock live-turn transcript is editor-local by design (seeded transcripts render
-from the mirror; an ad-hoc mock demo turn is not durable). The generated `TODO(mirror-map)` stub
-mappers belong to un-landed verticals (1a), not dead code.
+Straggler-sweep disposition (RESOLVED in 1a.4b — the parent's clear-cut ruling applied): the
+orphaned codec facade arms + the permanently-empty Participants/Tags surfaces + the dead
+`ISessionStore` members are DELETED (census below). `SessionController::appendUserText` stays
+presentation-local (§8.5) and the mock live-turn transcript stays editor-local by design. The
+last generated `TODO(mirror-map)` stub mappers landed WITH vertical 1a (map_adapter /
+map_transport_account / map_person_endpoint) — none remain.
 
-## Phase-1a boundary (NOT started — the next resume's work)
+## Phase 1a — LANDED (the last consumer port; the package exit criterion is met)
 
-Unchanged from the map below: adapter-catalog/instances + PersonEndpoint fetch/deliver arms,
-room-lifecycle verbs per §7, integrations tree + TUI channels hub onto mirror projections in both
-modes (scenario seed extended), then delete `MockTransportRegistry`/`MockPresenceService`/
-`MockPersonsService`/`MockContactsService` and the remaining Phase-2 items they gate
-(`TransportRepository`/`PersonsRepository`/`ContactsRepository` read paths where the tree/hub
-was their last consumer, the `daemon_conversations`/`daemon_transport_instances` cache domains
-if the mirror takes them, and the SubscriptionManager transports/contacts/persons arms).
+Executed across two resumes (each sub-step RED→GREEN, full GUI+TUI+tests build, ctest zero
+failures, format/tidy, qmllint-to-file where QML, i18n refresh where strings, committed):
+
+| commit | sub-step | net LOC |
+|---|---|---|
+| `ebd9773` | **1a.1** the tree/hub mirror FEED: `FetchOp::TransportAdapters`/`TransportInstances` + decode/deliver arms (full-list replace-and-prune; TransportChanged patches between reads); PersonList now delivers persons AND endpoints in one page (ghost-proof replace + delta set-replacement); `PersonEndpoint.presence_primitive` + `Adapter` mappers (ops_json canonical JSON); m_adapters/m_transport_accounts/m_person_endpoints write-behind + boot load (mirror schema v13→v14); SeedSet/Seeder + default scenario gain adapters/endpoints; lowercase state-token vocabulary unified | +915 |
+| `6d7a4a5` | **1a.2** room-lifecycle verbs stay DIRECT per §6.4 (routing verified: two-phase forms + single-verb ops on the TransportRepository seam; post-ack freshness = the node's ConversationsChanged/MembershipChanged into the ingestor); rung-3 §10.3 op-ids minted (uuidv7) on ConvJoin/ConvCreate/Member* (absent-when-empty; ConvLeave/Delete stay op-id-less per the census) | +100 |
+| `d565ecd` | **1a.3a** the channels HUB on the mirror: `ChannelsHubModel` — the ONE shared projection (accounts w/ label overlay + connection/presence riding the row, adapters w/ per-verb ops/schema/policies re-hydrated absent-preserving, conversations, contacts, B2 "new room" client-local §8.5, `pinsForSession` for the composer route chip); `Adapter` gains schema_json+policies_json (map-only regen, schema v14→v15); GUI ChannelsPage + TUI hub page read it in BOTH modes; `Transports`/`Contacts` demoted to null-guarded VERB sinks | +407 |
+| `2b4c74e` | **1a.3b** the integrations TREE on the mirror: IntegrationsTreeModel projects transport_accounts/adapters/conversations (mirror `group_dm` vocabulary) + the persons × person_endpoints join; journal-filtered rebuild + §5.8 visibility declarations; deterministic transport-/id-sorted order; `registry` = verb sink only, `persons` property DELETED; QML binds `Mirror`; all three tree suites + sidebar/integrations QML fixtures re-expressed over seeded real mirrors | +114 |
+| `dca7859` | **1a.4a** the EXIT CRITERION: `MockTransportRegistry`+`MockPresenceService`+`MockPersonsService`+`MockContactsService` DELETED (mock mode builds NO transport seams — the surfaces read the scenario-seeded mirror); `IPersonsService`+`DaemonPersonsService`+`PersonsRepository`+the SubMgr PersonsChanged arm and `IPresenceService`+`DaemonPresenceService` DELETED (PersonList feeds the mirror; presence rides the account rows); the orphaned persons codec facade (decodePersons/DecodedPerson/DecodedPersonEndpoint) deleted; boot-smoke-surfaced pre-existing breakage fixed on the mirror path (ChannelsPage's A6-dead daemonnet binding → RoutingManagerController.pinnedSessionFor + pinsChanged; composer chip → ChannelsHubModel; AccountFormDialog `fields` property misuse) | −1,274 |
+| `e55dd09` | **1a.4b** stragglers: orphaned codec facade arms (`decodeSessionPage`, `encodeRoutingSetRequest`, `decodeChatRoutes`, `decodeChatRoute`, `decodeRooms` + DecodedChatRoute/DecodedRoomInfo DTOs) DELETED — `encodeRoutingListChats`/`TransportRooms`/`RoutingGet`/`Bind`/`Unbind` SURVIVE (executor/RoutingRepository readers); the permanently-empty Participants surface (QML module + shared VM + TUI view + shell wiring + test) and Tags surface (sidebar section + createTag + sessions-list unit/tag roles + chips in BOTH shells) DELETED; the six dead `ISessionStore` members + Mirror overrides + SidebarModel Unit-fold arms + `domain::Tag`/`domain::Participant`/`Session.tagIds` DELETED | −1,496 |
+
+**Package totals vs base `4e69f2f`: 188 files, +4,841 / −8,838 (net −3,997 LOC); 32 files
+deleted.** ctest trajectory: 147 (base) → 146 (1b: `tst_store` deleted) → 146 through 1a.4a →
+**145/145 green** (1a.4b: `tst_participants_model` deleted with its class). i18n catalogs in
+sync (net: 4 obsolete feeder strings dropped in 1b, 1 hub string reworded + translated ×12 in
+1a.4a, 4 obsolete Participants/Tags entries dropped in 1a.4b). GUI mock-boot offscreen smoke
+clean (now part of the gate); clang-format/clang-tidy clean on all touched TUs; qmllint logs
+recorded per QML sub-step.
+
+### Phase-1a deletion census (adds to the Phase-1b/2 census above)
+
+DELETED classes/files:
+- `MockTransportRegistry`, `MockPresenceService`, `MockPersonsService`, `MockContactsService`
+  (8 files) — the A8 exit criterion; mock transport seams no longer exist.
+- `IPersonsService` + `DaemonPersonsService` (3 files), `IPresenceService` +
+  `DaemonPresenceService` (3 files) — both READ seam families; `PersonsRepository` (class) +
+  the SubscriptionManager PersonsChanged arm + the `Persons`/`Presence` context properties.
+- `ParticipantsModel` + `Participants.qml` + `ParticipantsView` (+ module CMake, 7 files incl.
+  test) — the permanently-empty right-panel section, both shells.
+- The Tags surface: sidebar section + `createTag`; sessions-list Unit/Tag roles + chips (GUI
+  delegate + TUI card line + display-role suffix); `domain::Tag` + `domain::Participant` (2
+  files) + metatype registrations + `Session.tagIds`.
+- The six dead `ISessionStore` members (`unitChildren`/`unit`/`tags`/`participants`/
+  `createUnit`/`createTag`) + MirrorSessionStore overrides + SidebarModel's Unit fold/walk arms.
+- Codec facade arms with zero readers: `decodePersons` (+2 DTOs), `decodeSessionPage`,
+  `encodeRoutingSetRequest`, `decodeChatRoutes`, `decodeChatRoute`, `decodeRooms` (+2 DTOs),
+  `decodeChatRouteStruct`.
+
+SURVIVORS (with reason):
+- `ITransportRegistry` + `DaemonTransportRegistry` + `TransportRepository` — the transport VERB
+  seam (room lifecycle two-phase forms + member ops, account connect/enable/label/remove,
+  settings/configure, auth handoff) + the wizard's settings/schema reads; daemon-only, null in
+  mock (QML null-guards every verb call).
+- `IContactsService` + `DaemonContactsService` + `ContactsRepository` — the contact VERB seam
+  (add/update/remove/alias/profile/directory); hub contact ROWS read the mirror.
+- `ChatRepository` + the SubscriptionManager MessagesChanged arm — native chat's ConvHistory
+  refetch (window fills are per-conversation, outside the tree/hub port's scope).
+- `DaemonCacheStore` transport instances/conversations tables — the REPO's own offline cache
+  behind the surviving verb seam (the read SURFACES render from the mirror; the repo re-lists
+  rooms post-verb from it). Candidate for a future sweep only if the verb seam re-homes.
+- `encodeRoutingListChatsRequest`/`encodeTransportRoomsRequest`/`encodePersonListRequest` —
+  the mirror executor's fetch encoders; `encodeRoutingGet/BindChat/UnbindChat` + `DecodedOrigin`
+  — the RoutingRepository mutation seam.
+- `NodeType::Unit`/`Tag` enum values + the `scopeSelected(nodeType, tagId, unitId)` cross-shell
+  signature + `SidebarModel` Row.tagId/TagIdRole — live contract shape (tagId inert at -1);
+  `Session.unitId` (the seed bundle writes it).
+
+### Notes for A9 (guardrails + F6 audit) and the endgame
+
+- The F6 audit baselines (07: 31 seams / 20 repos / 5+6 layouts) should now count: transport
+  READ seams −2 (persons/presence families gone), mock transport seams −4, repos −1
+  (PersonsRepository), the QML context properties −3 (`SessionStore` in 1b, `Persons` +
+  `Presence` in 1a), GUI/TUI surface sections −2 (Participants, Tags).
+- Wire-level: room verbs carry op_ids ONLY when the app initiates them (rung 3); nothing new to
+  guard server-side. The §6.4 lane census is unchanged (session-meta is the only NEW outboxed
+  class AD added; conv-meta lane verbs exist in CDDL but have no app UI yet).
+- The mock GUI offscreen boot smoke (`DAEMON_APP_SERVICE_MODE=mock`, QT offscreen, scan for
+  TypeError/ReferenceError/objectCreationFailed) caught two pre-existing breakages ctest never
+  sees — recommend A9 promote it into the endgame gate (`just e2e` / superproject sim).
+- The TUI binary needs a pty (terminal autodetect); headless real-binary TUI boot is not
+  smoke-testable — TUI coverage stays with the tui_* ctest suites (all green).
+- Remaining pre-mirror data paths: NONE. Every read surface (sessions, fleet, routing pins,
+  conversations, contacts, persons+endpoints, adapters, accounts, transcripts, chat windows,
+  notifications, models, profiles, approvals) projects the mirror in both modes; mutations run
+  the §7/§6.4-declared verb seams/lanes.
