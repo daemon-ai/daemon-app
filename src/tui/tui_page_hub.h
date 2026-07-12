@@ -27,6 +27,7 @@ class IFeedback;
 }
 namespace daemonapp::daemon {
 class PrincipalModel;
+class ChannelsHubModel;  // AD (1a.3): the shared channels-hub mirror projection
 class CapsRepository;    // [wave2:app-delegation] F7/DEL-7
 class GatewayRepository; // [wave2:app-gateway] Phase F: node OpenAI-gateway control
 class EngineIdentity;    // [wave2:integration] C5 approval origin attribution
@@ -66,7 +67,6 @@ class IToolInventory; // [wave2:app-approvals-safety] D2
 }
 namespace transports {
 class IContactsService;
-class IPresenceService;
 class ITransportRegistry;
 } // namespace transports
 namespace update {
@@ -109,9 +109,12 @@ public:
         // The authenticated principal (WhoAmI): gates the Users & Access route and
         // backs its page projection. Advisory only - the node enforces server-side.
         daemonapp::daemon::PrincipalModel* principal = nullptr;
+        // AD (1a.3): the Channels page READS come from the shared mirror projection (the same
+        // model the GUI ChannelsPage binds); the registry/contacts seams below are VERB sinks
+        // only (room lifecycle, account management, contact ops) — null in mock.
+        daemonapp::daemon::ChannelsHubModel* channelsHub = nullptr;
         transports::ITransportRegistry* transportRegistry = nullptr;
-        transports::IPresenceService* presence = nullptr;
-        // [acct-mgmt] Transport contacts / roster (Phase D): backs the per-account Contacts group.
+        // [acct-mgmt] Transport contacts / roster (Phase D): the contact VERB seam.
         transports::IContactsService* contacts = nullptr;
         // Release-feed updater: backs the Settings "Updates" auto-check toggle
         // (gated to builds that actually have a feed).

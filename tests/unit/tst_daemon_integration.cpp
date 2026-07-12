@@ -381,22 +381,6 @@ private slots:
                  daemonapp::daemon::ApiResponseKind::Health);
     }
 
-    void codecDecodesSessionPageResponse() {
-        // {"SessionPage": {"sessions": [ {"session": "s1", "state": "Active"} ], "rev": 0}}
-        // (L4 added the required "rev" field; "removed" is optional and omitted here.)
-        const QByteArray response(
-            "\xA1\x6BSessionPage\xA2\x68sessions\x81\xA2\x67session\x62s1\x65state\x66"
-            "Active\x63rev\x00",
-            54);
-        QList<daemonapp::daemon::CachedSessionRow> rows;
-        quint64 rev = 999;
-        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeSessionPage(response, &rows, nullptr, &rev));
-        QCOMPARE(rows.size(), 1);
-        QCOMPARE(rows.first().sessionId, QStringLiteral("s1"));
-        QCOMPARE(rows.first().state, QStringLiteral("Active"));
-        QCOMPARE(rev, static_cast<quint64>(0));
-    }
-
     void codecEncodesSubscribeRequest() {
         const QByteArray sub =
             daemonapp::daemon::NodeApiCodec::encodeSubscribeRequest(QStringLiteral("s1"), 3, 64);
@@ -624,6 +608,38 @@ private slots:
         QSignalSpy deadFailed(&deadSessions, &daemonapp::daemon::SessionRepository::refreshFailed);
         deadSessions.createSession(QString());
         QTRY_COMPARE_WITH_TIMEOUT(deadFailed.count(), 1, 3000);
+    }
+
+    // AD (1a.2, §10.3 rung 3): the direct room-lifecycle verbs carry the client-minted
+    // retry-safety op_id when provided, and omit the key entirely when not (absent ≠ null).
+    void roomVerbsCarryRetrySafetyOpIds() {
+        daemonapp::daemon::ConvJoinForm join;
+        join.name = QStringLiteral("ops");
+        const QByteArray withId = daemonapp::daemon::NodeApiCodec::encodeConvJoinRequest(
+            QStringLiteral("matrix/@you:hs"), join, QStringLiteral("op-join-1"));
+        QVERIFY(withId.contains("op_id"));
+        QVERIFY(withId.contains("op-join-1"));
+        const QByteArray withoutId = daemonapp::daemon::NodeApiCodec::encodeConvJoinRequest(
+            QStringLiteral("matrix/@you:hs"), join);
+        QVERIFY(!withoutId.contains("op_id"));
+
+        daemonapp::daemon::ConvCreateForm create;
+        const QByteArray created = daemonapp::daemon::NodeApiCodec::encodeConvCreateRequest(
+            QStringLiteral("matrix/@you:hs"), create, QStringLiteral("op-create-1"));
+        QVERIFY(created.contains("op_id"));
+        QVERIFY(created.contains("op-create-1"));
+
+        const QByteArray invite = daemonapp::daemon::NodeApiCodec::encodeMemberInviteRequest(
+            QStringLiteral("matrix/@you:hs"), QStringLiteral("!room:hs"), QStringLiteral("@bob:hs"),
+            QStringLiteral("op-inv-1"));
+        QVERIFY(invite.contains("op_id"));
+        QVERIFY(invite.contains("op-inv-1"));
+
+        const QByteArray setRole = daemonapp::daemon::NodeApiCodec::encodeMemberSetRoleRequest(
+            QStringLiteral("matrix/@you:hs"), QStringLiteral("!room:hs"), QStringLiteral("@bob:hs"),
+            QStringLiteral("Op"), QStringLiteral("op-role-1"));
+        QVERIFY(setRole.contains("op_id"));
+        QVERIFY(setRole.contains("op-role-1"));
     }
 
     // SessionUpdateMeta encodes ONLY the touched field(s): a pin patch carries "pinned" but not

@@ -3,15 +3,18 @@
 
 #include "integrations_tree_model.h"
 
-#include "transports/ipersons_service.h"
+#include "mirror/generated/entities_gen.h"
+#include "mirror/mirror_service.h"
+#include "mirror/store.h"
 #include "transports/itransport_registry.h"
 
 #include <algorithm>
 
-using transports::IPersonsService;
 using transports::ITransportRegistry;
 
 namespace {
+constexpr auto kConsumer = "integrations_tree";
+
 // Fold/selection id namespaces (control-char prefixes so a real transport/conversation id can never
 // collide across namespaces sharing m_collapsed).
 QString acctKey(const QString& transport) {
@@ -33,12 +36,63 @@ QString secKey(const QString& transport, const QString& section) {
 bool isChannelKind(const QString& kind) {
     return kind == QStringLiteral("channel") || kind == QStringLiteral("thread");
 }
+// Mirror vocabulary (map_conversation): "dm" | "group_dm".
 bool isDmKind(const QString& kind) {
-    return kind == QStringLiteral("dm") || kind == QStringLiteral("groupdm");
+    return kind == QStringLiteral("dm") || kind == QStringLiteral("group_dm");
 }
 } // namespace
 
 IntegrationsTreeModel::IntegrationsTreeModel(QObject* parent) : QAbstractListModel(parent) {}
+
+QObject* IntegrationsTreeModel::mirror() const {
+    return m_mirrorObject;
+}
+
+void IntegrationsTreeModel::setMirror(QObject* mirror) {
+    if (m_mirrorObject == mirror) {
+        return;
+    }
+    if (m_mirror != nullptr) {
+        m_mirror->disconnect(this);
+    }
+    m_mirrorObject = mirror;
+    m_mirror = nullptr;
+    if (auto* svc = qobject_cast<mirror::MirrorService*>(mirror)) {
+        m_mirror = &svc->store();
+        m_mirror->journal().registerConsumer(QLatin1String(kConsumer));
+        m_watermark = m_mirror->journal().headRev();
+        m_mirror->journal().advanceWatermark(QLatin1String(kConsumer), m_watermark);
+        connect(m_mirror, &mirror::Store::committed, this, &IntegrationsTreeModel::onCommitted);
+        // Visibility declaration (§5.8): the sidebar tree is a standing surface — observing the
+        // coarse collections keeps them fresh via the ingestor's staleness policy.
+        svc->ingestor().beginObserving(QStringLiteral("transports"));
+        svc->ingestor().beginObserving(QStringLiteral("adapters"));
+        svc->ingestor().beginObserving(QStringLiteral("persons"));
+        svc->ingestor().beginObserving(QStringLiteral("conversations"));
+    }
+    emit mirrorChanged();
+    rebuild();
+}
+
+void IntegrationsTreeModel::onCommitted() {
+    // Journal-filtered re-derivation (§8.1): rebuild only when a tree-relevant kind changed.
+    const auto deltas = m_mirror->journal().since(m_watermark);
+    m_watermark = m_mirror->journal().headRev();
+    m_mirror->journal().advanceWatermark(QLatin1String(kConsumer), m_watermark);
+    for (const auto& r : deltas) {
+        switch (r.kind) {
+        case mirror::EntityKind::Adapter:
+        case mirror::EntityKind::TransportAccount:
+        case mirror::EntityKind::Conversation:
+        case mirror::EntityKind::Person:
+        case mirror::EntityKind::PersonEndpoint:
+            rebuild();
+            return;
+        default:
+            break;
+        }
+    }
+}
 
 QObject* IntegrationsTreeModel::registry() const {
     return m_registry;
@@ -49,91 +103,123 @@ void IntegrationsTreeModel::setRegistry(QObject* registry) {
     if (m_registry == reg) {
         return;
     }
-    if (m_registry != nullptr) {
-        // ITransportRegistry declares a `disconnect(QString)` verb that shadows
-        // QObject::disconnect; use the explicit static overload to drop our connections.
-        QObject::disconnect(m_registry, nullptr, this, nullptr);
-    }
+    // AD (1a.3): the registry is a pure VERB sink now — no read signals to (dis)connect.
     m_registry = reg;
-    if (m_registry != nullptr) {
-        connect(m_registry, &ITransportRegistry::instancesChanged, this,
-                &IntegrationsTreeModel::rebuild);
-        connect(m_registry, &ITransportRegistry::adaptersChanged, this,
-                &IntegrationsTreeModel::rebuild);
-        connect(m_registry, &ITransportRegistry::conversationsChanged, this,
-                [this](const QString&) { rebuild(); });
-    }
     emit registryChanged();
-    rebuild();
 }
 
-QObject* IntegrationsTreeModel::persons() const {
-    return m_persons;
-}
-
-void IntegrationsTreeModel::setPersons(QObject* persons) {
-    auto* svc = qobject_cast<IPersonsService*>(persons);
-    if (m_persons == svc) {
-        return;
+QList<QVariantMap> IntegrationsTreeModel::accountRows() const {
+    QList<QVariantMap> out;
+    if (m_mirror == nullptr) {
+        return out;
     }
-    if (m_persons != nullptr) {
-        m_persons->disconnect(this);
+    for (const mirror::TransportAccount& t : m_mirror->snapshot().transport_accounts) {
+        QVariantMap row;
+        row.insert(QStringLiteral("transport"), t.transport);
+        row.insert(QStringLiteral("family"), t.family);
+        // wire v35: the node-persisted label overlays the display name.
+        row.insert(QStringLiteral("displayName"), t.label.isEmpty() ? t.display_name : t.label);
+        row.insert(QStringLiteral("enabled"), t.enabled);
+        row.insert(QStringLiteral("connectionReason"), t.reason);
+        out.append(row);
     }
-    m_persons = svc;
-    if (m_persons != nullptr) {
-        connect(m_persons, &IPersonsService::personsChanged, this,
-                [this](const QVariantList&) { rebuild(); });
-    }
-    emit personsChanged();
-    rebuild();
+    std::ranges::sort(out, [](const QVariantMap& a, const QVariantMap& b) {
+        return a.value(QStringLiteral("transport")).toString() <
+               b.value(QStringLiteral("transport")).toString();
+    });
+    return out;
 }
 
 QVariantMap IntegrationsTreeModel::adapterFor(const QString& family) const {
-    if (m_registry == nullptr) {
+    if (m_mirror == nullptr) {
         return {};
     }
-    const QVariantList adapters = m_registry->availableAdapters();
-    for (const QVariant& a : adapters) {
-        const QVariantMap row = a.toMap();
-        if (row.value(QStringLiteral("family")).toString() == family) {
-            return row;
+    const mirror::Adapter* a = m_mirror->snapshot().adapters.find(mirror::AdapterKey{family});
+    if (a == nullptr) {
+        return {};
+    }
+    QVariantMap row;
+    row.insert(QStringLiteral("family"), a->family);
+    row.insert(QStringLiteral("displayName"), a->display_name);
+    row.insert(QStringLiteral("capabilities"),
+               QVariantMap{{QStringLiteral("rooms"), a->cap_rooms},
+                           {QStringLiteral("directMessages"), a->cap_direct_messages},
+                           {QStringLiteral("fileTransfer"), a->cap_file_transfer}});
+    row.insert(QStringLiteral("directory"), a->directory);
+    return row;
+}
+
+QList<QVariantMap> IntegrationsTreeModel::conversationRows(const QString& transport) const {
+    QList<QVariantMap> out;
+    if (m_mirror == nullptr) {
+        return out;
+    }
+    for (const mirror::Conversation& c : m_mirror->snapshot().conversations) {
+        if (c.transport != transport) {
+            continue;
+        }
+        QVariantMap row;
+        row.insert(QStringLiteral("id"), c.id);
+        row.insert(QStringLiteral("kind"), c.kind);
+        row.insert(QStringLiteral("title"), c.title);
+        row.insert(QStringLiteral("parent"), c.parent);
+        out.append(row);
+    }
+    std::ranges::sort(out, [](const QVariantMap& a, const QVariantMap& b) {
+        return a.value(QStringLiteral("id")).toString() < b.value(QStringLiteral("id")).toString();
+    });
+    return out;
+}
+
+QList<QVariantMap> IntegrationsTreeModel::personRows(const QString& transport) const {
+    QList<QVariantMap> out;
+    if (m_mirror == nullptr) {
+        return out;
+    }
+    // persons × person_endpoints join on this transport: the alias wins as the label, else the
+    // endpoint's display name; presence is the endpoint contact-info's primitive.
+    for (const mirror::PersonEndpoint& e : m_mirror->snapshot().person_endpoints) {
+        if (e.transport != transport) {
+            continue;
+        }
+        QString label = e.display_name;
+        if (const mirror::Person* p =
+                m_mirror->snapshot().persons.find(mirror::PersonKey{e.person})) {
+            if (!p->alias.isEmpty()) {
+                label = p->alias;
+            }
+        }
+        QVariantMap row;
+        row.insert(QStringLiteral("id"), e.person);
+        row.insert(QStringLiteral("label"), label);
+        row.insert(QStringLiteral("presence"), e.presence_primitive);
+        out.append(row);
+    }
+    std::ranges::sort(out, [](const QVariantMap& a, const QVariantMap& b) {
+        return a.value(QStringLiteral("id")).toString() < b.value(QStringLiteral("id")).toString();
+    });
+    // One row per person (a person with several endpoints on one transport renders once).
+    QSet<QString> seen;
+    QList<QVariantMap> unique;
+    for (const QVariantMap& row : out) {
+        const QString id = row.value(QStringLiteral("id")).toString();
+        if (!seen.contains(id)) {
+            seen.insert(id);
+            unique.append(row);
         }
     }
-    return {};
+    return unique;
 }
 
 bool IntegrationsTreeModel::isExpanded(const QString& foldKey) const {
     return !m_collapsed.contains(foldKey);
 }
 
-// The persons (whole rows) with at least one endpoint on `transport`.
-static QList<QVariantMap> personsOnTransport(IPersonsService* persons, const QString& transport) {
-    QList<QVariantMap> out;
-    if (persons == nullptr) {
-        return out;
-    }
-    for (const QVariant& p : persons->persons()) {
-        const QVariantMap person = p.toMap();
-        const QVariantList endpoints = person.value(QStringLiteral("endpoints")).toList();
-        for (const QVariant& e : endpoints) {
-            if (e.toMap().value(QStringLiteral("transport")).toString() == transport) {
-                out.append(person);
-                break;
-            }
-        }
-    }
-    return out;
-}
-
 void IntegrationsTreeModel::rebuild() {
     beginResetModel();
     m_rows.clear();
-    if (m_registry != nullptr) {
-        const QVariantList instances = m_registry->instances();
-        for (const QVariant& i : instances) {
-            const QVariantMap inst = i.toMap();
-            appendAccount(inst, adapterFor(inst.value(QStringLiteral("family")).toString()));
-        }
+    for (const QVariantMap& inst : accountRows()) {
+        appendAccount(inst, adapterFor(inst.value(QStringLiteral("family")).toString()));
     }
     endResetModel();
     emit treeChanged();
@@ -148,13 +234,10 @@ void IntegrationsTreeModel::appendAccount(const QVariantMap& instance, const QVa
 
     // Partition this account's conversations by the node's kind/parent (the protocol-governed
     // hierarchy). A parent that is empty, unknown, or self-referential makes the row a ROOT.
-    const QVariantList convVariants = m_registry->conversations(transport);
-    QList<QVariantMap> convs;
+    const QList<QVariantMap> convs = conversationRows(transport);
     QSet<QString> knownIds;
-    for (const QVariant& c : convVariants) {
-        const QVariantMap m = c.toMap();
-        convs.append(m);
-        knownIds.insert(m.value(QStringLiteral("id")).toString());
+    for (const QVariantMap& c : convs) {
+        knownIds.insert(c.value(QStringLiteral("id")).toString());
     }
     const auto isRoot = [&](const QVariantMap& c) {
         const QString id = c.value(QStringLiteral("id")).toString();
@@ -182,7 +265,7 @@ void IntegrationsTreeModel::appendAccount(const QVariantMap& instance, const QVa
         }
     }
 
-    const QList<QVariantMap> people = personsOnTransport(m_persons, transport);
+    const QList<QVariantMap> people = personRows(transport);
     const bool hasPersons = !people.isEmpty();
     const bool showDms = dmCap && !dms.isEmpty();
     const bool showChannels = !rootChannels.isEmpty();
@@ -213,34 +296,12 @@ void IntegrationsTreeModel::appendAccount(const QVariantMap& instance, const QVa
         if (isExpanded(secKey(transport, QStringLiteral("persons")))) {
             for (const QVariantMap& person : people) {
                 Row r;
-                const QString alias = person.value(QStringLiteral("alias")).toString();
-                QString label = alias;
-                QString presence;
-                if (label.isEmpty()) {
-                    // Fall back to the display name of the endpoint on this transport.
-                    for (const QVariant& e : person.value(QStringLiteral("endpoints")).toList()) {
-                        const QVariantMap ep = e.toMap();
-                        if (ep.value(QStringLiteral("transport")).toString() == transport) {
-                            label = ep.value(QStringLiteral("displayName")).toString();
-                            presence = ep.value(QStringLiteral("presence")).toString();
-                            break;
-                        }
-                    }
-                } else {
-                    for (const QVariant& e : person.value(QStringLiteral("endpoints")).toList()) {
-                        const QVariantMap ep = e.toMap();
-                        if (ep.value(QStringLiteral("transport")).toString() == transport) {
-                            presence = ep.value(QStringLiteral("presence")).toString();
-                            break;
-                        }
-                    }
-                }
-                r.label = label;
+                r.label = person.value(QStringLiteral("label")).toString();
                 r.depth = 2;
                 r.rowKind = QStringLiteral("person");
                 r.transport = transport;
                 r.personId = person.value(QStringLiteral("id")).toString();
-                r.presence = presence;
+                r.presence = person.value(QStringLiteral("presence")).toString();
                 r.selId = QStringLiteral("person:") + r.personId;
                 m_rows.push_back(r);
             }
@@ -483,32 +544,27 @@ void IntegrationsTreeModel::toggleExpand(int row) {
 }
 
 void IntegrationsTreeModel::collectFoldKeys(QSet<QString>& out) const {
-    if (m_registry == nullptr) {
-        return;
-    }
-    for (const QVariant& i : m_registry->instances()) {
-        const QVariantMap inst = i.toMap();
+    for (const QVariantMap& inst : accountRows()) {
         const QString transport = inst.value(QStringLiteral("transport")).toString();
         const QString family = inst.value(QStringLiteral("family")).toString();
         const QVariantMap adapter = adapterFor(family);
         const QVariantMap caps = adapter.value(QStringLiteral("capabilities")).toMap();
         const bool dmCap = caps.value(QStringLiteral("directMessages")).toBool();
         out.insert(acctKey(transport));
-        if (!personsOnTransport(m_persons, transport).isEmpty()) {
+        if (!personRows(transport).isEmpty()) {
             out.insert(secKey(transport, QStringLiteral("persons")));
         }
         bool anyChannel = false;
         bool anyDm = false;
         QSet<QString> knownIds;
-        const QVariantList convs = m_registry->conversations(transport);
-        for (const QVariant& c : convs) {
-            knownIds.insert(c.toMap().value(QStringLiteral("id")).toString());
+        const QList<QVariantMap> convs = conversationRows(transport);
+        for (const QVariantMap& c : convs) {
+            knownIds.insert(c.value(QStringLiteral("id")).toString());
         }
-        for (const QVariant& c : convs) {
-            const QVariantMap m = c.toMap();
-            const QString kind = m.value(QStringLiteral("kind")).toString();
-            const QString id = m.value(QStringLiteral("id")).toString();
-            const QString parent = m.value(QStringLiteral("parent")).toString();
+        for (const QVariantMap& c : convs) {
+            const QString kind = c.value(QStringLiteral("kind")).toString();
+            const QString id = c.value(QStringLiteral("id")).toString();
+            const QString parent = c.value(QStringLiteral("parent")).toString();
             const bool root = parent.isEmpty() || parent == id || !knownIds.contains(parent);
             if (kind == QStringLiteral("space") && root) {
                 out.insert(convKey(transport, id));

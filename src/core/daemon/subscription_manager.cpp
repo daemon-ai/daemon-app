@@ -181,7 +181,7 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         }
         break;
     // [wave2:app-channels-liveness] B5: live per-account transport presence. Apply the carried
-    // connection/presence in place (the DaemonPresenceService re-projects -> status dots re-read).
+    // connection/presence in place (the mirror account rows carry the status dots since AD 1a).
     // On a connect transition, refresh that account's ConvList so auto-accepted/joined rooms
     // surface promptly (B2) rather than only on manual expand.
     case DecodedNodeEvent::Kind::TransportChanged:
@@ -225,13 +225,8 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             m_profiles->refreshProfiles();
         }
         break;
-    // [integrations wire v38] The person registry changed: refetch PersonList (invalidation
-    // pointer only; the node owns the registry). Mirrors ContactsChanged for the roster.
-    case DecodedNodeEvent::Kind::PersonsChanged:
-        if (m_persons != nullptr) {
-            m_persons->refresh();
-        }
-        break;
+    // [integrations wire v38 → AD 1a] PersonsChanged: the mirror ingestor owns the PersonList
+    // refetch (persons + endpoints land in the mirror tables the tree reads) — no repo arm here.
     // [integrations wire v38] A conversation's transcript grew: re-fetch ConvHistory for the
     // affected (transport, conv) so the chat tab's transcript lands the new message(s).
     // Invalidation pointer only — the client refetches from its cursor; it derives no message facts

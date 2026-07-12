@@ -6735,10 +6735,6 @@ This only affects the app appearance, not your data.</source>
         <translation>新しいエージェント</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>新しいタグ</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>すべて折りたたむ</translation>
     </message>
@@ -6818,16 +6814,8 @@ This only affects the app appearance, not your data.</source>
         <translation>アーカイブ済み</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>タグ</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>フリート</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>新しいタグ</translation>
     </message>
 </context>
 <context>
@@ -8734,12 +8722,6 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_チャンネルは利用できません: このモードではトランスポートの接合部が接続されていません。_
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8806,6 +8788,12 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Disconnected</source>
         <translation>切断されました</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_チャンネルは利用できません: このモードではチャンネルハブ・プロジェクションが接続されていません。_
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9458,13 +9446,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>モデル %1 がディスク上に見つかりません: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>参加者</translation>
     </message>
 </context>
 <context>

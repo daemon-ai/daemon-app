@@ -36,9 +36,9 @@ Kit.Dialog {
         root.revision;
         if (!controller)
             return false;
-        var rows = controller.fields();
-        for (var i = 0; i < rows.length; ++i) {
-            var f = rows[i];
+        var m = controller.fields;
+        for (var i = 0; i < m.rowCount(); ++i) {
+            var f = m.at(i);
             var masked = f.kind === "Password";
             var editing = controller.mode === "edit";
             var required = f.required && !(masked && editing);
@@ -62,9 +62,11 @@ Kit.Dialog {
     }
     function seed() {
         var b = {};
-        var rows = controller ? controller.fields() : [];
-        for (var i = 0; i < rows.length; ++i)
-            b[rows[i].key] = rows[i].value !== undefined ? rows[i].value : "";
+        var m = controller ? controller.fields : null;
+        for (var i = 0; m && i < m.rowCount(); ++i) {
+            var f = m.at(i);
+            b[f.key] = f.value !== undefined ? f.value : "";
+        }
         root.buffer = b;
         root.revision++;
     }

@@ -47,7 +47,6 @@ struct Session {
     // The agent/profile this session runs under (`SessionInfo.bound_profile`).
     ProfileRef boundProfile;
 
-    QList<int> tagIds; // client-local cross-cutting labels
     QString title;
     QString content; // markdown (legacy; transcripts migrate to SessionLogEntry)
 

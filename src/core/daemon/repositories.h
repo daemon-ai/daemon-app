@@ -707,8 +707,8 @@ public:
 
     // [wave2:app-channels-liveness] B5: apply a live TransportChanged node-event in place. Patches
     // the cached row's connection/presence (preserving family/displayName/boundProfile) and emits
-    // instancesRefreshed() so the DaemonPresenceService re-projects and the status dots re-read -
-    // no round-trip. Falls back to refreshInstances() when the transport is not yet cached (a
+    // instancesRefreshed() - no round-trip. (The status dots read the mirror account rows since
+    // AD 1a.) Falls back to refreshInstances() when the transport is not yet cached (a
     // brand-new account before its first TransportInstances). Mirrors
     // ModelRepository::applyDownloadProgress.
     // [waveB:app-v30] D1: also patches the node-reported disconnect provenance
@@ -921,35 +921,6 @@ private:
     QHash<QString, QList<DecodedContact>> m_directory; // transport -> last directory results
     // Per-transport RosterList page loop (wire v34): accumulate across `next` pages, then swap.
     QHash<QString, PageLoop<DecodedContact>> m_contactLoops;
-};
-
-// [integrations wire v38] The node's person/metacontact registry (PersonList -> Persons; re-listed
-// on PersonsChanged). refresh() issues PersonList; on the reply persons() is populated and
-// personsRefreshed() fires. Read-only at v38 (the node owns the registry). Kept in memory
-// (re-fetched on connect/focus + the PersonsChanged feed event), like the contacts roster — small,
-// authoritative, no offline schema.
-class PersonsRepository : public RepositoryBase {
-    Q_OBJECT
-
-public:
-    PersonsRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
-
-    [[nodiscard]] const QList<DecodedPerson>& persons() const { return m_persons; }
-
-    // Issue a PersonList; on success personsRefreshed() fires with persons() populated.
-    void refresh();
-
-signals:
-    void personsRefreshed();
-    void operationFailed(const QString& message);
-
-private:
-    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
-    void handleFailure(const QString& correlationId, const QString& message);
-
-    static constexpr auto kListCorrelation = "repo/person-list";
-
-    QList<DecodedPerson> m_persons;
 };
 
 // [integrations wire v38] Native chat: a conversation's durable transcript (ConvHistory) + the send

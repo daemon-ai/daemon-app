@@ -11,7 +11,6 @@
 #include "core/document_store.h"
 #include "file_tree_view.h"
 #include "fs_explorer_model.h"
-#include "participants_view.h"
 #include "queue_strip_view.h"
 #include "search_input_box.h"
 #include "session_list_view.h"
@@ -34,7 +33,6 @@
 TuiShellWidgets TuiShellLayout::build(Tui::ZRoot* root, Tui::ZTerminal* terminal,
                                       const QRect& geometry, TabModel* tabModel,
                                       files::FsExplorerModel* fileTree,
-                                      participants::ParticipantsModel* participants,
                                       be::DocumentStore* pageDoc) {
     TuiShellWidgets w;
 
@@ -158,18 +156,13 @@ TuiShellWidgets TuiShellLayout::build(Tui::ZRoot* root, Tui::ZTerminal* terminal
 
     columns->addWidget(right);
 
-    // Right column: the Participants section above the file Explorer (mirrors the
-    // GUI's RightPanel). The column holds both; Ctrl+E shows/hides them together.
+    // Right column: the file Explorer (mirrors the GUI's RightPanel; the permanently-empty
+    // Participants section died with the legacy store members — AD 1a.4).
     w.rightColumn = new Tui::ZWidget(w.window);
     w.rightColumn->setSizePolicyH(Tui::SizePolicy::Preferred);
     w.rightColumn->setSizePolicyV(Tui::SizePolicy::Expanding);
     auto* rightColLayout = new Tui::ZVBoxLayout();
     w.rightColumn->setLayout(rightColLayout);
-
-    w.participantsView = new ParticipantsView(w.rightColumn);
-    w.participantsView->setSizePolicyH(Tui::SizePolicy::Expanding);
-    w.participantsView->setModel(participants);
-    rightColLayout->addWidget(w.participantsView);
 
     w.fileTreeView = new FileTreeView(w.rightColumn);
     w.fileTreeView->setMinimumSize(28, 3);

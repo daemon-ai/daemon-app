@@ -12,35 +12,37 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+namespace mirror {
+class Store;
+} // namespace mirror
 namespace transports {
 class ITransportRegistry;
-class IPersonsService;
 } // namespace transports
 
-// [integrations wire v38] The integrations tree (work package A2): the sidebar surface where each
-// configured account (transport instance) is a ROOT node whose PROTOCOL governs its subtree. The
-// node is authoritative; the client hard-codes nothing per protocol — each account's adapter
-// capabilities decide which sections appear and the node's ConvList `kind`/`parent` decide the
-// hierarchy (spaces/servers -> rooms -> DMs).
+// [integrations wire v38] The integrations tree (work package A2 → AD 1a.3): the sidebar surface
+// where each configured account (transport instance) is a ROOT node whose PROTOCOL governs its
+// subtree. The node is authoritative; the client hard-codes nothing per protocol — each account's
+// adapter capabilities decide which sections appear and the node's conversation `kind`/`parent`
+// decide the hierarchy (spaces/servers -> rooms -> DMs).
 //
-// Architecture decision (A1 deferred this to A2): this model composes DIRECTLY from
-// ITransportRegistry (instances + availableAdapters + conversations) and IPersonsService (persons).
-// It is the SOLE integrations tree — the legacy fleet-cross-link sidebar projection was deleted in
-// M3. The authoritative live data the daemon adapters fill lives in the registry/persons seams;
-// composing directly keeps the protocol-governed rendering in one shared, testable C++ view-model
-// (thin-client rule).
+// AD (1a.3): this model composes from the MIRROR — `transport_accounts` (accounts), `adapters`
+// (capabilities + directory), `conversations` (kind/parent hierarchy) and `persons` ×
+// `person_endpoints` (the per-account Persons section) — identical in daemon (ingestor-fed) and
+// mock (scenario-seeded) modes (§9). The legacy ITransportRegistry/IPersonsService READ
+// composition is gone; the registry stays bound ONLY as the account VERB sink
+// (connect/enable — null in mock, where the verbs no-op).
 //
 // GUI + TUI render the SAME model: the GUI binds a flattened ListView (IntegrationsTree.qml), the
 // TUI a TreeListView via a DisplayRoleAdapter. All structural logic lives here.
 class IntegrationsTreeModel : public QAbstractListModel {
     Q_OBJECT
     QML_ELEMENT
-    // The transport-adapter registry (accounts + adapters + conversations). Bound from QML to the
-    // shared `Transports` context property. Null => an empty tree.
+    // The mirror composition root (`Mirror` context property; live in BOTH modes). Opaque
+    // QObject* so QML can assign it without a registered pointer metatype; the .cpp upcasts.
+    Q_PROPERTY(QObject* mirror READ mirror WRITE setMirror NOTIFY mirrorChanged)
+    // The transport-adapter VERB sink (connectAccount/setEnabled — bound from QML to the shared
+    // `Transports` context property; null in mock, the verbs then no-op). NEVER read from.
     Q_PROPERTY(QObject* registry READ registry WRITE setRegistry NOTIFY registryChanged)
-    // The cross-transport person registry (endpoints per transport). Bound from QML to the shared
-    // `Persons` context property. Null => no Persons sections.
-    Q_PROPERTY(QObject* persons READ persons WRITE setPersons NOTIFY personsChanged)
     // True when at least one account/space/section is currently expanded; drives the header's
     // collapse-all/expand-all toggle. Refreshed on rebuild.
     Q_PROPERTY(bool anyExpanded READ anyExpanded NOTIFY treeChanged)
@@ -50,7 +52,8 @@ public:
         LabelRole = Qt::UserRole + 1,
         DepthRole,     // tree depth (0 = account root)
         RowKindRole,   // "account"|"section"|"space"|"conversation"|"person"|"action"
-        ConvTypeRole,  // conversation kind: "channel"|"groupdm"|"dm"|"thread"|"space" (else "")
+        ConvTypeRole,  // conversation kind (mirror vocabulary):
+                       // "channel"|"group_dm"|"dm"|"thread"|"space" (else "")
         SectionRole,   // section id for section rows: "persons"|"channels"|"dms"|"browse" (else "")
         TransportRole, // owning transport instance id (account + descendants)
         ConversationRole, // conversation id for conversation/space rows (else "")
@@ -69,10 +72,10 @@ public:
 
     explicit IntegrationsTreeModel(QObject* parent = nullptr);
 
+    [[nodiscard]] QObject* mirror() const;
+    void setMirror(QObject* mirror);
     [[nodiscard]] QObject* registry() const;
     void setRegistry(QObject* registry);
-    [[nodiscard]] QObject* persons() const;
-    void setPersons(QObject* persons);
     [[nodiscard]] bool anyExpanded() const;
 
     int rowCount(const QModelIndex& parent = {}) const override;
@@ -102,8 +105,8 @@ public:
     [[nodiscard]] Q_INVOKABLE int currentRow() const;
 
 signals:
+    void mirrorChanged();
     void registryChanged();
-    void personsChanged();
     void treeChanged();
     // A conversation node (room/channel/DM) was activated: open its native chat tab. Routed through
     // the existing activation seam (A4 owns what activation DOES).
@@ -145,8 +148,9 @@ private:
     };
 
     void rebuild();
-    // Append one account and its capability-governed subtree. `adapter` is the matching
-    // availableAdapters() row (capabilities/ops), empty if the family is unknown.
+    void onCommitted();
+    // Append one account and its capability-governed subtree. `adapter` is the matching mirror
+    // adapters row (capabilities/directory as a QVariantMap), empty if the family is unknown.
     void appendAccount(const QVariantMap& instance, const QVariantMap& adapter);
     // Append a space node + (recursively) its child conversations. `byParent` maps a parent
     // conversation id to its child conversation rows. Guarded against cycles / unknown parents.
@@ -164,11 +168,21 @@ private:
     [[nodiscard]] bool rowIsCurrent(const Row& r) const;
     void emitCurrentChanged();
 
-    // Look up the availableAdapters() row for a family (capabilities + ops), empty if unknown.
+    // --- mirror projections (deterministically ordered) ---------------------------------------
+    // The configured accounts (transport-sorted), label overlaid onto displayName.
+    [[nodiscard]] QList<QVariantMap> accountRows() const;
+    // The adapters row for a family ({capabilities{...}, directory}), empty if unknown.
     [[nodiscard]] QVariantMap adapterFor(const QString& family) const;
+    // A transport's conversations (id-sorted): {id, kind, title, parent}.
+    [[nodiscard]] QList<QVariantMap> conversationRows(const QString& transport) const;
+    // The persons reachable on `transport` (person-id-sorted): {id, label, presence} — the
+    // persons × person_endpoints join (alias wins, else the endpoint's display name).
+    [[nodiscard]] QList<QVariantMap> personRows(const QString& transport) const;
 
+    QObject* m_mirrorObject = nullptr;
+    mirror::Store* m_mirror = nullptr; // the upcast m_mirrorObject (null when unset)
+    quint64 m_watermark = 0;
     transports::ITransportRegistry* m_registry = nullptr;
-    transports::IPersonsService* m_persons = nullptr;
     QList<Row> m_rows;
     // Accounts / spaces / sections are expanded by default; only explicitly-collapsed fold keys
     // live here.

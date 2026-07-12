@@ -6740,10 +6740,6 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>Bagong agent</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Bagong tag</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>I-collapse lahat</translation>
     </message>
@@ -6823,16 +6819,8 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>Naka-archive</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Mga Tag</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Fleet</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Bagong tag</translation>
     </message>
 </context>
 <context>
@@ -8742,12 +8730,6 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Hindi available ang mga channel: hindi nakakabit ang transports seam sa mode na ito._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8814,6 +8796,12 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <message>
         <source>Disconnected</source>
         <translation>Nadiskonekta</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Hindi available ang mga channel: hindi nakakabit ang channels-hub projection sa mode na ito._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9466,13 +9454,6 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Nawawala sa disk ang model na %1: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Mga Kalahok</translation>
     </message>
 </context>
 <context>

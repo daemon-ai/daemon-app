@@ -134,46 +134,6 @@ bool NodeApiCodec::decodeHealth(const QByteArray& responseCbor, DecodedHealth* o
     return true;
 }
 
-bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
-                                     QString* nextCursor, quint64* rev, QStringList* removed) {
-    if (out == nullptr) {
-        return false;
-    }
-    const auto response =
-        decodeChecked(responseCbor, api_response_r::api_response_response_session_page_m_c);
-    if (!response) {
-        return false;
-    }
-    const session_page& page =
-        response->api_response_response_session_page_m.response_session_page_SessionPage;
-    out->clear();
-    for (size_t i = 0; i < page.session_page_sessions_session_info_m_count; ++i) {
-        out->append(sessionRowFromInfo(page.session_page_sessions_session_info_m[i]));
-    }
-    if (nextCursor != nullptr) {
-        nextCursor->clear();
-        if (page.session_page_next_cursor_present &&
-            page.session_page_next_cursor.session_page_next_cursor_choice ==
-                session_page_next_cursor_r::session_page_next_cursor_session_id_m_c) {
-            *nextCursor =
-                fromZcbor(page.session_page_next_cursor.session_page_next_cursor_session_id_m);
-        }
-    }
-    if (rev != nullptr) {
-        *rev = page.session_page_rev;
-    }
-    if (removed != nullptr) {
-        removed->clear();
-        if (page.session_page_removed_present) {
-            const session_page_removed_r& rm = page.session_page_removed;
-            for (size_t i = 0; i < rm.session_page_removed_session_id_m_count; ++i) {
-                removed->append(fromZcbor(rm.session_page_removed_session_id_m[i]));
-            }
-        }
-    }
-    return true;
-}
-
 namespace {
 QString approvalModeName(int choice) {
     switch (choice) {

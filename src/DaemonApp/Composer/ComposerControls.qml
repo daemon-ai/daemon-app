@@ -62,8 +62,9 @@ RowLayout {
         function onChanged() { root.settingsRev++; }
     }
     Connections {
-        target: DaemonNet
-        function onChanged() { root.settingsRev++; }
+        // The mirror pin table re-derived (AD: the deleted daemonnet facade's change signal).
+        target: typeof ChannelsHub !== "undefined" && ChannelsHub ? ChannelsHub : null
+        function onPinsChanged() { root.settingsRev++; }
     }
     Connections {
         target: (typeof EngineIdentity !== "undefined" && EngineIdentity) ? EngineIdentity : null
@@ -135,9 +136,10 @@ RowLayout {
         id: routeChip
         Layout.alignment: Qt.AlignVCenter
         readonly property var pins: {
-            var rev = root.settingsRev; // re-evaluate on DaemonNet change
+            var rev = root.settingsRev; // re-evaluate on a mirror pin delta
             return rev >= 0 && root.session && root.session.sessionId
-                   ? DaemonNet.pinsForSession(root.session.sessionId) : [];
+                   && typeof ChannelsHub !== "undefined" && ChannelsHub
+                   ? ChannelsHub.pinsForSession(root.session.sessionId) : [];
         }
         visible: pins.length > 0
         text: pins.length > 1 ? qsTr("⇄ %1 +%2").arg(pins[0].label).arg(pins.length - 1)

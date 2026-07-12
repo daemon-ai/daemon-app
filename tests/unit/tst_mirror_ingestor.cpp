@@ -445,6 +445,156 @@ private slots:
         ing.beginObserving(QStringLiteral("contacts"), QStringLiteral("matrix-1"));
         QCOMPARE(exec.count(FetchOp::RosterList), 0); // fresh + within max-age ⇒ no fetch
     }
+
+    // --- AD (1a): the tree/hub deliver arms ----------------------------------------------------
+
+    // TransportAdapters full list: replace-and-prune (the catalog is node-authoritative).
+    void adaptersReplaceAndPrune() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        Adapter matrix;
+        matrix.family = QStringLiteral("matrix");
+        matrix.display_name = QStringLiteral("Matrix");
+        Adapter irc;
+        irc.family = QStringLiteral("irc");
+        ing.deliverAdapters({matrix, irc}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().adapters.size(), std::size_t(2));
+
+        // The next full read no longer lists irc: it prunes; matrix updates in place.
+        matrix.display_name = QStringLiteral("Matrix (v2)");
+        ing.deliverAdapters({matrix}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().adapters.size(), std::size_t(1));
+        const Adapter* m = store.snapshot().adapters.find(AdapterKey{QStringLiteral("matrix")});
+        QVERIFY(m != nullptr);
+        QCOMPARE(m->display_name, QStringLiteral("Matrix (v2)"));
+    }
+
+    // TransportInstances full list: replace-and-prune; a TransportChanged patch between reads
+    // updates the SAME row (the two feed paths share the lowercase token vocabulary).
+    void transportAccountsReplacePruneAndPatchInterplay() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        TransportAccount a;
+        a.transport = QStringLiteral("matrix/@you:hs");
+        a.family = QStringLiteral("matrix");
+        a.connection = QStringLiteral("offline");
+        TransportAccount b;
+        b.transport = QStringLiteral("irc/you");
+        ing.deliverTransportAccounts({a, b}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().transport_accounts.size(), std::size_t(2));
+
+        // The live event patches connection in place (§5.2) without touching identity fields.
+        NodeEvent e = ev(NodeEventKind::TransportChanged);
+        e.transport = a.transport;
+        e.connection = QStringLiteral("connected");
+        ing.ingest(e);
+        const TransportAccount* row =
+            store.snapshot().transport_accounts.find(TransportAccountKey{a.transport});
+        QVERIFY(row != nullptr);
+        QCOMPARE(row->connection, QStringLiteral("connected"));
+        QCOMPARE(row->family, QStringLiteral("matrix"));
+
+        // The next full read drops the removed account and keeps the patched state fresh.
+        a.connection = QStringLiteral("connected");
+        ing.deliverTransportAccounts({a}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().transport_accounts.size(), std::size_t(1));
+    }
+
+    // PersonList carries persons AND endpoints: the final page replaces BOTH tables — endpoints
+    // of a pruned person can never linger (the tree's Persons section ghost rule).
+    void personEndpointsReplaceWithPersons() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        Person alice;
+        alice.id = QStringLiteral("p-alice");
+        Person bob;
+        bob.id = QStringLiteral("p-bob");
+        PersonEndpoint ea;
+        ea.person = alice.id;
+        ea.transport = QStringLiteral("matrix/@you:hs");
+        ea.contact = QStringLiteral("@alice:hs");
+        PersonEndpoint eb;
+        eb.person = bob.id;
+        eb.transport = QStringLiteral("matrix/@you:hs");
+        eb.contact = QStringLiteral("@bob:hs");
+        ing.deliverPersons({alice, bob}, {ea, eb}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().persons.size(), std::size_t(2));
+        QCOMPARE(store.snapshot().person_endpoints.size(), std::size_t(2));
+
+        // Bob vanishes from the registry: his row AND his endpoint go together.
+        ing.deliverPersons({alice}, {ea}, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().persons.size(), std::size_t(1));
+        QCOMPARE(store.snapshot().person_endpoints.size(), std::size_t(1));
+        QVERIFY(store.snapshot().person_endpoints.find(eb.key()) == nullptr);
+    }
+
+    // The delta read (api/39): a CHANGED person's endpoint set replaces wholesale; a REMOVED
+    // person's endpoints are tombstoned with its row; untouched persons keep theirs.
+    void personsDeltaReplacesChangedEndpointSets() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+
+        Person alice;
+        alice.id = QStringLiteral("p-alice");
+        Person bob;
+        bob.id = QStringLiteral("p-bob");
+        PersonEndpoint ea1;
+        ea1.person = alice.id;
+        ea1.transport = QStringLiteral("matrix/@you:hs");
+        ea1.contact = QStringLiteral("@alice:hs");
+        PersonEndpoint eb;
+        eb.person = bob.id;
+        eb.transport = QStringLiteral("matrix/@you:hs");
+        eb.contact = QStringLiteral("@bob:hs");
+        ing.deliverPersons({alice, bob}, {ea1, eb}, /*isFinalPage=*/true);
+
+        // Alice changed: her endpoint moved to a new contact id; Bob is untouched (absent).
+        PersonEndpoint ea2;
+        ea2.person = alice.id;
+        ea2.transport = QStringLiteral("matrix/@you:hs");
+        ea2.contact = QStringLiteral("@alice2:hs");
+        ing.deliverPersonsDelta({alice}, {ea2}, /*removed=*/{}, /*rev=*/7, /*isFinalPage=*/true);
+        QCOMPARE(store.snapshot().person_endpoints.size(), std::size_t(2));
+        QVERIFY(store.snapshot().person_endpoints.find(ea1.key()) == nullptr);
+        QVERIFY(store.snapshot().person_endpoints.find(ea2.key()) != nullptr);
+        QVERIFY(store.snapshot().person_endpoints.find(eb.key()) != nullptr);
+
+        // Bob removed: his row + endpoints tombstone together.
+        ing.deliverPersonsDelta({}, {}, {QStringLiteral("p-bob")}, /*rev=*/8,
+                                /*isFinalPage=*/true);
+        QVERIFY(store.snapshot().persons.find(PersonKey{QStringLiteral("p-bob")}) == nullptr);
+        QVERIFY(store.snapshot().person_endpoints.find(eb.key()) == nullptr);
+    }
+
+    // The connect-time staleness scan covers the tree/hub collections: adapters + transports
+    // baseline ops are issued when stale (degraded reconnect, §5.6).
+    void reconnectScansAdaptersAndTransports() {
+        CoarseObserve obs;
+        Store store(obs);
+        RecordingExecutor exec;
+        FetchScheduler sched(exec, kBigCap);
+        Ingestor ing(store, sched);
+        ing.syncState().markStale(QStringLiteral("adapters"));
+        ing.syncState().markStale(QStringLiteral("transports"));
+        ing.onConnected(38, /*hasRevFields=*/false); // degraded: staleness scan
+        QVERIFY(exec.has(FetchOp::TransportAdapters, QString()));
+        QVERIFY(exec.has(FetchOp::TransportInstances, QString()));
+    }
 };
 
 QTEST_GUILESS_MAIN(TstMirrorIngestor)

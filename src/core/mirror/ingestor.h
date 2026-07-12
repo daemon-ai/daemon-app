@@ -79,6 +79,17 @@ public:
     void deliverContacts(const QString& transport, const std::vector<Contact>& items,
                          bool isFinalPage);
     void deliverPersons(const std::vector<Person>& items, bool isFinalPage);
+    // AD (1a): PersonList delivers persons AND their per-transport endpoints in one page (the
+    // wire `person.endpoints`). On the final page BOTH tables replace-and-prune together, so an
+    // endpoint of a vanished person can never linger (the tree's per-account Persons section).
+    void deliverPersons(const std::vector<Person>& items,
+                        const std::vector<PersonEndpoint>& endpoints, bool isFinalPage);
+    // AD (1a): the adapter catalog (TransportAdapters — connect-refresh read): full-list
+    // replace-and-prune (the catalog is small and node-authoritative).
+    void deliverAdapters(const std::vector<Adapter>& items, bool isFinalPage);
+    // AD (1a): the configured account list (TransportInstances — connect-refresh read):
+    // full-list replace-and-prune; TransportChanged patches rows in place between reads.
+    void deliverTransportAccounts(const std::vector<TransportAccount>& items, bool isFinalPage);
     // RoutingListChats page (M3): the origin→session pin table is a GLOBAL list — full-list
     // replace-and-prune over all route_pins on the final page (§5.3 PageLoop).
     void deliverRoutePins(const std::vector<RoutePin>& items, bool isFinalPage);
@@ -162,6 +173,12 @@ public:
                               const QStringList& removed, quint64 rev, bool isFinalPage);
     void deliverPersonsDelta(const std::vector<Person>& changed, const QStringList& removed,
                              quint64 rev, bool isFinalPage);
+    // AD (1a): the endpoint-carrying delta — each CHANGED person's endpoint set replaces
+    // wholesale (the wire row carries the full current set) and a REMOVED person's endpoints are
+    // tombstoned with its row, so the endpoints table never leaks a ghost across delta reads.
+    void deliverPersonsDelta(const std::vector<Person>& changed,
+                             const std::vector<PersonEndpoint>& endpoints,
+                             const QStringList& removed, quint64 rev, bool isFinalPage);
 
     // Report a fetch job finished so the scheduler frees the slot (the executor also may call the
     // scheduler directly; this is the ingestor-side convenience used by the bridge on decode).

@@ -16,6 +16,8 @@ CREATE TABLE m_adapters(
   cap_direct_messages INTEGER,
   cap_file_transfer INTEGER,
   ops_json TEXT,
+  schema_json TEXT,
+  policies_json TEXT,
   last_rev INTEGER NOT NULL, fetched_at_ms INTEGER NOT NULL);
 
 CREATE TABLE m_agent_entries(
@@ -167,6 +169,7 @@ CREATE TABLE m_person_endpoints(
   transport TEXT NOT NULL,
   contact TEXT NOT NULL,
   display_name TEXT,
+  presence_primitive TEXT,
   last_rev INTEGER NOT NULL, fetched_at_ms INTEGER NOT NULL);
 
 CREATE TABLE m_profiles(

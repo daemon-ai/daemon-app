@@ -73,10 +73,8 @@ struct OriginScratch {
 void fillOrigin(origin& out, const DecodedOrigin& o, OriginScratch& sc);
 // Project a generated `origin` into the flattened DecodedOrigin.
 DecodedOrigin decodeOriginStruct(const origin& o);
-// Project a generated `chat_route` into DecodedChatRoute.
-DecodedChatRoute decodeChatRouteStruct(const chat_route& r);
 DecodedUnitNode decodeUnitNodeStruct(const unit_node& n);
-// Project a generated `session_info` into a CachedSessionRow (shared by decodeSessionPage and
+// Project a generated `session_info` into a CachedSessionRow (shared by the SessionGet detail and
 // decodeSessionDetail). Leaves `updatedAtMs` at 0 (the caller stamps it).
 CachedSessionRow sessionRowFromInfo(const session_info& info);
 void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out);

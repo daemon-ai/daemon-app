@@ -25,8 +25,6 @@
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
 #include "palette_dialog.h" // [acct-mgmt] session picker for the room pin
-#include "participants_model.h"
-#include "participants_view.h"
 #include "persistence/isession_store.h"
 #include "root_widget.h"
 #include "root_widget_detail.h"

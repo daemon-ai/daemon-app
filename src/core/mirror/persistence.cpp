@@ -329,6 +329,114 @@ bool Persistence::writeBehind(const WriteBatch& batch) {
         }
     }
 
+    // AD (1a): the tree/hub M-tables — endpoints, the adapter catalog, the account list (E1).
+    for (const PersonEndpoint& e : batch.personEndpointUpserts) {
+        QSqlQuery up(db_);
+        up.prepare(QStringLiteral(
+            "INSERT OR REPLACE INTO m_person_endpoints"
+            "(key,person,transport,contact,display_name,presence_primitive,last_rev,fetched_at_ms)"
+            " VALUES(?,?,?,?,?,?,?,?)"));
+        const QString key = e.key().serialize();
+        up.addBindValue(key);
+        up.addBindValue(e.person);
+        up.addBindValue(e.transport);
+        up.addBindValue(e.contact);
+        up.addBindValue(e.display_name);
+        up.addBindValue(e.presence_primitive);
+        up.addBindValue(static_cast<qulonglong>(lastRevFor(key)));
+        up.addBindValue(static_cast<qlonglong>(at));
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const PersonEndpointKey& key : batch.personEndpointTombstones) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM m_person_endpoints WHERE key=?"));
+        del.addBindValue(key.serialize());
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const Adapter& a : batch.adapterUpserts) {
+        QSqlQuery up(db_);
+        up.prepare(QStringLiteral("INSERT OR REPLACE INTO m_adapters"
+                                  "(key,family,display_name,directory,cap_rooms,"
+                                  "cap_direct_messages,cap_file_transfer,ops_json,schema_json,"
+                                  "policies_json,last_rev,fetched_at_ms)"
+                                  " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)"));
+        const QString key = a.key().serialize();
+        up.addBindValue(key);
+        up.addBindValue(a.family);
+        up.addBindValue(a.display_name);
+        up.addBindValue(a.directory ? 1 : 0);
+        up.addBindValue(a.cap_rooms ? 1 : 0);
+        up.addBindValue(a.cap_direct_messages ? 1 : 0);
+        up.addBindValue(a.cap_file_transfer ? 1 : 0);
+        up.addBindValue(a.ops_json);
+        up.addBindValue(a.schema_json);
+        up.addBindValue(a.policies_json);
+        up.addBindValue(static_cast<qulonglong>(lastRevFor(key)));
+        up.addBindValue(static_cast<qlonglong>(at));
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const AdapterKey& key : batch.adapterTombstones) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM m_adapters WHERE key=?"));
+        del.addBindValue(key.serialize());
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const TransportAccount& t : batch.transportAccountUpserts) {
+        QSqlQuery up(db_);
+        up.prepare(QStringLiteral(
+            "INSERT OR REPLACE INTO m_transport_accounts"
+            "(key,transport,family,display_name,connection,presence,bound_profile,reason,message,"
+            "fatal,enabled,label,settings_json,last_rev,fetched_at_ms)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"));
+        const QString key = t.key().serialize();
+        up.addBindValue(key);
+        up.addBindValue(t.transport);
+        up.addBindValue(t.family);
+        up.addBindValue(t.display_name);
+        up.addBindValue(t.connection);
+        up.addBindValue(t.presence);
+        up.addBindValue(t.bound_profile);
+        up.addBindValue(t.reason);
+        up.addBindValue(t.message);
+        up.addBindValue(t.fatal ? 1 : 0);
+        up.addBindValue(t.enabled ? 1 : 0);
+        up.addBindValue(t.label);
+        up.addBindValue(t.settings_json);
+        up.addBindValue(static_cast<qulonglong>(lastRevFor(key)));
+        up.addBindValue(static_cast<qlonglong>(at));
+        if (!up.exec()) {
+            last_error_ = up.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+    for (const TransportAccountKey& key : batch.transportAccountTombstones) {
+        QSqlQuery del(db_);
+        del.prepare(QStringLiteral("DELETE FROM m_transport_accounts WHERE key=?"));
+        del.addBindValue(key.serialize());
+        if (!del.exec()) {
+            last_error_ = del.lastError().text();
+            db_.rollback();
+            return false;
+        }
+    }
+
     // Class-W window rows (chat + transcripts) + window_meta — same transaction (§4.5/§4.6).
     // Scope CLEARS run first: a rebaseline wipe precedes its replacement generation's upserts.
     for (const QString& scope : batch.transcriptWindowClears) {
@@ -508,6 +616,67 @@ bool Persistence::loadInto(MirrorModel& model, int chatWindowLimit) {
             pt.insert(p);
         }
         model.persons = pt.persistent();
+    }
+
+    // AD (1a): the tree/hub M-tables — endpoints, the adapter catalog, the account list (E1
+    // offline integrations tree / channels hub).
+    QSqlQuery eq(db_);
+    if (eq.exec(QStringLiteral("SELECT person,transport,contact,display_name,presence_primitive "
+                               "FROM m_person_endpoints"))) {
+        auto et = model.person_endpoints.transient();
+        while (eq.next()) {
+            PersonEndpoint e;
+            e.person = eq.value(0).toString();
+            e.transport = eq.value(1).toString();
+            e.contact = eq.value(2).toString();
+            e.display_name = eq.value(3).toString();
+            e.presence_primitive = eq.value(4).toString();
+            et.insert(e);
+        }
+        model.person_endpoints = et.persistent();
+    }
+    QSqlQuery aq(db_);
+    if (aq.exec(QStringLiteral("SELECT family,display_name,directory,cap_rooms,"
+                               "cap_direct_messages,cap_file_transfer,ops_json,schema_json,"
+                               "policies_json FROM m_adapters"))) {
+        auto at2 = model.adapters.transient();
+        while (aq.next()) {
+            Adapter a;
+            a.family = aq.value(0).toString();
+            a.display_name = aq.value(1).toString();
+            a.directory = aq.value(2).toBool();
+            a.cap_rooms = aq.value(3).toBool();
+            a.cap_direct_messages = aq.value(4).toBool();
+            a.cap_file_transfer = aq.value(5).toBool();
+            a.ops_json = aq.value(6).toString();
+            a.schema_json = aq.value(7).toString();
+            a.policies_json = aq.value(8).toString();
+            at2.insert(a);
+        }
+        model.adapters = at2.persistent();
+    }
+    QSqlQuery tq2(db_);
+    if (tq2.exec(QStringLiteral(
+            "SELECT transport,family,display_name,connection,presence,bound_profile,reason,"
+            "message,fatal,enabled,label,settings_json FROM m_transport_accounts"))) {
+        auto tt = model.transport_accounts.transient();
+        while (tq2.next()) {
+            TransportAccount t;
+            t.transport = tq2.value(0).toString();
+            t.family = tq2.value(1).toString();
+            t.display_name = tq2.value(2).toString();
+            t.connection = tq2.value(3).toString();
+            t.presence = tq2.value(4).toString();
+            t.bound_profile = tq2.value(5).toString();
+            t.reason = tq2.value(6).toString();
+            t.message = tq2.value(7).toString();
+            t.fatal = tq2.value(8).toBool();
+            t.enabled = tq2.value(9).toBool();
+            t.label = tq2.value(10).toString();
+            t.settings_json = tq2.value(11).toString();
+            tt.insert(t);
+        }
+        model.transport_accounts = tt.persistent();
     }
     // Class-W chat windows (E1 offline render): rebuild each scope's persisted CONTIGUOUS TAIL —
     // rows are read newest-first bounded by the §4.6 policy max, then reversed into cursor order.

@@ -296,10 +296,6 @@ Rectangle {
                     required property string title
                     required property string snippet
                     required property var modified
-                    required property string unitName
-                    required property int unitKind
-                    required property var tagNames
-                    required property var tagColors
                     required property bool current
                     required property bool pinned
 
@@ -386,59 +382,6 @@ Rectangle {
                             color: Theme.countText
                             font.family: FontIcons.display
                             font.pixelSize: 11
-                        }
-
-                        // Owning-agent chip + tag chips.
-                        Flow {
-                            Layout.fillWidth: true
-                            Layout.topMargin: 14
-                            spacing: Theme.spacing
-                            visible: del.unitName !== "" || (del.tagNames && del.tagNames.length > 0)
-
-                            Row {
-                                visible: del.unitName !== ""
-                                spacing: 5
-                                Kit.Glyph {
-                                    glyph: root.kindIcon(del.unitKind)
-                                    font.pointSize: 10 + Theme.pointSizeOffset
-                                    color: Theme.listSnippet
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                QQC.Label {
-                                    text: del.unitName
-                                    color: Theme.listSnippet
-                                    font.family: FontIcons.display
-                                    font.pixelSize: 11
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-
-                            Repeater {
-                                model: del.tagNames
-                                delegate: Row {
-                                    required property int index
-                                    required property string modelData
-                                    spacing: 5
-                                    Rectangle {
-                                        width: 9
-                                        height: 9
-                                        radius: 4.5
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        color: {
-                                            const c = del.tagColors;
-                                            return (c && index < c.length && c[index] !== "")
-                                                ? c[index] : Theme.sidebarIcon;
-                                        }
-                                    }
-                                    QQC.Label {
-                                        text: modelData
-                                        color: Theme.listSnippet
-                                        font.family: FontIcons.display
-                                        font.pixelSize: 11
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                }
-                            }
                         }
                     }
 

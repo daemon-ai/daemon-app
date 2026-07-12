@@ -172,6 +172,71 @@ private slots:
         QCOMPARE(wiped.transcripts.count(scope), std::size_t(0));
     }
 
+    // AD (1a): the tree/hub M-tables (adapters / transport accounts / person endpoints) persist
+    // and reload like the other M rows — the offline integrations tree / channels hub source.
+    void treeHubTablesRoundTrip() {
+        Persistence p;
+        const auto pth = paths();
+        QVERIFY2(p.open(pth), qPrintable(p.lastError()));
+
+        WriteBatch wb;
+        Adapter a;
+        a.family = QStringLiteral("matrix");
+        a.display_name = QStringLiteral("Matrix");
+        a.directory = true;
+        a.cap_rooms = true;
+        a.cap_direct_messages = true;
+        a.ops_json = QStringLiteral("{\"rosterOps\":{\"list\":true}}");
+        wb.adapterUpserts.push_back(a);
+        TransportAccount t;
+        t.transport = QStringLiteral("matrix/@you:hs");
+        t.family = QStringLiteral("matrix");
+        t.display_name = QStringLiteral("@you:hs");
+        t.connection = QStringLiteral("connected");
+        t.presence = QStringLiteral("available");
+        t.enabled = true;
+        wb.transportAccountUpserts.push_back(t);
+        PersonEndpoint e;
+        e.person = QStringLiteral("p-alice");
+        e.transport = t.transport;
+        e.contact = QStringLiteral("@alice:hs");
+        e.display_name = QStringLiteral("Alice");
+        e.presence_primitive = QStringLiteral("available");
+        wb.personEndpointUpserts.push_back(e);
+        wb.journalRecords.push_back(rec(1, QStringLiteral("matrix"), JournalOp::Upsert));
+        QVERIFY2(p.writeBehind(wb), qPrintable(p.lastError()));
+
+        MirrorModel model;
+        QVERIFY(p.loadInto(model));
+        const Adapter* la = model.adapters.find(AdapterKey{QStringLiteral("matrix")});
+        QVERIFY(la != nullptr);
+        QCOMPARE(la->display_name, QStringLiteral("Matrix"));
+        QVERIFY(la->directory);
+        QCOMPARE(la->ops_json, a.ops_json);
+        const TransportAccount* lt =
+            model.transport_accounts.find(TransportAccountKey{t.transport});
+        QVERIFY(lt != nullptr);
+        QCOMPARE(lt->connection, QStringLiteral("connected"));
+        QVERIFY(lt->enabled);
+        const PersonEndpoint* le = model.person_endpoints.find(e.key());
+        QVERIFY(le != nullptr);
+        QCOMPARE(le->display_name, QStringLiteral("Alice"));
+        QCOMPARE(le->presence_primitive, QStringLiteral("available"));
+
+        // Tombstones drop the rows.
+        WriteBatch del;
+        del.adapterTombstones.push_back(AdapterKey{QStringLiteral("matrix")});
+        del.transportAccountTombstones.push_back(TransportAccountKey{t.transport});
+        del.personEndpointTombstones.push_back(e.key());
+        del.journalRecords.push_back(rec(2, QStringLiteral("matrix"), JournalOp::Tombstone));
+        QVERIFY(p.writeBehind(del));
+        MirrorModel wiped;
+        QVERIFY(p.loadInto(wiped));
+        QCOMPARE(wiped.adapters.size(), std::size_t(0));
+        QCOMPARE(wiped.transport_accounts.size(), std::size_t(0));
+        QCOMPARE(wiped.person_endpoints.size(), std::size_t(0));
+    }
+
     void tombstoneWriteBehindDeletesRow() {
         Persistence p;
         const auto pth = paths();

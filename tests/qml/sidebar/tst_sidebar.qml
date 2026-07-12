@@ -42,7 +42,7 @@ TestCase {
     function test_integrations_tree_mounted_and_populated() {
         var m = findChild(sidebar, "integrationsTreeModel");
         verify(m !== null, "the sidebar composes an IntegrationsTree");
-        verify(m.rowCount() > 0, "the mounted tree is populated from the Transports seam");
+        verify(m.rowCount() > 0, "the mounted tree is populated from the seeded mirror");
     }
 
     // Activating a conversation row in the mounted tree propagates to the Sidebar's

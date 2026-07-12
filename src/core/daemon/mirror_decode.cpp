@@ -107,7 +107,8 @@ bool decodeChatHistoryToMirror(const QByteArray& responseCbor, const QString& tr
 }
 
 bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::Person>* out,
-                           quint64* rev, QStringList* removed) {
+                           quint64* rev, QStringList* removed,
+                           std::vector<mirror::PersonEndpoint>* endpoints) {
     if (out == nullptr) {
         return false;
     }
@@ -119,8 +120,24 @@ bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::P
     const response_persons& rp = response->api_response_response_persons_m;
     out->clear();
     out->reserve(rp.Persons_items_person_m_count);
+    if (endpoints != nullptr) {
+        endpoints->clear();
+    }
     for (size_t i = 0; i < rp.Persons_items_person_m_count; ++i) {
-        out->push_back(mirror::map_person(rp.Persons_items_person_m[i]));
+        const ::person& p = rp.Persons_items_person_m[i];
+        out->push_back(mirror::map_person(p));
+        // AD (1a): the per-transport endpoints ride the same wire row; the mapper leaves the
+        // owning `person` scope blank — stamp it here (the entity-map's "person.id" provenance).
+        if (endpoints != nullptr && p.person_endpoints_present) {
+            const QString owner = out->back().id;
+            for (size_t j = 0; j < p.person_endpoints.person_endpoints_person_endpoint_m_count;
+                 ++j) {
+                mirror::PersonEndpoint e = mirror::map_person_endpoint(
+                    p.person_endpoints.person_endpoints_person_endpoint_m[j]);
+                e.person = owner;
+                endpoints->push_back(std::move(e));
+            }
+        }
     }
     // [api/39 §10.2] The collection rev + the delta-read `removed` tombstone id list.
     if (rev != nullptr) {
@@ -134,6 +151,47 @@ bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::P
                     codec_detail::fromZcbor(rp.Persons_removed.Persons_removed_tstr[i]));
             }
         }
+    }
+    return true;
+}
+
+bool decodeAdaptersToMirror(const QByteArray& responseCbor, std::vector<mirror::Adapter>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_adapters_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_adapters& ra = response->api_response_response_adapters_m;
+    out->clear();
+    out->reserve(ra.response_adapters_Adapters_adapter_info_m_count);
+    for (size_t i = 0; i < ra.response_adapters_Adapters_adapter_info_m_count; ++i) {
+        out->push_back(mirror::map_adapter(ra.response_adapters_Adapters_adapter_info_m[i]));
+    }
+    return true;
+}
+
+bool decodeTransportInstancesToMirror(const QByteArray& responseCbor,
+                                      std::vector<mirror::TransportAccount>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_transport_instances_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_transport_instances& ri = response->api_response_response_transport_instances_m;
+    out->clear();
+    out->reserve(
+        ri.response_transport_instances_TransportInstances_transport_instance_info_m_count);
+    for (size_t i = 0;
+         i < ri.response_transport_instances_TransportInstances_transport_instance_info_m_count;
+         ++i) {
+        out->push_back(mirror::map_transport_account(
+            ri.response_transport_instances_TransportInstances_transport_instance_info_m[i]));
     }
     return true;
 }

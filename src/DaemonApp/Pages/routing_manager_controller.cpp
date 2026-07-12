@@ -151,6 +151,26 @@ void RoutingManagerController::setSelectedSession(const QString& session) {
     rebuildDelivery();
 }
 
+QString RoutingManagerController::pinnedSessionFor(const QString& transport,
+                                                   const QString& conv) const {
+    mirror::Store* store = storeOf(m_mirrorObject);
+    if (store == nullptr) {
+        return {};
+    }
+    for (const mirror::RoutePin& p : store->snapshot().route_pins) {
+        if (p.transport != transport) {
+            continue;
+        }
+        const Origin o = parseOriginKey(p.origin_key);
+        const bool matches = (o.scope.kind == OriginScopeKind::Group && o.scope.chat == conv) ||
+                             (o.scope.kind == OriginScopeKind::Dm && o.scope.user == conv);
+        if (matches) {
+            return p.session;
+        }
+    }
+    return {};
+}
+
 void RoutingManagerController::rebuild() {
     m_originByKey.clear();
     mirror::Store* store = storeOf(m_mirrorObject);
@@ -161,6 +181,7 @@ void RoutingManagerController::rebuild() {
         m_bindable->setRows({});
         m_sessions->setRows({});
         rebuildDelivery();
+        emit pinsChanged();
         return;
     }
     const mirror::MirrorModel& snap = store->snapshot();
@@ -246,6 +267,7 @@ void RoutingManagerController::rebuild() {
     m_bindable->setRows(bindableRows);
 
     rebuildDelivery();
+    emit pinsChanged();
 }
 
 void RoutingManagerController::rebuildDelivery() {

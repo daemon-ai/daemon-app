@@ -6735,10 +6735,6 @@ This only affects the app appearance, not your data.</source>
         <translation>新建智能体</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>新建标签</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>全部折叠</translation>
     </message>
@@ -6818,16 +6814,8 @@ This only affects the app appearance, not your data.</source>
         <translation>已归档</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>标签</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>编队</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>新建标签</translation>
     </message>
 </context>
 <context>
@@ -8734,12 +8722,6 @@ _未选择智能体。_
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_频道不可用：此模式下未接通传输接缝。_
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8806,6 +8788,12 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Disconnected</source>
         <translation>已断开连接</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_频道不可用：此模式下未接入频道中枢投影。_
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9458,13 +9446,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>磁盘上缺少模型 %1：%2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>参与者</translation>
     </message>
 </context>
 <context>

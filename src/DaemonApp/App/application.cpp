@@ -39,6 +39,7 @@
 #include "session/icheckpoint_timeline.h"
 
 // [mirror M2] Complete types for the Mirror/Outbox context-property upcasts (spec 09 §2/§6).
+#include "daemon/channels_hub_model.h" // complete type for the ChannelsHub context property
 #include "mirror/mirror_service.h"
 #include "outbox.h"
 #include "session/isession_settings.h"
@@ -49,8 +50,6 @@
 #include "transcript_exporter.h"
 #include "transports/ichat_service.h"
 #include "transports/icontacts_service.h"
-#include "transports/ipersons_service.h"
-#include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "turn_engine_factory.h"
 #include "update/update_manager.h"
@@ -367,13 +366,13 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // daemon-transport-adapter-spec.md + docs/multi-protocol-client-surface.md.
     engine.rootContext()->setContextProperty(QStringLiteral("Transports"),
                                              m_services.transportRegistry);
-    engine.rootContext()->setContextProperty(QStringLiteral("Presence"), m_services.presence);
+    // AD (1a.3): the SHARED channels-hub projection — ChannelsPage's READS (accounts, adapters,
+    // rooms, contacts, connection state) come from the mirror through this model in BOTH modes;
+    // `Transports`/`Contacts` stay bound as the VERB sinks only.
+    engine.rootContext()->setContextProperty(QStringLiteral("ChannelsHub"), m_services.channelsHub);
     // [acct-mgmt] Transport contacts / roster (Phase D, wire v34): the per-account Contacts section
     // in ChannelsPage binds this seam (RosterList + contact ops).
     engine.rootContext()->setContextProperty(QStringLiteral("Contacts"), m_services.contacts);
-    // [integrations wire v38] The cross-transport person registry (PersonList): the integrations
-    // tree's Persons sections bind this seam (endpoints per transport).
-    engine.rootContext()->setContextProperty(QStringLiteral("Persons"), m_services.persons);
     // [integrations wire v38] Native chat (A4): ChatPage's ChatConversationController binds this
     // IChatService seam (ConvHistory transcript + ConvSend + MessagesChanged refresh).
     engine.rootContext()->setContextProperty(QStringLiteral("Chat"), m_services.chat);

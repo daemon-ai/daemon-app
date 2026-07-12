@@ -99,6 +99,35 @@ bool WriteBehind::flush() {
             }
             break;
         }
+        // AD (1a): the tree/hub M-tables persist like the other M rows, so a cold offline boot
+        // renders the integrations tree / channels hub from the last-known state (E1).
+        case EntityKind::PersonEndpoint: {
+            const PersonEndpointKey key{parts.value(0), parts.value(1), parts.value(2)};
+            if (r.op == JournalOp::Tombstone) {
+                batch.personEndpointTombstones.push_back(key);
+            } else if (const PersonEndpoint* v = snap.person_endpoints.find(key)) {
+                batch.personEndpointUpserts.push_back(*v);
+            }
+            break;
+        }
+        case EntityKind::Adapter: {
+            const AdapterKey key{parts.value(0)};
+            if (r.op == JournalOp::Tombstone) {
+                batch.adapterTombstones.push_back(key);
+            } else if (const Adapter* v = snap.adapters.find(key)) {
+                batch.adapterUpserts.push_back(*v);
+            }
+            break;
+        }
+        case EntityKind::TransportAccount: {
+            const TransportAccountKey key{parts.value(0)};
+            if (r.op == JournalOp::Tombstone) {
+                batch.transportAccountTombstones.push_back(key);
+            } else if (const TransportAccount* v = snap.transport_accounts.find(key)) {
+                batch.transportAccountUpserts.push_back(*v);
+            }
+            break;
+        }
         case EntityKind::ChatMessage: {
             // key = transport␟conv␟cursor (§4.6 window item key).
             if (parts.size() >= 3) {

@@ -6740,10 +6740,6 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
         <translation>Novo agente</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Novo marcador</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Recolher tudo</translation>
     </message>
@@ -6823,16 +6819,8 @@ Isso afeta apenas a aparência do aplicativo, não seus dados.</translation>
         <translation>Arquivadas</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Marcadores</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Frota</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Novo marcador</translation>
     </message>
 </context>
 <context>
@@ -8742,12 +8730,6 @@ _Nenhum agente selecionado._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Os canais estão indisponíveis: a costura de transportes não está conectada neste modo._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8814,6 +8796,12 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
     <message>
         <source>Disconnected</source>
         <translation>Desconectado</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Os canais estão indisponíveis: a projeção do hub de canais não está conectada neste modo._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9466,13 +9454,6 @@ Os convites de sala são tratados pelo nó; as salas recém-ingressadas aparecem
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>O modelo %1 está ausente no disco: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Participantes</translation>
     </message>
 </context>
 <context>

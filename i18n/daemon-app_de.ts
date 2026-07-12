@@ -6740,10 +6740,6 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
         <translation>Neuer Agent</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Neues Tag</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Alle einklappen</translation>
     </message>
@@ -6823,16 +6819,8 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
         <translation>Archiviert</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Tags</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Flotte</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Neues Tag</translation>
     </message>
 </context>
 <context>
@@ -8742,12 +8730,6 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Kanäle sind nicht verfügbar: die Transport-Schnittstelle ist in diesem Modus nicht angebunden._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8814,6 +8796,12 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <message>
         <source>Disconnected</source>
         <translation>Getrennt</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Kanäle sind nicht verfügbar: die Channels-Hub-Projektion ist in diesem Modus nicht angebunden._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9466,13 +9454,6 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Modell %1 fehlt auf dem Datenträger: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Teilnehmer</translation>
     </message>
 </context>
 <context>

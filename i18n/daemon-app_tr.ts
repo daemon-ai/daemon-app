@@ -6735,10 +6735,6 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <translation>Yeni aracı</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Yeni etiket</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Tümünü daralt</translation>
     </message>
@@ -6818,16 +6814,8 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <translation>Arşivlenmiş</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Etiketler</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Filo</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Yeni etiket</translation>
     </message>
 </context>
 <context>
@@ -8734,12 +8722,6 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Kanallar kullanılamıyor: bu modda taşıma katmanı bağlanmamış._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8806,6 +8788,12 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>Disconnected</source>
         <translation>Bağlantı kesildi</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Kanallar kullanılamıyor: kanal merkezi projeksiyonu bu modda bağlı değil._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9458,13 +9446,6 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Model %1 diskte eksik: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Katılımcılar</translation>
     </message>
 </context>
 <context>

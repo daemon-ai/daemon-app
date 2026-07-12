@@ -254,23 +254,6 @@ struct DecodedOrigin {
     QString apiKey;                                 // Api
 };
 
-// One explicit chat pin (RoutingListChats -> ChatRoutes page items / RoutingGet -> ChatRoute).
-struct DecodedChatRoute {
-    DecodedOrigin origin;
-    QString session;
-    QString profile;   // empty = no agent override
-    QString isolation; // "PerUser" | "PerChat" | "PerThread" | "Shared" | "" (absent)
-};
-
-// One bindable room/chat on a transport instance (TransportRooms -> Rooms page items). The pin
-// picker renders these; `session` (when set) is the room's pinned session.
-struct DecodedRoomInfo {
-    QString transport;
-    QString room;    // the chat handle / room id (the Group scope key)
-    QString name;    // display label (empty = use the room id)
-    QString session; // pinned session id (empty = not pinned)
-};
-
 // --- Checkpoints (E4/TOOL-9) ----------------------------------------------------------------
 // One durable checkpoint (CheckpointList -> Checkpoints page). Node-created on tool events;
 // `turnOrdinal`/`cursorSeq` locate it on the session timeline (optional on the wire).
@@ -491,22 +474,6 @@ struct DecodedChatMessage {
 // [integrations wire v38] One transport-scoped endpoint of a person (person-endpoint): the
 // transport instance + the contact reachable there. Backs the Persons section (a person's reach
 // across transports).
-struct DecodedPersonEndpoint {
-    QString transport;
-    DecodedContact contact;
-};
-
-// [integrations wire v38] One person / metacontact (PersonList -> Persons; re-listed on
-// PersonsChanged). Auto-minted `id`, an optional user `alias`, and contact endpoints across
-// transports. The avatar (a content-addressed image blob) is intentionally not projected here (out
-// of scope; a later avatar surface can add it). `hasAlias` marks the optional alias.
-struct DecodedPerson {
-    QString id;
-    bool hasAlias = false;
-    QString alias;
-    QList<DecodedPersonEndpoint> endpoints;
-};
-
 // [acct-mgmt] The node-described join form (ConvJoinDetails -> ChannelJoinDetails). Honor the
 // *_supported flags (hide unsupported fields) and *_max_length (input constraints) when rendering.
 struct DecodedChannelJoinDetails {
@@ -1735,11 +1702,15 @@ public:
     // app renders it, then sends the filled form (ConvJoin / ConvCreate). Single-verb ops
     // (leave/delete) name the target conversation. ConvGet hydrates one conversation incl. members.
     [[nodiscard]] static QByteArray encodeConvJoinDetailsRequest(const QString& transport);
+    // [api/39 §10.3 rung 3] `opId` (absent when empty) is the client-minted retry-safety key on
+    // the direct create/join verbs (the node dedups on (principal, op_id) — no duplicate room).
     [[nodiscard]] static QByteArray encodeConvJoinRequest(const QString& transport,
-                                                          const ConvJoinForm& form);
+                                                          const ConvJoinForm& form,
+                                                          const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeConvCreateDetailsRequest(const QString& transport);
     [[nodiscard]] static QByteArray encodeConvCreateRequest(const QString& transport,
-                                                            const ConvCreateForm& form);
+                                                            const ConvCreateForm& form,
+                                                            const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeConvLeaveRequest(const QString& transport,
                                                            const QString& conv);
     [[nodiscard]] static QByteArray encodeConvDeleteRequest(const QString& transport,
@@ -1748,21 +1719,24 @@ public:
                                                          const QString& conv);
     // Membership verbs: `contactId` names the target member; `role` is a MemberRole wire string
     // (None|Voice|HalfOp|Op|Founder). Kick/Ban carry an optional reason (empty = absent).
+    // [api/39 §10.3 rung 3] `opId` (absent when empty) is the retry-safety double-op guard.
     [[nodiscard]] static QByteArray encodeMemberInviteRequest(const QString& transport,
                                                               const QString& conv,
-                                                              const QString& contactId);
+                                                              const QString& contactId,
+                                                              const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeMemberRemoveRequest(const QString& transport,
                                                               const QString& conv,
                                                               const QString& contactId,
-                                                              const QString& reason = QString());
-    [[nodiscard]] static QByteArray encodeMemberBanRequest(const QString& transport,
-                                                           const QString& conv,
-                                                           const QString& contactId,
-                                                           const QString& reason = QString());
+                                                              const QString& reason = QString(),
+                                                              const QString& opId = QString());
+    [[nodiscard]] static QByteArray
+    encodeMemberBanRequest(const QString& transport, const QString& conv, const QString& contactId,
+                           const QString& reason = QString(), const QString& opId = QString());
     [[nodiscard]] static QByteArray encodeMemberSetRoleRequest(const QString& transport,
                                                                const QString& conv,
                                                                const QString& contactId,
-                                                               const QString& role);
+                                                               const QString& role,
+                                                               const QString& opId = QString());
     // Decode the two details responses + the ConvGet response (Some/None -> *found).
     static bool decodeConvJoinDetails(const QByteArray& responseCbor,
                                       DecodedChannelJoinDetails* out);
@@ -1806,7 +1780,6 @@ public:
     // omitted ⇒ a full-list read (v38 behavior).
     [[nodiscard]] static QByteArray encodePersonListRequest(bool hasSinceRev = false,
                                                             quint64 sinceRev = 0);
-    static bool decodePersons(const QByteArray& responseCbor, QList<DecodedPerson>* out);
 
     // --- [api/39 §10.3] Bootstrap probe -------------------------------------------------------
     // A race-free reconnect baseline (§5.6 full step 1): one request returns every collection's
@@ -1914,9 +1887,6 @@ public:
     // Decode a SessionPage. `rev` (L4) is the roster revision this page reflects (persist + pass
     // back as since_rev); `removed` (L4 delta reads) is the ids the client should prune from its
     // cache.
-    static bool decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
-                                  QString* nextCursor = nullptr, quint64* rev = nullptr,
-                                  QStringList* removed = nullptr);
     // Decode a SessionDetail response (SessionGet). Sets *found=false on the null arm (unknown
     // session). CHA-9 follow-on: hydrates the per-session facets the roster page omits.
     static bool decodeSessionDetail(const QByteArray& responseCbor, DecodedSessionDetail* out,
@@ -2114,7 +2084,6 @@ public:
     // Resolve one origin's pin (RoutingGet -> ChatRoute(opt)).
     [[nodiscard]] static QByteArray encodeRoutingGetRequest(const DecodedOrigin& origin);
     // Set a full route (RoutingSet{chat_route} -> Ok): origin -> session (+profile/isolation).
-    [[nodiscard]] static QByteArray encodeRoutingSetRequest(const DecodedChatRoute& route);
     // Pin an origin to a session (+ optional agent) (RoutingBindChat -> Ok).
     [[nodiscard]] static QByteArray encodeRoutingBindChatRequest(const DecodedOrigin& origin,
                                                                  const QString& session,
@@ -2125,13 +2094,8 @@ public:
     [[nodiscard]] static QByteArray encodeTransportRoomsRequest(const QString& transport,
                                                                 const QString& after = QString());
     // Decode one ChatRoutes page. `*next` (when non-null) gets the resume cursor.
-    static bool decodeChatRoutes(const QByteArray& responseCbor, QList<DecodedChatRoute>* out,
-                                 QString* next = nullptr);
     // Decode a ChatRoute response (RoutingGet). Sets *found=false on the null arm (no pin).
-    static bool decodeChatRoute(const QByteArray& responseCbor, DecodedChatRoute* out, bool* found);
     // Decode one Rooms page. `*next` (when non-null) gets the resume cursor.
-    static bool decodeRooms(const QByteArray& responseCbor, QList<DecodedRoomInfo>* out,
-                            QString* next = nullptr);
 
     // --- User feedback over OpenTelemetry (wire v32) -------------------------------------------
     // Submit thumbs up/down + optional comment on an agent response, or general app feedback

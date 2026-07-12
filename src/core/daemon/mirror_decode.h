@@ -37,9 +37,20 @@ bool decodeChatHistoryToMirror(const QByteArray& responseCbor, const QString& tr
                                quint64* nextCursor, quint64* headCursor);
 
 // PersonList → Persons. [api/39 §10.2] `rev`/`removed` (if non-null) receive the delta-read
-// revision + tombstone id list (absent/empty on a v38 full-list reply).
+// revision + tombstone id list (absent/empty on a v38 full-list reply). AD (1a): `endpoints`
+// (if non-null) receives the per-transport PersonEndpoint rows riding each person (the owning
+// person id stamped from the enclosing row — the tree's per-account Persons section source).
 bool decodePersonsToMirror(const QByteArray& responseCbor, std::vector<mirror::Person>* out,
-                           quint64* rev = nullptr, QStringList* removed = nullptr);
+                           quint64* rev = nullptr, QStringList* removed = nullptr,
+                           std::vector<mirror::PersonEndpoint>* endpoints = nullptr);
+
+// TransportAdapters → Adapters (AD 1a: the adapter catalog — connect-refresh read).
+bool decodeAdaptersToMirror(const QByteArray& responseCbor, std::vector<mirror::Adapter>* out);
+
+// TransportInstances → TransportAccounts (AD 1a: the configured account list — connect-refresh
+// read; TransportChanged patches rows in place between reads).
+bool decodeTransportInstancesToMirror(const QByteArray& responseCbor,
+                                      std::vector<mirror::TransportAccount>* out);
 
 // RosterList → Contacts for `transport` (the payload carries only the id; transport is the scope).
 // `next` (if non-null) receives the roster resume cursor. [api/39 §10.2] `rev`/`removed` (if

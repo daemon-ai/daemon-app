@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "auth/auth_flow_controller.h"
-#include "transports/mock_persons_service.h"
-#include "transports/mock_transport_registry.h"
+#include "mirror/mirror_service.h"
+#include "mirror/seeder.h"
 
 #include <QtCore/qstring.h>
 #include <QtQml/qqmlcontext.h>
@@ -19,10 +19,12 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_ControlsPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_PagesPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_SidebarPlugin)
 
-// The tree binds the app-global Transports / Persons context properties (injected by
-// Application::registerContext in production); the AuthFlowSheet binds AuthFlow. The test injects
-// the in-repo mocks. The AuthFlowController is constructed WITHOUT a service so start() fails
-// closed instead of binding a loopback redirect sink (offscreen runs must never bind ports).
+// AD (1a.3): the tree binds the app-global `Mirror` composition root (its READ source; the
+// registry seam is a daemon-only VERB sink the offscreen test leaves unbound). The fixture seeds
+// a real in-memory mirror through the Seeder — the SAME apply pipeline production feeds — so the
+// REAL IntegrationsTree.qml renders the projection exactly as both shipped modes do. The
+// AuthFlowController is constructed WITHOUT a service so start() fails closed instead of binding
+// a loopback redirect sink (offscreen runs must never bind ports).
 class IntegrationsTestSetup : public QObject {
     Q_OBJECT
 
@@ -34,19 +36,44 @@ public slots:
         for (const QString& p : parts)
             engine->addImportPath(p);
 #endif
-        if (m_registry == nullptr) {
-            m_registry = new transports::MockTransportRegistry(this);
-            m_persons = new transports::MockPersonsService(this);
+        if (m_mirror == nullptr) {
+            m_mirror = new mirror::MirrorService(this);
+            m_mirror->openInMemory();
+            mirror::SeedSet seed;
+            mirror::Adapter matrix;
+            matrix.family = QStringLiteral("matrix");
+            matrix.display_name = QStringLiteral("Matrix");
+            matrix.cap_rooms = true;
+            matrix.cap_direct_messages = true;
+            seed.adapters = {matrix};
+            mirror::TransportAccount acct;
+            acct.transport = QStringLiteral("matrix/@you:matrix.org");
+            acct.family = QStringLiteral("matrix");
+            acct.display_name = QStringLiteral("@you:matrix.org");
+            acct.enabled = true;
+            acct.connection = QStringLiteral("connected");
+            seed.transportAccounts = {acct};
+            mirror::Conversation dev;
+            dev.transport = acct.transport;
+            dev.id = QStringLiteral("!daemon-dev:matrix.org");
+            dev.title = QStringLiteral("daemon-dev");
+            dev.kind = QStringLiteral("channel");
+            mirror::Conversation dm;
+            dm.transport = acct.transport;
+            dm.id = QStringLiteral("!dmAlice");
+            dm.title = QStringLiteral("Alice");
+            dm.kind = QStringLiteral("dm");
+            seed.conversations = {dev, dm};
+            mirror::Seeder seeder(m_mirror->store());
+            seeder.seed(seed);
             m_authFlow = new auth::AuthFlowController(nullptr, this);
         }
-        engine->rootContext()->setContextProperty(QStringLiteral("Transports"), m_registry);
-        engine->rootContext()->setContextProperty(QStringLiteral("Persons"), m_persons);
+        engine->rootContext()->setContextProperty(QStringLiteral("Mirror"), m_mirror);
         engine->rootContext()->setContextProperty(QStringLiteral("AuthFlow"), m_authFlow);
     }
 
 private:
-    transports::MockTransportRegistry* m_registry = nullptr;
-    transports::MockPersonsService* m_persons = nullptr;
+    mirror::MirrorService* m_mirror = nullptr;
     auth::AuthFlowController* m_authFlow = nullptr;
 };
 

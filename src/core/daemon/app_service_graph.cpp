@@ -10,6 +10,7 @@
 #include "config/mock_daemon_config.h"
 #include "connection/iconnection_service.h"
 #include "connection/mock_connection_service.h"
+#include "daemon/channels_hub_model.h"
 #include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_auth_flow_service.h"
@@ -22,8 +23,6 @@
 #include "daemon/daemon_fetch_executor.h"
 #include "daemon/daemon_fs_service.h"
 #include "daemon/daemon_model_catalog.h"
-#include "daemon/daemon_persons_service.h"
-#include "daemon/daemon_presence_service.h"
 #include "daemon/daemon_profile_store.h"
 #include "daemon/daemon_provider_catalog.h"
 #include "daemon/daemon_session_roster.h"
@@ -61,10 +60,6 @@
 #include "settings/qt_settings_store.h"
 #include "setup/agent_setup_model.h"
 #include "tools/mock_tool_inventory.h" // [wave2:app-approvals-safety] D2
-#include "transports/mock_contacts_service.h"
-#include "transports/mock_persons_service.h"
-#include "transports/mock_presence_service.h"
-#include "transports/mock_transport_registry.h"
 #include "update/update_manager.h"
 #include "verb_class.h"
 
@@ -176,18 +171,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // mirror store's pin table in M3; the legacy intent->model surfaces are retired.)
     const bool seedMockDemo = mode != ServiceMode::Daemon;
     graph.cron = new automation::MockCronStore(owner, seedMockDemo);
-    // Transport-adapter seams (daemon-transport-adapter-spec.md): inert mocks until a daemon
-    // adapter decodes transport_adapters / transport_instances. The registry advertises the
-    // existing adapter families for the "Add channel" picker; presence reports offline/unknown.
-    graph.transportRegistry = new transports::MockTransportRegistry(owner);
-    graph.presence = new transports::MockPresenceService(owner);
-    // [acct-mgmt] Transport contacts / roster (Phase D): inert canned mock until a daemon adapter
-    // decodes the node's roster ops (replaced in the Daemon branch below).
-    graph.contacts = new transports::MockContactsService(owner);
-    // [integrations wire v38] Person registry: inert canned mock until the integrations tree's
-    // persons sections port onto the mirror (post-M5; the tree composes directly from
-    // IPersonsService). The Daemon branch below replaces it with the DaemonPersonsService.
-    graph.persons = new transports::MockPersonsService(owner);
+    // AD (1a.4): NO mock transport/contacts seams. The tree/hub/channels READ surfaces project
+    // the scenario-seeded MIRROR (adapters/accounts/conversations/contacts/persons+endpoints);
+    // the registry/contacts VERB sinks stay null outside daemon mode (QML null-guards the verbs;
+    // account management needs a live node). The four Mock* transport services died here.
     // mirror A8 (M5): NO mock chat seam. The chat surfaces read the seeded mock MIRROR (window
     // lens) and send through the ConvSend outbox lane + scripted outcomes — MockChatService died
     // with the M5 cutover. `chat` stays null in mock; daemon mode builds DaemonChatService below
@@ -296,21 +283,16 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // built above is parented to `owner`; drop it for the daemon one.
         delete graph.fs;
         graph.fs = new fs::DaemonFsService(graph.nodeApi, graph.cache, owner);
-        // Daemon-backed, offline-first Channels read surface (story 04: EIO-1/3/8/9): replace the
-        // inert mock transport registry + presence with ones projected from the node's
-        // TransportAdapters / TransportInstances (+ ConvList per account). The mocks above are
-        // parented to `owner`; drop them for the daemon ones.
+        // Daemon-backed transport VERB seams (room lifecycle / account management / settings):
+        // the registry projects the TransportRepository. READS live on the mirror (AD 1a).
         graph.transportRepository = new TransportRepository(graph.nodeApi, graph.cache, owner);
         // [wave2:app-channels-liveness] B5: let the event feed patch live transport presence in
         // place (the repo is built after the SubscriptionManager, so wire it via the setter).
         if (graph.subscriptions != nullptr) {
             graph.subscriptions->setTransportRepository(graph.transportRepository);
         }
-        delete graph.transportRegistry;
         graph.transportRegistry =
             new transports::DaemonTransportRegistry(graph.transportRepository, owner);
-        delete graph.presence;
-        graph.presence = new transports::DaemonPresenceService(graph.transportRepository, owner);
         // [acct-mgmt] Daemon-backed transport contacts / roster (Phase D, wire v34): replace the
         // inert mock with the DaemonContactsService projecting the ContactsRepository. The feed's
         // ContactsChanged event refetches a transport's roster in place (wired via the setter
@@ -319,21 +301,16 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         if (graph.subscriptions != nullptr) {
             graph.subscriptions->setContactsRepository(graph.contactsRepository);
         }
-        delete graph.contacts;
         graph.contacts = new transports::DaemonContactsService(graph.contactsRepository, owner);
-        // [integrations wire v38] Daemon-backed person registry (PersonList) + native chat
-        // (ConvHistory / ConvSend): replace the inert mocks with services projecting the new
-        // repositories. The feed's PersonsChanged refetches PersonList and MessagesChanged
-        // refetches the affected conversation's ConvHistory — wired via the setters (the repos are
-        // built after the SubscriptionManager).
-        graph.personsRepository = new PersonsRepository(graph.nodeApi, graph.cache, owner);
+        // [integrations wire v38] Daemon-backed native chat (ConvHistory / ConvSend). The feed's
+        // MessagesChanged refetches the affected conversation's ConvHistory — wired via the
+        // setter (the repo is built after the SubscriptionManager). (The person registry reads
+        // died with the tree port: PersonList feeds the mirror persons/person_endpoints tables
+        // through the ingestor — AD 1a.)
         graph.chatRepository = new ChatRepository(graph.nodeApi, graph.cache, owner);
         if (graph.subscriptions != nullptr) {
-            graph.subscriptions->setPersonsRepository(graph.personsRepository);
             graph.subscriptions->setChatRepository(graph.chatRepository);
         }
-        delete graph.persons;
-        graph.persons = new transports::DaemonPersonsService(graph.personsRepository, owner);
         // (chat is null outside daemon mode since M5 — no mock to delete.)
         graph.chat = new transports::DaemonChatService(graph.chatRepository, owner);
         // Daemon-backed, offline-first session roster + dashboard (replaces the mock pair). The
@@ -385,7 +362,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              toolRepo = graph.toolRepository,   // [wave2:app-approvals-safety] D2
              gateway = graph.gatewayRepository, // Phase F: node OpenAI-gateway status
              feedback = daemonFeedback,         // wire v32: seed telemetry consent
-             persons = graph.personsRepository, // [integrations wire v38] person registry
              wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
@@ -407,11 +383,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // baseline that replaces the retired per-tab-enter / per-expand polling; the
                     // feed's ConversationsChanged / MembershipChanged keeps them fresh after).
                     transports->refreshAllConversations();
-                    // [integrations wire v38] The node's person/metacontact registry (the Persons
-                    // tree section); refetched incrementally on the PersonsChanged feed event.
-                    persons->refresh();
-                    // Roster/fleet/routing baselines are the mirror ingestor's (the reconnect
-                    // staleness scan / Bootstrap covers every scanned collection — AD).
+                    // Roster/fleet/routing/persons baselines are the mirror ingestor's (the
+                    // reconnect staleness scan / Bootstrap covers every scanned collection — AD).
                     // Foreign engines: the catalog for the engine picker + Agents settings.
                     agents->refreshCatalog();
                     // Interactive-auth family discovery (the AuthFlowSheet's provider list).
@@ -437,7 +410,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                "accounts(credentials), modelCatalog(models), profiles, "
                "approvals(ApprovalsPending/Decide), sessionSettings(SetSessionMode), fs(fs_*), "
                "fleetTree(Tree), roster/dashboard(offline-first over cache/fleet/approvals), "
-               "transports/presence(TransportAdapters/Instances+ConvList), "
+               "transports(TransportAdapters/Instances+ConvList; presence rides the mirror rows), "
                "checkpoints(CheckpointList/Rewind), "
                "routing(mirror store pin table; RoutingBindChat/Unbind mutations); "
                "still mock: daemonConfig, memory; node-blocked (NO wire op yet - rendered EMPTY, "
@@ -680,6 +653,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             mirrorStore->setOutbox(graph.outbox);
             graph.storeMirror = mirrorStore;
 
+            // AD (1a.3): the shared channels-hub projection (GUI + TUI hub read the SAME model).
+            graph.channelsHub = new ChannelsHubModel(&svc->store(), owner);
+
             // A7T (M4 sub-step 6) → AD: the turn engine's ONE mirror seam — coalesced transcript
             // blocks write through this sink into w_transcript_blocks (the ingestor stays the
             // single writer, §5.1; S1-S9 byte-parity), and the engine's roster enrichment reads
@@ -851,6 +827,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         QObject::connect(graph.mockHost, &MockScenarioHost::sessionCreated, mirrorStore,
                          &MirrorSessionStore::onNodeSessionCreated);
         graph.storeMirror = mirrorStore;
+
+        // AD (1a.3): the shared channels-hub projection over the scenario-seeded mirror.
+        graph.channelsHub = new ChannelsHubModel(&svc->store(), owner);
 
         // AD: the fleet TREE is the SAME mirror projection as daemon mode, over the scenario's
         // seeded fleet_units (child_ids edges derived from the ONE bundle). Null control seam —

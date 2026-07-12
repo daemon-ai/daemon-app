@@ -11,7 +11,6 @@ using domain::ListScope;
 using domain::NodeType;
 using domain::Session;
 using domain::UnitId;
-using domain::UnitNode;
 
 namespace {
 
@@ -98,33 +97,10 @@ void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId)
 }
 
 void SessionsListModel::reload() {
-    rebuildLookups();
     m_all = m_store ? m_store->sessions(m_scope) : QList<Session>{};
     m_scopeTitle = computeScopeTitle();
     emit scopeChanged();
     applyFilter();
-}
-
-void SessionsListModel::rebuildLookups() {
-    m_unitInfo.clear();
-    m_tagInfo.clear();
-    if (!m_store) {
-        return;
-    }
-    // Walk the whole unit tree via the single recursive primitive so each
-    // session's owning-unit name/kind can be resolved (any depth).
-    persistence::ISessionStore* store = m_store;
-    auto collect = [store, this](const UnitId& parentId, auto&& self) -> void {
-        for (const UnitNode& n : store->unitChildren(parentId)) {
-            m_unitInfo.insert(n.id.toString(), {n.name, static_cast<int>(n.kind)});
-            self(n.id, self);
-        }
-    };
-    collect(UnitId(), collect);
-
-    for (const domain::Tag& t : m_store->tags()) {
-        m_tagInfo.insert(t.id, {t.name, t.color});
-    }
 }
 
 void SessionsListModel::applyFilter() {
@@ -147,21 +123,8 @@ QString SessionsListModel::computeScopeTitle() const {
     case NodeType::Archived:
         return tr("Archived");
     case NodeType::Unit:
-        if (m_store) {
-            const UnitNode n = m_store->unit(m_scope.unitId);
-            if (n.isValid()) {
-                return n.name;
-            }
-        }
         return tr("Agent");
     case NodeType::Tag:
-        if (m_store) {
-            for (const domain::Tag& t : m_store->tags()) {
-                if (t.id == m_scope.tagId) {
-                    return t.name;
-                }
-            }
-        }
         return tr("Tag");
     case NodeType::Agent:
         // Fleet membership: an agent == its profile; title the list by the profile id.
@@ -201,24 +164,6 @@ QVariant SessionsListModel::data(const QModelIndex& index, int role) const {
         return snippetOf(c);
     case ModifiedRole:
         return c.modified;
-    case UnitNameRole:
-        return m_unitInfo.value(c.unitId.toString()).first;
-    case UnitKindRole:
-        return m_unitInfo.value(c.unitId.toString()).second;
-    case TagNamesRole: {
-        QStringList names;
-        for (int tagId : c.tagIds) {
-            names.append(m_tagInfo.value(tagId).first);
-        }
-        return names;
-    }
-    case TagColorsRole: {
-        QStringList colors;
-        for (int tagId : c.tagIds) {
-            colors.append(m_tagInfo.value(tagId).second);
-        }
-        return colors;
-    }
     case CurrentRole:
         return c.sessionId.toString() == m_currentId;
     case PinnedRole:
@@ -230,10 +175,8 @@ QVariant SessionsListModel::data(const QModelIndex& index, int role) const {
 
 QHash<int, QByteArray> SessionsListModel::roleNames() const {
     return {
-        {IdRole, "sessionId"},      {TitleRole, "title"},         {SnippetRole, "snippet"},
-        {ModifiedRole, "modified"}, {UnitNameRole, "unitName"},   {UnitKindRole, "unitKind"},
-        {TagNamesRole, "tagNames"}, {TagColorsRole, "tagColors"}, {CurrentRole, "current"},
-        {PinnedRole, "pinned"},
+        {IdRole, "sessionId"},      {TitleRole, "title"},     {SnippetRole, "snippet"},
+        {ModifiedRole, "modified"}, {CurrentRole, "current"}, {PinnedRole, "pinned"},
     };
 }
 

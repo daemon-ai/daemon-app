@@ -10,6 +10,7 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // capability provider for the command palette
+#include "mirror/mirror_service.h" // complete type for the tree setMirror upcast (AD 1a.3)
 // [wave2:app-delegation] F7/DEL-7 CapsRepository::refresh(); RoutingRepository IS-A
 // daemonnet::IRoutingActions (hub dep).
 #include "daemon/repositories.h"
@@ -24,8 +25,6 @@
 #include "memory_list_model.h"
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
-#include "participants_model.h"
-#include "participants_view.h"
 #include "persistence/isession_store.h"
 #include "root_widget_detail.h"
 #include "session_controller.h"
@@ -38,7 +37,6 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
-#include "transports/ipersons_service.h"
 #include "transports/itransport_registry.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
@@ -115,8 +113,8 @@ RootWidget::RootWidget()
     // from the transport registry (accounts/adapters/conversations) + the cross-transport persons
     // seam. Rendered through the Integrations display adapter in its own sidebar TreeListView.
     m_integrationsTree = new IntegrationsTreeModel(this);
-    m_integrationsTree->setRegistry(m_services.transportRegistry);
-    m_integrationsTree->setPersons(m_services.persons);
+    m_integrationsTree->setMirror(m_services.mirrorService); // AD (1a.3): the mirror projection
+    m_integrationsTree->setRegistry(m_services.transportRegistry); // verb sink only
 
     m_list = new SessionsListModel(this);
     // M4 sub-gate 1: the roster list reads the mirror-backed store (in mock mode storeMirror
@@ -224,8 +222,6 @@ RootWidget::RootWidget()
     m_fileTabs = std::make_unique<TuiFileTabController>(m_services.fs, m_tabModel, this);
 
     // The right sidebar's Participants section: the same shared model the GUI binds.
-    m_participants = new participants::ParticipantsModel(this);
-    m_participants->setStore(m_services.storeMirror);
 
     // Phase 0 shared seams (identical classes to the GUI). The connection seam
     // owns liveness; mirror its state into the footer's gateway indicator, then
@@ -271,8 +267,8 @@ RootWidget::RootWidget()
         .memGraph = m_memGraph,
         .settings = m_services.settings,
         .principal = m_services.principal,
+        .channelsHub = m_services.channelsHub, // AD (1a.3): the shared mirror projection
         .transportRegistry = m_services.transportRegistry,
-        .presence = m_services.presence,
         .contacts = m_services.contacts,
         .update = m_services.update,
         .caps = m_services.capsRepository,           // [wave2:app-delegation] F7/DEL-7
@@ -494,7 +490,7 @@ void RootWidget::buildUi() {
 
     const TuiShellWidgets shell =
         TuiShellLayout::build(this, terminal(), QRect(QPoint(0, 0), geometry().size()), m_tabModel,
-                              m_fileTree, m_participants, &m_pageDoc);
+                              m_fileTree, &m_pageDoc);
     m_window = shell.window;
     m_sidebarColumn = shell.sidebarColumn;
     m_sidebarView = shell.sidebarView;
@@ -518,7 +514,6 @@ void RootWidget::buildUi() {
     m_composer = shell.composer;
     m_completionPopup = shell.completionPopup;
     m_rightColumn = shell.rightColumn;
-    m_participantsView = shell.participantsView;
     m_fileTreeView = shell.fileTreeView;
     m_footer = shell.footer;
 
@@ -553,8 +548,6 @@ void RootWidget::buildUi() {
         const bool showExplorer =
             QSettings().value(QStringLiteral("ui/showFileExplorer"), false).toBool();
         m_fileTreeView->setVisible(showExplorer);
-        if (m_participantsView != nullptr)
-            m_participantsView->setVisible(showExplorer);
     }
     // Restore distraction-free mode the same way (the GUI restores its persisted
     // UiSettings.distractionFree at startup too).

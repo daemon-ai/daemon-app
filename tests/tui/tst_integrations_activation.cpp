@@ -9,63 +9,48 @@
 // the real helper + TabModel guards that end-to-end seam.
 
 #include "integrations_tree_model.h"
+#include "mirror/mirror_service.h"
+#include "mirror/seeder.h"
 #include "root_widget_detail.h"
 #include "tab_model.h"
-#include "transports/ipersons_service.h"
-#include "transports/itransport_registry.h"
 
 #include <QSignalSpy>
 #include <QtTest>
 
-using transports::IPersonsService;
-using transports::ITransportRegistry;
-
 namespace {
 
-QVariantMap conv(const QString& transport, const QString& id, const QString& title,
-                 const QString& kind, const QString& parent) {
-    return {{QStringLiteral("transport"), transport},
-            {QStringLiteral("id"), id},
-            {QStringLiteral("title"), title},
-            {QStringLiteral("kind"), kind},
-            {QStringLiteral("parent"), parent}};
+// A minimal seeded MIRROR: one Matrix account with a channel + a DM (enough to yield
+// conversation leaves the tree flattens under Channels / Direct Messages) — the same apply
+// pipeline production feeds (§9; the legacy registry/persons fakes died with the read port).
+void seedTree(mirror::MirrorService& svc) {
+    mirror::SeedSet seed;
+    mirror::Adapter matrix;
+    matrix.family = QStringLiteral("matrix");
+    matrix.display_name = QStringLiteral("Matrix");
+    matrix.cap_rooms = true;
+    matrix.cap_direct_messages = true;
+    seed.adapters = {matrix};
+    mirror::TransportAccount acct;
+    acct.transport = QStringLiteral("matrix/@you");
+    acct.family = QStringLiteral("matrix");
+    acct.display_name = QStringLiteral("Matrix (@you)");
+    acct.enabled = true;
+    acct.reason = QStringLiteral("ready");
+    seed.transportAccounts = {acct};
+    mirror::Conversation general;
+    general.transport = acct.transport;
+    general.id = QStringLiteral("!general");
+    general.title = QStringLiteral("general");
+    general.kind = QStringLiteral("channel");
+    mirror::Conversation dm;
+    dm.transport = acct.transport;
+    dm.id = QStringLiteral("!dm");
+    dm.title = QStringLiteral("Alice");
+    dm.kind = QStringLiteral("dm");
+    seed.conversations = {general, dm};
+    mirror::Seeder seeder(svc.store());
+    seeder.seed(seed);
 }
-
-// A minimal registry: one Matrix account with a channel + a DM (enough to yield conversation
-// leaves the tree flattens under Channels / Direct Messages).
-class FakeRegistry : public ITransportRegistry {
-public:
-    using ITransportRegistry::ITransportRegistry;
-    [[nodiscard]] QVariantList availableAdapters() const override {
-        QVariantMap caps{{QStringLiteral("rooms"), true}, {QStringLiteral("directMessages"), true}};
-        return {QVariantMap{{QStringLiteral("family"), QStringLiteral("matrix")},
-                            {QStringLiteral("displayName"), QStringLiteral("Matrix")},
-                            {QStringLiteral("capabilities"), caps},
-                            {QStringLiteral("schema"), QVariantList{}}}};
-    }
-    [[nodiscard]] QVariantList instances() const override {
-        return {QVariantMap{{QStringLiteral("transport"), QStringLiteral("matrix/@you")},
-                            {QStringLiteral("family"), QStringLiteral("matrix")},
-                            {QStringLiteral("displayName"), QStringLiteral("Matrix (@you)")},
-                            {QStringLiteral("enabled"), true},
-                            {QStringLiteral("connectionReason"), QStringLiteral("ready")}}};
-    }
-    [[nodiscard]] QVariantList conversations(const QString& transport) const override {
-        if (transport != QStringLiteral("matrix/@you")) {
-            return {};
-        }
-        return {conv(transport, QStringLiteral("!general"), QStringLiteral("general"),
-                     QStringLiteral("channel"), QString()),
-                conv(transport, QStringLiteral("!dm"), QStringLiteral("Alice"),
-                     QStringLiteral("dm"), QString())};
-    }
-};
-
-class FakePersons : public IPersonsService {
-public:
-    using IPersonsService::IPersonsService;
-    [[nodiscard]] QVariantList persons() const override { return {}; }
-};
 
 int findConversationRow(const IntegrationsTreeModel& model) {
     for (int i = 0; i < model.rowCount(); ++i) {
@@ -87,11 +72,11 @@ private slots:
     // deliberate replacement for the old Channels-page fallback (A4 dispatch), reached from the
     // integrations tree (work package AC).
     void conversationActivationOpensChatTab() {
-        FakeRegistry reg;
-        FakePersons persons;
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTree(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         TabModel tabs;
         // The production wiring both shells install: conversationActivated -> chat-tab dispatch.
@@ -123,11 +108,11 @@ private slots:
     // Re-activating the same conversation focuses its existing tab (find-or-create), never a
     // duplicate.
     void reactivatingConversationFocusesExistingTab() {
-        FakeRegistry reg;
-        FakePersons persons;
+        mirror::MirrorService svc;
+        svc.openInMemory();
+        seedTree(svc);
         IntegrationsTreeModel model;
-        model.setRegistry(&reg);
-        model.setPersons(&persons);
+        model.setMirror(&svc);
 
         TabModel tabs;
         QObject::connect(&model, &IntegrationsTreeModel::conversationActivated, &tabs,

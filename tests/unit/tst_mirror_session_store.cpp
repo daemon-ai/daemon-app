@@ -254,7 +254,7 @@ private slots:
     // AD (§7 direct create): without a repo (mock), requestNewSession emits createRequested and
     // the composition's answer (onNodeSessionCreated) relays as sessionCreated — the async
     // node-authority adoption path. newSession() is empty in both modes (nothing client-minted);
-    // the no-verb operations (delete/move/setContent/createUnit/createTag) are aligned no-ops.
+    // the no-verb operations (delete/move/setContent) are aligned no-ops.
     void requestNewSessionEmitsCreateSeamWithoutRepo() {
         mirror::MirrorService svc;
         svc.openInMemory();
@@ -276,8 +276,6 @@ private slots:
         store.deleteSession(domain::SessionId(QStringLiteral("s-a")));
         store.moveSession(domain::SessionId(QStringLiteral("s-a")), -1);
         store.setContent(domain::SessionId(QStringLiteral("s-a")), QStringLiteral("x"));
-        QVERIFY(store.createUnit(domain::UnitId(), domain::UnitKind::Engine).isEmpty());
-        QCOMPARE(store.createTag(QStringLiteral("t"), QStringLiteral("#fff")), -1);
         QCOMPARE(svc.store().snapshot().sessions.size(), std::size_t(0));
     }
 

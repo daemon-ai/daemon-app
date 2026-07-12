@@ -6740,10 +6740,6 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
         <translation>Nuevo agente</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>Nueva etiqueta</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>Contraer todo</translation>
     </message>
@@ -6823,16 +6819,8 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
         <translation>Archivadas</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>Etiquetas</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>Flota</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>Nueva etiqueta</translation>
     </message>
 </context>
 <context>
@@ -8742,12 +8730,6 @@ _Ningún agente seleccionado._
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_Los canales no están disponibles: la interfaz de transportes no está conectada en este modo._
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8814,6 +8796,12 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     <message>
         <source>Disconnected</source>
         <translation>Desconectado</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_Los canales no están disponibles: la proyección del hub de canales no está conectada en este modo._
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9466,13 +9454,6 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>Falta el modelo %1 en el disco: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>Participantes</translation>
     </message>
 </context>
 <context>

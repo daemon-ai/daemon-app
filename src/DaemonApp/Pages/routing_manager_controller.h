@@ -86,11 +86,18 @@ public:
     Q_INVOKABLE void bindAccount(const QString& transport, const QString& profile);
     // Explain an origin's resolution: { found, session, profile, decidedBy }. Pin or Default only.
     [[nodiscard]] Q_INVOKABLE QVariantMap explain(const QString& originKey) const;
+    // AD (1a): the session pinned to a conversation origin on `transport` (a dm/group scope whose
+    // chat/user id equals `conv`), "" when unpinned — the ChannelsPage room-pin badge source
+    // (replaces the deleted daemonnet facade read). Re-read on pinsChanged.
+    [[nodiscard]] Q_INVOKABLE QString pinnedSessionFor(const QString& transport,
+                                                       const QString& conv) const;
 
 signals:
     void mirrorChanged();
     void actionsChanged();
     void selectedSessionChanged();
+    // A mirror commit re-derived the pin table (imperative readers re-query pinnedSessionFor).
+    void pinsChanged();
 
 private:
     void rebuild();

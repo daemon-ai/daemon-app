@@ -28,5 +28,7 @@ target_link_libraries(da_sidebar
         daemon-app::theme
         daemon-app::controls
         daemon-app::presentation
+        # AD (1a.3): the integrations tree projects the mirror (accounts/adapters/convs/persons).
+        daemon-app::mirror_ingestor
         daemon-app::warnings
 )

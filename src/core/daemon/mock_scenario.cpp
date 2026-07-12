@@ -3,6 +3,7 @@
 
 #include "daemon/mock_scenario.h"
 
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QLoggingCategory>
 #include <QtGlobal>
@@ -15,7 +16,7 @@ Q_LOGGING_CATEGORY(lcScenario, "daemon.mirror.mock")
 
 const QChar kSep = QChar(0x1f);
 
-// The demo transport instance — the SAME id the (surviving) MockTransportRegistry advertises, so
+// The demo transport instance id every seeded kind shares, so
 // tree-activated chats open the scenario's seeded windows. When the tree/channels surfaces port
 // onto the mirror, the registry demo folds into this scenario too.
 QString mockTransport() {
@@ -165,7 +166,7 @@ mirror::Contact contactRow(const QString& id, const QString& name) {
 
 // The demo mirror seed: the chat/persons/contacts/routing/channels demo content that used to be
 // scattered across the per-seam data mocks, collapsed into the ONE declarative seed (§9). The
-// (transport, conv) ids match the surviving MockTransportRegistry demo rooms so tree activation
+// (transport, conv) ids match the seeded demo rooms so tree activation
 // opens these windows.
 void fillDefaultMirrorSeed(mirror::SeedSet& seed, const daemonnet::SeedBundle& bundle) {
     const QString t = mockTransport();
@@ -204,15 +205,98 @@ void fillDefaultMirrorSeed(mirror::SeedSet& seed, const daemonnet::SeedBundle& b
                       chatMsg(design, 2, QStringLiteral("Me"),
                               QStringLiteral("Looks good — pin this room to the design fleet?"))});
 
+    // Lowercase state tokens — the SAME vocabulary map_transport_account / the TransportChanged
+    // patch write, so mock rows are byte-identical to daemon rows (§9).
     mirror::TransportAccount acct;
     acct.transport = t;
     acct.family = QStringLiteral("matrix");
     acct.display_name = QStringLiteral("@you:matrix.org");
-    acct.connection = QStringLiteral("Connected");
-    acct.presence = QStringLiteral("Available");
+    acct.connection = QStringLiteral("connected");
+    acct.presence = QStringLiteral("available");
     acct.bound_profile = QStringLiteral("prof-1");
     acct.enabled = true;
     seed.transportAccounts = {acct};
+
+    // AD (1a): the adapter catalog — the canned demo families (matrix = the full verb set +
+    // directory; the internal Rooms loopback = deliberately narrower), as canonical mirror rows
+    // (ops_json in map_adapter's shape).
+    mirror::Adapter matrix;
+    matrix.family = QStringLiteral("matrix");
+    matrix.display_name = QStringLiteral("Matrix");
+    matrix.directory = true;
+    matrix.cap_rooms = true;
+    matrix.cap_direct_messages = true;
+    matrix.ops_json = QString::fromUtf8(
+        QJsonDocument(
+            QJsonObject{
+                {QStringLiteral("conversationOps"),
+                 QJsonObject{{QStringLiteral("create"), true},
+                             {QStringLiteral("joinChannel"), true},
+                             {QStringLiteral("leave"), true},
+                             {QStringLiteral("delete"), true},
+                             {QStringLiteral("send"), true},
+                             {QStringLiteral("setTopic"), false},
+                             {QStringLiteral("setTitle"), false},
+                             {QStringLiteral("setDescription"), false}}},
+                {QStringLiteral("membershipOps"), QJsonObject{{QStringLiteral("invite"), true},
+                                                              {QStringLiteral("remove"), true},
+                                                              {QStringLiteral("ban"), true},
+                                                              {QStringLiteral("setRole"), true}}},
+                {QStringLiteral("contactsOps"), QJsonObject{{QStringLiteral("getProfile"), true},
+                                                            {QStringLiteral("actionMenu"), true},
+                                                            {QStringLiteral("setAlias"), true}}},
+                {QStringLiteral("rosterOps"), QJsonObject{{QStringLiteral("list"), true},
+                                                          {QStringLiteral("add"), true},
+                                                          {QStringLiteral("update"), true},
+                                                          {QStringLiteral("remove"), true}}}})
+            .toJson(QJsonDocument::Compact));
+    mirror::Adapter rooms;
+    rooms.family = QStringLiteral("room");
+    rooms.display_name = QStringLiteral("Rooms (internal)");
+    rooms.directory = false;
+    rooms.cap_rooms = true;
+    rooms.cap_direct_messages = true;
+    rooms.ops_json = QString::fromUtf8(
+        QJsonDocument(
+            QJsonObject{
+                {QStringLiteral("conversationOps"),
+                 QJsonObject{{QStringLiteral("create"), true},
+                             {QStringLiteral("joinChannel"), true},
+                             {QStringLiteral("leave"), true},
+                             {QStringLiteral("delete"), false},
+                             {QStringLiteral("send"), true},
+                             {QStringLiteral("setTopic"), false},
+                             {QStringLiteral("setTitle"), false},
+                             {QStringLiteral("setDescription"), false}}},
+                {QStringLiteral("membershipOps"), QJsonObject{{QStringLiteral("invite"), true},
+                                                              {QStringLiteral("remove"), true},
+                                                              {QStringLiteral("ban"), false},
+                                                              {QStringLiteral("setRole"), false}}},
+                {QStringLiteral("contactsOps"), QJsonObject{{QStringLiteral("getProfile"), false},
+                                                            {QStringLiteral("actionMenu"), false},
+                                                            {QStringLiteral("setAlias"), false}}},
+                {QStringLiteral("rosterOps"), QJsonObject{{QStringLiteral("list"), true},
+                                                          {QStringLiteral("add"), true},
+                                                          {QStringLiteral("update"), false},
+                                                          {QStringLiteral("remove"), true}}}})
+            .toJson(QJsonDocument::Compact));
+    seed.adapters = {matrix, rooms};
+
+    // AD (1a): per-transport person endpoints (the tree's Persons section joins persons ×
+    // endpoints on this account) — Alice + Bob reachable on the demo Matrix account.
+    mirror::PersonEndpoint aliceEp;
+    aliceEp.person = QStringLiteral("p-alice");
+    aliceEp.transport = t;
+    aliceEp.contact = QStringLiteral("@alice:matrix.org");
+    aliceEp.display_name = QStringLiteral("Alice");
+    aliceEp.presence_primitive = QStringLiteral("available");
+    mirror::PersonEndpoint bobEp;
+    bobEp.person = QStringLiteral("p-bob");
+    bobEp.transport = t;
+    bobEp.contact = QStringLiteral("@bob:matrix.org");
+    bobEp.display_name = QStringLiteral("Bob");
+    bobEp.presence_primitive = QStringLiteral("available");
+    seed.personEndpoints = {aliceEp, bobEp};
 
     mirror::Room devRoom;
     devRoom.transport = t;
@@ -278,8 +362,8 @@ std::vector<mirror::ScenarioStep> defaultTimeline() {
                          acct.transport = mockTransport();
                          acct.family = QStringLiteral("matrix");
                          acct.display_name = QStringLiteral("@you:matrix.org");
-                         acct.connection = QStringLiteral("Connected");
-                         acct.presence = QStringLiteral("Away");
+                         acct.connection = QStringLiteral("connected");
+                         acct.presence = QStringLiteral("away");
                          acct.bound_profile = QStringLiteral("prof-1");
                          acct.enabled = true;
                          s.upsertTransportAccount(acct);

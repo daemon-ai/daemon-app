@@ -489,7 +489,7 @@ set_tests_properties(tst_file_finder_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 
 # tst_daemon_transports: the Phase 6a Channels read surface - the transport codec facade round-trips
 # (Adapters/TransportInstances/Conversations via cbor_encode_api_response), and DaemonTransportRegistry
-# + DaemonPresenceService render offline-first from cache and populate over the WireMuxServer fixture.
+# render offline-first from cache and populate over the WireMuxServer fixture.
 qt_add_executable(tst_daemon_transports tst_daemon_transports.cpp)
 target_link_libraries(tst_daemon_transports
     PRIVATE
@@ -505,8 +505,8 @@ set_tests_properties(tst_daemon_transports PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 # tst_integrations_seams (A1 app/core-seams; wire v38): the integrations foundation the later app
 # packages consume — the v38 codec wrappers (enriched auth-param-field, AuthFlowKind::UserPassword,
 # ConversationInfo.parent + Space, AdapterInfo.account_schema, ConvSend/ConvHistory, PersonList,
-# TransportSettings/Configure, MessagesChanged/PersonsChanged), the ChatRepository / PersonsRepository
-# + transport-settings repository surface, the daemon + mock IChatService/IPersonsService seams, and
+# TransportSettings/Configure, MessagesChanged/PersonsChanged), the ChatRepository
+# + transport-settings repository surface, the daemon IChatService seam, and
 # the SubscriptionManager fan-out — over the vendored zcbor codec + the WireMuxServer fixture.
 qt_add_executable(tst_integrations_seams tst_integrations_seams.cpp)
 target_link_libraries(tst_integrations_seams
@@ -584,7 +584,7 @@ set_tests_properties(tst_app_service_graph PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 
 # tst_mirror_session_store: the M4 mirror-backed ISessionStore (the 6->1 projection the session
 # consumers rebind onto) - DUAL-DECODER PARITY of the same SessionPage bytes through the legacy
-# (decodeSessionPage -> DaemonCacheStore -> CachedSessionStore) and mirror (decodeSessionsToMirror
+# and mirror (decodeSessionsToMirror
 # -> ingestor -> MirrorSessionStore) paths, the scoped views, the journal-filtered changed(), and
 # the legacy mutation/transcript delegation + signal relays. Only built with the substrate.
     qt_add_executable(tst_mirror_session_store tst_mirror_session_store.cpp)
@@ -926,7 +926,7 @@ add_test(NAME tst_sidebar_model COMMAND tst_sidebar_model)
 set_tests_properties(tst_sidebar_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_integrations_tree (A2 app/tree-ui): the integrations tree view-model composed directly from
-# ITransportRegistry + IPersonsService (account roots -> capability-gated sections -> space/parent
+# the mirror projection (account roots -> capability-gated sections -> space/parent
 # nesting -> rooms/DMs/persons, unknown-parent-as-root), its activation intents (conversation ->
 # A4's activation seam), and the schema-driven AccountManagementController (add hand-off to the auth
 # flow, edit merge-configure with masked-field omission, remove).
@@ -942,32 +942,10 @@ target_link_libraries(tst_integrations_tree
         daemon-app::transports
         daemon-app::uimodels
         daemon-app::sidebar
+        daemon-app::mirror_ingestor
 )
 add_test(NAME tst_integrations_tree COMMAND tst_integrations_tree)
 set_tests_properties(tst_integrations_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-
-# tst_participants_model: the right sidebar's Participants section model (shared by
-# the GUI and TUI) - the collapsible header, the seeded Agent/User rows with their
-# green "available" presence dots, and the section fold.
-qt_add_executable(tst_participants_model tst_participants_model.cpp)
-target_include_directories(tst_participants_model
-    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Participants"
-)
-target_link_libraries(tst_participants_model
-    PRIVATE
-        Qt6::Test
-        Qt6::Qml
-        Qt6::Quick
-        daemon-app::domain
-        daemon-app::persistence
-        daemon-app::daemonnet
-        daemon-app::participants
-        daemon-app::daemon_client
-        daemon-app::mirror_ingestor
-)
-
-add_test(NAME tst_participants_model COMMAND tst_participants_model)
-set_tests_properties(tst_participants_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_turn_controller: exercises the shared turn-lifecycle FSM (the C++ port of
 # TurnSimulator.qml) - a started turn runs its scripted events to completion and

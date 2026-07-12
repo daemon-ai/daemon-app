@@ -216,7 +216,6 @@ Rectangle {
                     // Highlight by identity (the model's `current` role), so it
                     // survives expand/collapse rebuilds without index tracking.
                     readonly property bool isSelected: !isSeparator && current
-                    readonly property bool isTag: nodeType === 5
                     readonly property bool isNode: nodeType === 4
                     readonly property bool isTransport: nodeType === 9
                     // Fleet membership rows (§0): node/connection root (10), agent (11), session (12).
@@ -300,9 +299,10 @@ Rectangle {
                         }
 
                         Kit.IconButton {
-                            // Fleet (2) adds a root node; Tags (3) adds a tag; the
-                            // Integrations (8) header is read-only (mock-seeded).
-                            visible: del.nodeType === 2 || del.nodeType === 3
+                            // Fleet (2) adds a root node; the Integrations (8)
+                            // header is read-only. (The Tags section died with the
+                            // dead store members — AD 1a.4.)
+                            visible: del.nodeType === 2
                             anchors.right: parent.right
                             anchors.rightMargin: 4
                             anchors.bottom: parent.bottom
@@ -312,9 +312,8 @@ Rectangle {
                             icon: FontIcons.fa_plus
                             iconPointSize: 12
                             iconColor: Theme.addButton
-                            tooltipText: del.nodeType === 2 ? qsTr("New agent") : qsTr("New tag")
-                            onClicked: del.nodeType === 2 ? sidebarModel.createRootUnit()
-                                                          : sidebarModel.createTag()
+                            tooltipText: qsTr("New agent")
+                            onClicked: sidebarModel.createRootUnit()
                         }
 
                         // Fleet header only: one-shot expand-all / collapse-all.
@@ -417,21 +416,10 @@ Rectangle {
                             width: 18
                             height: 18
 
-                            // Tag dot (fa_circle, in the tag color).
-                            Kit.Glyph {
-                                anchors.centerIn: parent
-                                visible: del.isTag
-                                glyph: FontIcons.fa_circle
-                                font.pointSize: 12 + Theme.pointSizeOffset
-                                color: del.isSelected ? Theme.sidebarSelectedText
-                                     : del.color !== "" ? del.color : Theme.sidebarIcon
-                            }
-
                             // Node kind icon (cosmetic), transport-tree icon, or
                             // the All/Archived scope icon.
                             Kit.Glyph {
                                 anchors.centerIn: parent
-                                visible: !del.isTag
                                 glyph: del.isNode ? root.kindIcon(del.kind)
                                      : del.isTransport ? root.transportIcon(del.txKind, del.convType)
                                      : del.isFleetNode ? FontIcons.fa_server
@@ -462,7 +450,7 @@ Rectangle {
                         QQC.Label {
                             id: rowLabel
                             anchors.left: iconBox.right
-                            anchors.leftMargin: del.isTag ? 11 : 5
+                            anchors.leftMargin: 5
                             anchors.right: subLabelText.visible ? subLabelText.left : stateDot.left
                             anchors.rightMargin: 5
                             anchors.verticalCenter: parent.verticalCenter

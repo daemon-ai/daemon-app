@@ -6740,10 +6740,6 @@ This only affects the app appearance, not your data.</source>
         <translation>নতুন এজেন্ট</translation>
     </message>
     <message>
-        <source>New tag</source>
-        <translation>নতুন ট্যাগ</translation>
-    </message>
-    <message>
         <source>Collapse all</source>
         <translation>সব সংকুচিত করুন</translation>
     </message>
@@ -6823,16 +6819,8 @@ This only affects the app appearance, not your data.</source>
         <translation>সংরক্ষণাগারভুক্ত</translation>
     </message>
     <message>
-        <source>Tags</source>
-        <translation>ট্যাগ</translation>
-    </message>
-    <message>
         <source>Fleet</source>
         <translation>ফ্লিট</translation>
-    </message>
-    <message>
-        <source>New tag</source>
-        <translation>নতুন ট্যাগ</translation>
     </message>
 </context>
 <context>
@@ -8742,12 +8730,6 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>_Channels are unavailable: the transports seam is not wired in this mode._
-</source>
-        <translation>_চ্যানেল উপলব্ধ নয়: এই মোডে ট্রান্সপোর্ট সিম যুক্ত করা নেই।_
-</translation>
-    </message>
-    <message>
         <source>Events-IO transport accounts, their rooms, members and contacts, shared with the GUI. **j/k** move.
 
 Account row: **c** connect · **d** disconnect · **e** enable/disable · **r** rename · **x** remove account · **g** join room · **n** new room · **a** add contact · **f** find people.
@@ -8814,6 +8796,12 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Disconnected</source>
         <translation>সংযোগ বিচ্ছিন্ন</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the channels-hub projection is not wired in this mode._
+</source>
+        <translation>_চ্যানেল উপলব্ধ নয়: এই মোডে চ্যানেল-হাব প্রজেকশন সংযুক্ত নেই।_
+</translation>
     </message>
     <message>
         <source>- %1%2 **%3** — %4 · %5%6
@@ -9466,13 +9454,6 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>Model %1 is missing on disk: %2</source>
         <translation>মডেল %1 ডিস্কে অনুপস্থিত: %2</translation>
-    </message>
-</context>
-<context>
-    <name>participants::ParticipantsModel</name>
-    <message>
-        <source>Participants</source>
-        <translation>অংশগ্রহণকারী</translation>
     </message>
 </context>
 <context>

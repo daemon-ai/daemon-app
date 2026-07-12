@@ -24,7 +24,6 @@
 
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
-using daemonapp::daemon::DecodedChatRoute;
 using daemonapp::daemon::DecodedOrigin;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::NodeApiCodec;

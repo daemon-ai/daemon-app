@@ -207,12 +207,8 @@ QVariant DisplayRoleAdapter::listData(const QModelIndex& src, int role) const {
     const auto srcData = [&](int r) { return sourceModel()->data(src, r); };
 
     if (role == Qt::DisplayRole) {
-        QString text = srcData(SessionsListModel::TitleRole).toString();
-        const QString agent = srcData(SessionsListModel::UnitNameRole).toString();
-        if (!agent.isEmpty()) {
-            text += QStringLiteral("  \u2014 %1").arg(agent);
-        }
-        return text;
+        // (The owning-agent suffix died with the permanently-empty unit lookup — AD 1a.4.)
+        return srcData(SessionsListModel::TitleRole).toString();
     }
 
     return sourceModel()->data(src, role);
