@@ -1051,6 +1051,56 @@ DecodedTranscriptBlock decodeTranscriptBlock(const transcript_block_r& block) {
     return out;
 }
 
+// [integrations wire v38] auth-field-kind choice -> wire string (default "Text").
+QString authFieldKindName(const auth_field_kind_r& kind) {
+    switch (kind.auth_field_kind_choice) {
+    case auth_field_kind_r::auth_field_kind_Password_tstr_c:
+        return QStringLiteral("Password");
+    case auth_field_kind_r::auth_field_kind_Number_tstr_c:
+        return QStringLiteral("Number");
+    case auth_field_kind_r::auth_field_kind_Choice_tstr_c:
+        return QStringLiteral("Choice");
+    case auth_field_kind_r::auth_field_kind_Text_tstr_c:
+    default:
+        return QStringLiteral("Text");
+    }
+}
+
+// [integrations wire v38] Project one enriched wire auth-param-field into the decoded struct: the
+// v37 key/label/required plus the v38 render/validation metadata
+// (kind/default/placeholder/choices). Absent optionals leave the struct defaults (kind == "Text",
+// has* == false).
+DecodedAuthParamField decodeAuthParamFieldStruct(const auth_param_field& f) {
+    DecodedAuthParamField out;
+    out.key = fromZcbor(f.auth_param_field_key);
+    out.label = fromZcbor(f.auth_param_field_label);
+    out.required = f.auth_param_field_required;
+    if (f.auth_param_field_kind_present) {
+        out.kind = authFieldKindName(f.auth_param_field_kind.auth_param_field_kind);
+    }
+    if (f.auth_param_field_default_present &&
+        f.auth_param_field_default.auth_param_field_default_choice ==
+            auth_param_field_default_r::auth_param_field_default_tstr_c) {
+        out.hasDefault = true;
+        out.defaultValue = fromZcbor(f.auth_param_field_default.auth_param_field_default_tstr);
+    }
+    if (f.auth_param_field_placeholder_present &&
+        f.auth_param_field_placeholder.auth_param_field_placeholder_choice ==
+            auth_param_field_placeholder_r::auth_param_field_placeholder_tstr_c) {
+        out.hasPlaceholder = true;
+        out.placeholder =
+            fromZcbor(f.auth_param_field_placeholder.auth_param_field_placeholder_tstr);
+    }
+    if (f.auth_param_field_choices_present) {
+        for (size_t i = 0; i < f.auth_param_field_choices.auth_param_field_choices_tstr_count;
+             ++i) {
+            out.choices.append(
+                fromZcbor(f.auth_param_field_choices.auth_param_field_choices_tstr[i]));
+        }
+    }
+    return out;
+}
+
 bool encodeRequest(const api_request_r& request, QByteArray* out) {
     // Grow the output buffer until the request fits rather than truncating: most requests are tiny,
     // but Submit/CommandInvoke carry user text and can exceed any small fixed size. Retry on encode

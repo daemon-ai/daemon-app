@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>連携を追加</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>アカウント設定</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>続ける</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>現在の値を保持するには空欄のままにします</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ until it is re-registered.</source>
         <translation>以下のペイロードを別のデバイスでスキャンしてください。承認を待っています…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>このペイロードを別のデバイスでスキャンしてください（ターミナルには画像はありません）：</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>別のデバイスでコードをスキャンするか、ペイロードをコピーしてください：</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ until it is re-registered.</source>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>このチャンネル種別にはブラウザーサインインがありません。</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>メッセージを送信できませんでした。</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>メッセージはまだありません</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>メッセージの送信に失敗しました</translation>
     </message>
 </context>
 <context>
@@ -3571,6 +3616,72 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>接続</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>無効にする</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>有効化</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>アカウント設定</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>アカウントを削除</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>削除</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>このアカウントを削除して切断しますか？ノードが完全に破棄します。</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>連携</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>すべて折りたたむ</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>すべて展開</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>連携を追加</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>人物</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>チャンネル</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>ダイレクトメッセージ</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>参照</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5654,6 +5765,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>新しいセッション</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>メッセージは送信されませんでした</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>メッセージを送信できませんでした。</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>セッション設定</translation>
     </message>
@@ -7113,6 +7232,10 @@ This only affects the app appearance, not your data.</source>
         <source>Agent</source>
         <translation>エージェント</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>チャット</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7446,6 +7569,10 @@ Thanks — proceeding with: %1
     <message>
         <source>The membership action was rejected</source>
         <translation>メンバーシップ操作は拒否されました</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>アカウント設定の適用に失敗しました</translation>
     </message>
 </context>
 <context>
@@ -9019,6 +9146,13 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>メッセージの送信に失敗しました</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9393,6 +9527,10 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>The membership action was rejected</source>
         <translation>メンバーシップ操作は拒否されました</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>アカウント設定の適用に失敗しました</translation>
     </message>
 </context>
 <context>

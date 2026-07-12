@@ -38,9 +38,16 @@ struct StepInput {
 // A challenge QVariantMap (carried by begun()/challenged()) has the shape:
 //   { kind: "redirect"|"form"|"qr"|"message",
 //     authorizationUrl:  string  (redirect),
-//     title:  string, fields: [ { key, label, required (bool) } ]  (form),
+//     title:  string, fields: [ field ]  (form),
 //     payload: string, image: QByteArray (empty=none), pollIntervalMs: number  (qr),
 //     text:  string  (message) }
+// where a `field` map is (the enriched wire v38 auth-param-field):
+//   { key, label, required (bool),
+//     kind: "Text"|"Password"|"Number"|"Choice"  (render/validation hint; "Text" default),
+//     default: string (prefill; "" = none), placeholder: string ("" = none),
+//     choices: [string] (allowed values when kind == "Choice"; else []) }
+// — so a schema-driven form masks secrets (kind == "Password"), prefills, hints, and offers
+// choice dropdowns without touching the codec. The same field shape backs providers()' params.
 //
 // Distinct from IAccountsService (account rows + API-key storage) and from the SASL connection
 // handshake (node_api_auth): this seam drives a challenge/response login that ends in a node-stored
@@ -53,9 +60,10 @@ public:
     ~IAuthFlowService() override = default;
 
     // The families supporting interactive auth, each a row:
-    //   { family, flowKind ("MatrixSso"|"OAuth2Pkce"), name,
-    //     params: [ { key, label, required (bool) } ] }
-    // Empty until refreshProviders() resolves (or the mock seeds).
+    //   { family, flowKind ("MatrixSso"|"OAuth2Pkce"|"BotToken"|"UserToken"|"PhoneOtp"|
+    //     "QrPairing"|"UserPassword"), name, params: [ field ] }
+    // (`field` is the enriched shape documented above.) Empty until refreshProviders() resolves
+    // (or the mock seeds).
     [[nodiscard]] Q_INVOKABLE virtual QVariantList providers() const = 0;
 
     // Kick a provider-list fetch; providersChanged() fires when the list is ready.

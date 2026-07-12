@@ -1046,9 +1046,9 @@ void RootWidget::repaintForTheme() {
     // The remaining custom-painted views sample tpal::* live at paint, so a plain
     // repaint suffices.
     const auto views = std::to_array<Tui::ZWidget*>(
-        {m_window, m_sidebarView, m_composerChrome, m_queue, m_attachments, m_footer,
-         m_completionPopup, m_search, m_composer, m_tabStrip, m_todos, m_subagents, m_fileTreeView,
-         m_editorView});
+        {m_window, m_sidebarView, m_integrationsView, m_composerChrome, m_queue, m_attachments,
+         m_footer, m_completionPopup, m_search, m_composer, m_tabStrip, m_todos, m_subagents,
+         m_fileTreeView, m_editorView});
     for (Tui::ZWidget* w : views) {
         if (w != nullptr) {
             w->update();

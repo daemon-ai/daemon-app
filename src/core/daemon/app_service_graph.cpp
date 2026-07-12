@@ -15,6 +15,7 @@
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_auth_flow_service.h"
 #include "daemon/daemon_cache_store.h"
+#include "daemon/daemon_chat_service.h"
 #include "daemon/daemon_checkpoint_timeline.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_contacts_service.h"
@@ -23,6 +24,7 @@
 #include "daemon/daemon_fleet_tree.h"
 #include "daemon/daemon_fs_service.h"
 #include "daemon/daemon_model_catalog.h"
+#include "daemon/daemon_persons_service.h"
 #include "daemon/daemon_presence_service.h"
 #include "daemon/daemon_profile_store.h"
 #include "daemon/daemon_provider_catalog.h"
@@ -56,7 +58,9 @@
 #include "settings/qt_settings_store.h"
 #include "setup/agent_setup_model.h"
 #include "tools/mock_tool_inventory.h" // [wave2:app-approvals-safety] D2
+#include "transports/mock_chat_service.h"
 #include "transports/mock_contacts_service.h"
+#include "transports/mock_persons_service.h"
 #include "transports/mock_presence_service.h"
 #include "transports/mock_transport_registry.h"
 #include "update/update_manager.h"
@@ -143,6 +147,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // [acct-mgmt] Transport contacts / roster (Phase D): inert canned mock until a daemon adapter
     // decodes the node's roster ops (replaced in the Daemon branch below).
     graph.contacts = new transports::MockContactsService(owner);
+    // [integrations wire v38] Person registry + native chat: inert canned mocks until a daemon
+    // adapter decodes the node's PersonList / ConvHistory (replaced in the Daemon branch below).
+    graph.persons = new transports::MockPersonsService(owner);
+    graph.chat = new transports::MockChatService(owner);
     // sessionSettings is constructed per-mode below (the daemon variant needs nodeApi to send
     // SetSessionMode); checkpoints starts as the mock and is REPLACED in the daemon branch with
     // the repo-backed DaemonCheckpointTimeline (CheckpointList/CheckpointRewind; E4/TOOL-9).
@@ -276,6 +284,21 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         }
         delete graph.contacts;
         graph.contacts = new transports::DaemonContactsService(graph.contactsRepository, owner);
+        // [integrations wire v38] Daemon-backed person registry (PersonList) + native chat
+        // (ConvHistory / ConvSend): replace the inert mocks with services projecting the new
+        // repositories. The feed's PersonsChanged refetches PersonList and MessagesChanged
+        // refetches the affected conversation's ConvHistory — wired via the setters (the repos are
+        // built after the SubscriptionManager).
+        graph.personsRepository = new PersonsRepository(graph.nodeApi, graph.cache, owner);
+        graph.chatRepository = new ChatRepository(graph.nodeApi, graph.cache, owner);
+        if (graph.subscriptions != nullptr) {
+            graph.subscriptions->setPersonsRepository(graph.personsRepository);
+            graph.subscriptions->setChatRepository(graph.chatRepository);
+        }
+        delete graph.persons;
+        graph.persons = new transports::DaemonPersonsService(graph.personsRepository, owner);
+        delete graph.chat;
+        graph.chat = new transports::DaemonChatService(graph.chatRepository, owner);
         // Daemon-backed, offline-first session roster + dashboard (replaces the mock pair). The
         // roster projects the (offline-first) CachedSessionStore; the dashboard derives its
         // counters from the FINAL seam pointers (DaemonFleetTree + DaemonApprovalsInbox) and its
@@ -345,6 +368,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              toolRepo = graph.toolRepository,   // [wave2:app-approvals-safety] D2
              gateway = graph.gatewayRepository, // Phase F: node OpenAI-gateway status
              feedback = daemonFeedback,         // wire v32: seed telemetry consent
+             persons = graph.personsRepository, // [integrations wire v38] person registry
              wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
@@ -368,6 +392,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // baseline that replaces the retired per-tab-enter / per-expand polling; the
                     // feed's ConversationsChanged / MembershipChanged keeps them fresh after).
                     transports->refreshAllConversations();
+                    // [integrations wire v38] The node's person/metacontact registry (the Persons
+                    // tree section); refetched incrementally on the PersonsChanged feed event.
+                    persons->refresh();
                     // Routing: the origin->session pin table (B6/ROU). Per-account rooms follow
                     // the instances refresh (DaemonDaemonNet chains them).
                     routing->refreshChats();

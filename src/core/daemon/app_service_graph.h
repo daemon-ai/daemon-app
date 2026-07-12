@@ -69,7 +69,9 @@ namespace tools {
 class IToolInventory; // [wave2:app-approvals-safety] D2
 }
 namespace transports {
+class IChatService;
 class IContactsService;
+class IPersonsService;
 class IPresenceService;
 class ITransportRegistry;
 } // namespace transports
@@ -81,6 +83,8 @@ namespace daemonapp::daemon {
 
 class AgentRepository;
 class ContactsRepository; // [acct-mgmt] transport contacts / roster (wire v34)
+class ChatRepository;     // [integrations wire v38] native chat (ConvHistory / ConvSend)
+class PersonsRepository;  // [integrations wire v38] person registry (PersonList)
 class EngineIdentity;
 class ApprovalRepository;
 class AuthRepository;
@@ -151,6 +155,10 @@ struct AppServiceGraph {
     // [acct-mgmt] Transport contacts / roster (Phase D). Mock-backed by default; a
     // DaemonContactsService replaces it in Daemon mode (projects ContactsRepository).
     transports::IContactsService* contacts = nullptr;
+    // [integrations wire v38] Person registry + native chat seams. Mock-backed by default; the
+    // Daemon* services replace them in Daemon mode (projecting PersonsRepository / ChatRepository).
+    transports::IPersonsService* persons = nullptr;
+    transports::IChatService* chat = nullptr;
     daemonnet::IDaemonNet* daemonNet = nullptr;
     session::ISessionSettings* sessionSettings = nullptr;
     session::ICheckpointTimeline* checkpoints = nullptr;
@@ -185,6 +193,11 @@ struct AppServiceGraph {
     // [acct-mgmt] Transport contacts / roster (RosterList/Add/Update/Remove + contact ops, wire
     // v34); Daemon mode only (the DaemonContactsService projects it).
     ContactsRepository* contactsRepository = nullptr;
+    // [integrations wire v38] Person registry (PersonList) + native chat (ConvHistory / ConvSend);
+    // Daemon mode only (the DaemonPersonsService / DaemonChatService project them). The
+    // SubscriptionManager routes PersonsChanged / MessagesChanged into them.
+    PersonsRepository* personsRepository = nullptr;
+    ChatRepository* chatRepository = nullptr;
     RoutingRepository* routingRepository = nullptr; // Routing pins (B6/ROU); Daemon mode only
     // The foreign-agent catalog (foreign engines; wire v29): backs the new-agent dialog's engine
     // picker and the Agents settings surface (register/remove). Constructed with the other

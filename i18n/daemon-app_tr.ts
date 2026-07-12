@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Entegrasyon ekle</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Hesap ayarları</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Devam et</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Kaydet</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Mevcut değeri korumak için boş bırakın</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ kadar başlatılamaz.</translation>
         <translation>Aşağıdaki veriyi diğer cihazınızla tarayın. Onay bekleniyor…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Bu veriyi diğer cihazınızla tarayın (terminalde görsel yok):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Kodu diğer cihazınızla tarayın veya veriyi kopyalayın:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ kadar başlatılamaz.</translation>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>Bu kanal türünde tarayıcı ile giriş yoktur.</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Mesaj gönderilemedi.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Henüz mesaj yok</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Mesaj gönderilemedi</translation>
     </message>
 </context>
 <context>
@@ -3571,6 +3616,72 @@ kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Bağlan</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Devre dışı bırak</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Etkinleştir</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Hesap ayarları</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Hesabı kaldır</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Kaldır</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>Bu hesap kaldırılıp bağlantısı kesilsin mi? Düğüm onu tamamen kaldırır.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Entegrasyonlar</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Tümünü daralt</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Tümünü genişlet</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Entegrasyon ekle</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Kişiler</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Kanallar</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Doğrudan mesajlar</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Gözat</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5654,6 +5765,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Yeni oturum</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Mesaj gönderilmedi</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Mesaj gönderilemedi.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Oturum ayarları</translation>
     </message>
@@ -7113,6 +7232,10 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <source>Agent</source>
         <translation>Aracı</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>Sohbet</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7446,6 +7569,10 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>The membership action was rejected</source>
         <translation>Üyelik işlemi reddedildi</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Hesap ayarları uygulanamadı</translation>
     </message>
 </context>
 <context>
@@ -9019,6 +9146,13 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Mesaj gönderilemedi</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9393,6 +9527,10 @@ Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada ot
     <message>
         <source>The membership action was rejected</source>
         <translation>Üyelik işlemi reddedildi</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Hesap ayarları uygulanamadı</translation>
     </message>
 </context>
 <context>

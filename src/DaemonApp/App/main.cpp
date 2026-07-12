@@ -4,6 +4,7 @@
 #include "application.h"
 #include "daemon_app_version.h"
 #include "i18n/localization.h"
+#include "platform/app_icon.h"
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(Q_OS_WASM)
 // No QtWidgets on mobile or in the browser: pure Qt Quick on QGuiApplication.
@@ -257,6 +258,15 @@ int main(int argc, char* argv[]) {
     }
     // No live primary answered (stale socket already cleaned in tryClaim):
     // continue as a normal instance rather than refusing to start.
+
+    // Desktop window/taskbar + tray icon. setDesktopFileName ties the window to
+    // the installed daemon-app.desktop, which is how Wayland compositors resolve
+    // an app's icon; setWindowIcon covers X11 / Windows / macOS and the app's own
+    // chrome. platform::appIcon() prefers the installed hicolor theme icon and
+    // falls back to the PNGs embedded in the app resource. Mobile brands via the
+    // launcher mipmaps and the browser via the favicon, so both are excluded.
+    QGuiApplication::setDesktopFileName(QStringLiteral("daemon-app"));
+    QGuiApplication::setWindowIcon(platform::appIcon());
 #endif
 
     // Pin the Controls style to Basic: our kit (DaemonApp.Controls) restyles

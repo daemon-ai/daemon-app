@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Magdagdag ng integrasyon</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Mga setting ng account</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Magpatuloy</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>I-save</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Iwanang blangko upang panatilihin ang kasalukuyang halaga</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ hanggang muli itong mairehistro.</translation>
         <translation>I-scan ang payload sa ibaba gamit ang iyong ibang device. Naghihintay ng pag-apruba…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>I-scan ang payload na ito gamit ang iyong ibang device (walang larawan sa terminal):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>I-scan ang code gamit ang iyong ibang device, o kopyahin ang payload:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>Ang channel type na ito ay walang browser sign-in.</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Hindi naipadala ang mensahe.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Wala pang mga mensahe</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Nabigong ipadala ang mensahe</translation>
     </message>
 </context>
 <context>
@@ -3573,6 +3618,72 @@ hanggang muli itong mairehistro.</translation>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Kumonekta</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>I-disable</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>I-enable</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Mga setting ng account</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Alisin ang account</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Alisin</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>Alisin at idiskonekta ang account na ito? Buong-buong tatanggalin ito ng node.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Mga Integration</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>I-collapse lahat</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>I-expand lahat</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Magdagdag ng integrasyon</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Mga tao</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Mga Channel</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Mga direktang mensahe</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Mag-browse</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5658,6 +5769,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Bagong session</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Hindi naipadala ang mensahe</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Hindi naipadala ang mensahe.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Mga setting ng session</translation>
     </message>
@@ -7121,6 +7240,10 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <source>Agent</source>
         <translation>Agent</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7454,6 +7577,10 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>The membership action was rejected</source>
         <translation>Tinanggihan ang membership action</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Nabigong ilapat ang mga setting ng account</translation>
     </message>
 </context>
 <context>
@@ -9027,6 +9154,13 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Nabigong ipadala ang mensahe</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9401,6 +9535,10 @@ Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong salihang room 
     <message>
         <source>The membership action was rejected</source>
         <translation>Tinanggihan ang membership action</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Nabigong ilapat ang mga setting ng account</translation>
     </message>
 </context>
 <context>

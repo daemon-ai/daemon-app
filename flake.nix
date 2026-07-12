@@ -41,6 +41,17 @@
       flake = false;
     };
 
+    # QR module-matrix encoder for the generic auth component (Kit.QrCode + the
+    # TUI half-block rendering). Nayuki's canonical upstream (MIT): two
+    # dependency-free C++ files (cpp/qrcodegen.{hpp,cpp}) exposing the raw module
+    # matrix via QrCode::getModule(x,y) - exactly what BOTH surfaces need. No C++
+    # releases upstream, so pin a rev like the other vendored sources; built out
+    # of the input by Dependencies.cmake (never committed into the repo).
+    qrcodegen = {
+      url = "github:nayuki/QR-Code-generator/2c9044de6b049ca25cb3cd1649ed7e27aa055138";
+      flake = false;
+    };
+
     # --- TUI frontend dependencies (Tui Widgets, Meson-built, consumed by the
     #     CMake build via pkg-config; see src/tui/CMakeLists.txt). termpaint
     #     itself is taken from nixpkgs; these two are not packaged there. ---
@@ -79,10 +90,31 @@
       url = "github:Swordfish90/qmltermwidget";
       flake = false;
     };
+
+    # --- Mirror substrate (spec 09 §4, ADR-002/-008) -----------------------
+    # Value-oriented immutable data structures + the severable reactive-core
+    # header subset that back the client mirror store. All header-only and
+    # BSL-1.0/MIT (see THIRD-PARTY-NOTICES.md), pinned like the other vendored
+    # sources: `flake = false`, wired into the build via <DEP>_SOURCE_DIR by
+    # cmake/Dependencies.cmake (header-only INTERFACE targets). Revs match the
+    # references/ study clones so the ported behaviors track the audited code.
+    #
+    # immer 0.9.1+ (arximboldi/immer @ bd4fc74): normalized immer::table entity
+    # tables + immer::diff — the mirror value substrate.
+    #
+    # ADR-008 FINALIZED (A3, M1): the observe seam is coarse signals, so the lager
+    # reactive-core candidate (and its zug + boost::intrusive transitive headers)
+    # was removed — gate 1 stayed decisively RED on the representative VM TU set
+    # (+50% clean / +53% incremental vs coarse; ~+4.5 s/TU). See
+    # src/core/mirror/ADR-008-addendum-A3.md. immer is the only mirror input now.
+    immer = {
+      url = "github:arximboldi/immer/bd4fc749b97dfa2b66a8f3de00bbf234db4856ef";
+      flake = false;
+    };
   };
 
   outputs =
-    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, ... }:
+    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qrcodegen, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, immer, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -213,11 +245,16 @@
           "-DEARCUT_SOURCE_DIR=${earcut}"
           "-DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${ksyntaxhighlighting}"
           "-DMICROTEX_SOURCE_DIR=${microtex}"
+          "-DQRCODEGEN_SOURCE_DIR=${qrcodegen}"
           "-DQWINDOWKIT_SOURCE_DIR=${qwindowkit}"
           "-DQSIMPLEUPDATER_SOURCE_DIR=${qsimpleupdater}"
           "-DQAUTOSTART_SOURCE_DIR=${qautostart}"
           "-DQXTGLOBALSHORTCUT_SOURCE_DIR=${qxtglobalshortcut}"
           "-DQMLTERMWIDGET_QML_DIR=${qmltermwidgetQmlDir}"
+          # Mirror substrate (header-only): the immer value substrate. The observe
+          # seam is coarse signals (ADR-008 finalized, A3), so lager/zug/boost are
+          # no longer vendored. See cmake/Dependencies.cmake for the INTERFACE wiring.
+          "-DIMMER_SOURCE_DIR=${immer}"
           # Host Linguist tools (lupdate/lrelease for qt_add_translations),
           # pinned directly rather than listing qttools as an input: the qtbase
           # env hook folds every qttools input's plugin dir into the wrapped
@@ -286,7 +323,7 @@
           inherit pkgs versionStr baseVersion;
           pkgsEmscripten = import nixpkgs-emscripten { inherit system; };
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
         };
 
         # --- Portable Linux desktop (static Qt) ------------------------------
@@ -297,7 +334,7 @@
         portableStack = import ./nix/portable.nix {
           inherit pkgs versionStr baseVersion;
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
           # TUI + embedded-terminal sources for the static TUI / GUI builds
           # (mirrors the dynamic tuiwidgets/qmltermwidget derivations above).
           tuiSources = { inherit tuiwidgets posixsignalmanager qmltermwidget; };
@@ -312,7 +349,7 @@
           import ./nix/macos.nix {
             inherit pkgs versionStr baseVersion;
             appSrc = ./.;
-            depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+            depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
             tuiSources = { inherit tuiwidgets posixsignalmanager qmltermwidget; };
           }
         );
@@ -326,7 +363,7 @@
         windowsStack = import ./nix/windows.nix {
           inherit pkgs versionStr baseVersion;
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
         };
 
         # --- Qt for Android (arm64-v8a) ---------------------------------------
@@ -346,7 +383,7 @@
         qtAndroidStack = import ./nix/android.nix {
           inherit pkgs pkgsAndroid versionStr baseVersion;
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
         };
 
         # --- Qt for iOS simulator (arm64, static) -----------------------------
@@ -359,7 +396,17 @@
         qtIosStack = import ./nix/ios.nix {
           inherit pkgs versionStr baseVersion;
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen; };
+        };
+
+        # --- Icon pipeline (all platforms) -----------------------------------
+        # Rasterizes packaging/icons/{small,large}.svg into every committed
+        # platform icon format (nix/icons.nix). Pure + host-agnostic; the
+        # outputs are checked into the tree via apps.update-icons and gated by
+        # checks.icons-drift (the vendored-codec model).
+        iconsPkg = import ./nix/icons.nix {
+          inherit pkgs;
+          iconSrc = ./packaging/icons;
         };
 
         # --- Linux packaging artifacts (CPack: DEB / RPM / AppImage) --------
@@ -857,6 +904,12 @@
         packages.appimagetool = appimageTooling.appimagetool;
         packages.cmake-appimage = cmake42;
 
+        # Icon pipeline output tree (nix/icons.nix): every committed platform
+        # icon format rasterized from packaging/icons/{small,large}.svg, laid
+        # out under $out at its repo-relative path (+ manifest.txt). Consumed
+        # by apps.update-icons (writes them into the tree) and checks.icons-drift.
+        packages.icons = iconsPkg;
+
         # Qt-for-WebAssembly toolchain (nix/qt-wasm.nix). `qt-wasm` is the
         # joined target stack a consumer points QT_HOST_PATH-style tooling at
         # (bin/qt-cmake + lib/cmake/Qt6/qt.toolchain.cmake); the per-module
@@ -964,10 +1017,64 @@
         # apksigner verification (nix/android.nix).
         checks.apk-sanity = qtAndroidStack.apkSanity;
 
+        # Icon drift gate: every file the pipeline generates must match its
+        # committed copy byte-for-byte (the icon analogue of codec-drift). The
+        # committed packaging/ tree is compared against the freshly-generated
+        # $out via the manifest; a mismatch means the SVGs changed without a
+        # follow-up `nix run .#update-icons`.
+        checks.icons-drift =
+          pkgs.runCommand "daemon-icons-drift" { } ''
+            set -euo pipefail
+            committed=${./packaging}
+            fail=0
+            while IFS= read -r rel; do
+              [ -n "$rel" ] || continue
+              sub="''${rel#packaging/}"
+              if ! cmp -s "${iconsPkg}/$rel" "$committed/$sub"; then
+                echo "DRIFT: $rel differs from the committed copy (or is missing)" >&2
+                fail=1
+              fi
+            done < "${iconsPkg}/manifest.txt"
+            if [ "$fail" -ne 0 ]; then
+              echo "committed icons are stale vs packaging/icons/*.svg; run: nix run .#update-icons" >&2
+              exit 1
+            fi
+            echo "committed icons match the generated output"
+            touch "$out"
+          '';
+
         apps.default = {
           type = "app";
           program = "${daemon-app}/bin/daemon-app";
           meta.description = "Run the daemon-app Qt Quick application";
+        };
+
+        # The one impure step: copy the pure icon renders into the working tree.
+        # Nix never mutates the repo during a build, so refreshing the committed
+        # icons is an explicit `nix run .#update-icons` (the update-codec model).
+        apps.update-icons = {
+          type = "app";
+          program =
+            let
+              script = pkgs.writeShellApplication {
+                name = "update-icons";
+                runtimeInputs = [ pkgs.coreutils ];
+                text = ''
+                  if [ ! -d packaging/icons ]; then
+                    echo "run from the daemon-app root (missing packaging/icons)" >&2
+                    exit 1
+                  fi
+                  while IFS= read -r rel; do
+                    [ -n "$rel" ] || continue
+                    install -D -m644 "${iconsPkg}/$rel" "./$rel"
+                    echo "updated $rel"
+                  done < "${iconsPkg}/manifest.txt"
+                  echo "icons refreshed from packaging/icons/{small,large}.svg"
+                '';
+              };
+            in
+            "${script}/bin/update-icons";
+          meta.description = "Regenerate committed platform icons from packaging/icons/*.svg (mutates the tree)";
         };
 
         # Serve the browser build over plain HTTP for a local smoke test
@@ -1067,11 +1174,13 @@
             export EARCUT_SOURCE_DIR="${earcut}"
             export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${ksyntaxhighlighting}"
             export MICROTEX_SOURCE_DIR="${microtex}"
+            export QRCODEGEN_SOURCE_DIR="${qrcodegen}"
             export QWINDOWKIT_SOURCE_DIR="${qwindowkit}"
             export QSIMPLEUPDATER_SOURCE_DIR="${qsimpleupdater}"
             export QAUTOSTART_SOURCE_DIR="${qautostart}"
             export QXTGLOBALSHORTCUT_SOURCE_DIR="${qxtglobalshortcut}"
             export QMLTERMWIDGET_QML_DIR="${qmltermwidgetQmlDir}"
+            export IMMER_SOURCE_DIR="${immer}"
           '';
         };
 
@@ -1087,6 +1196,13 @@
         # emscripten/Qt-wasm shellHook intact (an `inputsFrom` splice would drop it).
         devShells.wasm = qtWasmStack.devShell.overrideAttrs (old: {
           nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.chromium ];
+          # Surface the header-only immer source in the wasm shell too, so the WASM
+          # smoke probe (immer compiled under emscripten, spec 09 §11) can resolve
+          # it. Append to the existing emscripten/Qt-wasm shellHook rather than
+          # replacing it. (lager/zug removed: ADR-008 finalized to coarse signals.)
+          shellHook = (old.shellHook or "") + ''
+            export IMMER_SOURCE_DIR="${immer}"
+          '';
         });
 
         # Android cross-development: SDK/NDK + the android Qt stack + host

@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Добавить интеграцию</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Настройки учётной записи</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Оставьте пустым, чтобы сохранить текущее значение</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ until it is re-registered.</source>
         <translation>Отсканируйте данные ниже другим устройством. Ожидание подтверждения…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Отсканируйте эти данные другим устройством (изображения в терминале нет):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Отсканируйте код другим устройством или скопируйте данные:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ until it is re-registered.</source>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>У этого типа канала нет входа через браузер.</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Не удалось отправить сообщение.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Пока нет сообщений</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Не удалось отправить сообщение</translation>
     </message>
 </context>
 <context>
@@ -3575,6 +3620,72 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Подключить</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Отключить</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Включить</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Настройки учётной записи</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Удалить учётную запись</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>Удалить эту учётную запись и отключить её? Узел полностью её удалит.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Интеграции</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Свернуть всё</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Развернуть всё</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Добавить интеграцию</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Люди</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Каналы</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Личные сообщения</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Обзор</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5662,6 +5773,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Новая сессия</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Сообщение не отправлено</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Не удалось отправить сообщение.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Настройки сессии</translation>
     </message>
@@ -7129,6 +7248,10 @@ This only affects the app appearance, not your data.</source>
         <source>Agent</source>
         <translation>Агент</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>Чат</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7462,6 +7585,10 @@ Thanks — proceeding with: %1
     <message>
         <source>The membership action was rejected</source>
         <translation>Действие с участником было отклонено</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Не удалось применить настройки учётной записи</translation>
     </message>
 </context>
 <context>
@@ -9035,6 +9162,13 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Не удалось отправить сообщение</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9409,6 +9543,10 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>The membership action was rejected</source>
         <translation>Действие с участником было отклонено</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Не удалось применить настройки учётной записи</translation>
     </message>
 </context>
 <context>

@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>新增整合</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>帳戶設定</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>繼續</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>儲存</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>留空以保留目前的值</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ until it is re-registered.</source>
         <translation>用你的另一台裝置掃描下方的資料。等待核准…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>用你的另一台裝置掃描此資料（終端機中沒有影像）：</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>用你的另一台裝置掃描此 QR 碼，或複製資料：</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ until it is re-registered.</source>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>此頻道類型沒有瀏覽器登入。</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>無法傳送訊息。</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>尚無訊息</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>傳送訊息失敗</translation>
     </message>
 </context>
 <context>
@@ -3571,6 +3616,72 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>連線</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>停用</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>啟用</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>帳戶設定</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>移除帳戶</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>移除並中斷此帳戶？節點會將其完全拆除。</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>整合</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>全部摺疊</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>全部展開</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>新增整合</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>人員</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>頻道</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>私人訊息</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>瀏覽</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5654,6 +5765,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>新增工作階段</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>訊息未傳送</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>無法傳送訊息。</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>工作階段設定</translation>
     </message>
@@ -6595,7 +6714,7 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Chat</source>
-        <translation>對話</translation>
+        <translation>聊天</translation>
     </message>
     <message>
         <source>Tools</source>
@@ -7113,6 +7232,10 @@ This only affects the app appearance, not your data.</source>
         <source>Agent</source>
         <translation>代理</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>聊天</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7447,6 +7570,10 @@ Thanks — proceeding with: %1
         <source>The membership action was rejected</source>
         <translation>成員操作被拒絕</translation>
     </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>套用帳戶設定失敗</translation>
+    </message>
 </context>
 <context>
     <name>TuiFileTabController</name>
@@ -7662,7 +7789,7 @@ Thanks — proceeding with: %1
     </message>
     <message>
         <source>Chat</source>
-        <translation>對話</translation>
+        <translation>聊天</translation>
     </message>
     <message>
         <source>Stream responses</source>
@@ -9019,6 +9146,13 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>傳送訊息失敗</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9393,6 +9527,10 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>The membership action was rejected</source>
         <translation>成員操作被拒絕</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>套用帳戶設定失敗</translation>
     </message>
 </context>
 <context>

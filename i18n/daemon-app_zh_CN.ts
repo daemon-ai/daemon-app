@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>添加集成</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>账户设置</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>继续</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>留空以保留当前值</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ until it is re-registered.</source>
         <translation>用你的另一台设备扫描下方的数据。等待批准…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>用你的另一台设备扫描此数据（终端中没有图像）：</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>用你的另一台设备扫描此二维码，或复制数据：</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ until it is re-registered.</source>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>此频道类型没有浏览器登录。</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>无法发送消息。</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>暂无消息</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>发送消息失败</translation>
     </message>
 </context>
 <context>
@@ -3571,6 +3616,72 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>连接</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>禁用</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>启用</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>账户设置</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>移除账户</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>移除并断开此账户？节点将完全拆除它。</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>集成</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>全部折叠</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>全部展开</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>添加集成</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>人员</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>频道</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>私信</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>浏览</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5654,6 +5765,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>新建会话</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>消息未发送</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>无法发送消息。</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>会话设置</translation>
     </message>
@@ -7113,6 +7232,10 @@ This only affects the app appearance, not your data.</source>
         <source>Agent</source>
         <translation>智能体</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>聊天</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7446,6 +7569,10 @@ Thanks — proceeding with: %1
     <message>
         <source>The membership action was rejected</source>
         <translation>成员操作被拒绝</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>应用账户设置失败</translation>
     </message>
 </context>
 <context>
@@ -9019,6 +9146,13 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>发送消息失败</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9393,6 +9527,10 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>The membership action was rejected</source>
         <translation>成员操作被拒绝</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>应用账户设置失败</translation>
     </message>
 </context>
 <context>

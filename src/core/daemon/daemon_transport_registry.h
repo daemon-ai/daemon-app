@@ -62,6 +62,11 @@ public:
                    const QString& contactId) override;
     void memberSetRole(const QString& transport, const QString& conversation,
                        const QString& contactId, const QString& role) override;
+    // [integrations wire v38] Account settings read + configure, delegated to the repository (whose
+    // settingsRefreshed drives settingsChanged).
+    [[nodiscard]] QVariantMap settings(const QString& transport) const override;
+    void refreshSettings(const QString& transport) override;
+    void configure(const QString& transport, const QVariantMap& values) override;
 
 private:
     daemonapp::daemon::TransportRepository* m_repo = nullptr;

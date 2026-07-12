@@ -33,7 +33,10 @@ namespace daemonapp::daemon::cache {
 // v9 ([acct-mgmt] wire v35): adds enabled + label to daemon_transport_instances (node-persisted
 // desired state + display-label override; render offline-first). The cache is non-authoritative, so
 // the bump just drops + rebuilds (the daemon re-baselines it).
-inline constexpr int kSchemaVersion = 9;
+// v10 ([integrations] wire v38): adds parent to daemon_conversations (the containing space/server-
+// level conversation id; NULL/'' = a root) — with kind now carrying "space" container rows, the
+// integrations tree's hierarchy renders offline-first. Non-authoritative: drop + rebuild.
+inline constexpr int kSchemaVersion = 10;
 
 inline constexpr const char* kCreateMetaSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_cache_meta (
@@ -147,6 +150,9 @@ CREATE TABLE IF NOT EXISTS daemon_conversations (
   kind TEXT NOT NULL,
   title TEXT,
   topic TEXT,
+  -- [integrations] v10 (wire v38): the containing space/server-level conversation id on the same
+  -- transport (NULL/'' = a root; kind 'space' marks the container rows). Nullable like title/topic.
+  parent TEXT,
   updated_at_ms INTEGER NOT NULL,
   PRIMARY KEY (transport, conv_id)
 );

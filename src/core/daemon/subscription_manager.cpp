@@ -266,6 +266,22 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             m_profiles->refreshProfiles();
         }
         break;
+    // [integrations wire v38] The person registry changed: refetch PersonList (invalidation
+    // pointer only; the node owns the registry). Mirrors ContactsChanged for the roster.
+    case DecodedNodeEvent::Kind::PersonsChanged:
+        if (m_persons != nullptr) {
+            m_persons->refresh();
+        }
+        break;
+    // [integrations wire v38] A conversation's transcript grew: re-fetch ConvHistory for the
+    // affected (transport, conv) so the chat tab's transcript lands the new message(s).
+    // Invalidation pointer only — the client refetches from its cursor; it derives no message facts
+    // locally.
+    case DecodedNodeEvent::Kind::MessagesChanged:
+        if (m_chat != nullptr) {
+            m_chat->applyMessagesChanged(event.transport, event.conv);
+        }
+        break;
     case DecodedNodeEvent::Kind::Unknown:
         break;
     }

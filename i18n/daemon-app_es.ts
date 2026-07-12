@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Añadir integración</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Ajustes de la cuenta</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Continuar</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Guardar</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Déjalo en blanco para mantener el valor actual</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ hasta que se vuelva a registrar.</translation>
         <translation>Escanee el contenido de abajo con su otro dispositivo. Esperando aprobación…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Escanee este contenido con su otro dispositivo (sin imagen en la terminal):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Escanee el código con su otro dispositivo o copie el contenido:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>Este tipo de canal no tiene inicio de sesión por navegador.</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>No se pudo enviar el mensaje.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Aún no hay mensajes</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>No se pudo enviar el mensaje</translation>
     </message>
 </context>
 <context>
@@ -3573,6 +3618,72 @@ hasta que se vuelva a registrar.</translation>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Conectar</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Desactivar</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Activar</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Ajustes de la cuenta</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Eliminar cuenta</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Eliminar</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>¿Eliminar esta cuenta y desconectarla? El nodo la desmantela por completo.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Integraciones</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Contraer todo</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Expandir todo</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Añadir integración</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Personas</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Canales</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Mensajes directos</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Explorar</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5658,6 +5769,14 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>Nueva sesión</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Mensaje no enviado</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>No se pudo enviar el mensaje.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Ajustes de la sesión</translation>
     </message>
@@ -7121,6 +7240,10 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
         <source>Agent</source>
         <translation>Agente</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7454,6 +7577,10 @@ Gracias — continuando con: %1
     <message>
         <source>The membership action was rejected</source>
         <translation>La acción de membresía fue rechazada</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>No se pudo aplicar la configuración de la cuenta</translation>
     </message>
 </context>
 <context>
@@ -9027,6 +9154,13 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>No se pudo enviar el mensaje</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9401,6 +9535,10 @@ Las invitaciones a salas las gestiona el nodo; las salas recién unidas aparecen
     <message>
         <source>The membership action was rejected</source>
         <translation>La acción de membresía fue rechazada</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>No se pudo aplicar la configuración de la cuenta</translation>
     </message>
 </context>
 <context>

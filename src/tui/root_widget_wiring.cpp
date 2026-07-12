@@ -3,6 +3,7 @@
 
 #include "app/code_editor_controller.h"
 #include "app/transcript_log.h"
+#include "chat_conversation_controller.h"
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
@@ -13,6 +14,7 @@
 #include "fleet/iapprovals_inbox.h" // complete type for the footer pending-approvals count (TOOL-8)
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
+#include "integrations_tree_model.h"
 #include "memory/imemory_service.h"
 #include "memory_graph_model.h"
 #include "memory_list_model.h"
@@ -86,6 +88,7 @@ void RootWidget::wireViews() {
     wirePageLiveRefresh();
     wireSearchBox();
     wireSidebarTree();
+    wireIntegrationsTree();
     wireSessionList();
     wireTranscriptControls();
     wireComposer();
@@ -98,6 +101,13 @@ void RootWidget::wireModelBindings() {
     m_sidebarAdapter = new DisplayRoleAdapter(DisplayRoleAdapter::Kind::Sidebar, this);
     m_sidebarAdapter->setSourceModel(m_sidebar);
     m_sidebarView->setModel(m_sidebarAdapter);
+
+    // The co-equal Integrations tree (work package AC): the SAME shared IntegrationsTreeModel the
+    // GUI binds, rendered through the Integrations display adapter (custom roles -> Qt::DisplayRole
+    // + Tui decorations) in its own sidebar TreeListView.
+    m_integrationsAdapter = new DisplayRoleAdapter(DisplayRoleAdapter::Kind::Integrations, this);
+    m_integrationsAdapter->setSourceModel(m_integrationsTree);
+    m_integrationsView->setModel(m_integrationsAdapter);
 
     // The session list is a custom-painted view bound straight to the shared
     // model (no display-role adapter): it reads title/snippet/timestamp/agent/tags
@@ -281,6 +291,49 @@ void RootWidget::wireSidebarTree() {
                 m_sidebar->toggleExpand(row);
                 syncSidebarCurrent();
             });
+}
+
+void RootWidget::wireIntegrationsTree() {
+    // Enter (or a click) activates the current row: a conversation opens a native chat tab, an
+    // account root highlights, a Browse/person routes to its intent. Bind enterPressed rather than
+    // the selection's currentChanged so arrow navigation alone does NOT fire activation (which
+    // would open a chat tab on every move) — the GUI mirror activates on click, not hover.
+    connect(m_integrationsView, &Tui::ZListView::enterPressed, this, [this](int row) {
+        if (row >= 0) {
+            m_integrationsTree->activate(row);
+        }
+    });
+
+    // Left/Right fold/unfold the current account / space / section; a section-header click folds
+    // by explicit row (the header is not a selection stop).
+    const auto toggleCurrent = [this] {
+        const int row = m_integrationsView->currentIndex().row();
+        if (row >= 0) {
+            m_integrationsTree->toggleExpand(row);
+        }
+    };
+    connect(m_integrationsView, &TreeListView::collapseRequested, this, toggleCurrent);
+    connect(m_integrationsView, &TreeListView::expandRequested, this, toggleCurrent);
+    connect(m_integrationsView, &TreeListView::toggleRowRequested, this,
+            [this](int row) { m_integrationsTree->toggleExpand(row); });
+
+    // [integrations wire v38] Activating a room/DM opens (or focuses) a native chat tab for
+    // (transport, conversation) — the A4 dispatch, identical to the fleet session-leaf path and
+    // the GUI's Session.openConversation.
+    connect(m_integrationsTree, &IntegrationsTreeModel::conversationActivated, this,
+            [this](const QString& transport, const QString& conversation) {
+                rwdetail::openConversationTab(m_tabModel, transport, conversation);
+            });
+
+    // Account-management intents reuse the existing TUI account flows (parity with the GUI tree's
+    // menu): add opens the interactive add-account wizard (which hands off to the shared auth
+    // launcher), settings opens the Accounts page, remove opens the destructive teardown confirm.
+    connect(m_integrationsTree, &IntegrationsTreeModel::addAccountRequested, this,
+            [this] { openAddAccount(); });
+    connect(m_integrationsTree, &IntegrationsTreeModel::editAccountRequested, this,
+            [this](const QString&) { openManagerPage(QStringLiteral("accounts")); });
+    connect(m_integrationsTree, &IntegrationsTreeModel::removeAccountRequested, this,
+            [this](const QString& transport) { openChannelRemoveConfirm(transport, transport); });
 }
 
 void RootWidget::openRow(int row, bool pinned) {
@@ -647,6 +700,12 @@ void RootWidget::wireComposer() {
     // document). Background tabs keep their own orchestrators running independently.
     connect(m_composerSession, &ComposerSessionController::submitted, this,
             [this](const QString& text, const QString& refs) {
+                // [integrations wire v38] A native chat tab: send via ConvSend (no local
+                // echo — the node's MessagesChanged brings the line back authoritatively).
+                if (m_activeChat != nullptr) {
+                    m_activeChat->send(text);
+                    return;
+                }
                 if (m_active != nullptr) {
                     // Submitting commits to this session: a preview tab becomes
                     // permanent (VSCode-style) so the next preview opens elsewhere.

@@ -11,12 +11,16 @@ namespace auth {
 
 // Canned interactive-auth seam for the mock/standalone path + offscreen tests. Simulates the wire
 // v31 challenge/response state machine end-to-end with no node, no browser and no sockets, so the
-// AuthFlowController and both front ends exercise the real multi-step path:
+// AuthFlowController and both front ends exercise the real multi-step path — covering the full
+// challenge matrix (redirect / form / message / qr; [integrations wire v38]):
 //   - the "matrix" family is a single-step Redirect flow: begin -> Redirect challenge, then a
 //     Callback step completes it (the SSO analogue).
-//   - the "token" family is a multi-step flow: begin -> Form challenge (a token field), a Fields
-//     step advances to a Message challenge ("approve on your other device"), and a Poll step then
-//     completes it — exercising begun(), challenged() and completed() and all three input arms.
+//   - the "token" family is a multi-step flow: begin -> Form challenge (a masked token field with
+//     the enriched v38 field metadata), a Fields step advances to a Message challenge ("approve on
+//     your other device"), and a Poll step then completes it — exercising begun(), challenged()
+//     and completed() and all three input arms.
+//   - the "qr" family is a device-pairing flow: begin -> Qr challenge (payload + poll cadence),
+//     and the first Poll step completes it — the offline target for A3's QR surfaces.
 // `failNext*` let tests drive the failure arms deterministically.
 class MockAuthFlowService : public IAuthFlowService {
     Q_OBJECT

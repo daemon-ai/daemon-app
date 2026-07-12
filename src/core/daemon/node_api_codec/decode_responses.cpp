@@ -581,6 +581,20 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
             decoded.transport =
                 fromZcbor(ev.node_event_contacts_changed_m.ContactsChanged_transport);
             break;
+        // [integrations wire v38] The person registry changed — payload-free invalidation pointer;
+        // the SubscriptionManager refetches PersonList.
+        case node_event_r::node_event_persons_changed_m_c:
+            decoded.kind = DecodedNodeEvent::Kind::PersonsChanged;
+            break;
+        // [integrations wire v38] A conversation's transcript grew — carries transport + conv; the
+        // SubscriptionManager refetches ConvHistory for that conversation.
+        case node_event_r::node_event_messages_changed_m_c: {
+            const node_event_messages_changed& m = ev.node_event_messages_changed_m;
+            decoded.kind = DecodedNodeEvent::Kind::MessagesChanged;
+            decoded.transport = fromZcbor(m.MessagesChanged_transport);
+            decoded.conv = fromZcbor(m.MessagesChanged_conv);
+            break;
+        }
         default:
             decoded.kind = DecodedNodeEvent::Kind::Unknown;
             break;
@@ -1507,6 +1521,19 @@ QString authFlowKindName(const auth_flow_kind_r& kind) {
     switch (kind.auth_flow_kind_choice) {
     case auth_flow_kind_r::auth_flow_kind_OAuth2Pkce_tstr_c:
         return QStringLiteral("OAuth2Pkce");
+    // [integrations wire v38] the full flow-kind vocabulary — decode each as itself (the client
+    // treats it as an opaque label). Previously only SSO/OAuth were mapped and everything else
+    // silently folded to MatrixSso, which would have mislabeled the new UserPassword flow.
+    case auth_flow_kind_r::auth_flow_kind_BotToken_tstr_c:
+        return QStringLiteral("BotToken");
+    case auth_flow_kind_r::auth_flow_kind_UserToken_tstr_c:
+        return QStringLiteral("UserToken");
+    case auth_flow_kind_r::auth_flow_kind_PhoneOtp_tstr_c:
+        return QStringLiteral("PhoneOtp");
+    case auth_flow_kind_r::auth_flow_kind_QrPairing_tstr_c:
+        return QStringLiteral("QrPairing");
+    case auth_flow_kind_r::auth_flow_kind_UserPassword_tstr_c:
+        return QStringLiteral("UserPassword");
     case auth_flow_kind_r::auth_flow_kind_MatrixSso_tstr_c:
     default:
         return QStringLiteral("MatrixSso");
@@ -1526,10 +1553,10 @@ DecodedAuthChallenge decodeAuthChallenge(const auth_challenge_r& wire) {
         const auth_challenge_form& form = wire.auth_challenge_form_m;
         out.formTitle = fromZcbor(form.Form_title);
         for (size_t i = 0; i < form.Form_fields_auth_param_field_m_count; ++i) {
-            const auth_param_field& field = form.Form_fields_auth_param_field_m[i];
-            out.formFields.append(DecodedAuthParamField{fromZcbor(field.auth_param_field_key),
-                                                        fromZcbor(field.auth_param_field_label),
-                                                        field.auth_param_field_required});
+            // [integrations wire v38] carry the enriched field metadata (kind/default/placeholder/
+            // choices) so the auth component masks secrets + prefills.
+            out.formFields.append(
+                decodeAuthParamFieldStruct(form.Form_fields_auth_param_field_m[i]));
         }
         break;
     }
@@ -1588,11 +1615,9 @@ bool NodeApiCodec::decodeAuthProviders(const QByteArray& responseCbor,
         info.flowKind = authFlowKindName(row.auth_provider_info_flow_kind);
         info.displayName = fromZcbor(row.auth_provider_info_display_name);
         for (size_t j = 0; j < row.auth_provider_info_params_schema_auth_param_field_m_count; ++j) {
-            const auth_param_field& field =
-                row.auth_provider_info_params_schema_auth_param_field_m[j];
-            info.paramsSchema.append(DecodedAuthParamField{fromZcbor(field.auth_param_field_key),
-                                                           fromZcbor(field.auth_param_field_label),
-                                                           field.auth_param_field_required});
+            // [integrations wire v38] enriched field metadata (kind/default/placeholder/choices).
+            info.paramsSchema.append(decodeAuthParamFieldStruct(
+                row.auth_provider_info_params_schema_auth_param_field_m[j]));
         }
         out->append(info);
     }

@@ -101,12 +101,16 @@ struct CachedTransportInstanceRow {
 };
 
 // One offline-first conversation row (daemon_conversations; Phase 6a).
+// [integrations wire v38] `kind` may now be "space" (a container node) and `parent` carries the
+// optional containing space/server-level conversation id (empty = a root) — the hierarchy data the
+// integrations tree groups by, persisted so it renders offline-first.
 struct CachedConversationRow {
     QString transport;
     QString convId;
     QString kind;
     QString title;
     QString topic;
+    QString parent; // empty = a root (no containing space)
     qint64 updatedAtMs = 0;
 };
 

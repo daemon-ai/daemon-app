@@ -97,6 +97,23 @@ DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev);
 void fillModelRef(const model_ref& m, QString* repo, QString* file, QString* engine);
 void decodeHostRequest(const host_request& req, DecodedLogEntry* out);
 DecodedTranscriptBlock decodeTranscriptBlock(const transcript_block_r& block);
+// [integrations wire v38] Map an auth-field-kind choice to its wire string (Text|Password|Number|
+// Choice; defaults to "Text" on any unknown). Shared by the enriched auth-param-field projection.
+QString authFieldKindName(const auth_field_kind_r& kind);
+// [integrations wire v38] Project one enriched wire `auth_param_field` (key/label/required + the
+// v38 kind/default/placeholder/choices metadata) into a DecodedAuthParamField. Shared by the auth
+// providers/form decoders and the account-settings schema decoder (the wire type is one field).
+DecodedAuthParamField decodeAuthParamFieldStruct(const auth_param_field& f);
+// Project one wire contact-info into DecodedContact (id + optional display name / presence /
+// permission). Shared by the conversation/roster decoders (fs_fleet_channels.cpp) and the person
+// endpoints decoder (chat_persons.cpp). Defined in fs_fleet_channels.cpp.
+DecodedContact decodeContactInfoStruct(const contact_info& c);
+// [integrations wire v38] Fill a generated account_settings_values from a key->value map; the
+// zcbor_strings borrow into `scratch` (kept alive across the encode). Shared by the room-form
+// encoders (fs_fleet_channels.cpp) and TransportConfigure (chat_persons.cpp). Defined in
+// fs_fleet_channels.cpp.
+void fillSettingsValues(account_settings_values& out, const QMap<QString, QString>& values,
+                        QList<QByteArray>& scratch);
 
 // --- L0 wire-envelope CBOR primitives (hand-coded; see wire_l0.cpp) ------------------------------
 void cborAppendUint(QByteArray& b, quint64 v);

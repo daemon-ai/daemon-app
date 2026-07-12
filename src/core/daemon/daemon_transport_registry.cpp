@@ -9,6 +9,25 @@
 
 namespace transports {
 
+namespace {
+
+// [integrations wire v38] Project one decoded settings field into the display-only row the
+// schema-driven add/edit-account form renders (the enriched kind/default/placeholder/choices lets
+// it mask secrets + prefill).
+QVariantMap settingsFieldToVariant(const daemonapp::daemon::DecodedSettingsField& f) {
+    QVariantMap row;
+    row[QStringLiteral("key")] = f.key;
+    row[QStringLiteral("label")] = f.label;
+    row[QStringLiteral("required")] = f.required;
+    row[QStringLiteral("kind")] = f.kind;
+    row[QStringLiteral("default")] = f.hasDefault ? f.defaultValue : QString();
+    row[QStringLiteral("placeholder")] = f.hasPlaceholder ? f.placeholder : QString();
+    row[QStringLiteral("choices")] = QVariant(f.choices);
+    return row;
+}
+
+} // namespace
+
 DaemonTransportRegistry::DaemonTransportRegistry(daemonapp::daemon::TransportRepository* repo,
                                                  QObject* parent)
     : ITransportRegistry(parent), m_repo(repo) {
@@ -29,6 +48,12 @@ DaemonTransportRegistry::DaemonTransportRegistry(daemonapp::daemon::TransportRep
                 &ITransportRegistry::membersChanged);
         connect(m_repo, &daemonapp::daemon::TransportRepository::operationFailed, this,
                 &ITransportRegistry::roomOperationFailed);
+        // [integrations wire v38] re-emit the settings read-back as the seam's settingsChanged so
+        // the edit-account form re-hydrates off the same seam both surfaces bind.
+        connect(m_repo, &daemonapp::daemon::TransportRepository::settingsRefreshed, this,
+                [this](const QString& transport) {
+                    emit settingsChanged(transport, settings(transport));
+                });
     }
 }
 
@@ -67,6 +92,13 @@ QVariantList DaemonTransportRegistry::availableAdapters() const {
         if (a.hasDirectory) {
             row[QStringLiteral("directory")] = a.directory;
         }
+        // [integrations wire v38] the adapter's account-settings schema (the "Add/Edit account"
+        // form's fields, with the enriched metadata). Empty list when the adapter reported none.
+        QVariantList schema;
+        for (const daemonapp::daemon::DecodedSettingsField& f : a.accountSchema) {
+            schema.append(settingsFieldToVariant(f));
+        }
+        row[QStringLiteral("schema")] = schema;
         out.append(row);
     }
     return out;
@@ -109,9 +141,11 @@ QVariantList DaemonTransportRegistry::conversations(const QString& transport) co
         QVariantMap row;
         row[QStringLiteral("transport")] = c.transport;
         row[QStringLiteral("id")] = c.convId;
-        row[QStringLiteral("kind")] = c.kind;
+        row[QStringLiteral("kind")] = c.kind; // [integrations wire v38] may be "space" (container)
         row[QStringLiteral("title")] = c.title;
         row[QStringLiteral("topic")] = c.topic;
+        // [integrations wire v38] the containing space id ("" = a root) — the tree groups by it.
+        row[QStringLiteral("parent")] = c.parent;
         out.append(row);
     }
     return out;
@@ -240,6 +274,36 @@ void DaemonTransportRegistry::memberSetRole(const QString& transport, const QStr
     if (m_repo != nullptr) {
         m_repo->memberSetRole(transport, conversation, contactId, role);
     }
+}
+
+// [integrations wire v38] Account settings read + configure, delegated to the repository.
+QVariantMap DaemonTransportRegistry::settings(const QString& transport) const {
+    QVariantMap out;
+    if (m_repo == nullptr) {
+        return out;
+    }
+    const QMap<QString, QString> vals = m_repo->settings(transport);
+    for (auto it = vals.constBegin(); it != vals.constEnd(); ++it) {
+        out.insert(it.key(), it.value());
+    }
+    return out;
+}
+
+void DaemonTransportRegistry::refreshSettings(const QString& transport) {
+    if (m_repo != nullptr) {
+        m_repo->refreshSettings(transport);
+    }
+}
+
+void DaemonTransportRegistry::configure(const QString& transport, const QVariantMap& values) {
+    if (m_repo == nullptr) {
+        return;
+    }
+    QMap<QString, QString> settingsMap;
+    for (auto it = values.constBegin(); it != values.constEnd(); ++it) {
+        settingsMap.insert(it.key(), it.value().toString());
+    }
+    m_repo->configure(transport, settingsMap);
 }
 
 } // namespace transports

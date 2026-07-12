@@ -2,6 +2,11 @@ add_library(da_platform STATIC
     iplatform_services.h
     platform_services_factory.h
     platform_services_factory.cpp
+    # Branded application QIcon (window chrome + tray), shared by every surface.
+    # All-platform: the body degrades to a null icon where the icon resource is
+    # absent (mobile / wasm), so callers link a definition everywhere.
+    app_icon.h
+    app_icon.cpp
     # Browser-persistence contract surface (Browser Persistence Polish wave). Headers are
     # all-platform; the .cpp bodies are compiled on every platform (unlike wasm_page_origin.cpp,
     # which is wasm-only) so the all-platform call sites link a definition everywhere — the bodies

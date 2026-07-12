@@ -120,6 +120,86 @@ Kit.Dialog {
         root.paramValues = {};
     }
 
+    // Write a schema field's value into the right buffer (begin params vs in-flow form values),
+    // reassigning the whole object so the required-gating bindings re-evaluate.
+    function setFieldValue(intoForm, key, value) {
+        if (intoForm) {
+            var fv = root.formValues;
+            fv[key] = value;
+            root.formValues = fv;
+        } else {
+            var pv = root.paramValues;
+            pv[key] = value;
+            root.paramValues = pv;
+        }
+    }
+
+    // [integrations wire v38] One generic delegate for the enriched auth-param-field shape
+    // ({key, label, required, kind, default, placeholder, choices}) — used for BOTH the begin
+    // schema params and an in-flow Form challenge. It picks the control from `kind` (Password masks,
+    // Number offers a numeric affordance, Choice is a dropdown, Text is a plain field), prefills from
+    // `default`, and hints with `placeholder`. Nothing protocol-specific: the field data decides.
+    component SchemaField: ColumnLayout {
+        id: schemaField
+        property var field: ({})
+        property bool intoForm: false
+        Layout.fillWidth: true
+        spacing: 4
+
+        readonly property string fieldKind: (field.kind && field.kind.length > 0) ? field.kind
+                                                                                   : "Text"
+        readonly property string fieldDefault: (field.default !== undefined
+                                                 && field.default !== null)
+                                                ? String(field.default) : ""
+
+        Component.onCompleted: {
+            // Seed the default so a prefilled (and required) field is satisfied and submitted even
+            // if the user never edits it.
+            if (schemaField.fieldDefault.length > 0)
+                root.setFieldValue(schemaField.intoForm, schemaField.field.key,
+                                   schemaField.fieldDefault);
+        }
+
+        SectionLabel {
+            text: (schemaField.field.label && schemaField.field.label.length > 0)
+                  ? schemaField.field.label : schemaField.field.key
+        }
+        // Choice: a dropdown over the allowed values, defaulting to `default` when present.
+        Kit.Dropdown {
+            visible: schemaField.fieldKind === "Choice"
+            Layout.fillWidth: true
+            model: schemaField.field.choices ? schemaField.field.choices : []
+            currentIndex: {
+                var idx = schemaField.field.choices
+                          ? schemaField.field.choices.indexOf(schemaField.fieldDefault) : -1;
+                return idx >= 0 ? idx : 0;
+            }
+            onActivated: root.setFieldValue(schemaField.intoForm, schemaField.field.key,
+                             (schemaField.field.choices && currentIndex >= 0)
+                             ? schemaField.field.choices[currentIndex] : "")
+            Component.onCompleted: {
+                if (schemaField.fieldKind === "Choice" && schemaField.field.choices
+                    && schemaField.field.choices.length > 0)
+                    root.setFieldValue(schemaField.intoForm, schemaField.field.key,
+                                       schemaField.field.choices[currentIndex >= 0
+                                                                  ? currentIndex : 0]);
+            }
+        }
+        // Text / Password / Number: a field, masked for secrets and numeric-hinted for numbers.
+        Kit.TextField {
+            visible: schemaField.fieldKind !== "Choice"
+            Layout.fillWidth: true
+            text: schemaField.fieldDefault
+            echoMode: schemaField.fieldKind === "Password" ? TextInput.Password : TextInput.Normal
+            inputMethodHints: schemaField.fieldKind === "Number" ? Qt.ImhFormattedNumbersOnly
+                                                                 : Qt.ImhNone
+            placeholderText: (schemaField.field.placeholder !== undefined
+                              && schemaField.field.placeholder !== null)
+                             ? String(schemaField.field.placeholder) : ""
+            onTextEdited: root.setFieldValue(schemaField.intoForm, schemaField.field.key, text)
+        }
+    }
+
     Connections {
         target: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow : null
         function onProvidersChanged() {
@@ -187,25 +267,13 @@ Kit.Dialog {
                     root.paramValues = {};
                 }
             }
-            // Schema-driven param fields (e.g. Matrix SSO's homeserver).
+            // Schema-driven param fields (e.g. Matrix SSO's homeserver), enriched shape.
             Repeater {
                 model: (root.pickedRow && root.pickedRow.params) ? root.pickedRow.params : []
-                delegate: ColumnLayout {
+                delegate: SchemaField {
                     required property var modelData
-                    Layout.fillWidth: true
-                    spacing: 4
-                    SectionLabel {
-                        text: modelData.label && modelData.label.length > 0 ? modelData.label
-                                                                            : modelData.key
-                    }
-                    Kit.TextField {
-                        Layout.fillWidth: true
-                        onTextEdited: {
-                            var values = root.paramValues;
-                            values[modelData.key] = text;
-                            root.paramValues = values;
-                        }
-                    }
+                    field: modelData
+                    intoForm: false
                 }
             }
             Kit.TextButton {
@@ -326,22 +394,10 @@ Kit.Dialog {
             }
             Repeater {
                 model: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow.formFields : []
-                delegate: ColumnLayout {
+                delegate: SchemaField {
                     required property var modelData
-                    Layout.fillWidth: true
-                    spacing: 4
-                    SectionLabel {
-                        text: modelData.label && modelData.label.length > 0 ? modelData.label
-                                                                            : modelData.key
-                    }
-                    Kit.TextField {
-                        Layout.fillWidth: true
-                        onTextEdited: {
-                            var values = root.formValues;
-                            values[modelData.key] = text;
-                            root.formValues = values;
-                        }
-                    }
+                    field: modelData
+                    intoForm: true
                 }
             }
             Kit.TextButton {
@@ -375,15 +431,29 @@ Kit.Dialog {
                 wrapMode: Text.WordWrap
                 font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
             }
+            // If the node supplied pre-rendered image bytes, show them; otherwise (the default) the
+            // Kit.QrCode below renders the payload's module matrix.
             Image {
                 visible: (typeof AuthFlow !== "undefined" && AuthFlow)
                          && AuthFlow.qrImageSource.length > 0
                 Layout.alignment: Qt.AlignHCenter
                 source: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow.qrImageSource : ""
-                sourceSize.width: 200; sourceSize.height: 200
+                sourceSize.width: 220; sourceSize.height: 220
                 fillMode: Image.PreserveAspectFit
             }
-            // Fallback when the node sent no pre-rendered image: show the payload to render/scan.
+            // Default path: render the payload with the Kit QR control (its own light quiet zone +
+            // dark modules are high-contrast and scanner-safe in every theme).
+            Kit.QrCode {
+                id: qrCode
+                visible: (typeof AuthFlow !== "undefined" && AuthFlow)
+                         && AuthFlow.qrImageSource.length === 0 && valid
+                Layout.alignment: Qt.AlignHCenter
+                implicitWidth: 220
+                implicitHeight: 220
+                payload: (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow.qrPayload : ""
+            }
+            // Copyable payload text: always available (and the sole fallback when the matrix can't
+            // encode the payload, e.g. it is too long).
             Kit.TextField {
                 visible: (typeof AuthFlow !== "undefined" && AuthFlow)
                          && AuthFlow.qrImageSource.length === 0

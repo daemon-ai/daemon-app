@@ -470,10 +470,12 @@ ApplicationWindow {
                     root.activeSessionId = sessionId;
                     sessionExpanded.open(sessionId);
                 }
-                // An unpinned external conversation is browse-only (B4): open the Channels
-                // page; pinning to an agent stays an explicit RouteDialog act from there.
+                // [integrations wire v38] Activating a room/DM opens (or focuses) a native
+                // chat tab for (transport, conversation) — the deliberate replacement for the
+                // old open-Channels fallback. Routing pins to agent sessions stay an orthogonal
+                // overlay (an explicit RouteDialog act), unchanged.
                 onConversationActivated: function(transport, conversation) {
-                    Nav.open("channels");
+                    sessionExpanded.openConversation(transport, conversation, "");
                 }
                 // "+ New agent/node" opens a fresh chat via the shared open-a-chat path.
                 onNewChatRequested: App.openNewAgentChat()
@@ -590,6 +592,18 @@ ApplicationWindow {
                         root.activeSessionId = sessionId;
                         sidebarDrawerCompact.close();
                         compactStack.push(sessionPage);
+                    }
+                    // [integrations wire v38] An integrations room/DM opens a native chat tab in
+                    // the session pane (parity with the expanded shell), pushing it first when the
+                    // phone has no pane mounted yet.
+                    onConversationActivated: function(transport, conversation) {
+                        sidebarDrawerCompact.close();
+                        if (!root.activeSessionPane)
+                            compactStack.push(sessionPage);
+                        Qt.callLater(function() {
+                            if (root.activeSessionPane)
+                                root.activeSessionPane.openConversation(transport, conversation, "");
+                        });
                     }
                     // "+ New agent/node" opens a fresh chat via the shared open-a-chat path.
                     onNewChatRequested: {

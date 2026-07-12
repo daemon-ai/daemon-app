@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Tambah integrasi</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Pengaturan akun</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Lanjutkan</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Simpan</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Biarkan kosong untuk mempertahankan nilai saat ini</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ sampai didaftarkan ulang.</translation>
         <translation>Pindai payload di bawah dengan perangkat Anda yang lain. Menunggu persetujuan…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Pindai payload ini dengan perangkat Anda yang lain (tanpa gambar di terminal):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Pindai kode dengan perangkat Anda yang lain, atau salin payload:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ sampai didaftarkan ulang.</translation>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>Jenis saluran ini tidak memiliki login lewat browser.</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Tidak dapat mengirim pesan.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Belum ada pesan</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Gagal mengirim pesan</translation>
     </message>
 </context>
 <context>
@@ -3571,6 +3616,72 @@ sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Sambungkan</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Nonaktifkan</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Aktifkan</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Pengaturan akun</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Hapus akun</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Hapus</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>Hapus akun ini dan putuskan sambungannya? Node akan membongkarnya sepenuhnya.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Integrasi</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Ciutkan semua</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Perluas semua</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Tambah integrasi</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Orang</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Saluran</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Pesan langsung</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Jelajahi</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5654,6 +5765,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Sesi baru</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Pesan tidak terkirim</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Tidak dapat mengirim pesan.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Pengaturan sesi</translation>
     </message>
@@ -7113,6 +7232,10 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
         <source>Agent</source>
         <translation>Agen</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>Obrolan</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7446,6 +7569,10 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>The membership action was rejected</source>
         <translation>Tindakan keanggotaan ditolak</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Gagal menerapkan pengaturan akun</translation>
     </message>
 </context>
 <context>
@@ -9019,6 +9146,13 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Gagal mengirim pesan</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9393,6 +9527,10 @@ Undangan ruang ditangani oleh node; ruang yang baru digabungi muncul di sini sec
     <message>
         <source>The membership action was rejected</source>
         <translation>Tindakan keanggotaan ditolak</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Gagal menerapkan pengaturan akun</translation>
     </message>
 </context>
 <context>

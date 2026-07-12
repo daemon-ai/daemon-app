@@ -94,6 +94,7 @@ class AddAccountFlow;
 class RoomFlow;    // [acct-mgmt] Channels room lifecycle + member flows
 class ContactFlow; // [acct-mgmt] Channels transport-contacts flows (wire v34)
 class AuthFlowLauncher;
+class IntegrationsTreeModel;
 class SidebarModel;
 class SessionsListModel;
 class SessionController;
@@ -106,6 +107,7 @@ class TranscriptExporter;
 class DisplayRoleAdapter;
 class ParticipantsView;
 class TabModel;
+class ChatConversationController;
 class TuiFileTabController;
 class TuiOverlayHost;
 class TuiPageHub;
@@ -118,6 +120,13 @@ class TabSessionManager;
 // views always binds to the active session. Stored by pointer (never moved) so the
 // ingest's &doc back-pointer stays valid. Defined in root_widget.cpp.
 struct TabSession;
+
+// [integrations wire v38] Per-native-chat-tab backend state (A4): each Chat tab owns
+// an independent ChatConversationController (bound to the shared IChatService) + a
+// DocumentStore rendered by the shared TranscriptView, so a backgrounded chat tab
+// keeps its transcript current off the MessagesChanged feed. Defined in
+// root_widget_tabs.cpp.
+struct ChatTab;
 
 // The TUI shell: a single full-screen window holding the three-column layout
 // (Sidebar | SessionsList | Session), driven entirely by the app's
@@ -323,6 +332,7 @@ private:
     void wirePageLiveRefresh();    // re-render an active hub page on seam churn
     void wireSearchBox();          // type-ahead session-list filter
     void wireSidebarTree();        // sidebar selection + collapse/expand
+    void wireIntegrationsTree();   // integrations tree nav + conversation/account activation
     void wireSessionList();        // row open + per-row session actions
     void wireTranscriptControls(); // approval/clarify/rewind from the transcript
     void wireComposer();           // composer <-> session controller + completion
@@ -362,6 +372,13 @@ private:
     void activateTranscriptTab(int tabId);
     void activateFileTab(int tabId);
     void activatePageTab(int row);
+    // [integrations wire v38] Native chat tabs (A4). ensureChatTab lazily builds the
+    // per-tab controller + document (bound to the IChatService seam) and opens the
+    // conversation; activateChatTab binds the shared transcript/composer to it;
+    // destroyChatTab tears it down on close.
+    void activateChatTab(int tabId);
+    ChatTab* ensureChatTab(int tabId);
+    void destroyChatTab(int tabId);
 
     // --- overlay/theme helpers (root_widget_pages.cpp) -----------------------
     // Build the checkpoint overlay's display strings + parallel id list from the
@@ -436,11 +453,25 @@ private:
     std::unique_ptr<TabSessionManager> m_tabSessions;
     // The active transcript session (nullptr while a page tab is active).
     TabSession* m_active = nullptr;
+    // [integrations wire v38] Per-native-chat-tab state, keyed by tab id; plus the
+    // active chat controller (nullptr unless a Chat tab is foregrounded), which the
+    // composer submit routes to instead of a session orchestrator.
+    QHash<int, ChatTab*> m_chatTabs;
+    ChatConversationController* m_activeChat = nullptr;
 
     // TUI-only glue + widgets.
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
     Tui::ZWindow* m_window = nullptr;
+    // The left column container (Fleet/Tags tree above the Integrations tree), hidden as a unit by
+    // distraction-free mode.
+    Tui::ZWidget* m_sidebarColumn = nullptr;
     TreeListView* m_sidebarView = nullptr;
+    // [integrations wire v38] Work package AC: the co-equal Integrations surface mounted in the
+    // sidebar — the SAME shared IntegrationsTreeModel the GUI binds, rendered through the
+    // Integrations display adapter, navigable via its own TreeListView.
+    IntegrationsTreeModel* m_integrationsTree = nullptr;
+    DisplayRoleAdapter* m_integrationsAdapter = nullptr;
+    TreeListView* m_integrationsView = nullptr;
     // The middle column wrapping the search box + session list; hidden as one
     // unit by distraction-free mode.
     Tui::ZWidget* m_listColumn = nullptr;

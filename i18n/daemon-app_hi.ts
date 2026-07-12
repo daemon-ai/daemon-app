@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>एकीकरण जोड़ें</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>खाता सेटिंग्स</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>जारी रखें</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>सहेजें</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>वर्तमान मान बनाए रखने के लिए खाली छोड़ें</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ until it is re-registered.</source>
         <translation>नीचे दिए पेलोड को अपने दूसरे डिवाइस से स्कैन करें। अनुमोदन की प्रतीक्षा है…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>इस पेलोड को अपने दूसरे डिवाइस से स्कैन करें (टर्मिनल में कोई छवि नहीं):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>अपने दूसरे डिवाइस से कोड स्कैन करें, या पेलोड कॉपी करें:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ until it is re-registered.</source>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>इस चैनल प्रकार में ब्राउज़र साइन-इन नहीं है।</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>संदेश नहीं भेजा जा सका।</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>अभी तक कोई संदेश नहीं</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>संदेश भेजने में विफल</translation>
     </message>
 </context>
 <context>
@@ -3573,6 +3618,72 @@ until it is re-registered.</source>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>कनेक्ट करें</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>अक्षम करें</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>सक्षम करें</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>खाता सेटिंग्स</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>खाता हटाएँ</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>हटाएँ</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>इस खाते को हटाकर डिस्कनेक्ट करें? नोड इसे पूरी तरह हटा देता है।</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>एकीकरण</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>सभी संक्षिप्त करें</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>सभी विस्तृत करें</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>एकीकरण जोड़ें</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>व्यक्ति</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>चैनल</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>सीधे संदेश</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>ब्राउज़ करें</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5658,6 +5769,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>नया सत्र</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>संदेश नहीं भेजा गया</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>संदेश नहीं भेजा जा सका।</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>सत्र सेटिंग्स</translation>
     </message>
@@ -7121,6 +7240,10 @@ This only affects the app appearance, not your data.</source>
         <source>Agent</source>
         <translation>एजेंट</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>चैट</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7454,6 +7577,10 @@ Thanks — proceeding with: %1
     <message>
         <source>The membership action was rejected</source>
         <translation>सदस्यता क्रिया अस्वीकृत की गई</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>खाता सेटिंग्स लागू करने में विफल</translation>
     </message>
 </context>
 <context>
@@ -9027,6 +9154,13 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>संदेश भेजने में विफल</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9401,6 +9535,10 @@ Room invites are handled by the node; newly-joined rooms appear here automatical
     <message>
         <source>The membership action was rejected</source>
         <translation>सदस्यता क्रिया अस्वीकृत की गई</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>खाता सेटिंग्स लागू करने में विफल</translation>
     </message>
 </context>
 <context>

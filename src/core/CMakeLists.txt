@@ -33,3 +33,6 @@ add_subdirectory(session)
 add_subdirectory(transports)
 add_subdirectory(tools) # [wave2:app-approvals-safety] D2 tool inventory seam
 add_subdirectory(daemon)
+add_subdirectory(mirror) # [mirror G1] generated entity layer (spec 09 §3): Q_GADGET structs + mappers (needs daemon_codec)
+add_subdirectory(local)  # [mirror A2] local-<id>.db module + durable outbox (spec 09 §6, §3.4, §4.5)
+add_subdirectory(qr) # [integrations wire v38] A3 shared QR module-matrix seam (Kit.QrCode + TUI)

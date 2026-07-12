@@ -608,15 +608,16 @@ bool DaemonCacheStore::deleteTransportInstance(const QString& transport) {
 bool DaemonCacheStore::upsertConversation(const CachedConversationRow& row) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral(
-        "INSERT INTO daemon_conversations(transport,conv_id,kind,title,topic,updated_at_ms) "
-        "VALUES(?,?,?,?,?,?) "
+        "INSERT INTO daemon_conversations(transport,conv_id,kind,title,topic,parent,updated_at_ms) "
+        "VALUES(?,?,?,?,?,?,?) "
         "ON CONFLICT(transport,conv_id) DO UPDATE SET kind=excluded.kind,title=excluded.title,"
-        "topic=excluded.topic,updated_at_ms=excluded.updated_at_ms"));
+        "topic=excluded.topic,parent=excluded.parent,updated_at_ms=excluded.updated_at_ms"));
     q.addBindValue(row.transport);
     q.addBindValue(row.convId);
     q.addBindValue(row.kind);
     q.addBindValue(row.title);
     q.addBindValue(row.topic);
+    q.addBindValue(row.parent);
     q.addBindValue(row.updatedAtMs);
     return execWrite(q);
 }
@@ -625,7 +626,7 @@ QList<CachedConversationRow> DaemonCacheStore::conversations(const QString& tran
     QList<CachedConversationRow> rows;
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral(
-        "SELECT transport,conv_id,kind,title,topic,updated_at_ms FROM daemon_conversations "
+        "SELECT transport,conv_id,kind,title,topic,parent,updated_at_ms FROM daemon_conversations "
         "WHERE transport=? ORDER BY title ASC, conv_id ASC"));
     q.addBindValue(transport);
     if (!q.exec()) {
@@ -639,7 +640,8 @@ QList<CachedConversationRow> DaemonCacheStore::conversations(const QString& tran
         row.kind = q.value(2).toString();
         row.title = q.value(3).toString();
         row.topic = q.value(4).toString();
-        row.updatedAtMs = q.value(5).toLongLong();
+        row.parent = q.value(5).toString();
+        row.updatedAtMs = q.value(6).toLongLong();
         rows.append(row);
     }
     return rows;

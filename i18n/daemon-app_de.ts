@@ -33,6 +33,33 @@
     </message>
 </context>
 <context>
+    <name>AccountFormDialog</name>
+    <message>
+        <source>Add integration</source>
+        <translation>Integration hinzufügen</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Kontoeinstellungen</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Weiter</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Speichern</translation>
+    </message>
+    <message>
+        <source>%1 *</source>
+        <translation>%1 *</translation>
+    </message>
+    <message>
+        <source>Leave blank to keep the current value</source>
+        <translation>Leer lassen, um den aktuellen Wert beizubehalten</translation>
+    </message>
+</context>
+<context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
@@ -884,8 +911,8 @@ bis er erneut registriert wird.</translation>
         <translation>Scannen Sie die untenstehenden Daten mit Ihrem anderen Gerät. Warten auf Genehmigung…</translation>
     </message>
     <message>
-        <source>Scan this payload with your other device (no image in the terminal):</source>
-        <translation>Scannen Sie diese Daten mit Ihrem anderen Gerät (kein Bild im Terminal):</translation>
+        <source>Scan the code with your other device, or copy the payload:</source>
+        <translation>Scannen Sie den Code mit Ihrem anderen Gerät oder kopieren Sie die Daten:</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -1356,6 +1383,24 @@ bis er erneut registriert wird.</translation>
     <message>
         <source>This channel type has no browser sign-in.</source>
         <translation>Dieser Kanaltyp hat keine Browser-Anmeldung.</translation>
+    </message>
+</context>
+<context>
+    <name>ChatPage</name>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Die Nachricht konnte nicht gesendet werden.</translation>
+    </message>
+    <message>
+        <source>No messages yet</source>
+        <translation>Noch keine Nachrichten</translation>
+    </message>
+</context>
+<context>
+    <name>ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Nachricht konnte nicht gesendet werden</translation>
     </message>
 </context>
 <context>
@@ -3573,6 +3618,72 @@ bis er erneut registriert wird.</translation>
     </message>
 </context>
 <context>
+    <name>IntegrationsTree</name>
+    <message>
+        <source>Connect</source>
+        <translation>Verbinden</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Deaktivieren</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Aktivieren</translation>
+    </message>
+    <message>
+        <source>Account settings</source>
+        <translation>Kontoeinstellungen</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Konto entfernen</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+    <message>
+        <source>Remove this account and disconnect it? The node tears it down fully.</source>
+        <translation>Dieses Konto entfernen und trennen? Der Node baut es vollständig ab.</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Integrationen</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Alle einklappen</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Alle ausklappen</translation>
+    </message>
+    <message>
+        <source>Add integration</source>
+        <translation>Integration hinzufügen</translation>
+    </message>
+</context>
+<context>
+    <name>IntegrationsTreeModel</name>
+    <message>
+        <source>Persons</source>
+        <translation>Personen</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Kanäle</translation>
+    </message>
+    <message>
+        <source>Direct Messages</source>
+        <translation>Direktnachrichten</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Durchsuchen</translation>
+    </message>
+</context>
+<context>
     <name>InteractiveTurnHost</name>
     <message>
         <source>
@@ -5658,6 +5769,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Neue Sitzung</translation>
     </message>
     <message>
+        <source>Message not sent</source>
+        <translation>Nachricht nicht gesendet</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t send the message.</source>
+        <translation>Die Nachricht konnte nicht gesendet werden.</translation>
+    </message>
+    <message>
         <source>Session settings</source>
         <translation>Sitzungseinstellungen</translation>
     </message>
@@ -7121,6 +7240,10 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
         <source>Agent</source>
         <translation>Agent</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPanelStub</name>
@@ -7454,6 +7577,10 @@ Danke — es geht weiter mit: %1
     <message>
         <source>The membership action was rejected</source>
         <translation>Die Mitgliedschaftsaktion wurde abgelehnt</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Kontoeinstellungen konnten nicht angewendet werden</translation>
     </message>
 </context>
 <context>
@@ -9027,6 +9154,13 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ChatRepository</name>
+    <message>
+        <source>Failed to send the message</source>
+        <translation>Nachricht konnte nicht gesendet werden</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -9401,6 +9535,10 @@ Raumeinladungen werden vom Knoten verwaltet; neu beigetretene Räume erscheinen 
     <message>
         <source>The membership action was rejected</source>
         <translation>Die Mitgliedschaftsaktion wurde abgelehnt</translation>
+    </message>
+    <message>
+        <source>Failed to apply the account settings</source>
+        <translation>Kontoeinstellungen konnten nicht angewendet werden</translation>
     </message>
 </context>
 <context>

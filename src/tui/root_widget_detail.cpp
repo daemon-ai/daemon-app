@@ -111,6 +111,18 @@ QString pageMarkdown(int kind) {
     return {};
 }
 
+int openConversationTab(TabModel* tabs, const QString& transport, const QString& conversation,
+                        const QString& label) {
+    if (tabs == nullptr) {
+        return -1;
+    }
+    // The tab chip: the conversation's display label when known, else its id (never
+    // blank). openConversation is find-or-create keyed by (transport, conversation),
+    // so re-activating an open room/DM focuses its tab instead of duplicating it.
+    const QString title = label.isEmpty() ? conversation : label;
+    return tabs->openConversation(transport, conversation, title);
+}
+
 QString attachmentKindForName(const QString& name) {
     // Keep in sync with the GUI's drop-path detection (Composer.qml DropArea:
     // /\.(png|jpe?g|gif|webp|bmp|svg)$/ over the lowercased name).

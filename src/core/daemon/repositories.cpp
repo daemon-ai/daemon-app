@@ -2185,6 +2185,12 @@ void TransportRepository::handleResponse(const QString& correlationId,
         QString conv;
         const QString transport = splitTwo(tailOf(kMemberOpPrefix), &conv);
         handleMemberOpResponse(transport, conv, responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kSettingsPrefix))) {
+        // [integrations wire v38] TransportSettings read-back (the transport rides the tail).
+        handleSettingsResponse(tailOf(kSettingsPrefix), responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kConfigurePrefix))) {
+        // [integrations wire v38] TransportConfigure Ok -> re-read the settings (authoritative).
+        handleConfigureResponse(tailOf(kConfigurePrefix), responseCbor);
     }
 }
 
@@ -2521,6 +2527,9 @@ void TransportRepository::syncConversations(const QString& transport,
         row.kind = c.kind;
         row.title = c.title;
         row.topic = c.topic;
+        // [integrations wire v38] persist the containing space id (empty = a root) so the
+        // integrations tree's hierarchy renders offline-first.
+        row.parent = c.hasParent ? c.parent : QString();
         row.updatedAtMs = now;
         cache()->upsertConversation(row);
         keep.insert(c.id);
@@ -3533,6 +3542,239 @@ void GatewayRepository::handleFailure(const QString& correlationId, const QStrin
     if (correlationId == QLatin1String(kGetCorrelation) ||
         correlationId == QLatin1String(kSetCorrelation)) {
         emit operationFailed(message);
+    }
+}
+
+// --- [integrations wire v38] Transport account settings (read + configure) ----------------------
+void TransportRepository::refreshSettings(const QString& transport) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTransportSettingsRequest(transport),
+                          QLatin1String(kSettingsPrefix) + transport);
+}
+
+void TransportRepository::configure(const QString& transport,
+                                    const QMap<QString, QString>& values) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTransportConfigureRequest(transport, values),
+                          QLatin1String(kConfigurePrefix) + transport);
+}
+
+void TransportRepository::handleSettingsResponse(const QString& transport,
+                                                 const QByteArray& responseCbor) {
+    QMap<QString, QString> vals;
+    if (!NodeApiCodec::decodeTransportSettings(responseCbor, &vals)) {
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(QStringLiteral("Failed to decode TransportSettings response"));
+        }
+        return;
+    }
+    m_settings.insert(transport, vals);
+    emit settingsRefreshed(transport);
+}
+
+void TransportRepository::handleConfigureResponse(const QString& transport,
+                                                  const QByteArray& responseCbor) {
+    const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+    if (kind == ApiResponseKind::Ok) {
+        // Authoritative re-read: the node validated + applied (reconnect); render its stored
+        // values.
+        refreshSettings(transport);
+        return;
+    }
+    DecodedApiError err;
+    if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+        emit operationFailed(err.message);
+    } else {
+        emit operationFailed(tr("Failed to apply the account settings"));
+    }
+}
+
+// --- [integrations wire v38] Persons registry (PersonList) --------------------------------------
+PersonsRepository::PersonsRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                     QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &PersonsRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &PersonsRepository::handleFailure);
+    }
+}
+
+void PersonsRepository::refresh() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodePersonListRequest(), QLatin1String(kListCorrelation));
+}
+
+void PersonsRepository::handleResponse(const QString& correlationId,
+                                       const QByteArray& responseCbor) {
+    if (correlationId != QLatin1String(kListCorrelation)) {
+        return;
+    }
+    QList<DecodedPerson> persons;
+    if (!NodeApiCodec::decodePersons(responseCbor, &persons)) {
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(QStringLiteral("Failed to decode Persons response"));
+        }
+        return;
+    }
+    m_persons = persons;
+    emit personsRefreshed();
+}
+
+void PersonsRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kListCorrelation)) {
+        emit operationFailed(message);
+    }
+}
+
+// --- [integrations wire v38] Native chat (ConvHistory / ConvSend) -------------------------------
+QString ChatRepository::convKey(const QString& transport, const QString& conv) {
+    return transport + QChar(0x1f) + conv;
+}
+
+bool ChatRepository::splitConvKey(const QString& tail, QString* transport, QString* conv) {
+    const qsizetype us = tail.indexOf(QChar(0x1f));
+    if (us < 0) {
+        return false;
+    }
+    if (transport != nullptr) {
+        *transport = tail.left(us);
+    }
+    if (conv != nullptr) {
+        *conv = tail.mid(us + 1);
+    }
+    return true;
+}
+
+ChatRepository::ChatRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &ChatRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &ChatRepository::handleFailure);
+    }
+}
+
+void ChatRepository::refreshHistory(const QString& transport, const QString& conv) {
+    if (client() == nullptr) {
+        emit operationFailed(transport, conv, QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    const QString key = convKey(transport, conv);
+    // A fresh refresh restarts the conversation's page loop (paged forward from the start).
+    m_historyLoops[key].reset();
+    client()->sendRequest(NodeApiCodec::encodeConvHistoryRequest(transport, conv),
+                          QLatin1String(kHistoryPrefix) + key);
+}
+
+void ChatRepository::send(const QString& transport, const QString& conv, const QString& text) {
+    if (client() == nullptr) {
+        emit operationFailed(transport, conv, QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeConvSendRequest(transport, conv, text),
+                          QLatin1String(kSendPrefix) + convKey(transport, conv));
+}
+
+void ChatRepository::applyMessagesChanged(const QString& transport, const QString& conv) {
+    // The transcript grew: re-fetch it (the node bounds the page). A later delta could page only
+    // the tail past the last known cursor; a full refresh keeps v38 simple and always correct.
+    refreshHistory(transport, conv);
+}
+
+void ChatRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
+    const auto tailOf = [&](const char* prefix) { return correlationId.mid(int(qstrlen(prefix))); };
+    if (correlationId.startsWith(QLatin1String(kHistoryPrefix))) {
+        QString transport;
+        QString conv;
+        if (splitConvKey(tailOf(kHistoryPrefix), &transport, &conv)) {
+            handleHistoryResponse(transport, conv, responseCbor);
+        }
+    } else if (correlationId.startsWith(QLatin1String(kSendPrefix))) {
+        QString transport;
+        QString conv;
+        if (splitConvKey(tailOf(kSendPrefix), &transport, &conv)) {
+            handleSendResponse(transport, conv, responseCbor);
+        }
+    }
+}
+
+void ChatRepository::handleFailure(const QString& correlationId, const QString& message) {
+    const auto tailOf = [&](const char* prefix) { return correlationId.mid(int(qstrlen(prefix))); };
+    QString transport;
+    QString conv;
+    bool ours = false;
+    if (correlationId.startsWith(QLatin1String(kHistoryPrefix))) {
+        ours = splitConvKey(tailOf(kHistoryPrefix), &transport, &conv);
+    } else if (correlationId.startsWith(QLatin1String(kSendPrefix))) {
+        ours = splitConvKey(tailOf(kSendPrefix), &transport, &conv);
+    }
+    if (ours) {
+        emit operationFailed(transport, conv, message);
+    }
+}
+
+void ChatRepository::handleHistoryResponse(const QString& transport, const QString& conv,
+                                           const QByteArray& responseCbor) {
+    const QString key = convKey(transport, conv);
+    QList<DecodedChatMessage> page;
+    quint64 next = 0;
+    quint64 head = 0;
+    if (!NodeApiCodec::decodeConvHistory(responseCbor, &page, &next, &head)) {
+        m_historyLoops.remove(key);
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(transport, conv, err.message);
+        } else {
+            emit operationFailed(transport, conv,
+                                 QStringLiteral("Failed to decode ConvHistory response"));
+        }
+        return;
+    }
+    // Page loop: accumulate ascending records and re-issue with `after_cursor = next` until the
+    // page reaches the head (next >= head), then swap the transcript ONCE.
+    PageLoop<DecodedChatMessage>& loop = m_historyLoops[key];
+    loop.items.append(page);
+    if (next < head && loop.guard(QString::number(next)) && client() != nullptr) {
+        client()->sendRequest(
+            NodeApiCodec::encodeConvHistoryRequest(transport, conv, /*hasAfter=*/true, next),
+            QLatin1String(kHistoryPrefix) + key);
+        return;
+    }
+    m_messages.insert(key, loop.items);
+    m_historyLoops.remove(key);
+    emit historyRefreshed(transport, conv);
+}
+
+void ChatRepository::handleSendResponse(const QString& transport, const QString& conv,
+                                        const QByteArray& responseCbor) {
+    const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+    if (kind == ApiResponseKind::Ok) {
+        // No optimistic echo: the node appended the Chat record + emits MessagesChanged, which the
+        // SubscriptionManager turns into an authoritative refetch (applyMessagesChanged).
+        emit messageSent(transport, conv);
+        return;
+    }
+    DecodedApiError err;
+    if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+        emit operationFailed(transport, conv, err.message);
+    } else {
+        emit operationFailed(transport, conv, tr("Failed to send the message"));
     }
 }
 

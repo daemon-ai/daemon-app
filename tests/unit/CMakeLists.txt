@@ -349,6 +349,19 @@ target_link_libraries(tst_auth_flow
 add_test(NAME tst_auth_flow COMMAND tst_auth_flow)
 set_tests_properties(tst_auth_flow PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_qr (A3 app/auth-component; [integrations wire v38]): the shared QR module-matrix seam both auth
+# surfaces render from — QrMatrix::encode() as a known-vector check against Nayuki qrcodegen's
+# reference behavior (version-1 dimensions + the spec-fixed finder/timing/dark modules), and
+# renderHalfBlocks() as the terminal projection (exact half-block glyph rows + quiet-zone framing).
+qt_add_executable(tst_qr tst_qr.cpp)
+target_link_libraries(tst_qr
+    PRIVATE
+        Qt6::Test
+        daemon-app::qr
+)
+add_test(NAME tst_qr COMMAND tst_qr)
+set_tests_properties(tst_qr PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # [wave2:app-engines] tst_agent_registry (C1/ENG-3): the foreign-agent registry codec —
 # AgentRegister/AgentRemove/AgentCatalog/AgentDiscover round-trips against the vendored zcbor codec
 # (source=Manual, protocol tag, stdio/endpoint recipe; installed absent), and AgentCatalog decode
@@ -517,6 +530,25 @@ target_link_libraries(tst_daemon_transports
 )
 add_test(NAME tst_daemon_transports COMMAND tst_daemon_transports)
 set_tests_properties(tst_daemon_transports PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_integrations_seams (A1 app/core-seams; wire v38): the integrations foundation the later app
+# packages consume — the v38 codec wrappers (enriched auth-param-field, AuthFlowKind::UserPassword,
+# ConversationInfo.parent + Space, AdapterInfo.account_schema, ConvSend/ConvHistory, PersonList,
+# TransportSettings/Configure, MessagesChanged/PersonsChanged), the ChatRepository / PersonsRepository
+# + transport-settings repository surface, the daemon + mock IChatService/IPersonsService seams, and
+# the SubscriptionManager fan-out — over the vendored zcbor codec + the WireMuxServer fixture.
+qt_add_executable(tst_integrations_seams tst_integrations_seams.cpp)
+target_link_libraries(tst_integrations_seams
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::auth
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::transports
+)
+add_test(NAME tst_integrations_seams COMMAND tst_integrations_seams)
+set_tests_properties(tst_integrations_seams PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_daemon_profile_store: client-side id-derivation (slug) for ProfileCreate/Clone; the PRO-7/8
 # distribution + revisions codec round-trips; and the DaemonProfileStore export->file->import +
@@ -802,6 +834,27 @@ target_link_libraries(tst_sidebar_model
 add_test(NAME tst_sidebar_model COMMAND tst_sidebar_model)
 set_tests_properties(tst_sidebar_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_integrations_tree (A2 app/tree-ui): the integrations tree view-model composed directly from
+# ITransportRegistry + IPersonsService (account roots -> capability-gated sections -> space/parent
+# nesting -> rooms/DMs/persons, unknown-parent-as-root), its activation intents (conversation ->
+# A4's activation seam), and the schema-driven AccountManagementController (add hand-off to the auth
+# flow, edit merge-configure with masked-field omission, remove).
+qt_add_executable(tst_integrations_tree tst_integrations_tree.cpp)
+target_include_directories(tst_integrations_tree
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Sidebar"
+)
+target_link_libraries(tst_integrations_tree
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        Qt6::Quick
+        daemon-app::transports
+        daemon-app::uimodels
+        daemon-app::sidebar
+)
+add_test(NAME tst_integrations_tree COMMAND tst_integrations_tree)
+set_tests_properties(tst_integrations_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_participants_model: the right sidebar's Participants section model (shared by
 # the GUI and TUI) - the collapsible header, the seeded Agent/User rows with their
 # green "available" presence dots, and the section fold.
@@ -941,6 +994,29 @@ target_link_libraries(tst_tab_model
 )
 add_test(NAME tst_tab_model COMMAND tst_tab_model)
 set_tests_properties(tst_tab_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_chat_conversation_controller (A4 app/chat-tabs; wire v38): the shared native-chat
+# view-model BOTH surfaces bind — history load on open, the oldest-first markdown projection
+# of ConvHistory rows, send-without-local-echo, authoritative MessagesChanged refresh (fg + bg),
+# per-conversation signal filtering, and sendFailed surfacing. Compiles the controller source
+# directly and links the transports seam (IChatService + MockChatService).
+qt_add_executable(tst_chat_conversation_controller
+    tst_chat_conversation_controller.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat/chat_conversation_controller.cpp
+)
+set_target_properties(tst_chat_conversation_controller PROPERTIES AUTOMOC ON)
+target_include_directories(tst_chat_conversation_controller
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Chat"
+)
+target_link_libraries(tst_chat_conversation_controller
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        daemon-app::transports
+)
+add_test(NAME tst_chat_conversation_controller COMMAND tst_chat_conversation_controller)
+set_tests_properties(tst_chat_conversation_controller
+    PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_session_orchestrator: the shared submit pipeline - submit starts the
 # turn + populates todos (and clears them after the turn settles), cancel resets,
@@ -1086,3 +1162,98 @@ target_link_libraries(tst_composer_upload
 )
 add_test(NAME tst_composer_upload COMMAND tst_composer_upload)
 set_tests_properties(tst_composer_upload PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_outbox (mirror A2): the durable outbox + local-<id>.db module (spec 09 §6, §3.4, §4.5) -
+# UUIDv7 op-ids, the versioned+migrated local db (never dropped), the outbox state machine
+# (lanes/FIFO/backoff/gates/rejection/confirm/bounds), crash-injection across enqueue|send|confirm +
+# boot reconciliation, the disabled auto-replay gate, and the PendingOpsModel lens. Ported behaviors
+# re-expressed from Sink/Akonadi (LGPL) - behaviors only, no source text.
+qt_add_executable(tst_outbox tst_outbox.cpp)
+target_link_libraries(tst_outbox
+    PRIVATE
+        Qt6::Test
+        Qt6::Sql
+        daemon-app::local
+)
+add_test(NAME tst_outbox COMMAND tst_outbox)
+set_tests_properties(tst_outbox PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_composer_outbox_queue (mirror A2): the composer turn-prompt lane storage swap (spec 09 §6.7
+# step 1) - queued prompts become crash-durable while ComposerQueueModel's roles/signals are
+# unchanged. The existing composer suites remain the untouched regression harness for the default
+# in-memory path.
+qt_add_executable(tst_composer_outbox_queue tst_composer_outbox_queue.cpp)
+target_link_libraries(tst_composer_outbox_queue
+    PRIVATE
+        Qt6::Test
+        Qt6::Sql
+        daemon-app::composer_session
+        daemon-app::local
+)
+add_test(NAME tst_composer_outbox_queue COMMAND tst_composer_outbox_queue)
+set_tests_properties(tst_composer_outbox_queue PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_mirror_entities: the generated mirror entity layer (spec 09 §3). Linking daemon-app::mirror
+# IS the "generated headers compile in the app build" gate (moc-processed Q_GADGET structs + typed
+# keys + provenance table); the asserts cover §3.1 census completeness, provenance completeness,
+# and canonical \x1f key serialization. Pure logic, runs headless.
+qt_add_executable(tst_mirror_entities tst_mirror_entities.cpp)
+target_link_libraries(tst_mirror_entities
+    PRIVATE
+        Qt6::Test
+        daemon-app::mirror
+)
+add_test(NAME tst_mirror_entities COMMAND tst_mirror_entities)
+set_tests_properties(tst_mirror_entities PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# The A1 mirror-substrate suite (spec 09 §4, §11): the store apply/commit pipeline, the ACTIVE
+# degraded journal + watermarks/compaction, mirror-<id>.db persistence, and the ADR-008 observe
+# seam (both spike implementations). Gated on the vendored immer+zug+lager substrate being built
+# (daemon-app::mirror_substrate); platform stacks without those sources skip these tests. Ported
+# immer/lager behaviors are attributed in each source file's header.
+if(TARGET daemon-app::mirror_substrate)
+    foreach(_mtst tst_mirror_journal tst_mirror_store tst_mirror_persistence tst_mirror_observe)
+        qt_add_executable(${_mtst} ${_mtst}.cpp)
+        target_link_libraries(${_mtst} PRIVATE Qt6::Test daemon-app::mirror_substrate)
+        add_test(NAME ${_mtst} COMMAND ${_mtst})
+        set_tests_properties(${_mtst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endforeach()
+endif()
+
+# The A4 ingestor suite (spec 09 §5, §4.6, §13 M1): policy-table exhaustiveness, fetch-scheduler
+# dedup/priority/cap, ingestor dispatch + ConvHistory cursor fix + windows v1 + reconnect both
+# modes + ResyncNeeded scoping + visibility staleness, the write-behind one-transaction consumer,
+# and dual-write parity. Gated on the ingestor library (which is gated on the vendored substrate).
+if(TARGET daemon-app::mirror_ingestor)
+    foreach(_itst tst_mirror_policy_table tst_mirror_fetch_scheduler tst_mirror_ingestor
+                  tst_mirror_write_behind tst_mirror_parity)
+        qt_add_executable(${_itst} ${_itst}.cpp)
+        target_link_libraries(${_itst} PRIVATE Qt6::Test daemon-app::mirror_ingestor)
+        add_test(NAME ${_itst} COMMAND ${_itst})
+        set_tests_properties(${_itst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endforeach()
+
+    # The daemon bridge translation (DecodedNodeEvent → mirror::NodeEvent): the second compile-time
+    # exhaustiveness layer tying the app's generated wire enum to the policy table (spec §5.1/§12).
+    # Needs the daemon codec facade (node_api_codec.h) + the ingestor's policy table.
+    if(TARGET daemon-app::daemon_client)
+        qt_add_executable(tst_mirror_bridge tst_mirror_bridge.cpp)
+        target_link_libraries(tst_mirror_bridge
+            PRIVATE Qt6::Test daemon-app::mirror_ingestor daemon-app::daemon_client)
+        add_test(NAME tst_mirror_bridge COMMAND tst_mirror_bridge)
+        set_tests_properties(tst_mirror_bridge PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
+endif()
+
+# The A3 mirror-lens suite (spec 09 §8): the generic journal-delta adapter
+# (mirror::TableModel / mirror::WindowModel), the 64-bit stable-id interner, and the
+# ConversationListModel role-map demonstrator. Every model instantiation runs under
+# QAbstractItemModelTester (§12). Gated on the lens target being built (needs the substrate).
+if(TARGET daemon-app::mirror_lens)
+    foreach(_ltst tst_mirror_stable_id tst_mirror_table_model tst_mirror_window_model)
+        qt_add_executable(${_ltst} ${_ltst}.cpp)
+        target_link_libraries(${_ltst} PRIVATE Qt6::Test daemon-app::mirror_lens)
+        add_test(NAME ${_ltst} COMMAND ${_ltst})
+        set_tests_properties(${_ltst} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endforeach()
+endif()

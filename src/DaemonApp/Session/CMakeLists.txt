@@ -30,6 +30,7 @@ target_link_libraries(da_session_view
         daemon-app::tabs
         daemon-app::transcript
         daemon-app::composer
+        daemon-app::chat_view
         daemon-app::turn
         daemon-app::pages
         daemon-app::memory_views

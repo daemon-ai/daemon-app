@@ -93,6 +93,25 @@ if(NOT TARGET earcut::earcut)
 endif()
 
 # ---------------------------------------------------------------------------
+# qrcodegen - Nayuki's QR-Code-generator (MIT), all platforms. The two
+# dependency-free C++ files (cpp/qrcodegen.{hpp,cpp}) are built out of the
+# pinned flake input; NOT committed into the repo and never hand-edited. Used
+# by daemon-app::qr (QrMatrix) for the generic auth component's Kit.QrCode +
+# TUI half-block rendering. Project warning flags are intentionally NOT applied
+# to this vendored upstream source.
+# ---------------------------------------------------------------------------
+_daemon_app_resolve_dir(_qrcodegen_dir QRCODEGEN_SOURCE_DIR)
+if(NOT EXISTS "${_qrcodegen_dir}/cpp/qrcodegen.hpp")
+    message(FATAL_ERROR "QRCODEGEN_SOURCE_DIR must point to a nayuki/QR-Code-generator source tree (got '${_qrcodegen_dir}')")
+endif()
+if(NOT TARGET qrcodegen)
+    add_library(qrcodegen STATIC "${_qrcodegen_dir}/cpp/qrcodegen.cpp")
+    add_library(qrcodegen::qrcodegen ALIAS qrcodegen)
+    target_include_directories(qrcodegen PUBLIC "${_qrcodegen_dir}/cpp")
+    set_target_properties(qrcodegen PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
+# ---------------------------------------------------------------------------
 # KSyntaxHighlighting - KDE syntax highlighting engine + its QML module
 # (org.kde.syntaxhighlighting). Built from the pinned source tree; produces the
 # C++ target KF6SyntaxHighlighting and the QML plugin kquicksyntaxhighlightingplugin.
@@ -274,4 +293,49 @@ if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM AND DAEMON_APP_DESKTOP_DEPS)
     _daemon_app_optional_dep(qsimpleupdater    QSIMPLEUPDATER_SOURCE_DIR    QSimpleUpdater)
     _daemon_app_optional_dep(qautostart        QAUTOSTART_SOURCE_DIR        QAutostart)
     _daemon_app_optional_dep(qxtglobalshortcut QXTGLOBALSHORTCUT_SOURCE_DIR QxtGlobalShortcut)
+endif()
+
+# ---------------------------------------------------------------------------
+# Mirror substrate (spec 09 §4, ADR-002/-008): the header-only immer value
+# substrate, wired as an INTERFACE target from the flake's IMMER_SOURCE_DIR pin
+# (rev matches the references/ study clone). OPTIONAL: platform stacks that do
+# not pass the source simply skip it, and src/core/mirror only builds the
+# substrate library when DAEMON_APP_HAVE_MIRROR_SUBSTRATE is set below.
+#
+# ADR-008 FINALIZED (A3, M1): the observe seam is coarse signals; the lager
+# candidate (and its zug + boost::intrusive transitive headers) was deleted
+# after gate 1 stayed decisively RED on the representative VM TU set
+# (+50% clean / +53% incremental vs coarse — see
+# src/core/mirror/ADR-008-addendum-A3.md). immer is the only mirror dependency.
+#
+# immer's ODR-relevant compile switches are set ONCE here, globally, exactly as
+# study 01 §6 requires (never per-target/per-TU). IMMER_NO_THREAD_SAFETY drops
+# atomic refcounting + locks: the entire mirror data layer is single-threaded
+# (spec §11), async lives only at the wire edge. Exceptions are left to immer's
+# auto-detection of -fno-exceptions (config.hpp), which the wasm preset relies on.
+# ---------------------------------------------------------------------------
+set(DAEMON_APP_HAVE_MIRROR_SUBSTRATE OFF CACHE INTERNAL "immer substrate available")
+_daemon_app_resolve_dir(_immer_dir IMMER_SOURCE_DIR)
+if(_immer_dir)
+    if(NOT EXISTS "${_immer_dir}/immer/table.hpp")
+        message(FATAL_ERROR "IMMER_SOURCE_DIR must point at an immer source tree (got '${_immer_dir}')")
+    endif()
+
+    if(NOT TARGET immer)
+        add_library(immer INTERFACE)
+        add_library(immer::immer ALIAS immer)
+        # SYSTEM so the vendored headers' own warnings never surface under our
+        # -Werror project flags (CompilerWarnings.cmake).
+        target_include_directories(immer SYSTEM INTERFACE "${_immer_dir}")
+    endif()
+
+    # ODR-global immer switch (study 01 §6). Applied to the whole project so
+    # every TU that includes an immer header agrees on the memory policy.
+    add_compile_definitions(IMMER_NO_THREAD_SAFETY=1)
+
+    set(DAEMON_APP_HAVE_MIRROR_SUBSTRATE ON CACHE INTERNAL "immer substrate available" FORCE)
+    message(STATUS "Dependencies: mirror substrate available (immer value substrate; coarse observe seam).")
+else()
+    message(STATUS "Dependencies: IMMER_SOURCE_DIR not set; mirror substrate library skipped "
+        "(generated entity layer still builds).")
 endif()
