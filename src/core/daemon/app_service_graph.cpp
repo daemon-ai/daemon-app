@@ -294,23 +294,18 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.transportRegistry =
             new transports::DaemonTransportRegistry(graph.transportRepository, owner);
         // [acct-mgmt] Daemon-backed transport contacts / roster (Phase D, wire v34): replace the
-        // inert mock with the DaemonContactsService projecting the ContactsRepository. The feed's
-        // ContactsChanged event refetches a transport's roster in place (wired via the setter
-        // because the repo is built after the SubscriptionManager).
+        // inert mock with the DaemonContactsService projecting the ContactsRepository (the contact
+        // VERB sink — add/update/remove/alias/directory/profile). Contact ROWS are mirror-served:
+        // the ingestor's ContactsChanged policy arm pages RosterList into the mirror `contacts`
+        // table the channels hub reads, so no SubscriptionManager refetch arm is needed here.
         graph.contactsRepository = new ContactsRepository(graph.nodeApi, graph.cache, owner);
-        if (graph.subscriptions != nullptr) {
-            graph.subscriptions->setContactsRepository(graph.contactsRepository);
-        }
         graph.contacts = new transports::DaemonContactsService(graph.contactsRepository, owner);
-        // [integrations wire v38] Daemon-backed native chat (ConvHistory / ConvSend). The feed's
-        // MessagesChanged refetches the affected conversation's ConvHistory — wired via the
-        // setter (the repo is built after the SubscriptionManager). (The person registry reads
-        // died with the tree port: PersonList feeds the mirror persons/person_endpoints tables
-        // through the ingestor — AD 1a.)
+        // [integrations wire v38] Daemon-backed native chat send/history (ConvHistory / ConvSend).
+        // The transcript is mirror-served: the ingestor's MessagesChanged policy arm pages
+        // ConvHistory into the mirror `chat` window the conversation controller renders, so no
+        // SubscriptionManager refetch arm is needed here. (Persons likewise feed the mirror
+        // persons/person_endpoints tables through the ingestor — AD 1a.)
         graph.chatRepository = new ChatRepository(graph.nodeApi, graph.cache, owner);
-        if (graph.subscriptions != nullptr) {
-            graph.subscriptions->setChatRepository(graph.chatRepository);
-        }
         // (chat is null outside daemon mode since M5 — no mock to delete.)
         graph.chat = new transports::DaemonChatService(graph.chatRepository, owner);
         // Daemon-backed, offline-first session roster + dashboard (replaces the mock pair). The
@@ -485,7 +480,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // without a manual refresh. On a successful interactive sign-in, refetch the transport
     // instances (the new account appears with its live status) and that account's ConvList (its
     // rooms populate). Lives once in the shared graph so GUI + TUI both benefit through their
-    // existing instancesChanged/conversationsChanged reactivity. Daemon-backed mode only.
+    // existing instancesChanged reactivity (rooms render off the mirror's ChannelsHub). Daemon-
+    // backed mode only.
     if (graph.transportRepository != nullptr) {
         QObject::connect(graph.authFlowController, &auth::AuthFlowController::succeeded,
                          graph.transportRepository,

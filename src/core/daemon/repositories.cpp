@@ -1597,11 +1597,6 @@ QList<CachedTransportInstanceRow> TransportRepository::cachedInstances() const {
     return cache() != nullptr ? cache()->transportInstances() : QList<CachedTransportInstanceRow>{};
 }
 
-QList<CachedConversationRow>
-TransportRepository::cachedConversations(const QString& transport) const {
-    return cache() != nullptr ? cache()->conversations(transport) : QList<CachedConversationRow>{};
-}
-
 void TransportRepository::refreshAdapters() {
     if (client() == nullptr) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
@@ -3176,12 +3171,6 @@ void ChatRepository::send(const QString& transport, const QString& conv, const Q
                           QLatin1String(kSendPrefix) + convKey(transport, conv));
 }
 
-void ChatRepository::applyMessagesChanged(const QString& transport, const QString& conv) {
-    // The transcript grew: re-fetch it (the node bounds the page). A later delta could page only
-    // the tail past the last known cursor; a full refresh keeps v38 simple and always correct.
-    refreshHistory(transport, conv);
-}
-
 void ChatRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
     const auto tailOf = [&](const char* prefix) { return correlationId.mid(int(qstrlen(prefix))); };
     if (correlationId.startsWith(QLatin1String(kHistoryPrefix))) {
@@ -3251,7 +3240,8 @@ void ChatRepository::handleSendResponse(const QString& transport, const QString&
     const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
     if (kind == ApiResponseKind::Ok) {
         // No optimistic echo: the node appended the Chat record + emits MessagesChanged, which the
-        // SubscriptionManager turns into an authoritative refetch (applyMessagesChanged).
+        // mirror ingestor's policy arm turns into an authoritative ConvHistory refetch into the
+        // chat window (the surfaces read the mirror, not this repository's rows).
         emit messageSent(transport, conv);
         return;
     }

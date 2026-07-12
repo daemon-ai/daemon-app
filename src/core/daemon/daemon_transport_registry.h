@@ -30,8 +30,6 @@ public:
 
     [[nodiscard]] QVariantList availableAdapters() const override;
     [[nodiscard]] QVariantList instances() const override;
-    [[nodiscard]] QVariantList conversations(const QString& transport) const override;
-    void refreshConversations(const QString& transport) override;
     // [waveB:app-v30] D1: per-instance teardown intents, delegated to the repository.
     void disconnect(const QString& transport) override;
     void remove(const QString& transport) override;

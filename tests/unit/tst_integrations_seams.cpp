@@ -6,9 +6,9 @@
 // (enriched auth-param-field, AuthFlowKind::UserPassword, ConversationInfo.parent + Space,
 // AdapterInfo.account_schema, ConvSend/ConvHistory, PersonList, TransportSettings/Configure,
 // MessagesChanged/PersonsChanged events), the daemon repositories + services + mocks, the
-// SubscriptionManager fan-out, the IAuthFlowService DTO plumbing for the enriched fields (incl. the
-// mock's full challenge matrix), and the conversation parent/Space cache round-trip — all against
-// the vendored zcbor codec + the WireMuxServer fixture.
+// IAuthFlowService DTO plumbing for the enriched fields (incl. the mock's full challenge matrix),
+// and the conversation parent/Space cache round-trip — all against the vendored zcbor codec + the
+// WireMuxServer fixture.
 
 #include "auth/iauth_flow_service.h"
 #include "auth/mock_auth_flow_service.h"
@@ -22,7 +22,6 @@
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 #include "daemon/repositories.h"
-#include "daemon/subscription_manager.h"
 #include "daemon_api_client_decode.h"
 #include "daemon_api_client_encode.h"
 #include "daemon_api_client_types.h"
@@ -36,7 +35,6 @@
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
 
-using daemonapp::daemon::ApprovalRepository;
 using daemonapp::daemon::AuthRepository;
 using daemonapp::daemon::ChatRepository;
 using daemonapp::daemon::DaemonCacheStore;
@@ -48,11 +46,8 @@ using daemonapp::daemon::DecodedChatMessage;
 using daemonapp::daemon::DecodedConversation;
 using daemonapp::daemon::DecodedEventsPage;
 using daemonapp::daemon::DecodedNodeEvent;
-using daemonapp::daemon::ModelRepository;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::NodeApiCodec;
-using daemonapp::daemon::SessionRepository;
-using daemonapp::daemon::SubscriptionManager;
 using daemonapp::daemon::TransportRepository;
 using daemonapp::test::WireMuxServer;
 
@@ -945,32 +940,6 @@ private slots:
                  QStringLiteral("Password"));
     }
 
-    // ----- SubscriptionManager fan-out: MessagesChanged -> ChatRepository, PersonsChanged ->
-    // Persons
-    void messagesChangedRoutesToChat() {
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock(QStringLiteral("subchat.sock"))), "listen");
-        fake.setReplyPayload(convHistoryResponse());
-        DaemonTransport tx;
-        tx.setSocketPath(sock(QStringLiteral("subchat.sock")));
-        NodeApiClient client(&tx);
-        DaemonCacheStore cache(db(QStringLiteral("subchat.db")));
-        SessionRepository sessions(&client, &cache);
-        ApprovalRepository approvals(&client, &cache);
-        ModelRepository models(&client, &cache);
-        ChatRepository chat(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
-        mgr.setChatRepository(&chat);
-        QSignalSpy refreshed(&chat, &ChatRepository::historyRefreshed);
-        mgr.start();
-        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
-        fake.pushItem(
-            daemonapp::test::buildEventsPage({neMessagesChanged("demo/acct", "!room:demo")}, 1, 1));
-        // The routed applyMessagesChanged() issues a ConvHistory Call whose Journal reply
-        // refreshes.
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-    }
-
     // ----- IAuthFlowService DTO plumbing: the enriched field metadata reaches the seam maps -----
     // A3's generic auth component binds IAuthFlowService (via AuthFlowController), never the codec
     // — so the v38 kind/default/placeholder/choices must ride the provider params and Form
@@ -1044,54 +1013,6 @@ private slots:
         poll.kind = auth::StepInputKind::Poll;
         svc.step(begun.at(0).at(0).toString(), poll);
         QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 1, 3000);
-    }
-
-    // ----- Conversation parent/Space survives the cache + the registry projection -----
-    // A2's tree consumes ITransportRegistry::conversations() (projected from the offline-first
-    // daemon_conversations cache), so `parent` and the "space" kind must round-trip through both —
-    // decode-only support would strand the hierarchy at the codec layer.
-    void conversationParentSurvivesCacheAndRegistry() {
-        WireMuxServer fake;
-        QVERIFY2(fake.start(sock(QStringLiteral("convparent.sock"))), "listen");
-        fake.setReplyPayload(conversationsWithSpaceAndParent());
-        DaemonTransport tx;
-        tx.setSocketPath(sock(QStringLiteral("convparent.sock")));
-        NodeApiClient client(&tx);
-        DaemonCacheStore cache(db(QStringLiteral("convparent.db")));
-        TransportRepository repo(&client, &cache);
-        transports::DaemonTransportRegistry registry(&repo);
-        QSignalSpy refreshed(&registry, &transports::ITransportRegistry::conversationsChanged);
-        repo.refreshConversations(QStringLiteral("demo/acct"));
-        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
-
-        // The repository's cached rows carry kind="space" and the child's parent id.
-        const auto rows = repo.cachedConversations(QStringLiteral("demo/acct"));
-        QCOMPARE(rows.size(), 2);
-        QString spaceParentOfRoom;
-        bool sawSpace = false;
-        for (const auto& r : rows) {
-            if (r.convId == QStringLiteral("!space:demo")) {
-                sawSpace = r.kind == QStringLiteral("space") && r.parent.isEmpty();
-            } else if (r.convId == QStringLiteral("!room:demo")) {
-                spaceParentOfRoom = r.parent;
-            }
-        }
-        QVERIFY(sawSpace);
-        QCOMPARE(spaceParentOfRoom, QStringLiteral("!space:demo"));
-
-        // The seam projection carries both facts to the tree consumer.
-        QString projectedParent;
-        QString projectedKind;
-        for (const QVariant& rv : registry.conversations(QStringLiteral("demo/acct"))) {
-            const QVariantMap m = rv.toMap();
-            if (m.value(QStringLiteral("id")).toString() == QLatin1String("!room:demo")) {
-                projectedParent = m.value(QStringLiteral("parent")).toString();
-            } else if (m.value(QStringLiteral("id")).toString() == QLatin1String("!space:demo")) {
-                projectedKind = m.value(QStringLiteral("kind")).toString();
-            }
-        }
-        QCOMPARE(projectedParent, QStringLiteral("!space:demo"));
-        QCOMPARE(projectedKind, QStringLiteral("space"));
     }
 };
 

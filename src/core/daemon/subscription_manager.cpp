@@ -206,15 +206,6 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             m_transports->refreshConversations(event.transport);
         }
         break;
-    // [acct-mgmt] A transport's contact roster changed (wire v34). Refetch that transport's
-    // RosterList — invalidation pointer only; the node owns the roster. Mirrors
-    // ConversationsChanged for rooms. (This is the transport contacts feed, NOT the session-inbox
-    // RosterChanged above.)
-    case DecodedNodeEvent::Kind::ContactsChanged:
-        if (m_contacts != nullptr) {
-            m_contacts->refreshContacts(event.transport);
-        }
-        break;
     // Profile roster mutation (wire v31, phase H): a create/edit/delete/select (operator or
     // agent-authored via profile_manage) bumped the profile revision. Invalidation pointer only —
     // refetch ProfileList, which re-runs DaemonProfileStore::rebuild() so the provenance/filter
@@ -225,17 +216,14 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             m_profiles->refreshProfiles();
         }
         break;
-    // [integrations wire v38 → AD 1a] PersonsChanged: the mirror ingestor owns the PersonList
-    // refetch (persons + endpoints land in the mirror tables the tree reads) — no repo arm here.
-    // [integrations wire v38] A conversation's transcript grew: re-fetch ConvHistory for the
-    // affected (transport, conv) so the chat tab's transcript lands the new message(s).
-    // Invalidation pointer only — the client refetches from its cursor; it derives no message facts
-    // locally.
-    case DecodedNodeEvent::Kind::MessagesChanged:
-        if (m_chat != nullptr) {
-            m_chat->applyMessagesChanged(event.transport, event.conv);
-        }
-        break;
+    // Mirror-served invalidation events with NO manager arm — the ingestor's policy table owns the
+    // refetch and the surfaces read the mirror, so there is nothing for the manager to route:
+    //   - PersonsChanged  -> PersonList feeds the mirror persons (the tree reads it)
+    //   - MessagesChanged -> ConvHistory feeds the mirror `chat` window (the chat controller reads)
+    //   - ContactsChanged -> RosterList feeds the mirror `contacts` (the channels hub reads it)
+    // The retired repo-side refetches (ChatRepository / ContactsRepository) fed IChatService /
+    // IContactsService rows that no surface reads anymore (AD 1a). These enumerators intentionally
+    // have no case (the switch has no default), so the manager simply ignores them.
     case DecodedNodeEvent::Kind::Unknown:
         break;
     }

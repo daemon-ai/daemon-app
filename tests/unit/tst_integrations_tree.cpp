@@ -14,17 +14,6 @@ using transports::ITransportRegistry;
 
 namespace {
 
-QVariantMap conv(const QString& transport, const QString& id, const QString& title,
-                 const QString& kind, const QString& parent) {
-    QVariantMap m;
-    m[QStringLiteral("transport")] = transport;
-    m[QStringLiteral("id")] = id;
-    m[QStringLiteral("title")] = title;
-    m[QStringLiteral("kind")] = kind;
-    m[QStringLiteral("parent")] = parent;
-    return m;
-}
-
 QVariantMap ops(std::initializer_list<std::pair<QString, bool>> flags) {
     QVariantMap m;
     for (const auto& f : flags) {
@@ -56,7 +45,6 @@ public:
 
     QVariantList m_adapters;
     QVariantList m_instances;
-    QHash<QString, QVariantList> m_conversations;
     QHash<QString, QVariantMap> m_settings;
 
     // Recorded writes.
@@ -69,9 +57,6 @@ public:
 
     [[nodiscard]] QVariantList availableAdapters() const override { return m_adapters; }
     [[nodiscard]] QVariantList instances() const override { return m_instances; }
-    [[nodiscard]] QVariantList conversations(const QString& transport) const override {
-        return m_conversations.value(transport);
-    }
     [[nodiscard]] QVariantMap settings(const QString& transport) const override {
         return m_settings.value(transport);
     }
@@ -214,26 +199,6 @@ void seedTwoAccounts(FakeRegistry& reg) {
                     QStringLiteral("Matrix (@you)"), true, QStringLiteral("ready")),
         instanceRow(QStringLiteral("irc/libera"), QStringLiteral("irc"),
                     QStringLiteral("IRC (libera)"), false, QString()),
-    };
-    reg.m_conversations[QStringLiteral("matrix/@you")] = QVariantList{
-        conv(QStringLiteral("matrix/@you"), QStringLiteral("!space1"),
-             QStringLiteral("Demo Server"), QStringLiteral("space"), QString()),
-        conv(QStringLiteral("matrix/@you"), QStringLiteral("!general"), QStringLiteral("general"),
-             QStringLiteral("channel"), QStringLiteral("!space1")),
-        conv(QStringLiteral("matrix/@you"), QStringLiteral("!random"), QStringLiteral("random"),
-             QStringLiteral("channel"), QStringLiteral("!space1")),
-        conv(QStringLiteral("matrix/@you"), QStringLiteral("!standalone"),
-             QStringLiteral("standalone"), QStringLiteral("channel"), QString()),
-        conv(QStringLiteral("matrix/@you"), QStringLiteral("!orphan"), QStringLiteral("orphan"),
-             QStringLiteral("channel"), QStringLiteral("!missing")),
-        conv(QStringLiteral("matrix/@you"), QStringLiteral("!dmAlice"), QStringLiteral("Alice"),
-             QStringLiteral("dm"), QString()),
-        conv(QStringLiteral("matrix/@you"), QStringLiteral("!grpDesign"), QStringLiteral("Design"),
-             QStringLiteral("groupdm"), QString()),
-    };
-    reg.m_conversations[QStringLiteral("irc/libera")] = QVariantList{
-        conv(QStringLiteral("irc/libera"), QStringLiteral("#daemon"), QStringLiteral("#daemon"),
-             QStringLiteral("channel"), QString()),
     };
 }
 

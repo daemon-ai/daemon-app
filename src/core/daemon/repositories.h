@@ -676,7 +676,6 @@ public:
 
     [[nodiscard]] QList<DecodedAdapterInfo> adapters() const { return m_adapters; }
     [[nodiscard]] QList<CachedTransportInstanceRow> cachedInstances() const;
-    [[nodiscard]] QList<CachedConversationRow> cachedConversations(const QString& transport) const;
 
     void refreshAdapters();
     void refreshInstances();
@@ -929,10 +928,11 @@ private:
 // tracked for the MessagesChanged incremental fetch), swapping
 // messages(transport, conv) and firing historyRefreshed ONCE per refresh. send(transport, conv,
 // text) issues ConvSend and, on Ok, fires messageSent (no optimistic echo — the node appends the
-// Chat record + emits MessagesChanged, which drives the authoritative refetch via
-// applyMessagesChanged). applyMessagesChanged(transport, conv) is the feed hook (fetch the tail
-// past the known cursor). NOTHING is derived client-side; the node owns the transcript. Not cached
-// offline — a live, per-conversation query (like the roster).
+// Chat record + emits MessagesChanged). The authoritative transcript is mirror-served: the
+// ingestor's MessagesChanged policy arm pages ConvHistory into the mirror `chat` window the
+// surfaces render, so this repository has no feed hook of its own. NOTHING is derived client-side;
+// the node owns the transcript. Not cached offline — a live, per-conversation query (like the
+// roster).
 class ChatRepository : public RepositoryBase {
     Q_OBJECT
 
@@ -950,12 +950,9 @@ public:
     // cursor only — there is no backward "load older" op.)
     void refreshHistory(const QString& transport, const QString& conv);
     // ConvSend a plain-text message; on Ok messageSent(transport, conv) fires. The authoritative
-    // transcript update arrives via the MessagesChanged feed event (applyMessagesChanged).
+    // transcript update arrives via the MessagesChanged feed event, which the mirror ingestor pages
+    // into the chat window the surfaces render.
     void send(const QString& transport, const QString& conv, const QString& text);
-    // Feed hook (MessagesChanged): re-fetch the conversation's transcript so the tail lands. Kept a
-    // full refresh at v38 for simplicity (the node bounds the page); a later delta can page the
-    // tail past the known cursor.
-    void applyMessagesChanged(const QString& transport, const QString& conv);
 
 signals:
     void historyRefreshed(const QString& transport, const QString& conv);

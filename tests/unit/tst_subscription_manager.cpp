@@ -16,7 +16,6 @@
 using daemonapp::daemon::ApprovalRepository;
 using daemonapp::daemon::CachedTranscriptBlockRow;
 using daemonapp::daemon::CachedTransportInstanceRow; // [wave2:app-channels-liveness]
-using daemonapp::daemon::ContactsRepository; // [acct-mgmt] transport contacts / roster (wire v34)
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
 using daemonapp::daemon::ModelRepository;
@@ -296,33 +295,6 @@ private slots:
             {daemonapp::test::neConversationsChanged("matrix/@bot:hs", "!room:hs", "Added")}, 1,
             1));
         // The routed refreshConversations() issues a ConvList one-shot Call.
-        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
-    }
-
-    // [acct-mgmt] A ContactsChanged event refetches that transport's roster (RosterList) — an
-    // invalidation pointer, wired via setContactsRepository, mirroring ConversationsChanged.
-    void contactsChangedRefetchesRoster() {
-        const QString path = sock(QStringLiteral("contactch.sock"));
-        WireMuxServer fake;
-        QVERIFY2(fake.start(path), "listen");
-        DaemonTransport transport;
-        transport.setSocketPath(path);
-        NodeApiClient client(&transport);
-        DaemonCacheStore cache(dbPath(QStringLiteral("contactch.db")));
-        SessionRepository sessions(&client, &cache);
-        ApprovalRepository approvals(&client, &cache);
-        ModelRepository models(&client, &cache);
-        ContactsRepository contacts(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
-        mgr.setContactsRepository(&contacts);
-
-        mgr.start();
-        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
-        const int callsBefore = fake.requestCount();
-
-        fake.pushItem(daemonapp::test::buildEventsPage(
-            {daemonapp::test::neContactsChanged("matrix/@bot:hs")}, 1, 1));
-        // The routed refreshContacts() issues a RosterList one-shot Call.
         QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
     }
 
