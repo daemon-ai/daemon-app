@@ -1032,7 +1032,7 @@ private slots:
                  QStringLiteral("Personal"));
     }
 
-    // Instances + conversations populate the cache + registry end-to-end over the mux.
+    // Instances populate the cache + registry end-to-end over the mux.
     void refreshPopulatesOverMux() {
         const QString sock = m_tmp.filePath(QStringLiteral("ch.sock"));
         WireMuxServer fake;
@@ -1049,16 +1049,6 @@ private slots:
         QCOMPARE(cache.transportInstances().size(), 1);
         QCOMPARE(registry.instances().size(), 1);
         QCOMPARE(cache.transportInstances().at(0).connection, QStringLiteral("connected"));
-
-        // EIO-8: a live ConvList populates the per-account rooms.
-        fake.setReplyPayload(conversationsResponse());
-        QSignalSpy convs(&registry, &transports::ITransportRegistry::conversationsChanged);
-        registry.refreshConversations(QStringLiteral("matrix/@bot:hs"));
-        QTRY_COMPARE_WITH_TIMEOUT(convs.count(), 1, 3000);
-        const QVariantList rooms = registry.conversations(QStringLiteral("matrix/@bot:hs"));
-        QCOMPARE(rooms.size(), 1);
-        QCOMPARE(rooms.at(0).toMap().value(QStringLiteral("title")).toString(),
-                 QStringLiteral("General"));
     }
 
     // [wave2:app-channels-liveness] B5: applyTransportChanged patches a cached row's

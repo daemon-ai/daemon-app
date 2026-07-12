@@ -36,8 +36,6 @@ DaemonTransportRegistry::DaemonTransportRegistry(daemonapp::daemon::TransportRep
                 &ITransportRegistry::adaptersChanged);
         connect(m_repo, &daemonapp::daemon::TransportRepository::instancesRefreshed, this,
                 &ITransportRegistry::instancesChanged);
-        connect(m_repo, &daemonapp::daemon::TransportRepository::conversationsRefreshed, this,
-                &ITransportRegistry::conversationsChanged);
         // [acct-mgmt] forward the two-phase form descriptors + member list + op errors so both
         // surfaces render them off the same seam.
         connect(m_repo, &daemonapp::daemon::TransportRepository::joinDetailsReady, this,
@@ -128,33 +126,6 @@ QVariantList DaemonTransportRegistry::instances() const {
         out.append(row);
     }
     return out;
-}
-
-QVariantList DaemonTransportRegistry::conversations(const QString& transport) const {
-    QVariantList out;
-    if (m_repo == nullptr) {
-        return out;
-    }
-    // Offline-first: the last-known rooms for this account (live ConvList refreshes them).
-    for (const daemonapp::daemon::CachedConversationRow& c :
-         m_repo->cachedConversations(transport)) {
-        QVariantMap row;
-        row[QStringLiteral("transport")] = c.transport;
-        row[QStringLiteral("id")] = c.convId;
-        row[QStringLiteral("kind")] = c.kind; // [integrations wire v38] may be "space" (container)
-        row[QStringLiteral("title")] = c.title;
-        row[QStringLiteral("topic")] = c.topic;
-        // [integrations wire v38] the containing space id ("" = a root) — the tree groups by it.
-        row[QStringLiteral("parent")] = c.parent;
-        out.append(row);
-    }
-    return out;
-}
-
-void DaemonTransportRegistry::refreshConversations(const QString& transport) {
-    if (m_repo != nullptr) {
-        m_repo->refreshConversations(transport);
-    }
 }
 
 // [waveB:app-v30] D1: forward the teardown intents to the repository.

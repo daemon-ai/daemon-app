@@ -17,8 +17,6 @@ class ApprovalRepository;
 class ModelRepository;
 class ProfileRepository;
 class TransportRepository; // [wave2:app-channels-liveness]
-class ContactsRepository;  // [acct-mgmt] transport contacts / roster (wire v34)
-class ChatRepository;      // [integrations wire v38] native chat (ConvHistory / MessagesChanged)
 class DaemonCacheStore;
 struct DecodedNodeEvent;
 
@@ -69,17 +67,6 @@ public:
     // manager in the service graph. Optional; TransportChanged is ignored when unset.
     void setTransportRepository(TransportRepository* transports) { m_transports = transports; }
 
-    // [acct-mgmt] The contacts repository refetched on a ContactsChanged feed event (wire v34). The
-    // node owns the roster; this refetches that transport's RosterList. Wired via a setter because
-    // the repo is constructed after this manager. Optional; ContactsChanged is ignored when unset.
-    void setContactsRepository(ContactsRepository* contacts) { m_contacts = contacts; }
-
-    // [integrations wire v38] The chat repository the MessagesChanged feed event drives (an
-    // incremental ConvHistory re-fetch for the affected conversation). Wired via a setter because
-    // the repo is constructed after this manager. Optional; the event is ignored when unset.
-    // (PersonsChanged routes to the mirror ingestor alone — AD 1a.)
-    void setChatRepository(ChatRepository* chat) { m_chat = chat; }
-
     [[nodiscard]] quint64 feedCursor() const { return m_feedCursor; }
 
 signals:
@@ -98,8 +85,6 @@ private:
     ModelRepository* m_models = nullptr;
     ProfileRepository* m_profiles = nullptr;
     TransportRepository* m_transports = nullptr; // [wave2:app-channels-liveness]
-    ContactsRepository* m_contacts = nullptr;    // [acct-mgmt] wire v34
-    ChatRepository* m_chat = nullptr;            // [integrations wire v38]
     DaemonCacheStore* m_cache = nullptr;
 
     quint64 m_feedStreamId = 0; // the open EventsSince stream id (0 = none)
