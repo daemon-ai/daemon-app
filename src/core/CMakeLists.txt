@@ -1,4 +1,5 @@
 add_subdirectory(util)
+add_subdirectory(crash) # consent-gated Sentry crash reporting (GUI+TUI seam; no-op on wasm/mobile)
 add_subdirectory(domain)
 # uimodels + daemonnet provide the shared row models + the mock DOMAIN seed (SeedBundle) the
 # is re-seeded from, so they must be configured before persistence.

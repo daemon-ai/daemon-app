@@ -59,6 +59,8 @@ target_link_libraries(daemon-app
         Qt6::QuickControls2
         daemon-app::warnings
         daemon-app::version
+        # Consent-gated crash reporting (Sentry; no-op on wasm).
+        daemon-app::crash
         # Core services
         daemon-app::i18n
         daemon-app::persistence

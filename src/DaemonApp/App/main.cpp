@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "application.h"
+#include "crash/crash_reporter.h"
 #include "daemon_app_version.h"
 #include "i18n/localization.h"
 #include "platform/app_icon.h"
@@ -185,6 +186,32 @@ bool maybeRunOffscreenRenderHarness(QQmlApplicationEngine& engine) {
     return true;
 }
 
+#ifndef Q_OS_WASM
+// Chained Qt message handler that forwards qWarning/qCritical/qFatal into the crash-report
+// breadcrumb trail (so a crash's Sentry event carries the GUI log context leading up to it), then
+// delegates to whatever handler was installed before us (or Qt's formatted stderr default). No-op
+// for crash reporting until it is armed; the delegation keeps normal logging intact regardless.
+QtMessageHandler g_previousMessageHandler = nullptr;
+void crashBreadcrumbMessageHandler(QtMsgType type, const QMessageLogContext& context,
+                                   const QString& message) {
+    if (type == QtWarningMsg || type == QtCriticalMsg || type == QtFatalMsg) {
+        const crash::Level level = type == QtWarningMsg    ? crash::Level::Warning
+                                   : type == QtCriticalMsg ? crash::Level::Error
+                                                           : crash::Level::Fatal;
+        crash::addBreadcrumb(
+            level, QString::fromUtf8(context.category != nullptr ? context.category : "qt"),
+            message);
+    }
+    if (g_previousMessageHandler != nullptr) {
+        g_previousMessageHandler(type, context, message);
+    } else {
+        // No prior handler: replicate Qt's default so warnings still reach stderr/journald.
+        std::fputs(qFormatLogMessage(type, context, message).toLocal8Bit().constData(), stderr);
+        std::fputc('\n', stderr);
+    }
+}
+#endif
+
 } // namespace
 
 // The feature modules are STATIC, so their QML plugins must be referenced
@@ -232,6 +259,37 @@ int main(int argc, char* argv[]) {
     QCoreApplication::setApplicationName(QStringLiteral("daemon-app"));
     QCoreApplication::setOrganizationName(QStringLiteral("daemon-app"));
     QCoreApplication::setApplicationVersion(QStringLiteral(DAEMON_APP_VERSION_STR));
+
+    // Consent-gated crash reporting (Sentry). Held for the whole of main() — declared here so it
+    // covers every early-return path (the headless self-checks below). No crash reporting in the
+    // browser build (Q_OS_WASM): no out-of-process handler exists there.
+    crash::Guard crashGuard;
+#ifndef Q_OS_WASM
+    // Armed after the app object + name/version (so QStandardPaths + applicationDirPath resolve)
+    // but BEFORE the QML engine, so the whole scene load + run is covered. The QApplication is
+    // already constructed above; losing capture of the very earliest pre-init frames is the
+    // documented, accepted tradeoff (see docs/crash-reporting.md). Capture is armed immediately;
+    // upload waits for the dedicated crash consent (require_user_consent), granted now if the user
+    // opted in on a prior run (cached in QSettings) so the reporter arms correctly before any node
+    // connection.
+    crashGuard = crash::init(QStringLiteral("gui"),
+                             QStringLiteral("daemon-app@") + QStringLiteral(DAEMON_APP_VERSION_STR),
+                             crash::defaultDatabasePath(), crash::defaultHandlerPath(),
+                             crash::effectiveDsn());
+    if (crashGuard.armed()) {
+        if (crash::consentCached()) {
+            crash::giveConsent();
+        }
+        // Forward the Qt log trail into the crash breadcrumb trail (chains to the prior handler).
+        g_previousMessageHandler = qInstallMessageHandler(crashBreadcrumbMessageHandler);
+    }
+    // Hidden crash-corpus trigger (never fires in a normal run): DAEMON_APP_CRASH_TEST=segv|abort|
+    // throw crashes the process so a minidump can be verified in the local DB (uploaded only with
+    // consent). Placed after init so the handler is armed.
+    if (const QByteArray crashTest = qgetenv("DAEMON_APP_CRASH_TEST"); !crashTest.isEmpty()) {
+        crash::triggerTestCrash(QString::fromUtf8(crashTest));
+    }
+#endif
 
     // --hidden: start minimized to the tray (what the login autostart entry
     // passes). parse(), not process(): unknown args (harness flags, Qt's own)

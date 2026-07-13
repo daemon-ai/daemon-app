@@ -111,10 +111,26 @@
       url = "github:arximboldi/immer/bd4fc749b97dfa2b66a8f3de00bbf234db4856ef";
       flake = false;
     };
+
+    # --- Crash reporting (Sentry native SDK) -------------------------------
+    # sentry-native's OFFICIAL RELEASE tarball (0.15.3). The release package bundles the vendored
+    # crashpad/breakpad/mpack deps (a raw git clone would need submodules), so it is the supported
+    # way to build the SDK. Consumed via the CMake `add_subdirectory` vendoring the other deps use
+    # (SENTRY_NATIVE_SOURCE_DIR), producing `libsentry` + the co-shipped `crashpad_handler`.
+    #
+    # `flake = false` + the `file+https://` scheme (NOT a bare tarball URL): Nix ≥2.25 imports a
+    # tarball flake input through the git cache, which rejects the `.git` gitlink files the release
+    # archive carries under `external/crashpad/**` ("invalid name for a tree entry - .git"). The
+    # `file+…` scheme fetches the archive as an opaque file (pinned by narHash in flake.lock) and we
+    # unzip it in a derivation (`sentryNativeSrc`), sidestepping the git-cache import entirely.
+    sentry-native = {
+      url = "file+https://github.com/getsentry/sentry-native/releases/download/0.15.3/sentry-native.zip";
+      flake = false;
+    };
   };
 
   outputs =
-    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qrcodegen, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, immer, ... }:
+    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qrcodegen, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, immer, sentry-native, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -172,6 +188,23 @@
         # instead pin Qt6LinguistTools_DIR in depFlags, keeping qttools'
         # libs out of the runtime closures.
         qtShellPackages = qtGuiPackages ++ qtTuiPackages ++ [ pkgs.qt6.qttools ];
+
+        # --- Crash reporting (Sentry native SDK) -------------------------------
+        # The `sentry-native` input is the release .zip fetched as an opaque file (see the input
+        # comment). Unzip it into a plain source tree Dependencies.cmake add_subdirectory's as
+        # SENTRY_NATIVE_SOURCE_DIR. No build here — the app's CMake build compiles it (static lib +
+        # crashpad_handler) so it participates in the same toolchain/lane as the rest of the app.
+        sentryNativeSrc = pkgs.runCommand "sentry-native-0.15.3-src" { nativeBuildInputs = [ pkgs.unzip ]; } ''
+          mkdir -p "$out"
+          unzip -q ${sentry-native} -d "$out"
+        '';
+
+        # The product default Sentry DSN baked into the app (compiled into -DDAEMON_APP_SENTRY_DSN).
+        # PUBLIC value — a DSN is an ingest-only key, safe to embed (see references/crash-reporting.md
+        # + docs/crash-reporting.md). Overridable at runtime by the `DAEMON_APP_SENTRY_DSN` env; the
+        # superproject bundle passes the same value through. An empty string compiles crash reporting
+        # OUT (disabled), which is what a fork/unset build gets.
+        sentryDsn = "https://500fed6a24304a5615c66ef479824fe6@o4511727459827712.ingest.de.sentry.io/4511727469199441";
 
         # --- Tui Widgets stack (Meson) -----------------------------------------
         # Built as plain Nix derivations that emit pkg-config files; the daemon-app
@@ -255,6 +288,10 @@
           # seam is coarse signals (ADR-008 finalized, A3), so lager/zug/boost are
           # no longer vendored. See cmake/Dependencies.cmake for the INTERFACE wiring.
           "-DIMMER_SOURCE_DIR=${immer}"
+          # Crash reporting: the sentry-native source tree (add_subdirectory'd by Dependencies.cmake,
+          # built static per lane) + the compiled-in product default DSN. See cmake/Dependencies.cmake.
+          "-DSENTRY_NATIVE_SOURCE_DIR=${sentryNativeSrc}"
+          "-DDAEMON_APP_SENTRY_DSN=${sentryDsn}"
           # Host Linguist tools (lupdate/lrelease for qt_add_translations),
           # pinned directly rather than listing qttools as an input: the qtbase
           # env hook folds every qttools input's plugin dir into the wrapped
@@ -290,7 +327,10 @@
           # wrapQtAppsHook adds its lib/qml to the wrapped app's import path.
           # qtkeychain backs the OS-keychain server-token store (auth6); the build
           # falls back to a QSettings token store when it is absent.
-          buildInputs = qtGuiPackages ++ [ pkgs.tinyxml-2 pkgs.qt6Packages.qtkeychain qmltermwidget-qt6 ];
+          # `curl` backs sentry-native's default HTTP transport on Linux (SENTRY_TRANSPORT=curl); the
+          # SDK's FindCURL resolves it via pkg-config from this buildInput. macOS/Windows lanes use
+          # the platform transport instead (see cmake/Dependencies.cmake / docs/crash-reporting.md).
+          buildInputs = qtGuiPackages ++ [ pkgs.tinyxml-2 pkgs.qt6Packages.qtkeychain qmltermwidget-qt6 pkgs.curl ];
 
           cmakeFlags = depFlags ++ [ "-DDAEMON_APP_VERSION_STR=${versionStr}" ];
 
@@ -1172,6 +1212,7 @@
             dbus # dbus-run-session: a private session bus for the AT-SPI registry
             gobject-introspection # GI runtime (pyatspi resolves typelibs through it)
             glib # GLib/GObject/Gio typelibs pyatspi transitively imports
+            curl # sentry-native's default Linux HTTP transport (SENTRY_TRANSPORT=curl)
           ] ++ qtShellPackages ++ tuiDeps ++ [ qmltermwidget-qt6 ];
 
           shellHook = ''
@@ -1197,6 +1238,13 @@
             export QXTGLOBALSHORTCUT_SOURCE_DIR="${qxtglobalshortcut}"
             export QMLTERMWIDGET_QML_DIR="${qmltermwidgetQmlDir}"
             export IMMER_SOURCE_DIR="${immer}"
+            # Crash reporting: the unzipped sentry-native source tree (add_subdirectory'd by
+            # cmake/Dependencies.cmake) + the compiled-in product default DSN (public, overridable at
+            # runtime by $DAEMON_APP_SENTRY_DSN). curl.dev is on the shell's pkg-config path so the
+            # SDK's default Linux transport (SENTRY_TRANSPORT=curl) resolves in a dev build too.
+            export SENTRY_NATIVE_SOURCE_DIR="${sentryNativeSrc}"
+            export DAEMON_APP_SENTRY_DSN="${sentryDsn}"
+            export PKG_CONFIG_PATH="${pkgs.curl.dev}/lib/pkgconfig:$PKG_CONFIG_PATH"
             # pyatspi (the a11y-audit walker) resolves the Atspi-2.0 + GLib
             # typelibs through GI at import time; surface them so `import pyatspi`
             # works in the shell and under the audit sandbox.

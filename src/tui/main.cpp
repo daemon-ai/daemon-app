@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
+#include "crash/crash_reporter.h"
 #include "daemon_app_version.h"
 #include "i18n/localization.h"
 #include "mouse_terminal.h"
@@ -75,6 +76,18 @@ void tuiMessageHandler(QtMsgType type, const QMessageLogContext& context, const 
         out << "  (" << context.file << ':' << context.line << ')';
     }
     out << '\n';
+
+    // Also feed warning+ into the crash-report breadcrumb trail so a crash carries the log context
+    // that led up to it. This is in-memory (Sentry scope) and NEVER writes to stderr, preserving
+    // the alt-screen guarantee above; a no-op until crash reporting is armed (and on
+    // wasm/disabled).
+    if (type == QtWarningMsg || type == QtCriticalMsg || type == QtFatalMsg) {
+        const crash::Level clevel = type == QtWarningMsg    ? crash::Level::Warning
+                                    : type == QtCriticalMsg ? crash::Level::Error
+                                                            : crash::Level::Fatal;
+        crash::addBreadcrumb(
+            clevel, QString::fromUtf8(context.category != nullptr ? context.category : "qt"), msg);
+    }
 }
 
 } // namespace
@@ -332,6 +345,25 @@ int main(int argc, char* argv[]) {
     QCoreApplication::setApplicationName(QStringLiteral("daemon-tui"));
     QCoreApplication::setOrganizationName(QStringLiteral("daemon-app"));
     QCoreApplication::setApplicationVersion(QStringLiteral(DAEMON_APP_VERSION_STR));
+
+    // Consent-gated crash reporting (Sentry). Armed after the app name/version are set (so
+    // QStandardPaths + applicationDirPath resolve) and before any widget/terminal is built, so the
+    // whole run — including the offscreen self-checks below — is covered. Capture is armed
+    // immediately; upload waits for the dedicated crash consent, granted now if the user opted in
+    // on a prior run (cached in QSettings, shared with the GUI). The guard lives for the whole of
+    // main(), covering the offscreen early-return path. Breadcrumbs flow through tuiMessageHandler.
+    crash::Guard crashGuard = crash::init(
+        QStringLiteral("tui"),
+        QStringLiteral("daemon-app@") + QStringLiteral(DAEMON_APP_VERSION_STR),
+        crash::defaultDatabasePath(), crash::defaultHandlerPath(), crash::effectiveDsn());
+    if (crashGuard.armed() && crash::consentCached()) {
+        crash::giveConsent();
+    }
+    // Hidden crash-corpus trigger (never fires in a normal run) — see the GUI main for the
+    // contract.
+    if (const QByteArray crashTest = qgetenv("DAEMON_APP_CRASH_TEST"); !crashTest.isEmpty()) {
+        crash::triggerTestCrash(QString::fromUtf8(crashTest));
+    }
 
     // Honor the theme the GUI persisted (shared QSettings file) before any widget
     // builds its palette. The TUI's app name differs (daemon-tui), so the lookup

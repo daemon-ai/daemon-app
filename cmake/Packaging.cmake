@@ -125,6 +125,24 @@ if(DAEMON_APP_BUNDLED_LIBS)
     )
 endif()
 
+# --- Crash reporter handler (Sentry / crashpad) ------------------------------
+# The crashpad backend runs an out-of-process handler executable that MUST ship co-located with the
+# app: crash::defaultHandlerPath() points sentry_options_set_handler_path() at
+# `applicationDirPath()/crashpad_handler[.exe]` — the same co-location contract the node binary uses
+# (deb/rpm -> /opt/daemon/bin, AppImage -> usr/bin, DMG -> Contents/MacOS, NSIS -> bin\, portable ->
+# bin/, all == `_da_colocated_bin_dir`). Built as part of the sentry-native add_subdirectory, so we
+# install its target file directly rather than via a cache-var path.
+#
+# Only the crashpad backend has a handler: the Windows (MinGW) lane uses breakpad and macOS/Linux
+# use crashpad (see cmake/Dependencies.cmake). The double guard (target exists AND backend is
+# crashpad) means NSIS ships it only if the Windows backend decision ever becomes crashpad.
+if(TARGET crashpad_handler AND DAEMON_APP_SENTRY_BACKEND STREQUAL "crashpad")
+    install(
+        PROGRAMS "$<TARGET_FILE:crashpad_handler>"
+        DESTINATION "${_da_colocated_bin_dir}"
+    )
+endif()
+
 # Co-located node binary relocatability backstop (APPLE, bundled build only).
 # The nix-built Rust node binaries carry an absolute /nix/store install name
 # for libiconv (the nix libiconv, not the system one), which dangles on any mac

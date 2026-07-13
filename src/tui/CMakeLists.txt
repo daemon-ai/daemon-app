@@ -282,6 +282,8 @@ target_link_libraries(daemon-tui
         daemon-app::tui_viewmodels
         daemon-app::presentation
         daemon-app::theme_core
+        # Consent-gated crash reporting (Sentry; no-op on wasm).
+        daemon-app::crash
         daemon-app::composer_session
         daemon-app::turn
         daemon-app::status_model

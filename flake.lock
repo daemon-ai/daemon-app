@@ -282,7 +282,20 @@
         "qsimpleupdater": "qsimpleupdater",
         "qwindowkit": "qwindowkit",
         "qxtglobalshortcut": "qxtglobalshortcut",
+        "sentry-native": "sentry-native",
         "tuiwidgets": "tuiwidgets"
+      }
+    },
+    "sentry-native": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-kYPZY0OmIM1EjlrsoVoKwat7r8caX8/z8316W2TQEEU=",
+        "type": "file",
+        "url": "https://github.com/getsentry/sentry-native/releases/download/0.15.3/sentry-native.zip"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://github.com/getsentry/sentry-native/releases/download/0.15.3/sentry-native.zip"
       }
     },
     "systems": {

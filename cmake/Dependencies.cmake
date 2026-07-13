@@ -336,3 +336,55 @@ endif()
 # every TU that includes an immer header agrees on the memory policy.
 add_compile_definitions(IMMER_NO_THREAD_SAFETY=1)
 message(STATUS "Dependencies: mirror substrate wired (immer value substrate; coarse observe seam).")
+
+# ---------------------------------------------------------------------------
+# sentry-native - cross-platform crash reporting (Sentry). Built from the pinned
+# release tarball (SENTRY_NATIVE_SOURCE_DIR) via add_subdirectory, producing the
+# static `sentry` library the crash module links + (on the crashpad backend) the
+# `crashpad_handler` executable Packaging.cmake co-locates with the app.
+#
+# DESKTOP ONLY: guarded out of the wasm (browser: no out-of-process handler, no
+# native crash surface) and mobile builds. The crash module (src/core/crash) is
+# likewise compiled out under Q_OS_WASM.
+#
+# Backend per platform (spec: docs/crash-reporting.md):
+#   - Linux / macOS -> crashpad (the SDK default; proven to build under this Nix
+#     devShell on Linux; macOS is crashpad-by-construction, to be verified on a mac).
+#   - Windows (MinGW cross) -> breakpad. Crashpad's Windows handler needs MSVC
+#     (mini_chromium / GN assume the MSVC toolchain), which this repo's only
+#     Windows lane (pkgsCross.mingwW64) is not; breakpad builds under MinGW and
+#     still yields uploadable minidumps. `inproc` is the documented last-resort
+#     fallback. Override with -DDAEMON_APP_SENTRY_BACKEND=<crashpad|breakpad|inproc>.
+# ---------------------------------------------------------------------------
+if(NOT DAEMON_APP_WASM AND NOT DAEMON_APP_MOBILE)
+    _daemon_app_resolve_dir(_sentry_dir SENTRY_NATIVE_SOURCE_DIR)
+    if(NOT EXISTS "${_sentry_dir}/CMakeLists.txt")
+        message(FATAL_ERROR "SENTRY_NATIVE_SOURCE_DIR must point to a sentry-native source tree (got '${_sentry_dir}')")
+    endif()
+
+    if(DEFINED DAEMON_APP_SENTRY_BACKEND)
+        set(_sentry_backend "${DAEMON_APP_SENTRY_BACKEND}")
+    elseif(WIN32)
+        set(_sentry_backend "breakpad")
+    else()
+        set(_sentry_backend "crashpad")
+    endif()
+    set(DAEMON_APP_SENTRY_BACKEND "${_sentry_backend}" CACHE STRING "sentry-native crash backend" FORCE)
+
+    # These are read with if()/option() BEFORE our value would apply unless FORCEd into the cache.
+    set(SENTRY_BACKEND "${_sentry_backend}" CACHE STRING "" FORCE)
+    set(SENTRY_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE) # link libsentry.a into the app; one fewer shipped .so
+    set(SENTRY_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(SENTRY_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    # Not EXCLUDE_FROM_ALL: the crashpad backend's `crashpad_handler` executable is a runtime
+    # artifact nothing links, so it must build as part of `all` for Packaging.cmake's install rule
+    # (an EXCLUDE_FROM_ALL target cannot be installed). Tests/examples are already off above.
+    add_subdirectory("${_sentry_dir}" "${CMAKE_BINARY_DIR}/_deps/sentry-native")
+
+    # Treat the SDK's public header as a system include so <sentry.h>'s own warnings never surface
+    # under our -Werror project flags.
+    if(TARGET sentry)
+        target_include_directories(sentry SYSTEM INTERFACE "${_sentry_dir}/include")
+    endif()
+    message(STATUS "Dependencies: sentry-native wired (backend=${_sentry_backend}, static).")
+endif()
