@@ -359,6 +359,10 @@ let
       pkg-config
       kdePackages.extra-cmake-modules
       perl
+      # crashpad (the sentry crashpad backend) generates its Mach RPC stubs with
+      # Apple's Mach Interface Generator; bootstrap_cmds provides `mig` + `migcom`
+      # hermetically (on the build PATH) so the compile needs no impure /usr/bin.
+      darwin.bootstrap_cmds
     ];
 
     buildInputs = [
@@ -412,29 +416,23 @@ let
     # co-located crashpad_handler that cmake/Packaging.cmake stages into the
     # bundle). Left unset (no sentryNativeSrc) it compiles crash reporting OUT.
     #
-    # sentry-native's default transport on macOS is curl (only Windows uses
-    # winhttp), so its find_package(CURL) must resolve. macOS ships libcurl as a
-    # system library (dyld shared cache /usr/lib/libcurl.4.dylib); point CMake at
-    # the SDK's stub (.tbd) + headers so the .app links the SYSTEM curl — no
-    # /nix/store dylib to scrub, exactly like the CUPS handling above.
+    # SENTRY_TRANSPORT=none: the crashpad backend uploads minidumps out-of-process
+    # via crashpad_handler's OWN HTTP transport (macOS NSURLSession) straight to the
+    # DSN's minidump endpoint, with the SDK's scope (breadcrumbs/tags/context) attached
+    # as crashpad multipart files — so crash reporting is complete without the SDK's own
+    # envelope transport. That default transport on macOS is curl, whose
+    # find_package(CURL) would force us to link libcurl: the nix cc-wrapper strips the
+    # impure Xcode-SDK curl headers under NIX_ENFORCE_PURITY, and pulling nixpkgs curl
+    # would drag its openssl/nghttp2/zstd/brotli store dylibs into the bundle (the DMG
+    # scrub can't map them). Disabling the SDK transport sidesteps all of that; the app
+    # only ever crash-captures + adds breadcrumbs, never sends non-crash events.
     ++ lib.optionals (sentryNativeSrc != null) [
       "-DSENTRY_NATIVE_SOURCE_DIR=${sentryNativeSrc}"
       "-DDAEMON_APP_SENTRY_DSN=${sentryDsn}"
-      "-DCURL_INCLUDE_DIR=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
-      "-DCURL_LIBRARY=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd"
+      "-DSENTRY_TRANSPORT=none"
     ];
 
     CCACHE_DISABLE = "1";
-
-    # crashpad's build shells out to Apple's Mach Interface Generator (`mig`,
-    # which itself invokes `migcom`) to generate the util/mach RPC stubs; those
-    # tools live in /usr/bin + the Xcode toolchain, not in the nix store. Append
-    # (so nix's own cc/cmake/ninja still win) the system bindirs for the build,
-    # exactly like the qt-from-source buildEnv and the DMG packaging step do.
-    # Only crashpad needs this, so it is a no-op for a crash-reporting-off build.
-    preConfigure = ''
-      export PATH="$PATH:/usr/bin:/usr/sbin"
-    '';
 
     dontWrapQtApps = true;
     dontFixup = true;
