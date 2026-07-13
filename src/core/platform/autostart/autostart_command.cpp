@@ -42,7 +42,9 @@ QString resolveSiblingGuiProgramInDir(const QString& dir) {
 QString resolveSiblingGuiProgram() {
     // Inside an AppImage the mount path dies with the process; the entry must
     // point at the .AppImage itself (which launches the GUI by default).
-    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    // Not const: a const local defeats the automatic move on return
+    // (clang-tidy performance-no-automatic-move).
+    QString appImage = qEnvironmentVariable("APPIMAGE");
     if (!appImage.isEmpty()) {
         return appImage;
     }
