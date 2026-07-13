@@ -3576,6 +3576,10 @@ struct request_telemetry_consent_set {
 	bool TelemetryConsentSet_enabled;
 };
 
+struct request_crash_consent_set {
+	bool CrashConsentSet_enabled;
+};
+
 struct saved_presence_name_r {
 	union {
 		struct zcbor_string saved_presence_name_tstr;
@@ -3985,6 +3989,7 @@ struct api_request_r {
 		struct request_resource_grant_revoke api_request_request_resource_grant_revoke_m;
 		struct request_feedback_submit api_request_request_feedback_submit_m;
 		struct request_telemetry_consent_set api_request_request_telemetry_consent_set_m;
+		struct request_crash_consent_set api_request_request_crash_consent_set_m;
 		struct request_presence_save api_request_request_presence_save_m;
 		struct request_presence_delete api_request_request_presence_delete_m;
 		struct request_presence_set_active api_request_request_presence_set_active_m;
@@ -4188,6 +4193,8 @@ struct api_request_r {
 		api_request_request_feedback_submit_m_c,
 		api_request_request_telemetry_consent_get_m_c,
 		api_request_request_telemetry_consent_set_m_c,
+		api_request_request_crash_consent_get_m_c,
+		api_request_request_crash_consent_set_m_c,
 		api_request_request_presence_list_m_c,
 		api_request_request_presence_save_m_c,
 		api_request_request_presence_delete_m_c,
@@ -8168,6 +8175,10 @@ struct response_telemetry_consent {
 	bool TelemetryConsent_enabled;
 };
 
+struct response_crash_consent {
+	bool CrashConsent_enabled;
+};
+
 struct response_saved_presences {
 	struct saved_presence response_saved_presences_SavedPresences_saved_presence_m[64];
 	size_t response_saved_presences_SavedPresences_saved_presence_m_count;
@@ -8529,6 +8540,7 @@ struct api_response_r {
 		struct response_who_am_i api_response_response_who_am_i_m;
 		struct response_feedback_ack api_response_response_feedback_ack_m;
 		struct response_telemetry_consent api_response_response_telemetry_consent_m;
+		struct response_crash_consent api_response_response_crash_consent_m;
 		struct response_saved_presences api_response_response_saved_presences_m;
 		struct response_notifications api_response_response_notifications_m;
 		struct response_persons api_response_response_persons_m;
@@ -8634,6 +8646,7 @@ struct api_response_r {
 		api_response_response_who_am_i_m_c,
 		api_response_response_feedback_ack_m_c,
 		api_response_response_telemetry_consent_m_c,
+		api_response_response_crash_consent_m_c,
 		api_response_response_saved_presences_m_c,
 		api_response_response_notifications_m_c,
 		api_response_response_persons_m_c,

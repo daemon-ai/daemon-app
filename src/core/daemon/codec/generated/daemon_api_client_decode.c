@@ -499,6 +499,7 @@ static bool decode_feedback_diagnostics(zcbor_state_t *state, struct feedback_di
 static bool decode_repeated_FeedbackSubmit_diagnostics(zcbor_state_t *state, struct FeedbackSubmit_diagnostics_r *result);
 static bool decode_request_feedback_submit(zcbor_state_t *state, struct request_feedback_submit *result);
 static bool decode_request_telemetry_consent_set(zcbor_state_t *state, struct request_telemetry_consent_set *result);
+static bool decode_request_crash_consent_set(zcbor_state_t *state, struct request_crash_consent_set *result);
 static bool decode_repeated_saved_presence_name(zcbor_state_t *state, struct saved_presence_name_r *result);
 static bool decode_repeated_saved_presence_message(zcbor_state_t *state, struct saved_presence_message_r *result);
 static bool decode_repeated_saved_presence_emoji(zcbor_state_t *state, struct saved_presence_emoji_r *result);
@@ -1012,6 +1013,7 @@ static bool decode_response_who_am_i(zcbor_state_t *state, struct response_who_a
 static bool decode_feedback_ack(zcbor_state_t *state, struct feedback_ack *result);
 static bool decode_response_feedback_ack(zcbor_state_t *state, struct response_feedback_ack *result);
 static bool decode_response_telemetry_consent(zcbor_state_t *state, struct response_telemetry_consent *result);
+static bool decode_response_crash_consent(zcbor_state_t *state, struct response_crash_consent *result);
 static bool decode_response_saved_presences(zcbor_state_t *state, struct response_saved_presences *result);
 static bool decode_repeated_notification_info_account(zcbor_state_t *state, struct notification_info_account_r *result);
 static bool decode_repeated_notification_info_created_ms(zcbor_state_t *state, struct notification_info_created_ms *result);
@@ -9012,6 +9014,20 @@ static bool decode_request_telemetry_consent_set(
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"TelemetryConsentSet", tmp_str.len = sizeof("TelemetryConsentSet") - 1, &tmp_str)))))
 	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
 	&& (zcbor_bool_decode(state, (&(*result).TelemetryConsentSet_enabled))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_crash_consent_set(
+		zcbor_state_t *state, struct request_crash_consent_set *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"CrashConsentSet", tmp_str.len = sizeof("CrashConsentSet") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).CrashConsentSet_enabled))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -18096,6 +18112,20 @@ static bool decode_response_telemetry_consent(
 	return res;
 }
 
+static bool decode_response_crash_consent(
+		zcbor_state_t *state, struct response_crash_consent *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"CrashConsent", tmp_str.len = sizeof("CrashConsent") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).CrashConsent_enabled))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_response_saved_presences(
 		zcbor_state_t *state, struct response_saved_presences *result)
 {
@@ -18818,6 +18848,7 @@ static bool decode_api_response(
 	|| (zcbor_union_elem_code(state) && (((decode_response_who_am_i(state, (&(*result).api_response_response_who_am_i_m)))) && (((*result).api_response_choice = api_response_response_who_am_i_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_feedback_ack(state, (&(*result).api_response_response_feedback_ack_m)))) && (((*result).api_response_choice = api_response_response_feedback_ack_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_telemetry_consent(state, (&(*result).api_response_response_telemetry_consent_m)))) && (((*result).api_response_choice = api_response_response_telemetry_consent_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_crash_consent(state, (&(*result).api_response_response_crash_consent_m)))) && (((*result).api_response_choice = api_response_response_crash_consent_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_saved_presences(state, (&(*result).api_response_response_saved_presences_m)))) && (((*result).api_response_choice = api_response_response_saved_presences_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_notifications(state, (&(*result).api_response_response_notifications_m)))) && (((*result).api_response_choice = api_response_response_notifications_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_persons(state, (&(*result).api_response_response_persons_m)))) && (((*result).api_response_choice = api_response_response_persons_m_c), true)))
@@ -19028,6 +19059,8 @@ static bool decode_api_request(
 	|| (zcbor_union_elem_code(state) && (((decode_request_feedback_submit(state, (&(*result).api_request_request_feedback_submit_m)))) && (((*result).api_request_choice = api_request_request_feedback_submit_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"TelemetryConsentGet", tmp_str.len = sizeof("TelemetryConsentGet") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_telemetry_consent_get_m_c), true)))
 	|| (((decode_request_telemetry_consent_set(state, (&(*result).api_request_request_telemetry_consent_set_m)))) && (((*result).api_request_choice = api_request_request_telemetry_consent_set_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"CrashConsentGet", tmp_str.len = sizeof("CrashConsentGet") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_crash_consent_get_m_c), true)))
+	|| (((decode_request_crash_consent_set(state, (&(*result).api_request_request_crash_consent_set_m)))) && (((*result).api_request_choice = api_request_request_crash_consent_set_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"PresenceList", tmp_str.len = sizeof("PresenceList") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_presence_list_m_c), true)))
 	|| (((decode_request_presence_save(state, (&(*result).api_request_request_presence_save_m)))) && (((*result).api_request_choice = api_request_request_presence_save_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((decode_request_presence_delete(state, (&(*result).api_request_request_presence_delete_m)))) && (((*result).api_request_choice = api_request_request_presence_delete_m_c), true)))
