@@ -1388,6 +1388,54 @@ struct request_model_inspect {
 	struct zcbor_string ModelInspect_id;
 };
 
+struct request_swarm_run_detail {
+	struct zcbor_string SwarmRunDetail_run_id;
+};
+
+struct swarm_policy_mode_t_r {
+	enum {
+		swarm_policy_mode_t_always_tstr_c,
+		swarm_policy_mode_t_idle_tstr_c,
+		swarm_policy_mode_t_scheduled_tstr_c,
+		swarm_policy_mode_t_manual_tstr_c,
+	} swarm_policy_mode_t_choice;
+};
+
+struct swarm_policy_schedule {
+	struct zcbor_string swarm_policy_schedule;
+};
+
+struct swarm_policy {
+	struct swarm_policy_mode_t_r swarm_policy_mode;
+	uint32_t swarm_policy_vram_cap_mb;
+	uint32_t swarm_policy_duty_cycle_pct;
+	struct swarm_policy_schedule swarm_policy_schedule;
+	bool swarm_policy_schedule_present;
+};
+
+struct request_swarm_join {
+	struct zcbor_string SwarmJoin_run_id;
+	struct swarm_policy SwarmJoin_policy;
+	struct zcbor_string SwarmJoin_op_id;
+};
+
+struct swarm_leave_mode_r {
+	enum {
+		swarm_leave_mode_graceful_tstr_c,
+		swarm_leave_mode_immediate_tstr_c,
+	} swarm_leave_mode_choice;
+};
+
+struct request_swarm_leave {
+	struct zcbor_string SwarmLeave_run_id;
+	struct swarm_leave_mode_r SwarmLeave_mode;
+	struct zcbor_string SwarmLeave_op_id;
+};
+
+struct request_swarm_set_policy {
+	struct swarm_policy SwarmSetPolicy_policy;
+};
+
 struct Models_after_r {
 	union {
 		struct zcbor_string Models_after_tstr;
@@ -3842,6 +3890,10 @@ struct api_request_r {
 		struct request_model_recommend api_request_request_model_recommend_m;
 		struct request_model_quantize api_request_request_model_quantize_m;
 		struct request_model_inspect api_request_request_model_inspect_m;
+		struct request_swarm_run_detail api_request_request_swarm_run_detail_m;
+		struct request_swarm_join api_request_request_swarm_join_m;
+		struct request_swarm_leave api_request_request_swarm_leave_m;
+		struct request_swarm_set_policy api_request_request_swarm_set_policy_m;
 		struct request_models api_request_request_models_m;
 		struct request_model_current api_request_request_model_current_m;
 		struct request_provider_models api_request_request_provider_models_m;
@@ -4019,6 +4071,12 @@ struct api_request_r {
 		api_request_request_model_quantize_m_c,
 		api_request_request_model_quantizes_m_c,
 		api_request_request_model_inspect_m_c,
+		api_request_request_swarm_run_list_m_c,
+		api_request_request_swarm_run_detail_m_c,
+		api_request_request_swarm_join_m_c,
+		api_request_request_swarm_leave_m_c,
+		api_request_request_swarm_set_policy_m_c,
+		api_request_request_swarm_hardware_report_m_c,
 		api_request_request_models_m_c,
 		api_request_request_model_current_m_c,
 		api_request_request_provider_catalog_m_c,
@@ -5721,6 +5779,16 @@ struct node_event_messages_changed {
 	bool MessagesChanged_origin_op_present;
 };
 
+struct SwarmChanged_run_id {
+	struct zcbor_string SwarmChanged_run_id;
+};
+
+struct node_event_swarm_changed {
+	struct SwarmChanged_run_id SwarmChanged_run_id;
+	bool SwarmChanged_run_id_present;
+	uint64_t SwarmChanged_rev;
+};
+
 struct node_event_r {
 	union {
 		struct node_event_session_advanced node_event_session_advanced_m;
@@ -5739,6 +5807,7 @@ struct node_event_r {
 		struct node_event_notifications_changed node_event_notifications_changed_m;
 		struct node_event_persons_changed node_event_persons_changed_m;
 		struct node_event_messages_changed node_event_messages_changed_m;
+		struct node_event_swarm_changed node_event_swarm_changed_m;
 	};
 	enum {
 		node_event_session_advanced_m_c,
@@ -5757,6 +5826,7 @@ struct node_event_r {
 		node_event_notifications_changed_m_c,
 		node_event_persons_changed_m_c,
 		node_event_messages_changed_m_c,
+		node_event_swarm_changed_m_c,
 	} node_event_choice;
 };
 
@@ -6165,6 +6235,149 @@ struct gguf_info {
 
 struct response_model_inspect {
 	struct gguf_info response_model_inspect_ModelInspect;
+};
+
+struct headroom_tstrint {
+	struct zcbor_string swarm_eligibility_headroom_tstrint_key;
+	int32_t headroom_tstrint;
+};
+
+struct swarm_eligibility {
+	bool swarm_eligibility_eligible;
+	struct zcbor_string swarm_eligibility_reasons_tstr[64];
+	size_t swarm_eligibility_reasons_tstr_count;
+	struct headroom_tstrint headroom_tstrint[64];
+	size_t headroom_tstrint_count;
+};
+
+struct swarm_run_summary_policy {
+	struct swarm_policy swarm_run_summary_policy;
+};
+
+struct swarm_run_summary {
+	struct zcbor_string swarm_run_summary_run_id;
+	struct zcbor_string swarm_run_summary_phase;
+	bool swarm_run_summary_joined;
+	struct swarm_eligibility swarm_run_summary_eligibility;
+	struct swarm_run_summary_policy swarm_run_summary_policy;
+	bool swarm_run_summary_policy_present;
+	uint64_t swarm_run_summary_last_round;
+};
+
+struct response_swarm_runs {
+	struct swarm_run_summary response_swarm_runs_SwarmRuns_swarm_run_summary_m[64];
+	size_t response_swarm_runs_SwarmRuns_swarm_run_summary_m_count;
+};
+
+struct swarm_contribution {
+	uint64_t swarm_contribution_rounds;
+	uint64_t swarm_contribution_tokens;
+	uint64_t swarm_contribution_bytes_up;
+	uint64_t swarm_contribution_bytes_down;
+	uint64_t swarm_contribution_witness_count;
+	uint64_t swarm_contribution_checkpoint_credits;
+};
+
+struct swarm_event_phase {
+	struct zcbor_string Phase_run_id;
+	struct zcbor_string Phase_phase;
+	uint64_t Phase_epoch;
+	uint64_t Phase_round;
+};
+
+struct swarm_event_progress {
+	struct zcbor_string Progress_run_id;
+	uint32_t Progress_inner_step;
+	uint64_t Progress_loss_micros;
+	uint64_t Progress_tokens_per_s_milli;
+	uint32_t Progress_peers;
+};
+
+struct swarm_event_round_outcome {
+	struct zcbor_string RoundOutcome_run_id;
+	uint64_t RoundOutcome_round;
+	uint32_t RoundOutcome_committed;
+	uint32_t RoundOutcome_ingested;
+	bool RoundOutcome_stalled;
+};
+
+struct swarm_event_contribution {
+	struct zcbor_string Contribution_run_id;
+	struct swarm_contribution Contribution_contribution;
+};
+
+struct swarm_event_warning {
+	struct zcbor_string Warning_run_id;
+	struct zcbor_string Warning_class;
+	struct zcbor_string Warning_detail;
+};
+
+struct swarm_event_error {
+	struct zcbor_string Error_run_id;
+	struct zcbor_string Error_class;
+	struct zcbor_string Error_detail;
+};
+
+struct swarm_event_r {
+	union {
+		struct swarm_event_phase swarm_event_phase_m;
+		struct swarm_event_progress swarm_event_progress_m;
+		struct swarm_event_round_outcome swarm_event_round_outcome_m;
+		struct swarm_event_contribution swarm_event_contribution_m;
+		struct swarm_event_warning swarm_event_warning_m;
+		struct swarm_event_error swarm_event_error_m;
+	};
+	enum {
+		swarm_event_phase_m_c,
+		swarm_event_progress_m_c,
+		swarm_event_round_outcome_m_c,
+		swarm_event_contribution_m_c,
+		swarm_event_warning_m_c,
+		swarm_event_error_m_c,
+	} swarm_event_choice;
+};
+
+struct swarm_run_detail {
+	struct swarm_run_summary swarm_run_detail_summary;
+	struct zcbor_string swarm_run_detail_coordinator;
+	struct swarm_contribution swarm_run_detail_contribution;
+	struct swarm_event_r swarm_run_detail_recent_events_swarm_event_m[64];
+	size_t swarm_run_detail_recent_events_swarm_event_m_count;
+};
+
+struct response_swarm_run_detail {
+	union {
+		struct swarm_run_detail response_swarm_run_detail_SwarmRunDetail_swarm_run_detail_m;
+	};
+	enum {
+		response_swarm_run_detail_SwarmRunDetail_swarm_run_detail_m_c,
+		response_swarm_run_detail_SwarmRunDetail_null_m_c,
+	} response_swarm_run_detail_SwarmRunDetail_choice;
+};
+
+struct swarm_capabilities {
+	uint32_t swarm_capabilities_abi_version;
+	struct zcbor_string swarm_capabilities_ops_tstr[64];
+	size_t swarm_capabilities_ops_tstr_count;
+	struct zcbor_string swarm_capabilities_payload_stores_tstr[64];
+	size_t swarm_capabilities_payload_stores_tstr_count;
+};
+
+struct swarm_hardware_report {
+	uint32_t swarm_hardware_report_gpus;
+	uint64_t swarm_hardware_report_vram_mb;
+	uint64_t swarm_hardware_report_ram_mb;
+	struct zcbor_string swarm_hardware_report_backend_lanes_tstr[64];
+	size_t swarm_hardware_report_backend_lanes_tstr_count;
+	struct swarm_capabilities swarm_hardware_report_capabilities;
+	uint64_t swarm_hardware_report_up_kbps;
+	uint64_t swarm_hardware_report_down_kbps;
+	uint64_t swarm_hardware_report_disk_free_mb;
+	struct zcbor_string swarm_hardware_report_throughput_class;
+};
+
+struct response_swarm_hardware_report {
+	struct swarm_hardware_report response_swarm_hardware_report_SwarmHardwareReport;
 };
 
 struct profile_info_created_by_r {
@@ -8247,6 +8460,9 @@ struct api_response_r {
 		struct response_model_quantize_started api_response_response_model_quantize_started_m;
 		struct response_model_quantizes api_response_response_model_quantizes_m;
 		struct response_model_inspect api_response_response_model_inspect_m;
+		struct response_swarm_runs api_response_response_swarm_runs_m;
+		struct response_swarm_run_detail api_response_response_swarm_run_detail_m;
+		struct response_swarm_hardware_report api_response_response_swarm_hardware_report_m;
 		struct response_profiles api_response_response_profiles_m;
 		struct response_profile api_response_response_profile_m;
 		struct response_soul_text api_response_response_soul_text_m;
@@ -8349,6 +8565,9 @@ struct api_response_r {
 		api_response_response_model_quantize_started_m_c,
 		api_response_response_model_quantizes_m_c,
 		api_response_response_model_inspect_m_c,
+		api_response_response_swarm_runs_m_c,
+		api_response_response_swarm_run_detail_m_c,
+		api_response_response_swarm_hardware_report_m_c,
 		api_response_response_profiles_m_c,
 		api_response_response_profile_m_c,
 		api_response_response_soul_text_m_c,

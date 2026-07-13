@@ -202,6 +202,14 @@ static bool decode_request_model_recommend(zcbor_state_t *state, struct request_
 static bool decode_model_quantize_args(zcbor_state_t *state, struct model_quantize_args *result);
 static bool decode_request_model_quantize(zcbor_state_t *state, struct request_model_quantize *result);
 static bool decode_request_model_inspect(zcbor_state_t *state, struct request_model_inspect *result);
+static bool decode_request_swarm_run_detail(zcbor_state_t *state, struct request_swarm_run_detail *result);
+static bool decode_swarm_policy_mode_t(zcbor_state_t *state, struct swarm_policy_mode_t_r *result);
+static bool decode_repeated_swarm_policy_schedule(zcbor_state_t *state, struct swarm_policy_schedule *result);
+static bool decode_swarm_policy(zcbor_state_t *state, struct swarm_policy *result);
+static bool decode_request_swarm_join(zcbor_state_t *state, struct request_swarm_join *result);
+static bool decode_swarm_leave_mode(zcbor_state_t *state, struct swarm_leave_mode_r *result);
+static bool decode_request_swarm_leave(zcbor_state_t *state, struct request_swarm_leave *result);
+static bool decode_request_swarm_set_policy(zcbor_state_t *state, struct request_swarm_set_policy *result);
 static bool decode_repeated_Models_after(zcbor_state_t *state, struct Models_after_r *result);
 static bool decode_request_models(zcbor_state_t *state, struct request_models *result);
 static bool decode_request_model_current(zcbor_state_t *state, struct request_model_current *result);
@@ -714,6 +722,8 @@ static bool decode_node_event_notifications_changed(zcbor_state_t *state, struct
 static bool decode_node_event_persons_changed(zcbor_state_t *state, struct node_event_persons_changed *result);
 static bool decode_repeated_MessagesChanged_origin_op(zcbor_state_t *state, struct MessagesChanged_origin_op_r *result);
 static bool decode_node_event_messages_changed(zcbor_state_t *state, struct node_event_messages_changed *result);
+static bool decode_repeated_SwarmChanged_run_id(zcbor_state_t *state, struct SwarmChanged_run_id *result);
+static bool decode_node_event_swarm_changed(zcbor_state_t *state, struct node_event_swarm_changed *result);
 static bool decode_node_event(zcbor_state_t *state, struct node_event_r *result);
 static bool decode_repeated_events_page_epoch(zcbor_state_t *state, struct events_page_epoch *result);
 static bool decode_events_page(zcbor_state_t *state, struct events_page *result);
@@ -750,6 +760,24 @@ static bool decode_quantize_status(zcbor_state_t *state, struct quantize_status 
 static bool decode_response_model_quantizes(zcbor_state_t *state, struct response_model_quantizes *result);
 static bool decode_gguf_info(zcbor_state_t *state, struct gguf_info *result);
 static bool decode_response_model_inspect(zcbor_state_t *state, struct response_model_inspect *result);
+static bool decode_repeated_headroom_tstrint(zcbor_state_t *state, struct headroom_tstrint *result);
+static bool decode_swarm_eligibility(zcbor_state_t *state, struct swarm_eligibility *result);
+static bool decode_repeated_swarm_run_summary_policy(zcbor_state_t *state, struct swarm_run_summary_policy *result);
+static bool decode_swarm_run_summary(zcbor_state_t *state, struct swarm_run_summary *result);
+static bool decode_response_swarm_runs(zcbor_state_t *state, struct response_swarm_runs *result);
+static bool decode_swarm_contribution(zcbor_state_t *state, struct swarm_contribution *result);
+static bool decode_swarm_event_phase(zcbor_state_t *state, struct swarm_event_phase *result);
+static bool decode_swarm_event_progress(zcbor_state_t *state, struct swarm_event_progress *result);
+static bool decode_swarm_event_round_outcome(zcbor_state_t *state, struct swarm_event_round_outcome *result);
+static bool decode_swarm_event_contribution(zcbor_state_t *state, struct swarm_event_contribution *result);
+static bool decode_swarm_event_warning(zcbor_state_t *state, struct swarm_event_warning *result);
+static bool decode_swarm_event_error(zcbor_state_t *state, struct swarm_event_error *result);
+static bool decode_swarm_event(zcbor_state_t *state, struct swarm_event_r *result);
+static bool decode_swarm_run_detail(zcbor_state_t *state, struct swarm_run_detail *result);
+static bool decode_response_swarm_run_detail(zcbor_state_t *state, struct response_swarm_run_detail *result);
+static bool decode_swarm_capabilities(zcbor_state_t *state, struct swarm_capabilities *result);
+static bool decode_swarm_hardware_report(zcbor_state_t *state, struct swarm_hardware_report *result);
+static bool decode_response_swarm_hardware_report(zcbor_state_t *state, struct response_swarm_hardware_report *result);
 static bool decode_repeated_profile_info_created_by(zcbor_state_t *state, struct profile_info_created_by_r *result);
 static bool decode_repeated_profile_info_owner(zcbor_state_t *state, struct profile_info_owner_r *result);
 static bool decode_profile_info(zcbor_state_t *state, struct profile_info *result);
@@ -3982,6 +4010,138 @@ static bool decode_request_model_inspect(
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ModelInspect", tmp_str.len = sizeof("ModelInspect") - 1, &tmp_str)))))
 	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
 	&& (zcbor_tstr_decode(state, (&(*result).ModelInspect_id))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_swarm_run_detail(
+		zcbor_state_t *state, struct request_swarm_run_detail *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmRunDetail", tmp_str.len = sizeof("SwarmRunDetail") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SwarmRunDetail_run_id))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_policy_mode_t(
+		zcbor_state_t *state, struct swarm_policy_mode_t_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"always", tmp_str.len = sizeof("always") - 1, &tmp_str))))) && (((*result).swarm_policy_mode_t_choice = swarm_policy_mode_t_always_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"idle", tmp_str.len = sizeof("idle") - 1, &tmp_str))))) && (((*result).swarm_policy_mode_t_choice = swarm_policy_mode_t_idle_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"scheduled", tmp_str.len = sizeof("scheduled") - 1, &tmp_str))))) && (((*result).swarm_policy_mode_t_choice = swarm_policy_mode_t_scheduled_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"manual", tmp_str.len = sizeof("manual") - 1, &tmp_str))))) && (((*result).swarm_policy_mode_t_choice = swarm_policy_mode_t_manual_tstr_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_swarm_policy_schedule(
+		zcbor_state_t *state, struct swarm_policy_schedule *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"schedule", tmp_str.len = sizeof("schedule") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).swarm_policy_schedule)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_policy(
+		zcbor_state_t *state, struct swarm_policy *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"mode", tmp_str.len = sizeof("mode") - 1, &tmp_str)))))
+	&& (decode_swarm_policy_mode_t(state, (&(*result).swarm_policy_mode))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"vram_cap_mb", tmp_str.len = sizeof("vram_cap_mb") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).swarm_policy_vram_cap_mb))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"duty_cycle_pct", tmp_str.len = sizeof("duty_cycle_pct") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).swarm_policy_duty_cycle_pct))))
+	&& zcbor_present_decode(&((*result).swarm_policy_schedule_present), (zcbor_decoder_t *)decode_repeated_swarm_policy_schedule, state, (&(*result).swarm_policy_schedule))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_swarm_policy_schedule(state, (&(*result).swarm_policy_schedule));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_swarm_join(
+		zcbor_state_t *state, struct request_swarm_join *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmJoin", tmp_str.len = sizeof("SwarmJoin") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SwarmJoin_run_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"policy", tmp_str.len = sizeof("policy") - 1, &tmp_str)))))
+	&& (decode_swarm_policy(state, (&(*result).SwarmJoin_policy))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"op_id", tmp_str.len = sizeof("op_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SwarmJoin_op_id))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_leave_mode(
+		zcbor_state_t *state, struct swarm_leave_mode_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"graceful", tmp_str.len = sizeof("graceful") - 1, &tmp_str))))) && (((*result).swarm_leave_mode_choice = swarm_leave_mode_graceful_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"immediate", tmp_str.len = sizeof("immediate") - 1, &tmp_str))))) && (((*result).swarm_leave_mode_choice = swarm_leave_mode_immediate_tstr_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_swarm_leave(
+		zcbor_state_t *state, struct request_swarm_leave *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmLeave", tmp_str.len = sizeof("SwarmLeave") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SwarmLeave_run_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"mode", tmp_str.len = sizeof("mode") - 1, &tmp_str)))))
+	&& (decode_swarm_leave_mode(state, (&(*result).SwarmLeave_mode))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"op_id", tmp_str.len = sizeof("op_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SwarmLeave_op_id))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_swarm_set_policy(
+		zcbor_state_t *state, struct request_swarm_set_policy *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmSetPolicy", tmp_str.len = sizeof("SwarmSetPolicy") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"policy", tmp_str.len = sizeof("policy") - 1, &tmp_str)))))
+	&& (decode_swarm_policy(state, (&(*result).SwarmSetPolicy_policy))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -12694,6 +12854,41 @@ static bool decode_node_event_messages_changed(
 	return res;
 }
 
+static bool decode_repeated_SwarmChanged_run_id(
+		zcbor_state_t *state, struct SwarmChanged_run_id *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SwarmChanged_run_id)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_node_event_swarm_changed(
+		zcbor_state_t *state, struct node_event_swarm_changed *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmChanged", tmp_str.len = sizeof("SwarmChanged") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && ((zcbor_present_decode(&((*result).SwarmChanged_run_id_present), (zcbor_decoder_t *)decode_repeated_SwarmChanged_run_id, state, (&(*result).SwarmChanged_run_id))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"rev", tmp_str.len = sizeof("rev") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).SwarmChanged_rev))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_SwarmChanged_run_id(state, (&(*result).SwarmChanged_run_id));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_node_event(
 		zcbor_state_t *state, struct node_event_r *result)
 {
@@ -12715,7 +12910,8 @@ static bool decode_node_event(
 	|| (zcbor_union_elem_code(state) && (((decode_node_event_resync_needed(state, (&(*result).node_event_resync_needed_m)))) && (((*result).node_event_choice = node_event_resync_needed_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_node_event_notifications_changed(state, (&(*result).node_event_notifications_changed_m)))) && (((*result).node_event_choice = node_event_notifications_changed_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_node_event_persons_changed(state, (&(*result).node_event_persons_changed_m)))) && (((*result).node_event_choice = node_event_persons_changed_m_c), true)))
-	|| (zcbor_union_elem_code(state) && (((decode_node_event_messages_changed(state, (&(*result).node_event_messages_changed_m)))) && (((*result).node_event_choice = node_event_messages_changed_m_c), true)))), zcbor_union_end_code(state), int_res))));
+	|| (zcbor_union_elem_code(state) && (((decode_node_event_messages_changed(state, (&(*result).node_event_messages_changed_m)))) && (((*result).node_event_choice = node_event_messages_changed_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_node_event_swarm_changed(state, (&(*result).node_event_swarm_changed_m)))) && (((*result).node_event_choice = node_event_swarm_changed_m_c), true)))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -13420,6 +13616,376 @@ static bool decode_response_model_inspect(
 
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ModelInspect", tmp_str.len = sizeof("ModelInspect") - 1, &tmp_str)))))
 	&& (decode_gguf_info(state, (&(*result).response_model_inspect_ModelInspect))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_headroom_tstrint(
+		zcbor_state_t *state, struct headroom_tstrint *result)
+{
+	zcbor_log("%s\r\n", __func__);
+
+	bool res = ((((zcbor_tstr_decode(state, (&(*result).swarm_eligibility_headroom_tstrint_key))))
+	&& (zcbor_int32_decode(state, (&(*result).headroom_tstrint)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_eligibility(
+		zcbor_state_t *state, struct swarm_eligibility *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"eligible", tmp_str.len = sizeof("eligible") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).swarm_eligibility_eligible))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"reasons", tmp_str.len = sizeof("reasons") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).swarm_eligibility_reasons_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).swarm_eligibility_reasons_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"headroom", tmp_str.len = sizeof("headroom") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).headroom_tstrint_count, (zcbor_decoder_t *)decode_repeated_headroom_tstrint, state, (*&(*result).headroom_tstrint), sizeof(struct headroom_tstrint))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		zcbor_tstr_decode(state, (*&(*result).swarm_eligibility_reasons_tstr));
+		decode_repeated_headroom_tstrint(state, (*&(*result).headroom_tstrint));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_swarm_run_summary_policy(
+		zcbor_state_t *state, struct swarm_run_summary_policy *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"policy", tmp_str.len = sizeof("policy") - 1, &tmp_str)))))
+	&& (decode_swarm_policy(state, (&(*result).swarm_run_summary_policy)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_run_summary(
+		zcbor_state_t *state, struct swarm_run_summary *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).swarm_run_summary_run_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"phase", tmp_str.len = sizeof("phase") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).swarm_run_summary_phase))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"joined", tmp_str.len = sizeof("joined") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).swarm_run_summary_joined))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"eligibility", tmp_str.len = sizeof("eligibility") - 1, &tmp_str)))))
+	&& (decode_swarm_eligibility(state, (&(*result).swarm_run_summary_eligibility))))
+	&& zcbor_present_decode(&((*result).swarm_run_summary_policy_present), (zcbor_decoder_t *)decode_repeated_swarm_run_summary_policy, state, (&(*result).swarm_run_summary_policy))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"last_round", tmp_str.len = sizeof("last_round") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_run_summary_last_round))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_swarm_run_summary_policy(state, (&(*result).swarm_run_summary_policy));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_swarm_runs(
+		zcbor_state_t *state, struct response_swarm_runs *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmRuns", tmp_str.len = sizeof("SwarmRuns") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).response_swarm_runs_SwarmRuns_swarm_run_summary_m_count, (zcbor_decoder_t *)decode_swarm_run_summary, state, (*&(*result).response_swarm_runs_SwarmRuns_swarm_run_summary_m), sizeof(struct swarm_run_summary))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_swarm_run_summary(state, (*&(*result).response_swarm_runs_SwarmRuns_swarm_run_summary_m));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_contribution(
+		zcbor_state_t *state, struct swarm_contribution *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"rounds", tmp_str.len = sizeof("rounds") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_contribution_rounds))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"tokens", tmp_str.len = sizeof("tokens") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_contribution_tokens))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"bytes_up", tmp_str.len = sizeof("bytes_up") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_contribution_bytes_up))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"bytes_down", tmp_str.len = sizeof("bytes_down") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_contribution_bytes_down))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"witness_count", tmp_str.len = sizeof("witness_count") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_contribution_witness_count))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"checkpoint_credits", tmp_str.len = sizeof("checkpoint_credits") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_contribution_checkpoint_credits))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_event_phase(
+		zcbor_state_t *state, struct swarm_event_phase *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Phase", tmp_str.len = sizeof("Phase") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Phase_run_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"phase", tmp_str.len = sizeof("phase") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Phase_phase))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"epoch", tmp_str.len = sizeof("epoch") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).Phase_epoch))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"round", tmp_str.len = sizeof("round") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).Phase_round))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_event_progress(
+		zcbor_state_t *state, struct swarm_event_progress *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Progress", tmp_str.len = sizeof("Progress") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Progress_run_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"inner_step", tmp_str.len = sizeof("inner_step") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).Progress_inner_step))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"loss_micros", tmp_str.len = sizeof("loss_micros") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).Progress_loss_micros))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"tokens_per_s_milli", tmp_str.len = sizeof("tokens_per_s_milli") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).Progress_tokens_per_s_milli))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"peers", tmp_str.len = sizeof("peers") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).Progress_peers))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_event_round_outcome(
+		zcbor_state_t *state, struct swarm_event_round_outcome *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"RoundOutcome", tmp_str.len = sizeof("RoundOutcome") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).RoundOutcome_run_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"round", tmp_str.len = sizeof("round") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).RoundOutcome_round))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"committed", tmp_str.len = sizeof("committed") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).RoundOutcome_committed))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ingested", tmp_str.len = sizeof("ingested") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).RoundOutcome_ingested))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"stalled", tmp_str.len = sizeof("stalled") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).RoundOutcome_stalled))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_event_contribution(
+		zcbor_state_t *state, struct swarm_event_contribution *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Contribution", tmp_str.len = sizeof("Contribution") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Contribution_run_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"contribution", tmp_str.len = sizeof("contribution") - 1, &tmp_str)))))
+	&& (decode_swarm_contribution(state, (&(*result).Contribution_contribution))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_event_warning(
+		zcbor_state_t *state, struct swarm_event_warning *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Warning", tmp_str.len = sizeof("Warning") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Warning_run_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"class", tmp_str.len = sizeof("class") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Warning_class))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"detail", tmp_str.len = sizeof("detail") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Warning_detail))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_event_error(
+		zcbor_state_t *state, struct swarm_event_error *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Error", tmp_str.len = sizeof("Error") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"run_id", tmp_str.len = sizeof("run_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Error_run_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"class", tmp_str.len = sizeof("class") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Error_class))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"detail", tmp_str.len = sizeof("detail") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).Error_detail))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_event(
+		zcbor_state_t *state, struct swarm_event_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	bool int_res;
+
+	bool res = (((zcbor_union_start_code(state) && (int_res = ((((decode_swarm_event_phase(state, (&(*result).swarm_event_phase_m)))) && (((*result).swarm_event_choice = swarm_event_phase_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((decode_swarm_event_progress(state, (&(*result).swarm_event_progress_m)))) && (((*result).swarm_event_choice = swarm_event_progress_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_swarm_event_round_outcome(state, (&(*result).swarm_event_round_outcome_m)))) && (((*result).swarm_event_choice = swarm_event_round_outcome_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_swarm_event_contribution(state, (&(*result).swarm_event_contribution_m)))) && (((*result).swarm_event_choice = swarm_event_contribution_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_swarm_event_warning(state, (&(*result).swarm_event_warning_m)))) && (((*result).swarm_event_choice = swarm_event_warning_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_swarm_event_error(state, (&(*result).swarm_event_error_m)))) && (((*result).swarm_event_choice = swarm_event_error_m_c), true)))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_run_detail(
+		zcbor_state_t *state, struct swarm_run_detail *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"summary", tmp_str.len = sizeof("summary") - 1, &tmp_str)))))
+	&& (decode_swarm_run_summary(state, (&(*result).swarm_run_detail_summary))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"coordinator", tmp_str.len = sizeof("coordinator") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).swarm_run_detail_coordinator))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"contribution", tmp_str.len = sizeof("contribution") - 1, &tmp_str)))))
+	&& (decode_swarm_contribution(state, (&(*result).swarm_run_detail_contribution))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"recent_events", tmp_str.len = sizeof("recent_events") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).swarm_run_detail_recent_events_swarm_event_m_count, (zcbor_decoder_t *)decode_swarm_event, state, (*&(*result).swarm_run_detail_recent_events_swarm_event_m), sizeof(struct swarm_event_r))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_swarm_event(state, (*&(*result).swarm_run_detail_recent_events_swarm_event_m));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_swarm_run_detail(
+		zcbor_state_t *state, struct response_swarm_run_detail *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmRunDetail", tmp_str.len = sizeof("SwarmRunDetail") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((decode_swarm_run_detail(state, (&(*result).response_swarm_run_detail_SwarmRunDetail_swarm_run_detail_m)))) && (((*result).response_swarm_run_detail_SwarmRunDetail_choice = response_swarm_run_detail_SwarmRunDetail_swarm_run_detail_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((zcbor_nil_expect(state, NULL))) && (((*result).response_swarm_run_detail_SwarmRunDetail_choice = response_swarm_run_detail_SwarmRunDetail_null_m_c), true)))), zcbor_union_end_code(state), int_res)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_capabilities(
+		zcbor_state_t *state, struct swarm_capabilities *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"abi_version", tmp_str.len = sizeof("abi_version") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).swarm_capabilities_abi_version))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ops", tmp_str.len = sizeof("ops") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).swarm_capabilities_ops_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).swarm_capabilities_ops_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"payload_stores", tmp_str.len = sizeof("payload_stores") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).swarm_capabilities_payload_stores_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).swarm_capabilities_payload_stores_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		zcbor_tstr_decode(state, (*&(*result).swarm_capabilities_ops_tstr));
+		zcbor_tstr_decode(state, (*&(*result).swarm_capabilities_payload_stores_tstr));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_swarm_hardware_report(
+		zcbor_state_t *state, struct swarm_hardware_report *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"gpus", tmp_str.len = sizeof("gpus") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).swarm_hardware_report_gpus))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"vram_mb", tmp_str.len = sizeof("vram_mb") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_hardware_report_vram_mb))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ram_mb", tmp_str.len = sizeof("ram_mb") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_hardware_report_ram_mb))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"backend_lanes", tmp_str.len = sizeof("backend_lanes") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).swarm_hardware_report_backend_lanes_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).swarm_hardware_report_backend_lanes_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"capabilities", tmp_str.len = sizeof("capabilities") - 1, &tmp_str)))))
+	&& (decode_swarm_capabilities(state, (&(*result).swarm_hardware_report_capabilities))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"up_kbps", tmp_str.len = sizeof("up_kbps") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_hardware_report_up_kbps))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"down_kbps", tmp_str.len = sizeof("down_kbps") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_hardware_report_down_kbps))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"disk_free_mb", tmp_str.len = sizeof("disk_free_mb") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_hardware_report_disk_free_mb))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"throughput_class", tmp_str.len = sizeof("throughput_class") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).swarm_hardware_report_throughput_class))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		zcbor_tstr_decode(state, (*&(*result).swarm_hardware_report_backend_lanes_tstr));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_swarm_hardware_report(
+		zcbor_state_t *state, struct response_swarm_hardware_report *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmHardwareReport", tmp_str.len = sizeof("SwarmHardwareReport") - 1, &tmp_str)))))
+	&& (decode_swarm_hardware_report(state, (&(*result).response_swarm_hardware_report_SwarmHardwareReport))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -18183,6 +18749,9 @@ static bool decode_api_response(
 	|| (zcbor_union_elem_code(state) && (((decode_response_model_quantize_started(state, (&(*result).api_response_response_model_quantize_started_m)))) && (((*result).api_response_choice = api_response_response_model_quantize_started_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_model_quantizes(state, (&(*result).api_response_response_model_quantizes_m)))) && (((*result).api_response_choice = api_response_response_model_quantizes_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_model_inspect(state, (&(*result).api_response_response_model_inspect_m)))) && (((*result).api_response_choice = api_response_response_model_inspect_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_swarm_runs(state, (&(*result).api_response_response_swarm_runs_m)))) && (((*result).api_response_choice = api_response_response_swarm_runs_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_swarm_run_detail(state, (&(*result).api_response_response_swarm_run_detail_m)))) && (((*result).api_response_choice = api_response_response_swarm_run_detail_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_swarm_hardware_report(state, (&(*result).api_response_response_swarm_hardware_report_m)))) && (((*result).api_response_choice = api_response_response_swarm_hardware_report_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_profiles(state, (&(*result).api_response_response_profiles_m)))) && (((*result).api_response_choice = api_response_response_profiles_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_profile(state, (&(*result).api_response_response_profile_m)))) && (((*result).api_response_choice = api_response_response_profile_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_soul_text(state, (&(*result).api_response_response_soul_text_m)))) && (((*result).api_response_choice = api_response_response_soul_text_m_c), true)))
@@ -18342,7 +18911,13 @@ static bool decode_api_request(
 	|| (zcbor_union_elem_code(state) && (((decode_request_model_quantize(state, (&(*result).api_request_request_model_quantize_m)))) && (((*result).api_request_choice = api_request_request_model_quantize_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ModelQuantizes", tmp_str.len = sizeof("ModelQuantizes") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_model_quantizes_m_c), true)))
 	|| (((decode_request_model_inspect(state, (&(*result).api_request_request_model_inspect_m)))) && (((*result).api_request_choice = api_request_request_model_inspect_m_c), true))
-	|| (zcbor_union_elem_code(state) && (((decode_request_models(state, (&(*result).api_request_request_models_m)))) && (((*result).api_request_choice = api_request_request_models_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmRunList", tmp_str.len = sizeof("SwarmRunList") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_swarm_run_list_m_c), true)))
+	|| (((decode_request_swarm_run_detail(state, (&(*result).api_request_request_swarm_run_detail_m)))) && (((*result).api_request_choice = api_request_request_swarm_run_detail_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((decode_request_swarm_join(state, (&(*result).api_request_request_swarm_join_m)))) && (((*result).api_request_choice = api_request_request_swarm_join_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_swarm_leave(state, (&(*result).api_request_request_swarm_leave_m)))) && (((*result).api_request_choice = api_request_request_swarm_leave_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_swarm_set_policy(state, (&(*result).api_request_request_swarm_set_policy_m)))) && (((*result).api_request_choice = api_request_request_swarm_set_policy_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SwarmHardwareReport", tmp_str.len = sizeof("SwarmHardwareReport") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_swarm_hardware_report_m_c), true)))
+	|| (((decode_request_models(state, (&(*result).api_request_request_models_m)))) && (((*result).api_request_choice = api_request_request_models_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((decode_request_model_current(state, (&(*result).api_request_request_model_current_m)))) && (((*result).api_request_choice = api_request_request_model_current_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ProviderCatalog", tmp_str.len = sizeof("ProviderCatalog") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_provider_catalog_m_c), true)))
 	|| (((decode_request_provider_models(state, (&(*result).api_request_request_provider_models_m)))) && (((*result).api_request_choice = api_request_request_provider_models_m_c), true))
