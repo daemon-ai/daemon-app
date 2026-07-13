@@ -78,7 +78,7 @@ QString defaultDatabasePath() {
 QString defaultHandlerPath() {
     // Co-located with the app binary, exactly like the node binary (see local_daemon_launcher.cpp):
     // every desktop package ships crashpad_handler next to the executable.
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
     const QString exe = QStringLiteral("crashpad_handler.exe");
 #else
     const QString exe = QStringLiteral("crashpad_handler");

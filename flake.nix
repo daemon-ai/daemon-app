@@ -401,9 +401,12 @@
         # best-effort wine smoke (nix/windows.nix). Only these outputs
         # evaluate it, so the native desktop outputs stay unchanged.
         windowsStack = import ./nix/windows.nix {
-          inherit pkgs versionStr baseVersion;
+          inherit pkgs versionStr baseVersion sentryDsn;
           appSrc = ./.;
-          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen immer; };
+          depSources = {
+            inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen immer;
+            sentryNative = sentryNativeSrc;
+          };
         };
 
         # --- Qt for Android (arm64-v8a) ---------------------------------------

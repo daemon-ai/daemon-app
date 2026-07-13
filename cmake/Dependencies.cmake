@@ -358,6 +358,15 @@ message(STATUS "Dependencies: mirror substrate wired (immer value substrate; coa
 # ---------------------------------------------------------------------------
 if(NOT DAEMON_APP_WASM AND NOT DAEMON_APP_MOBILE)
     _daemon_app_resolve_dir(_sentry_dir SENTRY_NATIVE_SOURCE_DIR)
+    if(NOT _sentry_dir)
+        # Unlike the hard-required deps above, an entirely-unwired sentry source is a SKIP, not an
+        # error: crash reporting is an optional, consent-gated add-on and the module compiles down to
+        # no-op stubs without the `sentry` target (src/core/crash/CMakeLists.txt). This keeps build
+        # lanes that have not (yet) threaded SENTRY_NATIVE_SOURCE_DIR — e.g. the static portable/macOS
+        # stacks — building, with crash reporting compiled out. A SET-but-wrong path is still fatal
+        # below: that is a misconfiguration, not an opt-out.
+        message(STATUS "Dependencies: sentry-native NOT wired (SENTRY_NATIVE_SOURCE_DIR unset) — crash reporting compiled out.")
+    else()
     if(NOT EXISTS "${_sentry_dir}/CMakeLists.txt")
         message(FATAL_ERROR "SENTRY_NATIVE_SOURCE_DIR must point to a sentry-native source tree (got '${_sentry_dir}')")
     endif()
@@ -385,6 +394,25 @@ if(NOT DAEMON_APP_WASM AND NOT DAEMON_APP_MOBILE)
     # under our -Werror project flags.
     if(TARGET sentry)
         target_include_directories(sentry SYSTEM INTERFACE "${_sentry_dir}/include")
+        if(MINGW)
+            # sentry's CMake adds MinGW-only suppressions to its own target, including -Wno-format.
+            # That collides with the Nix cc-wrapper's format hardening (-Wformat -Wformat-security
+            # -Werror=format-security): GCC hard-errors when -Wformat is disabled while
+            # -Werror=format-security stays armed ("'-Wformat-security' ignored without '-Wformat'").
+            # Appending -Wformat AFTER sentry's options re-enables it (last flag wins); the resulting
+            # format warnings inside sentry stay warnings — only format-security is promoted to error.
+            target_compile_options(sentry PRIVATE -Wformat)
+
+            # Header-case shim: two sentry sources include the MSVC-cased <Psapi.h> / <TlHelp32.h>,
+            # but mingw-w64 ships only lowercase headers and this cross build runs on a
+            # case-sensitive filesystem. Generate forwarding headers into the build tree rather than
+            # touching the vendored SDK.
+            set(_sentry_shim "${CMAKE_BINARY_DIR}/_deps/sentry-mingw-include-shim")
+            file(WRITE "${_sentry_shim}/Psapi.h" "#include <psapi.h>\n")
+            file(WRITE "${_sentry_shim}/TlHelp32.h" "#include <tlhelp32.h>\n")
+            target_include_directories(sentry PRIVATE "${_sentry_shim}")
+        endif()
     endif()
     message(STATUS "Dependencies: sentry-native wired (backend=${_sentry_backend}, static).")
+    endif()
 endif()

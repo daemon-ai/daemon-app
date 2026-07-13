@@ -39,6 +39,9 @@
   baseVersion,
   versionStr,
   depSources,
+  # The compiled-in product default Sentry DSN (public value) — same contract as
+  # the native desktop build; crash reporting stays consent-gated at runtime.
+  sentryDsn ? "",
 }:
 let
   inherit (pkgs) lib;
@@ -338,6 +341,8 @@ let
         -DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${depSources.ksyntaxhighlighting} \
         -DMICROTEX_SOURCE_DIR=${depSources.microtex} \
         -DQRCODEGEN_SOURCE_DIR=${depSources.qrcodegen} \
+        -DSENTRY_NATIVE_SOURCE_DIR=${depSources.sentryNative} \
+        -DDAEMON_APP_SENTRY_DSN=${sentryDsn} \
         -DIMMER_SOURCE_DIR=${depSources.immer} \
         -DDAEMON_APP_VERSION_STR=${versionStr} \
         -DDAEMON_APP_UPDATE_CAPABILITY=SelfApply \
@@ -476,6 +481,10 @@ let
     "shcore.dll"
     "ntdll.dll"
     "msvcrt.dll" # mingw CRT baseline (an inbox DLL on every Windows)
+    # Crash reporting (sentry-native, breakpad backend): the dbghelp stack unwinder
+    # (SENTRY_WITH_UNWINDER_DBGHELP) + minidump writing. An inbox DLL (system32) on
+    # every supported Windows.
+    "dbghelp.dll"
     # Sockets + TLS (Schannel) + crypto
     "ws2_32.dll"
     "iphlpapi.dll"
