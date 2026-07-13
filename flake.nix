@@ -387,10 +387,14 @@
         # from nixpkgs; no Xcode). Only evaluates on darwin.
         macosStack = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin (
           import ./nix/macos.nix {
-            inherit pkgs versionStr baseVersion;
+            inherit pkgs versionStr baseVersion sentryDsn;
             appSrc = ./.;
             depSources = { inherit md4qt earcut ksyntaxhighlighting microtex qrcodegen immer; };
             tuiSources = { inherit tuiwidgets posixsignalmanager qmltermwidget; };
+            # Crash reporting: the same unzipped sentry-native source tree the Linux/Windows
+            # lanes consume; nix/macos.nix threads it (+ the compiled-in DSN above) into the
+            # static app build so the .dmg ships a working crashpad handler.
+            inherit sentryNativeSrc;
           }
         );
 

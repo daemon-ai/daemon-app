@@ -28,6 +28,12 @@
   versionStr,
   depSources,
   tuiSources,
+  # Crash reporting (Sentry native SDK): the unzipped sentry-native source tree
+  # add_subdirectory'd by cmake/Dependencies.cmake (crashpad backend on macOS) +
+  # the compiled-in product default DSN. Same contract as the Linux/Windows
+  # lanes; an unset DSN compiles crash reporting OUT (documented SKIP).
+  sentryNativeSrc ? null,
+  sentryDsn ? "",
 }:
 let
   inherit (pkgs) lib;
@@ -391,6 +397,16 @@ let
       "-DDAEMON_APP_UPDATE_FEED_URL=https://github.com/daemon-ai/daemon/releases/latest/download/manifest.json"
       "-DDAEMON_APP_UPDATE_PUBKEY=RWRXpowS90Fy+TYhRsrBbQNSDvjbtJpqi9T89OGqSNTLkOa5vn62hK0o"
       "-DDAEMON_APP_UPDATE_ARTIFACT_KIND=dmg"
+    ]
+    # Crash reporting: sentry-native (crashpad backend, static) + the compiled-in
+    # DSN, mirroring the Linux/Windows lanes. Wired once here; DAEMON_APP_TUI=ON
+    # means this single build covers both the GUI and the TUI (the shared
+    # cmake/Dependencies.cmake links libsentry into the app and builds the
+    # co-located crashpad_handler that cmake/Packaging.cmake stages into the
+    # bundle). Left unset (no sentryNativeSrc) it compiles crash reporting OUT.
+    ++ lib.optionals (sentryNativeSrc != null) [
+      "-DSENTRY_NATIVE_SOURCE_DIR=${sentryNativeSrc}"
+      "-DDAEMON_APP_SENTRY_DSN=${sentryDsn}"
     ];
 
     CCACHE_DISABLE = "1";

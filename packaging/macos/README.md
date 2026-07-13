@@ -103,6 +103,43 @@ cmake --build build-macos
 
 (or `nix build .#macos-dmg --option sandbox false` at the cost of purity).
 
+## CI release lane (self-hosted M1 runner)
+
+The `macos` job in the superproject's [.github/workflows/release.yml](../../../.github/workflows/release.yml)
+builds `.?submodules=1#package-dmg`, stages `daemon-<version>-macos-arm64.dmg`
+(+ `.sha256`) as the `macos` artifact, and — when `SENTRY_AUTH_TOKEN` is set —
+uploads the Rust `release-symbols` debug files. It runs on the M1 mini as a
+self-hosted runner and is **disabled by default** behind a repo-variable gate
+(a `vars.ENABLE_MACOS_RELEASE == 'true'` check, not a literal `if: false`, so
+enabling is a settings change and actionlint stays clean). Two manual,
+out-of-band steps arm it:
+
+1. **Register the mini as a self-hosted Actions runner.** In the repo's
+   `Settings → Actions → Runners → New self-hosted runner`, install the runner
+   on the mini with the labels `self-hosted, macOS, ARM64` (the job's
+   `runs-on: [self-hosted, macOS, ARM64]` targets exactly those). Run it as a
+   service so it survives reboots.
+2. **Set the repo variable `ENABLE_MACOS_RELEASE=true`** (`Settings → Secrets
+   and variables → Actions → Variables`). Until it is `true` the job is
+   skipped, and the `publish` job's `!failure() && !cancelled()` guard lets a
+   skipped macos lane pass without blocking the Linux/Windows/mobile release.
+
+**Resource caps (non-negotiable — the mini has 8 GB RAM).** The DMG lane is a
+sealed `nix build`; cap it on the mini via the nix daemon's `nix.conf`:
+
+```
+# /etc/nix/nix.conf on the mini
+max-jobs = 1
+cores = 4
+```
+
+The job also pins `--max-jobs 1 --cores 4` and `nice -n 19` on the build step,
+and `CARGO_BUILD_JOBS=4` on the symbol build, so it stays within budget even if
+the daemon config drifts. No `DeterminateSystems/nix-installer` or
+`cachix/cachix-action` step runs here: the mini already has nix and a warm
+store (a `cachix use daemon-ai` push step is optional and out of scope for the
+self-hosted lane).
+
 ## What the DMG contains (theoretical — verify on first run)
 
 ```
