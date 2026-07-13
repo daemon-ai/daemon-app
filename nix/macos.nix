@@ -404,9 +404,17 @@ let
     # cmake/Dependencies.cmake links libsentry into the app and builds the
     # co-located crashpad_handler that cmake/Packaging.cmake stages into the
     # bundle). Left unset (no sentryNativeSrc) it compiles crash reporting OUT.
+    #
+    # sentry-native's default transport on macOS is curl (only Windows uses
+    # winhttp), so its find_package(CURL) must resolve. macOS ships libcurl as a
+    # system library (dyld shared cache /usr/lib/libcurl.4.dylib); point CMake at
+    # the SDK's stub (.tbd) + headers so the .app links the SYSTEM curl — no
+    # /nix/store dylib to scrub, exactly like the CUPS handling above.
     ++ lib.optionals (sentryNativeSrc != null) [
       "-DSENTRY_NATIVE_SOURCE_DIR=${sentryNativeSrc}"
       "-DDAEMON_APP_SENTRY_DSN=${sentryDsn}"
+      "-DCURL_INCLUDE_DIR=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
+      "-DCURL_LIBRARY=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd"
     ];
 
     CCACHE_DISABLE = "1";
