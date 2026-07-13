@@ -9,6 +9,7 @@
 // preserved by repair().
 
 #include "platform/autostart/autostart_backend.h"
+#include "platform/autostart/autostart_backend_portal.h"
 #include "platform/autostart/autostart_command.h"
 #include "platform/autostart/autostart_entry.h"
 
@@ -51,12 +52,10 @@ bool writeEntry(const QString& path, const QString& content, QString* error) {
     return true;
 }
 
-// The common environment gate for every operation.
-bool unsupportedHere(const QString& program, Status* status) {
-    if (runningInsideFlatpak()) {
-        *status = {State::Unsupported, Detail::Flatpak, {}};
-        return true;
-    }
+// The non-Flatpak environment gate. Flatpak is handled separately (it routes to
+// the Background portal, autostart_backend_portal.h), so only the no-launchable-
+// program case remains here.
+bool noProgram(const QString& program, Status* status) {
     if (program.isEmpty()) {
         *status = {State::Unsupported, Detail::NoProgram, {}};
         return true;
@@ -64,11 +63,27 @@ bool unsupportedHere(const QString& program, Status* status) {
     return false;
 }
 
+// Inside a Flatpak sandbox the XDG autostart-dir write below never reaches the
+// host session, so launch-at-login goes through the Background portal. When the
+// portal is unreachable the query falls back to the pre-portal Unsupported/
+// Flatpak status ("managed by your system's Flatpak permissions").
+Status portalQuery() {
+    // The Background portal offers no state read-back, so a live query cannot
+    // reflect a prior grant: report a clean Disabled (toggleable) when the
+    // portal is present so the settings row is shown and the user can (re)assert
+    // the request; the portal echoes the real grant in apply()'s Response.
+    return portal::available() ? Status{State::Disabled, Detail::None, {}}
+                               : Status{State::Unsupported, Detail::Flatpak, {}};
+}
+
 } // namespace
 
 Status query(const QString& program) {
+    if (runningInsideFlatpak()) {
+        return portalQuery();
+    }
     Status gate;
-    if (unsupportedHere(program, &gate)) {
+    if (noProgram(program, &gate)) {
         return gate;
     }
     const QString path = entryPath();
@@ -80,8 +95,11 @@ Status query(const QString& program) {
 }
 
 Status apply(const QString& program, bool enable) {
+    if (runningInsideFlatpak()) {
+        return portal::requestBackground(program, enable);
+    }
     Status gate;
-    if (unsupportedHere(program, &gate)) {
+    if (noProgram(program, &gate)) {
         return gate;
     }
     const QString path = entryPath();
@@ -99,8 +117,13 @@ Status apply(const QString& program, bool enable) {
 }
 
 bool repair(const QString& program) {
+    // The portal owns the host-side Flatpak autostart entry; nothing local to
+    // rewrite (the sandbox never sees a stale ~/.config/autostart file).
+    if (runningInsideFlatpak()) {
+        return false;
+    }
     Status gate;
-    if (unsupportedHere(program, &gate)) {
+    if (noProgram(program, &gate)) {
         return false;
     }
     const QString path = entryPath();

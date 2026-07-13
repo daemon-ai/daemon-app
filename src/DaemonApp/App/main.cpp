@@ -6,6 +6,7 @@
 #include "daemon_app_version.h"
 #include "i18n/localization.h"
 #include "platform/app_icon.h"
+#include "platform/autostart/autostart_command.h"
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(Q_OS_WASM)
 // No QtWidgets on mobile or in the browser: pure Qt Quick on QGuiApplication.
@@ -322,7 +323,14 @@ int main(int argc, char* argv[]) {
     // chrome. platform::appIcon() prefers the installed hicolor theme icon and
     // falls back to the PNGs embedded in the app resource. Mobile brands via the
     // launcher mipmaps and the browser via the favicon, so both are excluded.
-    QGuiApplication::setDesktopFileName(QStringLiteral("daemon-app"));
+    // Flathub installs the desktop file + icon under the reverse-DNS app id
+    // (io.daemon.app), so the Wayland app_id must match that basename inside the
+    // Flatpak sandbox; every other Linux lane (deb/rpm/AppImage/portable) ships
+    // daemon-app.desktop. Match the installed basename either way so the
+    // compositor resolves the window icon.
+    QGuiApplication::setDesktopFileName(autostart::runningInsideFlatpak()
+                                            ? QStringLiteral("io.daemon.app")
+                                            : QStringLiteral("daemon-app"));
     QGuiApplication::setWindowIcon(platform::appIcon());
 #endif
 

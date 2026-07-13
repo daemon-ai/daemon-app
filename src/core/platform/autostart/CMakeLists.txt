@@ -41,5 +41,15 @@ elseif(APPLE)
     target_sources(da_autostart PRIVATE autostart_backend_mac.mm)
     target_link_libraries(da_autostart PRIVATE daemon-app::update "-framework ServiceManagement")
 else()
-    target_sources(da_autostart PRIVATE autostart_backend_xdg.cpp)
+    # Linux/freedesktop: the XDG ~/.config/autostart entry, plus the Background
+    # portal branch (autostart_backend_portal.*) the XDG TU routes to when
+    # running inside a Flatpak sandbox. The portal talks D-Bus (Qt6::DBus).
+    find_package(Qt6 6.11 REQUIRED COMPONENTS DBus)
+    target_sources(da_autostart
+        PRIVATE
+            autostart_backend_xdg.cpp
+            autostart_backend_portal.h
+            autostart_backend_portal.cpp
+    )
+    target_link_libraries(da_autostart PRIVATE Qt6::DBus)
 endif()
