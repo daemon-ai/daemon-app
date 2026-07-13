@@ -374,6 +374,13 @@ let
 
     cmakeFlags = [
       "-DCMAKE_BUILD_TYPE=Release"
+      # Pin the build architecture explicitly. The vendored crashpad (the sentry
+      # crashpad backend) reads the crashpad_util target's OSX_ARCHITECTURES to
+      # choose which Mach interface (mig) arch to generate; with
+      # CMAKE_OSX_ARCHITECTURES unset it wrongly defaults to x86_64 even on an
+      # Apple-Silicon host, producing mismatched stubs. Pinning the host arch
+      # keeps the whole .app (and crashpad's mig output) on the native arch.
+      "-DCMAKE_OSX_ARCHITECTURES=${if pkgs.stdenv.hostPlatform.isAarch64 then "arm64" else "x86_64"}"
       "-DBUILD_SHARED_LIBS=OFF"
       "-DBUILD_TESTING=OFF"
       "-DDAEMON_APP_TUI=ON"
@@ -418,6 +425,16 @@ let
     ];
 
     CCACHE_DISABLE = "1";
+
+    # crashpad's build shells out to Apple's Mach Interface Generator (`mig`,
+    # which itself invokes `migcom`) to generate the util/mach RPC stubs; those
+    # tools live in /usr/bin + the Xcode toolchain, not in the nix store. Append
+    # (so nix's own cc/cmake/ninja still win) the system bindirs for the build,
+    # exactly like the qt-from-source buildEnv and the DMG packaging step do.
+    # Only crashpad needs this, so it is a no-op for a crash-reporting-off build.
+    preConfigure = ''
+      export PATH="$PATH:/usr/bin:/usr/sbin"
+    '';
 
     dontWrapQtApps = true;
     dontFixup = true;
