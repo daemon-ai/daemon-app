@@ -43,6 +43,9 @@ public:
     [[nodiscard]] bool telemetryEnabled() const override { return m_telemetryEnabled; }
     void setTelemetryEnabled(bool enabled) override;
 
+    [[nodiscard]] bool crashReportingEnabled() const override { return m_crashReportingEnabled; }
+    void setCrashReportingEnabled(bool enabled) override;
+
     // Test introspection.
     [[nodiscard]] const QVector<MessageRecord>& messageRecords() const { return m_messageRecords; }
     [[nodiscard]] const QVector<AppRecord>& appRecords() const { return m_appRecords; }
@@ -51,6 +54,7 @@ private:
     void persist() const;
 
     bool m_telemetryEnabled = false;
+    bool m_crashReportingEnabled = false;
     QVector<MessageRecord> m_messageRecords;
     QVector<AppRecord> m_appRecords;
 };

@@ -18,4 +18,7 @@ target_link_libraries(da_feedback
         Qt6::Core
     PRIVATE
         daemon-app::warnings
+        # Crash consent flows through the shared crash seam (persistConsent / consentCached), so the
+        # mock exercises the SAME local Sentry gate + QSettings cache the daemon seam uses.
+        daemon-app::crash
 )

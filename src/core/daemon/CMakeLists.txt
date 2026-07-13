@@ -137,6 +137,8 @@ target_link_libraries(da_daemon_client
         daemon-app::settings_store
         daemon-app::config
         daemon-app::feedback
+        # Crash consent: DaemonFeedback flips the local Sentry gate via the shared crash seam.
+        daemon-app::crash
         daemon-app::fs
         daemon-app::memory
         daemon-app::models

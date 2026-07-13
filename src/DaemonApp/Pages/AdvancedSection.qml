@@ -74,6 +74,18 @@ ColumnLayout {
     }
     OptionRow {
         Layout.fillWidth: true
+        label: qsTr("Send crash reports")
+        // A dedicated, node-owned crash-reporting consent (wire v41), DISTINCT from telemetry above
+        // and default OFF. Toggling it flips the local Sentry upload gate + persists the choice
+        // (so the reporter arms correctly at next startup) and updates the node for future workers.
+        checked: (typeof Feedback !== "undefined" && Feedback) ? Feedback.crashReportingEnabled : false
+        onToggled: function(on) {
+            if (typeof Feedback !== "undefined" && Feedback)
+                Feedback.setCrashReportingEnabled(on);
+        }
+    }
+    OptionRow {
+        Layout.fillWidth: true
         label: qsTr("Enable experimental tools")
         checked: DaemonConfig.value("advanced/experimentalTools", false)
         onToggled: function(on) { DaemonConfig.setValue("advanced/experimentalTools", on); }

@@ -219,6 +219,10 @@
         <translation>匿名テレメトリーを送信</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>クラッシュレポートを送信</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>実験的なツールを有効にする</translation>
     </message>
@@ -7956,6 +7960,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>セッションごとの一時的な子の最大数</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>クラッシュレポートを送信</translation>
     </message>
     <message>
         <source>Tools</source>

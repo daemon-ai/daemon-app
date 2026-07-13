@@ -219,6 +219,10 @@
         <translation>Anonim telemetri gönder</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>Çökme raporları gönder</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>Deneysel araçları etkinleştir</translation>
     </message>
@@ -7956,6 +7960,10 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>Oturum başına en fazla geçici alt aracı</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>Çökme raporları gönder</translation>
     </message>
     <message>
         <source>Tools</source>

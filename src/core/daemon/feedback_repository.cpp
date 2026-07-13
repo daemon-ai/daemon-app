@@ -3,6 +3,7 @@
 
 #include "daemon/feedback_repository.h"
 
+#include "crash/crash_reporter.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 
@@ -81,6 +82,18 @@ void DaemonFeedback::setTelemetryEnabled(bool enabled) {
                           QLatin1String(kConsentSetCorrelation));
 }
 
+void DaemonFeedback::setCrashReportingEnabled(bool enabled) {
+    // Unlike telemetry, flip the LOCAL reporter + persist the cache IMMEDIATELY (no wait for a node
+    // echo): the app-side Sentry client must honor the choice even before/without a node
+    // round-trip, and must arm correctly at the next startup before any connection exists. Then
+    // inform the node (best-effort) so future worker spawns inherit the decision.
+    applyCrashConsent(enabled);
+    if (m_client != nullptr) {
+        m_client->sendRequest(NodeApiCodec::encodeCrashConsentSetRequest(enabled),
+                              QLatin1String(kCrashConsentSetCorrelation));
+    }
+}
+
 void DaemonFeedback::refreshConsent() {
     if (m_client == nullptr) {
         return;
@@ -89,12 +102,28 @@ void DaemonFeedback::refreshConsent() {
                           QLatin1String(kConsentGetCorrelation));
 }
 
+void DaemonFeedback::refreshCrashConsent() {
+    if (m_client == nullptr) {
+        return;
+    }
+    m_client->sendRequest(NodeApiCodec::encodeCrashConsentGetRequest(),
+                          QLatin1String(kCrashConsentGetCorrelation));
+}
+
 void DaemonFeedback::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kConsentGetCorrelation) ||
         correlationId == QLatin1String(kConsentSetCorrelation)) {
         bool enabled = m_telemetryEnabled;
         if (NodeApiCodec::decodeTelemetryConsent(responseCbor, &enabled)) {
             applyConsent(enabled);
+        }
+        return;
+    }
+    if (correlationId == QLatin1String(kCrashConsentGetCorrelation) ||
+        correlationId == QLatin1String(kCrashConsentSetCorrelation)) {
+        bool enabled = m_crashReportingEnabled;
+        if (NodeApiCodec::decodeCrashConsent(responseCbor, &enabled)) {
+            applyCrashConsent(enabled);
         }
         return;
     }
@@ -117,6 +146,18 @@ void DaemonFeedback::applyConsent(bool enabled) {
     }
     m_telemetryEnabled = enabled;
     emit telemetryEnabledChanged(m_telemetryEnabled);
+}
+
+void DaemonFeedback::applyCrashConsent(bool enabled) {
+    // Flip the live Sentry consent gate + cache it in QSettings (idempotent; also arms the next
+    // startup). Done regardless of whether the tracked value changed, so a node echo that matches
+    // still guarantees the local reporter + cache are in the granted/revoked state.
+    crash::persistConsent(enabled);
+    if (m_crashReportingEnabled == enabled) {
+        return;
+    }
+    m_crashReportingEnabled = enabled;
+    emit crashReportingEnabledChanged(m_crashReportingEnabled);
 }
 
 } // namespace daemonapp::daemon

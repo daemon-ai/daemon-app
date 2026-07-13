@@ -388,6 +388,7 @@ private slots:
             QStringLiteral("voice/model"),
             QStringLiteral("advanced/logLevel"),
             QStringLiteral("advanced/telemetry"),
+            QStringLiteral("advanced/crashReports"),
             QStringLiteral("advanced/experimentalTools"),
         };
         QCOMPARE(ids, expected);

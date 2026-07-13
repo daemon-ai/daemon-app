@@ -219,6 +219,10 @@
         <translation>傳送匿名遙測資料</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>傳送當機報告</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>啟用實驗性工具</translation>
     </message>
@@ -7956,6 +7960,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>每個工作階段的最大臨時子代理數</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>傳送當機報告</translation>
     </message>
     <message>
         <source>Tools</source>

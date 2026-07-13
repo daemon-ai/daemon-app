@@ -219,6 +219,10 @@
         <translation>अनाम टेलीमेट्री भेजें</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>क्रैश रिपोर्ट भेजें</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>प्रयोगात्मक टूल सक्षम करें</translation>
     </message>
@@ -7964,6 +7968,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>प्रति सत्र अधिकतम अस्थायी चाइल्ड</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>क्रैश रिपोर्ट भेजें</translation>
     </message>
     <message>
         <source>Tools</source>

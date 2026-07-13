@@ -1469,6 +1469,17 @@ QByteArray NodeApiCodec::encodeTelemetryConsentSetRequest(bool enabled) {
         });
 }
 
+QByteArray NodeApiCodec::encodeCrashConsentGetRequest() {
+    return encodeSimple(api_request_r::api_request_request_crash_consent_get_m_c);
+}
+
+QByteArray NodeApiCodec::encodeCrashConsentSetRequest(bool enabled) {
+    return encodeWithFill(
+        api_request_r::api_request_request_crash_consent_set_m_c, [&](api_request_r& request) {
+            request.api_request_request_crash_consent_set_m.CrashConsentSet_enabled = enabled;
+        });
+}
+
 // --- Node gateway (wire v32) -----------------------------------------------------------------
 
 QByteArray NodeApiCodec::encodeGatewayGetRequest() {

@@ -219,6 +219,10 @@
         <translation>发送匿名遥测数据</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>发送崩溃报告</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>启用实验性工具</translation>
     </message>
@@ -7956,6 +7960,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>每个会话的最大临时子智能体数</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>发送崩溃报告</translation>
     </message>
     <message>
         <source>Tools</source>

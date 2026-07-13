@@ -1298,6 +1298,8 @@ enum class ApiResponseKind {
     // user feedback over OpenTelemetry (wire v32).
     FeedbackAck,
     TelemetryConsent,
+    // crash-reporting consent (wire v41; CrashConsentGet/Set -> CrashConsent).
+    CrashConsent,
     // node gateway status (wire v32; GatewayGet/GatewaySet -> GatewayStatus).
     GatewayStatus,
     // custom OpenAI-compatible providers (generalized Daemon Cloud): CustomProviderList response.
@@ -2113,10 +2115,16 @@ public:
     // feedback is not.
     [[nodiscard]] static QByteArray encodeTelemetryConsentGetRequest();
     [[nodiscard]] static QByteArray encodeTelemetryConsentSetRequest(bool enabled);
+    // Read / set the node-owned crash-reporting consent (wire v41; CrashConsentGet/Set ->
+    // CrashConsent{enabled}). Default OFF (opt-in); DISTINCT from the telemetry consent above.
+    [[nodiscard]] static QByteArray encodeCrashConsentGetRequest();
+    [[nodiscard]] static QByteArray encodeCrashConsentSetRequest(bool enabled);
     // Decode a FeedbackAck (accepted+queued to the durable outbox; delivery is a separate drain).
     static bool decodeFeedbackAck(const QByteArray& responseCbor, bool* accepted, bool* queued);
     // Decode a TelemetryConsent response into the node's current consent state.
     static bool decodeTelemetryConsent(const QByteArray& responseCbor, bool* enabled);
+    // Decode a CrashConsent response into the node's current crash-reporting consent state.
+    static bool decodeCrashConsent(const QByteArray& responseCbor, bool* enabled);
 
     // --- Node gateway (wire v32) --------------------------------------------------------------
     // Read the gateway's live status (GatewayGet -> GatewayStatus). Zero-arg.

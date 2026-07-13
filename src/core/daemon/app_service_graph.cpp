@@ -390,6 +390,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // Seed the node-owned telemetry consent (wire v32) so the settings toggle
                     // reflects the node's stored state.
                     feedback->refreshConsent();
+                    // Seed the node-owned crash-reporting consent (wire v41) for its settings
+                    // toggle.
+                    feedback->refreshCrashConsent();
                     subscriptions->start();
                 } else if (!nowReady && *wasReady) {
                     subscriptions->stop();

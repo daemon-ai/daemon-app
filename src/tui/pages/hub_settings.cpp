@@ -325,6 +325,11 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
         rows << makeRow(advanced, advancedLabel, QStringLiteral("advanced/telemetry"),
                         tr("Send anonymous telemetry"), QStringLiteral("toggle"),
                         QStringLiteral("feedback"), m_deps.feedback->telemetryEnabled());
+        // Dedicated crash-reporting consent (wire v41; distinct from telemetry, default OFF),
+        // GUI-parity with the AdvancedSection "Send crash reports" row.
+        rows << makeRow(advanced, advancedLabel, QStringLiteral("advanced/crashReports"),
+                        tr("Send crash reports"), QStringLiteral("toggle"),
+                        QStringLiteral("crashFeedback"), m_deps.feedback->crashReportingEnabled());
     }
     rows << configToggle(advanced, advancedLabel, "advanced/experimentalTools",
                          tr("Enable experimental tools"), false);
@@ -365,6 +370,11 @@ bool TuiPageHub::applySettingsValue(const QVariantMap& row, const QVariant& valu
     // exactly like the GUI AdvancedSection consent row.
     if (seam == QLatin1String("feedback") && m_deps.feedback != nullptr) {
         m_deps.feedback->setTelemetryEnabled(value.toBool());
+        return true;
+    }
+    // Node-owned crash-reporting consent (wire v41), the dedicated "Send crash reports" toggle.
+    if (seam == QLatin1String("crashFeedback") && m_deps.feedback != nullptr) {
+        m_deps.feedback->setCrashReportingEnabled(value.toBool());
         return true;
     }
     // [waveB:app-v30] D4: a tool toggle -> IToolInventory::setEnabled (the node re-fetches).

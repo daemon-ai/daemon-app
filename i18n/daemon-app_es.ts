@@ -219,6 +219,10 @@
         <translation>Enviar telemetría anónima</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>Enviar informes de fallos</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>Habilitar herramientas experimentales</translation>
     </message>
@@ -7964,6 +7968,10 @@ Gracias — continuando con: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>Máx. de procesos hijos efímeros por sesión</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>Enviar informes de fallos</translation>
     </message>
     <message>
         <source>Tools</source>

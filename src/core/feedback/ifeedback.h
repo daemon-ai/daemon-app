@@ -26,6 +26,14 @@ class IFeedback : public QObject {
     // it as a side effect except through the explicit opt-in on submitAppFeedback.
     Q_PROPERTY(bool telemetryEnabled READ telemetryEnabled WRITE setTelemetryEnabled NOTIFY
                    telemetryEnabledChanged)
+    // Node-owned crash-reporting consent (wire v41; the dedicated "Send crash reports" toggle,
+    // DISTINCT from telemetry above and default OFF). Bound read/write by the settings crash-report
+    // row (AdvancedSection.qml / the TUI settings surface). On write the seam persists the node
+    // value (CrashConsentSet) AND flips the local Sentry consent (crash::give/revokeConsent) +
+    // caches it in QSettings so the reporter arms correctly at next startup before the node
+    // connects.
+    Q_PROPERTY(bool crashReportingEnabled READ crashReportingEnabled WRITE setCrashReportingEnabled
+                   NOTIFY crashReportingEnabledChanged)
 
 public:
     static constexpr int kRatingNone = 0;
@@ -56,8 +64,12 @@ public:
     [[nodiscard]] virtual bool telemetryEnabled() const = 0;
     virtual void setTelemetryEnabled(bool enabled) = 0;
 
+    [[nodiscard]] virtual bool crashReportingEnabled() const = 0;
+    virtual void setCrashReportingEnabled(bool enabled) = 0;
+
 signals:
     void telemetryEnabledChanged(bool enabled);
+    void crashReportingEnabledChanged(bool enabled);
     // Emitted after a submission is recorded/acknowledged (`kind` is "message" or
     // "app") so the UI can show a transient acknowledgment.
     void submitted(const QString& kind);

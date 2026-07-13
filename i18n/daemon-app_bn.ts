@@ -219,6 +219,10 @@
         <translation>বেনামী টেলিমেট্রি পাঠান</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>ক্র্যাশ রিপোর্ট পাঠান</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>পরীক্ষামূলক টুল সক্রিয় করুন</translation>
     </message>
@@ -7964,6 +7968,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>প্রতি সেশনে সর্বাধিক ক্ষণস্থায়ী চাইল্ড</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>ক্র্যাশ রিপোর্ট পাঠান</translation>
     </message>
     <message>
         <source>Tools</source>

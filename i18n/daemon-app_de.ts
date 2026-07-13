@@ -219,6 +219,10 @@
         <translation>Anonyme Telemetrie senden</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>Absturzberichte senden</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>Experimentelle Werkzeuge aktivieren</translation>
     </message>
@@ -7964,6 +7968,10 @@ Danke — es geht weiter mit: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>Max. flüchtige Kindprozesse pro Sitzung</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>Absturzberichte senden</translation>
     </message>
     <message>
         <source>Tools</source>

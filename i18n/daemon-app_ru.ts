@@ -219,6 +219,10 @@
         <translation>Отправлять анонимную телеметрию</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>Отправлять отчёты о сбоях</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>Включить экспериментальные инструменты</translation>
     </message>
@@ -7972,6 +7976,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>Макс. число временных дочерних процессов на сессию</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>Отправлять отчёты о сбоях</translation>
     </message>
     <message>
         <source>Tools</source>

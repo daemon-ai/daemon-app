@@ -4,6 +4,7 @@
 #include "feedback/mock_feedback.h"
 
 #include "appcache/json_cache.h"
+#include "crash/crash_reporter.h"
 
 namespace feedback {
 
@@ -18,6 +19,9 @@ MockFeedback::MockFeedback(QObject* parent) : IFeedback(parent) {
     // exactly like the config mock it replaces did.
     const QJsonObject cached = appcache::loadObject(kCacheFile);
     m_telemetryEnabled = cached.value(kConsentKey).toBool(false);
+    // Crash consent lives in QSettings (shared with the GUI/TUI mains + the live Sentry gate), not
+    // this JSON cache, so read it from there for a coherent initial toggle state.
+    m_crashReportingEnabled = crash::consentCached();
 }
 
 void MockFeedback::persist() const {
@@ -50,6 +54,17 @@ void MockFeedback::setTelemetryEnabled(bool enabled) {
     m_telemetryEnabled = enabled;
     persist();
     emit telemetryEnabledChanged(m_telemetryEnabled);
+}
+
+void MockFeedback::setCrashReportingEnabled(bool enabled) {
+    // Flip the live Sentry consent gate + cache it in QSettings (crash::persistConsent), so the
+    // mock surface exercises the SAME local consent path the daemon seam uses.
+    crash::persistConsent(enabled);
+    if (m_crashReportingEnabled == enabled) {
+        return;
+    }
+    m_crashReportingEnabled = enabled;
+    emit crashReportingEnabledChanged(m_crashReportingEnabled);
 }
 
 } // namespace feedback

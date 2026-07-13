@@ -33,21 +33,29 @@ public:
     [[nodiscard]] bool telemetryEnabled() const override { return m_telemetryEnabled; }
     void setTelemetryEnabled(bool enabled) override;
 
-    // Seed the cached consent from the node (TelemetryConsentGet). The service graph calls this on
-    // connect-ready so the settings toggle reflects the node's stored state.
+    [[nodiscard]] bool crashReportingEnabled() const override { return m_crashReportingEnabled; }
+    void setCrashReportingEnabled(bool enabled) override;
+
+    // Seed the cached consent from the node (TelemetryConsentGet + CrashConsentGet). The service
+    // graph calls these on connect-ready so the settings toggles reflect the node's stored state.
     void refreshConsent();
+    void refreshCrashConsent();
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void applyConsent(bool enabled);
+    void applyCrashConsent(bool enabled);
 
     NodeApiClient* m_client = nullptr;
     bool m_telemetryEnabled = false;
+    bool m_crashReportingEnabled = false;
 
     static constexpr auto kSubmitMessageCorrelation = "repo/feedback-submit-message";
     static constexpr auto kSubmitAppCorrelation = "repo/feedback-submit-app";
     static constexpr auto kConsentGetCorrelation = "repo/telemetry-consent-get";
     static constexpr auto kConsentSetCorrelation = "repo/telemetry-consent-set";
+    static constexpr auto kCrashConsentGetCorrelation = "repo/crash-consent-get";
+    static constexpr auto kCrashConsentSetCorrelation = "repo/crash-consent-set";
 };
 
 } // namespace daemonapp::daemon

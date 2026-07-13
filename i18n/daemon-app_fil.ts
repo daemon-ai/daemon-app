@@ -219,6 +219,10 @@
         <translation>Magpadala ng anonymous na telemetry</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>Magpadala ng mga ulat ng pag-crash</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>Paganahin ang mga eksperimentong tool</translation>
     </message>
@@ -7964,6 +7968,10 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>Max na ephemeral children kada session</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>Magpadala ng mga ulat ng pag-crash</translation>
     </message>
     <message>
         <source>Tools</source>

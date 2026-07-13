@@ -94,6 +94,8 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         {api_response_r::api_response_response_feedback_ack_m_c, ApiResponseKind::FeedbackAck},
         {api_response_r::api_response_response_telemetry_consent_m_c,
          ApiResponseKind::TelemetryConsent},
+        // crash-reporting consent (wire v41).
+        {api_response_r::api_response_response_crash_consent_m_c, ApiResponseKind::CrashConsent},
         // node gateway status (wire v32).
         {api_response_r::api_response_response_gateway_status_m_c, ApiResponseKind::GatewayStatus},
         // custom OpenAI-compatible providers (generalized Daemon Cloud).
@@ -1827,6 +1829,18 @@ bool NodeApiCodec::decodeTelemetryConsent(const QByteArray& responseCbor, bool* 
     }
     if (enabled != nullptr) {
         *enabled = response->api_response_response_telemetry_consent_m.TelemetryConsent_enabled;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeCrashConsent(const QByteArray& responseCbor, bool* enabled) {
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_crash_consent_m_c);
+    if (!response) {
+        return false;
+    }
+    if (enabled != nullptr) {
+        *enabled = response->api_response_response_crash_consent_m.CrashConsent_enabled;
     }
     return true;
 }

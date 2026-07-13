@@ -219,6 +219,10 @@
         <translation>Kirim telemetri anonim</translation>
     </message>
     <message>
+        <source>Send crash reports</source>
+        <translation>Kirim laporan kerusakan</translation>
+    </message>
+    <message>
         <source>Enable experimental tools</source>
         <translation>Aktifkan alat eksperimental</translation>
     </message>
@@ -7956,6 +7960,10 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Max ephemeral children per session</source>
         <translation>Maks. anak sementara per sesi</translation>
+    </message>
+    <message>
+        <source>Send crash reports</source>
+        <translation>Kirim laporan kerusakan</translation>
     </message>
     <message>
         <source>Tools</source>
