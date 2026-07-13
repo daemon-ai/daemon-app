@@ -21,7 +21,7 @@ done
 
 mkdir -p /usr/share/applications /usr/share/metainfo
 ln -sf "$opt/share/applications/daemon-app.desktop" /usr/share/applications/daemon-app.desktop
-ln -sf "$opt/share/metainfo/io.daemon.app.metainfo.xml" /usr/share/metainfo/io.daemon.app.metainfo.xml
+ln -sf "$opt/share/metainfo/ai.daemon.app.metainfo.xml" /usr/share/metainfo/ai.daemon.app.metainfo.xml
 for dir in "$opt"/share/icons/hicolor/*/apps; do
     size=$(basename "$(dirname "$dir")")
     mkdir -p "/usr/share/icons/hicolor/$size/apps"

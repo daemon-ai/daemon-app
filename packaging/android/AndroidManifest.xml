@@ -12,7 +12,7 @@ the app links (QtNetwork contributes android.permission.INTERNET - the whole
 point of this thin remote/WebSocket client).
 
 Deliberate deltas from Qt's stock template:
- * package id io.daemon.app (the AppStream/product id used everywhere else).
+ * package id ai.daemon.app (the AppStream/product id used everywhere else).
  * android:extractNativeLibs="true": the installer unpacks lib/arm64-v8a so
    the APK zip can keep the .so entries compressed - the gradle-less
    assembly (nix/android.nix) then needs no 16 KB page-alignment dance.
@@ -21,7 +21,7 @@ Deliberate deltas from Qt's stock template:
    share-to-other-apps / open-in intents, which this client does not use.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.daemon.app"
+    package="ai.daemon.app"
     android:installLocation="auto"
     android:versionCode="-- %%INSERT_VERSION_CODE%% --"
     android:versionName="-- %%INSERT_VERSION_NAME%% --">

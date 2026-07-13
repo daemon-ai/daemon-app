@@ -16,7 +16,7 @@ app minimized to the tray.
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>io.daemon.app.autostart</string>
+    <string>ai.daemon.app.autostart</string>
     <key>BundleProgram</key>
     <string>Contents/MacOS/daemon-app</string>
     <key>ProgramArguments</key>
@@ -28,7 +28,7 @@ app minimized to the tray.
     <true/>
     <key>AssociatedBundleIdentifiers</key>
     <array>
-        <string>io.daemon.app</string>
+        <string>ai.daemon.app</string>
     </array>
 </dict>
 </plist>

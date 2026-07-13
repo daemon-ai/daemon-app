@@ -28,7 +28,7 @@ build_dir="${IOS_BUILD_DIR:-build-ios}"
 device_type="${IOS_DEVICE_TYPE:-iPhone 16}"
 wait_ready_ms="${IOS_WAIT_READY_MS:-30000}"
 shot_dir="${IOS_SHOT_DIR:-/tmp/ios-proof}"
-bundle_id="io.daemon.app"
+bundle_id="ai.daemon.app"
 
 # Run this inside `nix develop .#ios` (which puts cmake/ninja/pkg-config on PATH
 # and exports the dep dirs + PKG_CONFIG_PATH), but the nixpkgs darwin stdenv

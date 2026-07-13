@@ -801,7 +801,7 @@
               for path in \
                 ./opt/daemon/bin/daemon-app \
                 ./opt/daemon/share/applications/daemon-app.desktop \
-                ./opt/daemon/share/metainfo/io.daemon.app.metainfo.xml \
+                ./opt/daemon/share/metainfo/ai.daemon.app.metainfo.xml \
                 ./opt/daemon/share/icons/hicolor/256x256/apps/daemon-app.png \
                 ./opt/daemon/share/icons/hicolor/scalable/apps/daemon-app.svg \
                 ./opt/daemon/share/daemon-app/microtex-res/RES_README \
@@ -831,7 +831,7 @@
               dpkg-deb -x "$deb" deb-root
               desktop-file-validate deb-root/opt/daemon/share/applications/daemon-app.desktop
               appstreamcli validate --no-net \
-                deb-root/opt/daemon/share/metainfo/io.daemon.app.metainfo.xml
+                deb-root/opt/daemon/share/metainfo/ai.daemon.app.metainfo.xml
 
               echo "=== DEB payload: portable ELF contract + closure ==="
               bin=deb-root/opt/daemon/bin/daemon-app
@@ -850,7 +850,7 @@
               for path in \
                 /opt/daemon/bin/daemon-app \
                 /opt/daemon/share/applications/daemon-app.desktop \
-                /opt/daemon/share/metainfo/io.daemon.app.metainfo.xml \
+                /opt/daemon/share/metainfo/ai.daemon.app.metainfo.xml \
                 /opt/daemon/share/icons/hicolor/256x256/apps/daemon-app.png; do
                 grep -qxF "$path" rpm-list.txt || { echo "missing in rpm: $path" >&2; exit 1; }
               done
@@ -890,7 +890,7 @@
               test -x squashfs-root/AppRun
               test -f squashfs-root/usr/bin/daemon-app
               test -e squashfs-root/daemon-app.desktop
-              test -f squashfs-root/usr/share/metainfo/io.daemon.app.metainfo.xml
+              test -f squashfs-root/usr/share/metainfo/ai.daemon.app.metainfo.xml
               check_payload_closure appimage squashfs-root/usr
 
               echo "=== AppImage: offscreen boot probe (static payload) ==="

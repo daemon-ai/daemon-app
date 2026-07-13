@@ -525,8 +525,8 @@ let
         echo "=== aapt2 dump badging ===" | tee -a "$report"
         ${buildTools}/aapt2 dump badging "$apk" > badging.txt
         head -n 5 badging.txt >> "$report"
-        grep -q "package: name='io.daemon.app'" badging.txt \
-          || { echo "FAIL: package id is not io.daemon.app" >&2; exit 1; }
+        grep -q "package: name='ai.daemon.app'" badging.txt \
+          || { echo "FAIL: package id is not ai.daemon.app" >&2; exit 1; }
         grep -q "versionCode='[1-9]" badging.txt \
           || { echo "FAIL: versionCode missing/zero" >&2; exit 1; }
         grep -q "versionName='${baseVersion}" badging.txt \

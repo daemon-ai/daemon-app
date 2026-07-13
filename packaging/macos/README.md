@@ -147,7 +147,7 @@ daemon-<version>-macos-<arch>.dmg        # UDZO, volume name "Daemon"
 └── daemon-app.app                       # + /Applications symlink (CPack default)
     └── Contents/
         ├── Info.plist                   # from packaging/macos/Info.plist.in
-        │                                #   io.daemon.app, LSMinimumSystemVersion 13.0
+        │                                #   ai.daemon.app, LSMinimumSystemVersion 13.0
         ├── MacOS/
         │   ├── daemon-app               # the Qt Quick GUI
         │   ├── daemon                   # DAEMON_APP_BUNDLED_DAEMON (if set)

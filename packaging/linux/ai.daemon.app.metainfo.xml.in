@@ -9,7 +9,7 @@ hardcode a version here. The single <release> entry is a stub - the release
 pipeline appends real entries (with notes) when tagging.
 -->
 <component type="desktop-application">
-  <id>io.daemon.app</id>
+  <id>ai.daemon.app</id>
   <metadata_license>FSFAP</metadata_license>
   <project_license>MPL-2.0</project_license>
   <name>Daemon</name>

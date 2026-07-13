@@ -90,7 +90,7 @@ source dirs, `ECM_DIR`, the host `katehighlightingindexer`, and the tinyxml2
    SIMCTL_CHILD_DAEMON_APP_SERVICE_MODE=mock \
    SIMCTL_CHILD_DAEMON_APP_SOCKET=/ \
    SIMCTL_CHILD_DAEMON_APP_WAIT_READY=30000 \
-   xcrun simctl launch --console-pty --terminate-running-process booted io.daemon.app
+   xcrun simctl launch --console-pty --terminate-running-process booted ai.daemon.app
    # expect on stdout: DAEMON_APP_READY ok
    ```
    Mock service mode avoids needing a reachable node: `driveFirstRunConnect()`
@@ -123,7 +123,7 @@ iOS reuses the Android/wasm seams — it is APPLE + `DAEMON_APP_MOBILE`:
   `microtexResDir()` finds it app-dir-relative.
 - **Token store**: no qtkeychain on iOS, so the server-token store falls back
   to `QSettings` (same as the static/mobile builds).
-- **Bundle id**: `io.daemon.app` (matches the macOS/Android/AppStream id); the
+- **Bundle id**: `ai.daemon.app` (matches the macOS/Android/AppStream id); the
   Info.plist is Qt's default iOS template.
 
 ## KSyntaxHighlighting × the Xcode "new build system"

@@ -10,7 +10,7 @@ the plist; @PROJECT_VERSION@ is the VERSION-file SemVer. The CFBundle version
 fields must stay strictly numeric-dotted, so the git-enriched build string
 from cmake/Version.cmake is deliberately NOT used here (it stays in
 daemon_app_version.h / the About page). CFBundleIdentifier mirrors the
-AppStream component id (packaging/linux/io.daemon.app.metainfo.xml.in).
+AppStream component id (packaging/linux/ai.daemon.app.metainfo.xml.in).
 -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -22,7 +22,7 @@ AppStream component id (packaging/linux/io.daemon.app.metainfo.xml.in).
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleIdentifier</key>
-    <string>io.daemon.app</string>
+    <string>ai.daemon.app</string>
     <key>CFBundleName</key>
     <string>Daemon</string>
     <key>CFBundleDisplayName</key>

@@ -221,12 +221,12 @@ if(UNIX AND NOT APPLE)
     # builds stay reproducible (epoch date) while dev builds show today.
     string(TIMESTAMP DAEMON_APP_METAINFO_DATE "%Y-%m-%d" UTC)
     configure_file(
-        "${_da_linux_dir}/io.daemon.app.metainfo.xml.in"
-        "${CMAKE_BINARY_DIR}/packaging/io.daemon.app.metainfo.xml"
+        "${_da_linux_dir}/ai.daemon.app.metainfo.xml.in"
+        "${CMAKE_BINARY_DIR}/packaging/ai.daemon.app.metainfo.xml"
         @ONLY
     )
     install(
-        FILES "${CMAKE_BINARY_DIR}/packaging/io.daemon.app.metainfo.xml"
+        FILES "${CMAKE_BINARY_DIR}/packaging/ai.daemon.app.metainfo.xml"
         DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
     )
 

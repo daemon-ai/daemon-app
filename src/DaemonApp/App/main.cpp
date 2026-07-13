@@ -324,12 +324,12 @@ int main(int argc, char* argv[]) {
     // falls back to the PNGs embedded in the app resource. Mobile brands via the
     // launcher mipmaps and the browser via the favicon, so both are excluded.
     // Flathub installs the desktop file + icon under the reverse-DNS app id
-    // (io.daemon.app), so the Wayland app_id must match that basename inside the
+    // (ai.daemon.app), so the Wayland app_id must match that basename inside the
     // Flatpak sandbox; every other Linux lane (deb/rpm/AppImage/portable) ships
     // daemon-app.desktop. Match the installed basename either way so the
     // compositor resolves the window icon.
     QGuiApplication::setDesktopFileName(autostart::runningInsideFlatpak()
-                                            ? QStringLiteral("io.daemon.app")
+                                            ? QStringLiteral("ai.daemon.app")
                                             : QStringLiteral("daemon-app"));
     QGuiApplication::setWindowIcon(platform::appIcon());
 #endif

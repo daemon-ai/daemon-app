@@ -21,7 +21,7 @@ for tool in daemon-app daemon daemon-cli; do
 done
 
 remove_if_ours /usr/share/applications/daemon-app.desktop
-remove_if_ours /usr/share/metainfo/io.daemon.app.metainfo.xml
+remove_if_ours /usr/share/metainfo/ai.daemon.app.metainfo.xml
 for dir in "$opt"/share/icons/hicolor/*/apps; do
     size=$(basename "$(dirname "$dir")")
     for icon in "$dir"/*; do

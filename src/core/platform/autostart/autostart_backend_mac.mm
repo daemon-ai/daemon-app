@@ -3,7 +3,7 @@
 
 // macOS 13+ (the bundle's LSMinimumSystemVersion floor): SMAppService over the
 // agent plist shipped inside the bundle at
-// Contents/Library/LaunchAgents/io.daemon.app.autostart.plist (see
+// Contents/Library/LaunchAgents/ai.daemon.app.autostart.plist (see
 // packaging/macos/, staged by src/DaemonApp/App/CMakeLists.txt). The plist is
 // inert until registered here at runtime; the entry appears under the app's
 // own name in System Settings > General > Login Items. The environment guards
@@ -23,7 +23,7 @@ namespace autostart::backend {
 namespace {
 
 NSString* plistName() {
-    return @"io.daemon.app.autostart.plist";
+    return @"ai.daemon.app.autostart.plist";
 }
 
 // Environment gate shared by every operation; returns true (with *status

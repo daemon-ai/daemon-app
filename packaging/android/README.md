@@ -104,7 +104,7 @@ file:
 ## Layout of this directory
 
 * `AndroidManifest.xml` - QtActivity-based manifest, application id
-  `io.daemon.app`, minSdk 28 / targetSdk 35. Overlaid onto Qt's package
+  `ai.daemon.app`, minSdk 28 / targetSdk 35. Overlaid onto Qt's package
   template by androiddeployqt (`QT_ANDROID_PACKAGE_SOURCE_DIR`); the
   `%%INSERT_*%%` markers are filled from the deployment settings.
 * `res/mipmap-*/ic_launcher.png` - launcher icons, generated from
