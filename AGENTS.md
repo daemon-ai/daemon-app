@@ -257,3 +257,8 @@ mirror.
 Bump in the monorepo with `just set-version daemon-app X.Y.Z` (writes `VERSION` and syncs
 `UPDATES.json`); standalone, edit `VERSION` (CMake picks it up) and `UPDATES.json`. `just
 check-version` validates the SemVer.
+
+**Agents MUST NOT bump or otherwise change the version unless the human explicitly asks for a
+version bump.** That covers `VERSION`, `just set-version`, and the derived mirrors
+(`packaging/UPDATES.json`). Landing a feature is NEVER an implicit reason to bump; if a change
+seems to warrant one, flag it in your summary and let the human decide.
