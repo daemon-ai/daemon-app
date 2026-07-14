@@ -6373,6 +6373,7 @@ struct swarm_capabilities {
 struct swarm_hardware_report {
 	uint32_t swarm_hardware_report_gpus;
 	uint64_t swarm_hardware_report_vram_mb;
+	uint64_t swarm_hardware_report_shared_mb;
 	uint64_t swarm_hardware_report_ram_mb;
 	struct zcbor_string swarm_hardware_report_backend_lanes_tstr[64];
 	size_t swarm_hardware_report_backend_lanes_tstr_count;

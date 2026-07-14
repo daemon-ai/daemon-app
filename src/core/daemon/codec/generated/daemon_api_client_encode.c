@@ -12733,10 +12733,12 @@ static bool encode_swarm_hardware_report(
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_encode(state, 9) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"gpus", tmp_str.len = sizeof("gpus") - 1, &tmp_str)))))
+	bool res = (((zcbor_map_start_encode(state, 10) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"gpus", tmp_str.len = sizeof("gpus") - 1, &tmp_str)))))
 	&& (zcbor_uint32_encode(state, (&(*input).swarm_hardware_report_gpus))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"vram_mb", tmp_str.len = sizeof("vram_mb") - 1, &tmp_str)))))
 	&& (zcbor_uint64_encode(state, (&(*input).swarm_hardware_report_vram_mb))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"shared_mb", tmp_str.len = sizeof("shared_mb") - 1, &tmp_str)))))
+	&& (zcbor_uint64_encode(state, (&(*input).swarm_hardware_report_shared_mb))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ram_mb", tmp_str.len = sizeof("ram_mb") - 1, &tmp_str)))))
 	&& (zcbor_uint64_encode(state, (&(*input).swarm_hardware_report_ram_mb))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"backend_lanes", tmp_str.len = sizeof("backend_lanes") - 1, &tmp_str)))))
@@ -12750,7 +12752,7 @@ static bool encode_swarm_hardware_report(
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"disk_free_mb", tmp_str.len = sizeof("disk_free_mb") - 1, &tmp_str)))))
 	&& (zcbor_uint64_encode(state, (&(*input).swarm_hardware_report_disk_free_mb))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"throughput_class", tmp_str.len = sizeof("throughput_class") - 1, &tmp_str)))))
-	&& (zcbor_tstr_encode(state, (&(*input).swarm_hardware_report_throughput_class))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 9))));
+	&& (zcbor_tstr_encode(state, (&(*input).swarm_hardware_report_throughput_class))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 10))));
 
 	log_result(state, res, __func__);
 	return res;

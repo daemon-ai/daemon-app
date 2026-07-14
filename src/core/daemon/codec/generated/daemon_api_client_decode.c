@@ -13968,6 +13968,8 @@ static bool decode_swarm_hardware_report(
 	&& (zcbor_uint32_decode(state, (&(*result).swarm_hardware_report_gpus))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"vram_mb", tmp_str.len = sizeof("vram_mb") - 1, &tmp_str)))))
 	&& (zcbor_uint64_decode(state, (&(*result).swarm_hardware_report_vram_mb))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"shared_mb", tmp_str.len = sizeof("shared_mb") - 1, &tmp_str)))))
+	&& (zcbor_uint64_decode(state, (&(*result).swarm_hardware_report_shared_mb))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ram_mb", tmp_str.len = sizeof("ram_mb") - 1, &tmp_str)))))
 	&& (zcbor_uint64_decode(state, (&(*result).swarm_hardware_report_ram_mb))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"backend_lanes", tmp_str.len = sizeof("backend_lanes") - 1, &tmp_str)))))
